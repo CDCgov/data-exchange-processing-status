@@ -22,10 +22,24 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 group "gov.cdc.ocio"
 version "1.0.0-SNAPSHOT"
 
+configurations {
+    // create a separate configuration for the agent since it should not be a normal dependency
+    agent
+}
+
 dependencies {
     implementation "com.microsoft.azure.functions:azure-functions-java-library:3.0.0"
     implementation "com.azure:azure-cosmos:4.41.0"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2"
+    implementation 'io.opentelemetry:opentelemetry-api:1.29.0'
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.29.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-logging:1.29.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.29.0'
+
+    implementation 'io.opentelemetry:opentelemetry-semconv:1.29.0-alpha'
+
+    agent "io.opentelemetry.javaagent:opentelemetry-javaagent:1.29.0"
+
     testImplementation "org.mockito:mockito-core:5.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"

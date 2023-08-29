@@ -5,40 +5,47 @@ import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.model.TraceResult
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.api.trace.*
+import io.opentelemetry.context.Context
 import java.util.*
 
 
-class TraceFunction {
+class AddSpanToTraceFunction {
 
     private var tracer: Tracer? = null
 
     fun run(
         request: HttpRequestMessage<Optional<String>>,
+        traceId: String,
+        spanId: String,
         providerName: String,
         context: ExecutionContext
     ): HttpResponseMessage {
 
         val logger = context.logger
 
-        //val jaegerEndpoint = "https://ocio-ede-dev-jaeger-app-service.azurewebsites.net:4317"
         val jaegerEndpoint = "http://ocioededevjaeger.eastus.azurecontainer.io:4317"
         val openTelemetry = OpenTelemetryConfig.initOpenTelemetry(jaegerEndpoint)
 
         logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
         logger.info("provider name = $providerName")
 
-//        val someParam = request.queryParameters["someParam"]
+        tracer = openTelemetry.getTracer(AddSpanToTraceFunction::class.java.name)
 
-        tracer = openTelemetry.getTracer(TraceFunction::class.java.name)
+        val spanContext = SpanContext.createFromRemoteParent(
+            traceId,
+            spanId,
+            TraceFlags.getSampled(),
+            TraceState.getDefault()
+        )
 
-        val span: Span = tracer!!.spanBuilder("doWork").startSpan()
+        val span = tracer!!.spanBuilder("stage2")
+            .setParent(Context.current().with(Span.wrap(spanContext)))
+            .startSpan()
         try {
-            span.setAttribute("providerName", providerName)
+            span.setAttribute("stage2_field1", providerName)
             span.makeCurrent().use { ignored ->
                 Thread.sleep(500)
-                logger.info("A sample log message!")
             }
         } finally {
             span.end()
@@ -47,7 +54,6 @@ class TraceFunction {
         val result = TraceResult()
         result.status = "OK"
         result.traceId = span.spanContext.traceId
-        result.spanId = span.spanContext.spanId
 
         return request
             .createResponseBuilder(HttpStatus.OK)
