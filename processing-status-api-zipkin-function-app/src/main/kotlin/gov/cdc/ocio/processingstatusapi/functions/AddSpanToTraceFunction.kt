@@ -37,6 +37,7 @@ class AddSpanToTraceFunction {
 
         val result = TraceResult()
         result.status = "OK"
+        result.traceId = span.context().traceIdString()
         result.traceContext = B3SingleFormat.writeB3SingleFormat(tracing!!.currentTraceContext().get())
 
         return request
