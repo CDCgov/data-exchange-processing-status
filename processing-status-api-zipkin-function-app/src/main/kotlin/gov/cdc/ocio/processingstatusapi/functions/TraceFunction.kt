@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.functions
 
+import brave.propagation.B3SingleFormat
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
@@ -34,8 +35,7 @@ class TraceFunction {
 
         val result = TraceResult()
         result.status = "OK"
-        result.traceId = span.context().traceIdString()
-        result.spanId = span.context().spanIdString()
+        result.traceContext = B3SingleFormat.writeB3SingleFormat(tracing!!.currentTraceContext().get())
 
         return request
             .createResponseBuilder(HttpStatus.OK)

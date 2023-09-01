@@ -38,13 +38,12 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "span/{traceId}/{spanId}/{providerName}",
+                    route = "span/{traceContext}/{providerName}",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("traceId") String traceId,
-            @BindingName("spanId") String spanId,
+            @BindingName("traceContext") String traceContext,
             @BindingName("providerName") String providerName,
             final ExecutionContext context) {
-        return new AddSpanToTraceFunction().run(request, traceId, spanId, providerName, context);
+        return new AddSpanToTraceFunction().run(request, traceContext, providerName, context);
     }
 
 }

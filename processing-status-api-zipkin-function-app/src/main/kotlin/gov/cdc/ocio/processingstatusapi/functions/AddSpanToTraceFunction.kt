@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.functions
 
+import brave.propagation.B3SingleFormat
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
@@ -14,16 +15,19 @@ class AddSpanToTraceFunction {
 
     fun run(
         request: HttpRequestMessage<Optional<String>>,
-        traceId: String,
-        spanId: String,
+        traceContext: String,
         providerName: String,
         context: ExecutionContext
     ): HttpResponseMessage {
 
         val logger = context.logger
 
-        tracing!!.tracer().startScopedSpanWithParent("stage2")
-        val span = tracing!!.tracer().currentSpan()
+        val traceContext = B3SingleFormat.parseB3SingleFormat(traceContext)
+
+        val span = tracing!!.tracer().nextSpan(traceContext)
+        span.name("stage2")
+        span.start()
+
         try {
             span.tag("key", "secondProcessingStage")
             Thread.sleep(500)
@@ -33,8 +37,7 @@ class AddSpanToTraceFunction {
 
         val result = TraceResult()
         result.status = "OK"
-        result.traceId = span.context().traceIdString()
-        result.spanId = span.context().spanIdString()
+        result.traceContext = B3SingleFormat.writeB3SingleFormat(tracing!!.currentTraceContext().get())
 
         return request
             .createResponseBuilder(HttpStatus.OK)
