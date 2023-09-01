@@ -15,17 +15,17 @@ class AddSpanToTraceFunction {
 
     fun run(
         request: HttpRequestMessage<Optional<String>>,
-        traceContext: String,
+        traceContextAsB3SingleFormat: String,
         providerName: String,
         context: ExecutionContext
     ): HttpResponseMessage {
 
         val logger = context.logger
 
-        val traceContext = B3SingleFormat.parseB3SingleFormat(traceContext)
+        val traceContext = B3SingleFormat.parseB3SingleFormat(traceContextAsB3SingleFormat)
 
         val span = tracing!!.tracer().nextSpan(traceContext)
-        span.name("stage2")
+        span.name(providerName)
         span.start()
 
         try {
