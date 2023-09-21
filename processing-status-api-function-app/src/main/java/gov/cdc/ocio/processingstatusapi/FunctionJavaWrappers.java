@@ -24,7 +24,7 @@ public class FunctionJavaWrappers {
     public HttpResponseMessage trace(
             @HttpTrigger(
                     name = "req",
-                    methods = {HttpMethod.GET},
+                    methods = {HttpMethod.POST},
                     route = "trace/{spanName}",
                     //authLevel = AuthorizationLevel.FUNCTION) HttpRequestMessage<Optional<String>> request,
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
@@ -37,7 +37,7 @@ public class FunctionJavaWrappers {
     public HttpResponseMessage addSpanToTrace(
             @HttpTrigger(
                     name = "req",
-                    methods = {HttpMethod.GET},
+                    methods = {HttpMethod.PUT},
                     route = "span/{traceId}/{spanId}/{spanName}",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("traceId") String traceId,
