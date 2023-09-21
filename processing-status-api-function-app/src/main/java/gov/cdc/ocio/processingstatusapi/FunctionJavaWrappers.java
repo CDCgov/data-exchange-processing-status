@@ -25,12 +25,12 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "trace/{providerName}",
+                    route = "trace/{spanName}",
                     //authLevel = AuthorizationLevel.FUNCTION) HttpRequestMessage<Optional<String>> request,
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("providerName") String providerName,
+            @BindingName("spanName") String spanName,
             final ExecutionContext context) {
-        return new TraceFunction().run(request, providerName, context);
+        return new TraceFunction().run(request, spanName, context);
     }
 
     @FunctionName("AddSpanToTrace")
@@ -38,13 +38,13 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "span/{traceId}/{spanId}/{providerName}",
+                    route = "span/{traceId}/{spanId}/{spanName}",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("traceId") String traceId,
             @BindingName("spanId") String spanId,
-            @BindingName("providerName") String providerName,
+            @BindingName("spanName") String spanName,
             final ExecutionContext context) {
-        return new AddSpanToTraceFunction().run(request, traceId, spanId, providerName, context);
+        return new AddSpanToTraceFunction().run(request, traceId, spanId, spanName, context);
     }
 
 }

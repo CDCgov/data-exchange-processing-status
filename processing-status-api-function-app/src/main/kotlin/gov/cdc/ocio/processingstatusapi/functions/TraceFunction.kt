@@ -16,7 +16,7 @@ class TraceFunction {
 
     fun run(
         request: HttpRequestMessage<Optional<String>>,
-        providerName: String,
+        spanName: String,
         context: ExecutionContext
     ): HttpResponseMessage {
 
@@ -27,15 +27,15 @@ class TraceFunction {
         val openTelemetry = OpenTelemetryConfig.initOpenTelemetry(jaegerEndpoint)
 
         logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-        logger.info("provider name = $providerName")
+        logger.info("span name = $spanName")
 
 //        val someParam = request.queryParameters["someParam"]
 
         tracer = openTelemetry.getTracer(TraceFunction::class.java.name)
 
-        val span: Span = tracer!!.spanBuilder("doWork").startSpan()
+        val span: Span = tracer!!.spanBuilder(spanName).startSpan()
         try {
-            span.setAttribute("providerName", providerName)
+            span.setAttribute("some_field", UUID.randomUUID().toString())
             span.makeCurrent().use { ignored ->
                 Thread.sleep(500)
                 logger.info("A sample log message!")
