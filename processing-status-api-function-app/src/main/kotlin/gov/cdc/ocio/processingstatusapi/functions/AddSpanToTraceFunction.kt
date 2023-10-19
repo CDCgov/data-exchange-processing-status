@@ -18,7 +18,7 @@ class AddSpanToTraceFunction {
         request: HttpRequestMessage<Optional<String>>,
         traceId: String,
         spanId: String,
-        providerName: String,
+        spanName: String,
         context: ExecutionContext
     ): HttpResponseMessage {
 
@@ -28,7 +28,7 @@ class AddSpanToTraceFunction {
         val openTelemetry = OpenTelemetryConfig.initOpenTelemetry(jaegerEndpoint)
 
         logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-        logger.info("provider name = $providerName")
+        logger.info("span name = $spanName")
 
         tracer = openTelemetry.getTracer(AddSpanToTraceFunction::class.java.name)
 
@@ -39,11 +39,11 @@ class AddSpanToTraceFunction {
             TraceState.getDefault()
         )
 
-        val span = tracer!!.spanBuilder("stage2")
+        val span = tracer!!.spanBuilder(spanName)
             .setParent(Context.current().with(Span.wrap(spanContext)))
             .startSpan()
         try {
-            span.setAttribute("stage2_field1", providerName)
+            span.setAttribute("some_field", UUID.randomUUID().toString())
             span.makeCurrent().use { ignored ->
                 Thread.sleep(500)
             }
