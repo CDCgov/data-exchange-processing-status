@@ -10,6 +10,8 @@ servers:
     description: Production server
   - url: 'https://ocio-ede-dev-supplemental-api-kotlin.azurewebsites.net/api'
 tags:
+  - name: DEX Tracing
+    description: CDC Data Exchange Distributed Tracing
   - name: DEX Reports
     description: CDC Data Exchange Reports
     externalDocs:
@@ -17,18 +19,174 @@ tags:
       url: 'https://github.com/CDCgov/data-exchange-csv'
   - name: DEX Status
     description: CDC Data Exchange Status
+  - name: Health
+    description: Health endpoint
 security:
   - bearerAuth: []
 paths:
-  '/report/reportid/{report_id}':
+  '/trace':
+    post:
+      tags:
+        - DEX Tracing
+      summary: Create a processing status trace.
+      description: >-
+        Creates a new distributed tracing trace.
+      parameters:
+        - name: stageName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Name of the stage providing the trace.
+      responses:
+        '200':
+          description: Report for the given identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/trace/addSpan/{traceId}/{spanId}':
+    put:
+      tags:
+        - DEX Tracing
+      summary: Create a processing status span for a given trace.
+      description: >-
+        Creates a new distributed tracing trace.
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trace ID
+        - name: spanId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Parent span ID to add this span to.
+        - name: stageName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Name of the stage providing the trace.
+        - name: spanMark
+          in: query
+          required: true
+          schema:
+            type: string
+            example:
+              - start
+              - stop
+          description: Name of the stage providing the trace.
+      requestBody:
+        description: >-
+          Optional tags.  If a tag is provided with the same `key` in the stop mark as the start mark, the new tag value will
+          replace the start tag value.
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tags'
+      responses:
+        '200':
+          description: Report for the given identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/trace/traceId/{traceId}':
+    get:
+      tags:
+        - DEX Tracing
+      summary: Gets a processing status trace from a trace ID.
+      description: >-
+        Retrieves a distributed tracing trace.
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trace ID.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/trace/uploadId/{uploadId}':
+    get:
+      tags:
+        - DEX Tracing
+      summary: Gets a processing status trace.
+      description: >-
+        Retrieves a distributed tracing trace span.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Upload ID.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/report/uploadId/{uploadId}':
+    post:
+      tags:
+        - DEX Reports
+      summary: Create an initial report.
+      description: >-
+        Creates an initial report.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Upload ID.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
     get:
       tags:
         - DEX Reports
-      summary: Processing status report for given report identifier.
+      summary: Create a report for the given upload ID.
       description: >-
-        Provides a status report for the given report identifier.
+        Creates a status report for the given upload identifier.
       parameters:
-        - name: report_id
+        - name: uploadId
           in: path
           required: true
           schema:
@@ -47,7 +205,80 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report/traceid/{trace_id}':
+  '/report/reportId/{reportId}':
+    post:
+      tags:
+        - DEX Reports
+      summary: Create an initial report.
+      description: >-
+        Creates an initial report.
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Report ID.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+    get:
+      tags:
+        - DEX Tracing
+      summary: Gets a processing status trace from a report ID.
+      description: >-
+        Retrieves a distributed tracing trace.
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Report ID.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/report/traceId/{traceId}':
+    post:
+      tags:
+        - DEX Reports
+      summary: Create an initial report.
+      description: >-
+        Creates an initial report.
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trace ID.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
     get:
       tags:
         - DEX Reports
@@ -55,7 +286,7 @@ paths:
       description: >-
         Provides a status report for the given trace identifier.
       parameters:
-        - name: trace_id
+        - name: traceId
           in: path
           required: true
           schema:
@@ -74,34 +305,7 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report/uploadid/{upload_id}':
-    get:
-      tags:
-        - DEX Reports
-      summary: Processing status report for given upload identifier.
-      description: >-
-        Provides a status report for the given upload identifier.
-      parameters:
-        - name: upload_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Destination identifier to retrieve all the upload statuses for.
-      responses:
-        '200':
-          description: Report for the given identifier
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/HL7Report'
-                  - $ref: '#/components/schemas/CSVReport'
-        '400':
-          description: Bad request.  The identifier provided was not found.
-        '401':
-          description: Authorization information is missing or invalid.
-  '/status/{destination_id}':
+  '/status/{destinationId}':
     get:
       tags:
         - DEX Status
@@ -117,7 +321,7 @@ paths:
             If specified, also filter by meta_ext_event that was provided with
             the upload.
           example: RoutineImmunization
-        - name: destination_id
+        - name: destinationId
           in: path
           required: true
           schema:
@@ -174,12 +378,53 @@ paths:
           description: Bad request.  The destination identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+  '/health':
+    get:
+      tags:
+        - Health
+      summary: Gets the health status of the service.
+      description: >-
+        Retrieves the health status of the service.
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
+    CreateTrace:
+      type: object
+      properties:
+        trace_id:
+          type: string
+        span_id:
+          type: string
+    GetTrace:
+      type: object
+      properties:
+        trace_id:
+          type: string
+        span_id:
+          type: string
+    Tags:
+      type: array
+      items:
+        type: object
+        properties:
+          key:
+            type: string
+          value:
+            type: string
     HL7Report:
       type: object
       properties:
