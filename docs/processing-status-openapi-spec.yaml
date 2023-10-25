@@ -230,7 +230,7 @@ paths:
     put:
       tags:
         - DEX Reports
-      summary: Ammend an existing report with the given upload identifier
+      summary: Ammend an existing report using the provided upload identifier to lookup the report.
       parameters:
         - name: uploadId
           in: path
@@ -252,7 +252,7 @@ paths:
     get:
       tags:
         - DEX Reports
-      summary: Retrieve a report for the given upload ID.
+      summary: Retrieve a report using the provider upload identifier to lookup the report.
       description: >-
         Creates a status report for the given upload identifier.
       parameters:
@@ -328,7 +328,7 @@ paths:
     put:
       tags:
         - DEX Reports
-      summary: Ammend an existing report with the given trace identifier
+      summary: Ammend an existing report using the provided trace identifier to lookup the report.
       parameters:
         - name: traceId
           in: path
@@ -350,7 +350,7 @@ paths:
     get:
       tags:
         - DEX Reports
-      summary: Processing status report for given trace identifier.
+      summary: Retrieve a report using the provider trace identifier to lookup the report.
       description: >-
         Provides a status report for the given trace identifier.
       parameters:
