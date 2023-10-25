@@ -1,7 +1,24 @@
 openapi: 3.0.1
 info:
   title: DEX Processing Status API
-  description: Swagger definition of the Data Exchange (DEX) processing status API.
+  description: |
+    Swagger definition of the Data Exchange (DEX) processing status API.
+    ## Overview
+    ### What it does:
+    -	Standardized tracing capture with advanced query options
+    -	Standardized report capture with advanced query options
+    -	Emitting configurable notifications, which could be used to facilitate workflow management or success/fail observability for uploads
+    ### What it doesn’t do:
+    -	Workflow management
+    -	Access control layer
+    
+    ## Functionality
+    The processing status API provides three areas of functionality including tracing, reporting, and notifications.
+      * **Tracing** - Traces are used to indicate the completion of a phase of processing.  For example, as a file is uploaded it progresses through a pipeline.  As milestones are completed in the pipeline a trace is used to indicate the successful completion of that milestone.
+      
+      * **Reports** - Reports are used to provide feedback whenever one of the processing pipeline stages has warnings, errors, or fails.  There can be more than one processing report for the processing pipeline.  For example, there may be warnings on the structure validation, which reports to the processing API, but the file is allowed to continue processing.  The next stage, content validation, may then have some critical failures that cause the pipeline to stop, which is provided in a second report.
+      
+      * **Notifications** - Notifications define the methods and filters used to provide feedback to listeners.  Notification setups need to be established and once created persist until cancelled by the listener.  Notification listeners will provide a request to indicate what type of notification they want such as a webhook HTTP call whenever a relevant event occurs.  Notifications apply to both traces and reports.  Notifications may be fired for a trace or report as they are generated or fired when the pipeline concludes.  If the latter, the entire collection of traces or reports is provided all at once, whether because of a failure or it completed successfully.
   version: 1.0.0
 servers:
   - url: 'https://apidev.cdc.gov/1.0.0'
