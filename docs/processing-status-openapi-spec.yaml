@@ -5,12 +5,12 @@ info:
     Swagger definition of the Data Exchange (DEX) processing status API.
     ## Overview
     ### What it does:
-    -	Standardized tracing capture with advanced query options
-    -	Standardized report capture with advanced query options
-    -	Emitting configurable notifications, which could be used to facilitate workflow management or success/fail observability for uploads
+    -  Standardized tracing capture with advanced query options
+    -  Standardized report capture with advanced query options
+    -  Emitting configurable notifications, which could be used to facilitate workflow management or success/fail observability for uploads
     ### What it doesn’t do:
-    -	Workflow management
-    -	Access control layer
+    -  Workflow management
+    -  Access control layer
     
     ## Functionality
     The processing status API provides three areas of functionality including tracing, reporting, and notifications.
@@ -21,11 +21,10 @@ info:
       * **Notifications** - Notifications define the methods and filters used to provide feedback to listeners.  Notification setups need to be established and once created persist until cancelled by the listener.  Notification listeners will provide a request to indicate what type of notification they want such as a webhook HTTP call whenever a relevant event occurs.  Notifications apply to both traces and reports.  Notifications may be fired for a trace or report as they are generated or fired when the pipeline concludes.  If the latter, the entire collection of traces or reports is provided all at once, whether because of a failure or it completed successfully.
   version: 1.0.0
 servers:
-  - url: 'https://apidev.cdc.gov/1.0.0'
+  - url: 'https://apidev.cdc.gov/processingstatus'
     description: Development server
-  - url: 'https://api.cdc.gov/1.0.0'
+  - url: 'https://api.cdc.gov/processingstatus'
     description: Production server
-  - url: 'https://ocio-ede-dev-supplemental-api-kotlin.azurewebsites.net/api'
 tags:
   - name: DEX Tracing
     description: CDC Data Exchange Distributed Tracing
@@ -217,11 +216,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  report_id:
-                    type: string
-                    format: uuid
+                $ref: '#/components/schemas/CreateReport'
         '400':
           description: Bad request.  The identifier provided was not found.
         '401':
@@ -494,6 +489,34 @@ paths:
                     csv_report_schema_v1.0
         '400':
           description: Bad request.  The destination identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/status/{uploadId}':
+    get:
+      tags:
+        - DEX Status
+      summary: Provides a complete view of an upload in progress or completed.
+      description: >-
+        Provides a complete view of an upload in progress or a completed upload, including all that is know about the upload in terms of tracing and reporting.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: >-
+            If specified, also filter by meta_ext_event that was provided with
+            the upload.
+      responses:
+        '200':
+          description: All of the upload statuses for the given destination identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingStatus'
+        '400':
+          description: Bad request.  The upload identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
   '/status/{destinationId}':
