@@ -31,7 +31,7 @@ class CosmosContainerManager {
 
                 // setup database
                 logger.info("calling createDatabaseIfNotExists...")
-                val db = createDatabaseIfNotExists(context, cosmosClient, "UploadStatus")!!
+                val db = createDatabaseIfNotExists(context, cosmosClient, "ProcessingStatus")!!
 
                 val containerProperties = CosmosContainerProperties(containerName, "/partitionKey")
 
