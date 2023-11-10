@@ -6,6 +6,8 @@ import com.microsoft.azure.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.AddSpanToTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
+import gov.cdc.ocio.processingstatusapi.functions.reports.AmendReportFunction;
+import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 
 public class FunctionJavaWrappers {
 
@@ -45,6 +47,31 @@ public class FunctionJavaWrappers {
             @BindingName("spanName") String spanName,
             final ExecutionContext context) {
         return new AddSpanToTraceFunction().run(request, traceId, spanId, spanName, context);
+    }
+
+    @FunctionName("CreateReport")
+    public HttpResponseMessage createReport(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.POST},
+                    route = "report",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            final ExecutionContext context) {
+        return new CreateReportFunction().run(request, context);
+    }
+
+    @FunctionName("AmendReport")
+    public HttpResponseMessage amendReport(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.PUT},
+                    route = "report/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        return new AmendReportFunction().run(request, uploadId, context);
     }
 
 }
