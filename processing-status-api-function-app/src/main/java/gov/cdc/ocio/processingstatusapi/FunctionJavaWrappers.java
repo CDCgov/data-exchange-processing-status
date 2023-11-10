@@ -8,6 +8,7 @@ import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.AmendReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
+import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
 
 public class FunctionJavaWrappers {
 
@@ -85,5 +86,31 @@ public class FunctionJavaWrappers {
             @BindingName("reportId") String reportId,
             final ExecutionContext context) {
         return new AmendReportFunction(request, context).withReportId(reportId);
+    }
+
+    @FunctionName("GetReportByUploadId")
+    public HttpResponseMessage getReportByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        return new GetReportFunction(request, context).withUploadId(uploadId);
+    }
+
+    @FunctionName("GetReportByReportId")
+    public HttpResponseMessage getReportByReportId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/reportId/{reportId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("reportId") String reportId,
+            final ExecutionContext context) {
+        return new GetReportFunction(request, context).withReportId(reportId);
     }
 }
