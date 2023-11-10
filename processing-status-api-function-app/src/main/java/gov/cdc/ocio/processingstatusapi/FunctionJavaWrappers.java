@@ -59,7 +59,19 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
-        return new CreateReportFunction(request, context).run();
+        return new CreateReportFunction(context).withHttpRequest(request);
+    }
+
+    @FunctionName("ServiceBusProcessor")
+    public void serviceBusProcessor(
+            @ServiceBusQueueTrigger(
+                    name = "msg",
+                    queueName = "%ServiceBusQueueName%",
+                    connection = "ServiceBusConnectionString"
+            ) String message,
+            final ExecutionContext context
+    ) {
+        new CreateReportFunction(context).withMessage(message);
     }
 
     @FunctionName("AmendReportByUploadId")
