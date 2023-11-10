@@ -18,18 +18,18 @@ class AddSpanToTraceFunction {
         request: HttpRequestMessage<Optional<String>>,
         traceId: String,
         spanId: String,
-        spanName: String,
         context: ExecutionContext
     ): HttpResponseMessage {
 
         val logger = context.logger
-
-        val jaegerEndpoint = "http://ocioededevjaeger.eastus.azurecontainer.io:4317"
-        val openTelemetry = OpenTelemetryConfig.initOpenTelemetry(jaegerEndpoint)
+        val openTelemetry = OpenTelemetryConfig.initOpenTelemetry()
 
         logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-        logger.info("span name = $spanName")
-
+        val stageName = request.queryParameters["stageName"]
+        val spanMark = request.queryParameters["spanMark"]
+        logger.info("StageName: $stageName")
+        logger.info("SpanMark: $spanMark")
+        logger.info(spanMark)
         tracer = openTelemetry.getTracer(AddSpanToTraceFunction::class.java.name)
 
         val spanContext = SpanContext.createFromRemoteParent(
@@ -39,27 +39,32 @@ class AddSpanToTraceFunction {
             TraceState.getDefault()
         )
 
-        val span = tracer!!.spanBuilder(spanName)
-            .setParent(Context.current().with(Span.wrap(spanContext)))
-            .startSpan()
-        try {
-            span.setAttribute("some_field", UUID.randomUUID().toString())
-            span.makeCurrent().use { ignored ->
-                Thread.sleep(500)
-            }
-        } finally {
+        if(spanMark!= null && (spanMark == "start" || spanMark == "stop")) {
+            tracer = openTelemetry.getTracer(TraceFunction::class.java.name)
+
+            val span = tracer!!.spanBuilder(stageName)
+                .setParent(Context.current().with(Span.wrap(spanContext)))
+                .startSpan()
+            span.setAttribute("spanMark", spanMark)
             span.end()
+
+            val result = TraceResult()
+            result.traceId = traceId
+            result.spanId = spanId
+            return request
+                .createResponseBuilder(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(result)
+                .build()
+
+        } else{
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .header("Content-Type", "application/json")
+                .body("The provided spanMark is not allowed.")
+                .build()
         }
 
-        val result = TraceResult()
-        result.status = "OK"
-        result.traceId = span.spanContext.traceId
-
-        return request
-            .createResponseBuilder(HttpStatus.OK)
-            .header("Content-Type", "application/json")
-            .body(result)
-            .build()
     }
 
 }
