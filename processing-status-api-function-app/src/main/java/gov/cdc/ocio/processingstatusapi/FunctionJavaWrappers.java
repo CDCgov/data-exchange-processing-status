@@ -59,7 +59,7 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
-        return new CreateReportFunction().run(request, context);
+        return new CreateReportFunction(request, context).run();
     }
 
     @FunctionName("AmendReportByUploadId")

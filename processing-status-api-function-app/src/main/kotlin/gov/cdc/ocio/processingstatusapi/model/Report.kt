@@ -12,6 +12,8 @@ class Report {
 
     var destinationId: String? = null
 
+    var eventType: String? = null
+
     var reports: List<StageReport>? = null
 }
 

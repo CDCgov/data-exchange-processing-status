@@ -9,15 +9,24 @@ import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.CreateReportResult
 import gov.cdc.ocio.processingstatusapi.model.Report
 import java.util.*
+import java.util.logging.Logger
 
-class CreateReportFunction {
+class CreateReportFunction(
+        private val request: HttpRequestMessage<Optional<String>>,
+        context: ExecutionContext) {
 
-    fun run(
-            request: HttpRequestMessage<Optional<String>>,
-            context: ExecutionContext
-    ): HttpResponseMessage {
+    private val logger: Logger = context.logger
 
-        val logger = context.logger
+    private val containerName = "Reports"
+
+    private val container: CosmosContainer
+
+    init {
+        logger.info("CreateReportFunction")
+        container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
+    }
+
+    fun run(): HttpResponseMessage {
 
         val uploadId = request.queryParameters["uploadId"]
                 ?: return request
@@ -31,6 +40,12 @@ class CreateReportFunction {
                         .body("destinationId is required")
                         .build()
 
+        val eventType = request.queryParameters["eventType"]
+                ?: return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body("eventType is required")
+                        .build()
+
         val reportId = UUID.randomUUID().toString()
 
         // Send report message across service bus
@@ -39,10 +54,10 @@ class CreateReportFunction {
             this.reportId = reportId
             this.uploadId = uploadId
             this.destinationId = destinationId
+            this.eventType = eventType
         }
 
-        val container = CosmosContainerManager.initDatabaseContainer(context, "Reports")!!
-        createReport(context, container, report)
+        createReport(report)
 
         val result = CreateReportResult().apply {
             this.reportId = reportId
@@ -55,9 +70,7 @@ class CreateReportFunction {
                 .build()
     }
 
-    private fun createReport(context: ExecutionContext, container: CosmosContainer, report: Report) {
-        val logger = context.logger
-
+    private fun createReport(report: Report) {
         val response = container.createItem(report)
 
         logger.info("wrote reportId = ${response.item.reportId}")
