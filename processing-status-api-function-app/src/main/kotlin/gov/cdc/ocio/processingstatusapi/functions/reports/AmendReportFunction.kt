@@ -1,12 +1,11 @@
 package gov.cdc.ocio.processingstatusapi.functions.reports
 
 import com.azure.cosmos.CosmosContainer
-import com.azure.cosmos.CosmosException
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.PartitionKey
 import com.azure.messaging.servicebus.ServiceBusClientBuilder
 import com.azure.messaging.servicebus.ServiceBusMessage
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
@@ -17,61 +16,102 @@ import gov.cdc.ocio.processingstatusapi.model.CreateReportResult
 import gov.cdc.ocio.processingstatusapi.model.Report
 import gov.cdc.ocio.processingstatusapi.model.StageReport
 import java.util.*
+import java.util.logging.Logger
 
-class AmendReportFunction {
+class AmendReportFunction(
+        private val request: HttpRequestMessage<Optional<String>>,
+        context: ExecutionContext) {
 
-    fun run(
-            request: HttpRequestMessage<Optional<String>>,
-            uploadId: String,
-            context: ExecutionContext
-    ): HttpResponseMessage {
+    private val logger: Logger = context.logger
 
-        val logger = context.logger
+    private val containerName = "Reports"
 
-        val stageName = request.queryParameters["stageName"]
-                ?: return request
-                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                        .body("stageName is required")
-                        .build()
+    private val container: CosmosContainer
 
-        val requestBody = request.body.orElse("")
-        val amendReportRequest = Gson().fromJson(requestBody, AmendReportRequest::class.java)
+    private val reportStageName: String?
 
-        val containerName = "Reports"
-        val container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
+    private val requestBody: String?
 
-        val sqlQuery = StringBuilder()
-        sqlQuery.append("select * from $containerName r where r.uploadId = '$uploadId'")
+    private val amendReportRequest: AmendReportRequest?
+
+    private val reportContentType: String?
+
+    private val reportContent: String?
+
+    init {
+        reportStageName = request.queryParameters["stageName"]
+        requestBody = request.body.orElse("")
+
+        amendReportRequest = try {
+            Gson().fromJson(requestBody, AmendReportRequest::class.java)
+        } catch (e: JsonSyntaxException) {
+            null
+        }
+
+        reportContentType = amendReportRequest?.contentType
+        reportContent = amendReportRequest?.content
+
+        logger.info("reportStageName=$reportStageName, requestBody=$requestBody, reportContentType=$reportContentType, reportContent=$reportContent")
+
+        container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
+    }
+
+    fun withUploadId(uploadId: String): HttpResponseMessage {
+        // Verify the request is complete and properly formatted
+        checkRequired()?.let { return it }
+
+        val sqlQuery = "select * from $containerName r where r.uploadId = '$uploadId'"
 
         // Locate the existing report so we can amend it
         val items = container.queryItems(
-                sqlQuery.toString(), CosmosQueryRequestOptions(),
+                sqlQuery, CosmosQueryRequestOptions(),
                 Report::class.java
         )
-
-        var reportId: String? = null
         if (items.count() > 0) {
+            logger.info("Successfully located report with uploadId = $uploadId")
             val report = items.elementAt(0)
-            reportId = report.reportId
-
-            val stageReport = StageReport().apply {
-                this.reportId = UUID.randomUUID().toString()
-                this.stageName = stageName
-                this.contentType = amendReportRequest.contentType
-                this.content = amendReportRequest.content
-            }
-            val reports = report.reports?.toMutableList() ?: mutableListOf()
-            reports.add(stageReport)
-            report.reports = reports
-
-            val response = container.upsertItem(report)
-            logger.info("Upserted at ${Date()}, reportId = ${response.item.reportId}")
-
-            //amendReport(context, container, report)
+            return run(report)
         }
 
+        logger.warning("Failed to locate report with uploadId = $uploadId")
+
+        return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("Invalid uploadId provided")
+                .build()
+    }
+
+    fun withReportId(reportId: String): HttpResponseMessage {
+        // Verify the request is complete and properly formatted
+        checkRequired()?.let { return it }
+
+        val sqlQuery = "select * from $containerName r where r.reportId = '$reportId'"
+
+        // Locate the existing report so we can amend it
+        val items = container.queryItems(
+                sqlQuery, CosmosQueryRequestOptions(),
+                Report::class.java
+        )
+        if (items.count() > 0) {
+            logger.info("Successfully located report with reportId = $reportId")
+            val report = items.elementAt(0)
+            return run(report)
+        }
+
+        logger.warning("Failed to locate report with reportId = $reportId")
+
+        return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("Invalid reportId provided")
+                .build()
+    }
+
+    private fun run(report: Report): HttpResponseMessage {
+
+        amendReport(report)
+
         val result = CreateReportResult().apply {
-            this.reportId = reportId
+            this.reportId = report.reportId
         }
 
         return request
@@ -81,42 +121,55 @@ class AmendReportFunction {
                 .build()
     }
 
-    @Throws(Exception::class)
-    private fun amendReport(context: ExecutionContext,
-                            container: CosmosContainer,
-                            reportId: String,
-                            destinationId: String,
-                            stageReport: StageReport) {
+    private fun amendReport(report: Report) {
 
-        val logger = context.logger
+        logger.info("Amending reportId = ${report.reportId}")
 
-        logger.info("Amending reportId = $reportId")
+        val stageReport = StageReport().apply {
+            this.reportId = UUID.randomUUID().toString()
+            this.stageName = reportStageName
+            this.contentType = reportContentType
+            this.content = reportContent
+        }
+        val reports = report.reports?.toMutableList() ?: mutableListOf()
+        reports.add(stageReport)
+        report.reports = reports
 
-        var readReport: Report? = null
-        try {
-            logger.info("Checking to see if reportId exists...")
-            val reportResponse = container.readItem(
-                    reportId, PartitionKey(destinationId),
-                    Report::class.java
-            )
-            readReport = reportResponse.item
+        val response = container.upsertItem(report)
+        logger.info("Upserted at ${Date()}, reportId = ${response.item.reportId}")
+    }
 
-            logger.info("Found reportId")
+    private fun checkRequired(): HttpResponseMessage? {
 
-            logger.info("Amending report")
-            readReport.reports?.toMutableList()?.add(stageReport) ?: run {
-                readReport.reports = listOf(stageReport)
-            }
-
-        } catch (ex: CosmosException) {
-            // If here, the reportId was not found
-            throw ex
+        if (reportStageName == null) {
+            return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("stageName is required")
+                    .build()
         }
 
-        logger.info("Calling upsert")
-        val response = container.upsertItem(readReport)
+        if (amendReportRequest == null) {
+            return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("Malformed request body")
+                    .build()
+        }
 
-        logger.info("Upserted at ${Date()}, reportId = ${response.item.reportId}")
+        if (reportContentType == null) {
+            return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("Malformed request body, contentType is required")
+                    .build()
+        }
+
+        if (reportContent == null) {
+            return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("Malformed request body, content is required")
+                    .build()
+        }
+
+        return null
     }
 
     private fun sendMessage(context: ExecutionContext, message: Report) {
