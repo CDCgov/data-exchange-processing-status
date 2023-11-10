@@ -73,7 +73,7 @@ paths:
         - DEX Tracing
       summary: Create a processing status span for a given trace.
       description: >-
-        Creates a new distributed tracing trace.
+        Creates a new distributed tracing span.
       parameters:
         - name: traceId
           in: path
@@ -636,9 +636,12 @@ components:
         timesteamp:
           type: string
           format: date-time
-        duration:
+        status:
+          type: string
+          enum: [running, completed]
+        elapsed:
           type: number
-          description: length of time in microseconds the stage ran
+          description: length of time in microseconds the stage ran or has run if status is in_progress
           example: 765024
         destination_id:
           type: string
