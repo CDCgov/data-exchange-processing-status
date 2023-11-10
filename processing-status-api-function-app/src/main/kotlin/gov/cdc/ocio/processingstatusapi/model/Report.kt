@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import java.util.*
+
 class Report {
 
     var id : String? = null
@@ -22,4 +24,6 @@ class StageReport {
     var contentType : String? = null
 
     var content: String? = null
+
+    val timestamp: Date = Date()
 }
