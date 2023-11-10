@@ -28,31 +28,22 @@ class AmendReportFunction(
 
     private val container: CosmosContainer
 
-    private val reportStageName: String?
+    private val reportStageName: String? = request.queryParameters["stageName"]
 
-    private val requestBody: String?
+    private val requestBody: String? = request.body.orElse("")
 
-    private val amendReportRequest: AmendReportRequest?
+    private val amendReportRequest: AmendReportRequest? = try {
+        Gson().fromJson(requestBody, AmendReportRequest::class.java)
+    } catch (e: JsonSyntaxException) {
+        null
+    }
 
-    private val reportContentType: String?
+    private val reportContentType: String? = amendReportRequest?.contentType
 
-    private val reportContent: String?
+    private val reportContent: String? = amendReportRequest?.content
 
     init {
-        reportStageName = request.queryParameters["stageName"]
-        requestBody = request.body.orElse("")
-
-        amendReportRequest = try {
-            Gson().fromJson(requestBody, AmendReportRequest::class.java)
-        } catch (e: JsonSyntaxException) {
-            null
-        }
-
-        reportContentType = amendReportRequest?.contentType
-        reportContent = amendReportRequest?.content
-
         logger.info("reportStageName=$reportStageName, requestBody=$requestBody, reportContentType=$reportContentType, reportContent=$reportContent")
-
         container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
     }
 
