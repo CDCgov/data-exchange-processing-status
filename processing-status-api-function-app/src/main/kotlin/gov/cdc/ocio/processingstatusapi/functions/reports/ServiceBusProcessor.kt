@@ -80,7 +80,8 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
                 uploadId,
                 stageName,
                 contentType,
-                content
+                content,
+                amendReportMessage.dispositionType
         )
     }
 

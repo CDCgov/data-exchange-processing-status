@@ -6,6 +6,7 @@ import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
+import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.Report
 import gov.cdc.ocio.processingstatusapi.model.StageReport
 import java.util.*
@@ -45,7 +46,11 @@ class ReportManager(context: ExecutionContext) {
     }
 
     @Throws(BadStateException::class, BadRequestException::class)
-    fun amendReportWithUploadId(uploadId: String, stageName: String, contentType: String, content: String): String {
+    fun amendReportWithUploadId(uploadId: String,
+                                stageName: String,
+                                contentType: String,
+                                content: String,
+                                dispositionType: DispositionType): String {
         val sqlQuery = "select * from $containerName r where r.uploadId = '$uploadId'"
 
         // Locate the existing report so we can amend it
@@ -59,7 +64,7 @@ class ReportManager(context: ExecutionContext) {
 
             val reportId = report.reportId ?: throw BadStateException("Unexpected null value for reportId")
 
-            amendReport(report, stageName, contentType, content)
+            amendReport(report, stageName, contentType, content, dispositionType)
 
             return reportId
         }
@@ -68,7 +73,11 @@ class ReportManager(context: ExecutionContext) {
     }
 
     @Throws(BadRequestException::class)
-    fun amendReportWithReportId(reportId: String, stageName: String, contentType: String, content: String) {
+    fun amendReportWithReportId(reportId: String,
+                                stageName: String,
+                                contentType: String,
+                                content: String,
+                                dispositionType: DispositionType) {
         val sqlQuery = "select * from $containerName r where r.reportId = '$reportId'"
 
         // Locate the existing report so we can amend it
@@ -80,20 +89,35 @@ class ReportManager(context: ExecutionContext) {
             logger.info("Successfully located report with reportId = $reportId")
             val report = items.elementAt(0)
 
-            amendReport(report, stageName, contentType, content)
+            amendReport(report, stageName, contentType, content, dispositionType)
 
         } else throw BadRequestException("Unable to locate reportId: $reportId")
     }
 
-    private fun amendReport(report: Report, stageName: String, contentType: String, content: String) {
+    private fun amendReport(report: Report,
+                            stageName:
+                            String,
+                            contentType: String,
+                            content: String,
+                            dispositionType: DispositionType) {
+
+        val reports = report.reports?.toMutableList() ?: mutableListOf()
+
+        when (dispositionType) {
+            DispositionType.REPLACE -> {
+                // Remove all elements with matching stageName.  The new one will be then added in logic below.
+                reports.removeIf { it.stageName == stageName }
+            }
+            else -> { } // do nothing
+        }
         val stageReport = StageReport().apply {
             this.reportId = UUID.randomUUID().toString()
             this.stageName = stageName
             this.contentType = contentType
             this.content = content
         }
-        val reports = report.reports?.toMutableList() ?: mutableListOf()
         reports.add(stageReport)
+
         report.reports = reports
 
         val response = container.upsertItem(report)

@@ -5,4 +5,6 @@ class AmendReportRequest {
     val contentType: String? = null
 
     val content: String? = null
+
+    val dispositionType: DispositionType = DispositionType.APPEND
 }

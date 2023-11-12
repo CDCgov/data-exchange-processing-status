@@ -10,6 +10,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.AmendReportRequest
 import gov.cdc.ocio.processingstatusapi.model.CreateReportResult
+import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import java.util.*
 
 class AmendReportFunction(
@@ -32,6 +33,8 @@ class AmendReportFunction(
 
     private val reportContent = amendReportRequest?.content
 
+    private val dispositionType = amendReportRequest?.dispositionType ?: DispositionType.APPEND
+
     init {
         logger.info("reportStageName=$reportStageName, requestBody=$requestBody, reportContentType=$reportContentType, reportContent=$reportContent")
     }
@@ -45,7 +48,8 @@ class AmendReportFunction(
                     uploadId,
                     reportStageName!!,
                     reportContentType!!,
-                    reportContent!!
+                    reportContent!!,
+                    dispositionType
             )
             return successResponse(reportId)
 
@@ -72,7 +76,8 @@ class AmendReportFunction(
                     reportId,
                     reportStageName!!,
                     reportContentType!!,
-                    reportContent!!
+                    reportContent!!,
+                    dispositionType
             )
             return successResponse(reportId)
 
