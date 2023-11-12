@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi;
 import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
-import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException;
 import gov.cdc.ocio.processingstatusapi.functions.AddSpanToTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
