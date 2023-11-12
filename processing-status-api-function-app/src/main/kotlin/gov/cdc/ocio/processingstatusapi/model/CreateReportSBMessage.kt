@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.model
 
-class CreateReportRequest {
+class CreateReportSBMessage: ServiceBusMessage() {
 
     val uploadId: String? = null
 

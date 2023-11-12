@@ -3,12 +3,14 @@ package gov.cdc.ocio.processingstatusapi;
 import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
+import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException;
 import gov.cdc.ocio.processingstatusapi.functions.AddSpanToTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.AmendReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
+import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
 
 public class FunctionJavaWrappers {
 
@@ -62,6 +64,16 @@ public class FunctionJavaWrappers {
         return new CreateReportFunction(context).withHttpRequest(request);
     }
 
+    /***
+     * Process a message from the service bus queue.  The same queue is used for all
+     * messages to ensure sequential processing.  For example, we need to ensure if a
+     * report is created first that it can be amended.  With separate queues for creating
+     * and amending there would always be a possibility that the amend message is processed
+     * before the create message.
+     *
+     * @param message JSON message content
+     * @param context Execution context of the service bus message
+     */
     @FunctionName("ServiceBusProcessor")
     public void serviceBusProcessor(
             @ServiceBusQueueTrigger(
@@ -71,7 +83,12 @@ public class FunctionJavaWrappers {
             ) String message,
             final ExecutionContext context
     ) {
-        new CreateReportFunction(context).withMessage(message);
+        try {
+            context.getLogger().info("Received message: " + message);
+            new ServiceBusProcessor(context).withMessage(message);
+        } catch (Exception e) {
+            context.getLogger().warning("Failed to process service bus message: " + e.getLocalizedMessage());
+        }
     }
 
     @FunctionName("AmendReportByUploadId")
