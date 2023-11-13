@@ -9,10 +9,17 @@ import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.AmendReportRequest
-import gov.cdc.ocio.processingstatusapi.model.CreateReportResult
+import gov.cdc.ocio.processingstatusapi.model.AmendReportResult
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import java.util.*
 
+/**
+ * Amend reports for given request.
+ *
+ * @property request HttpRequestMessage<Optional<String>>
+ * @property context ExecutionContext
+ * @constructor
+ */
 class AmendReportFunction(
         private val request: HttpRequestMessage<Optional<String>>,
         private val context: ExecutionContext) {
@@ -39,6 +46,13 @@ class AmendReportFunction(
         logger.info("reportStageName=$reportStageName, requestBody=$requestBody, reportContentType=$reportContentType, reportContent=$reportContent")
     }
 
+    /**
+     * Amend an existing report with the given upload ID.  The report content type and content is determined from the
+     * request as properties of this class.
+     *
+     * @param uploadId String
+     * @return HttpResponseMessage
+     */
     fun withUploadId(uploadId: String): HttpResponseMessage {
         // Verify the request is complete and properly formatted
         checkRequired()?.let { return it }
@@ -51,7 +65,7 @@ class AmendReportFunction(
                     reportContent!!,
                     dispositionType
             )
-            return successResponse(reportId)
+            return successResponse(reportId, reportStageName)
 
         } catch (e: BadRequestException) {
             logger.warning("Failed to locate report with uploadId = $uploadId")
@@ -67,6 +81,13 @@ class AmendReportFunction(
         }
     }
 
+    /**
+     * Amend an existing report with the given report ID.  The report content type and content is determined from the
+     * request as properties of this class.
+     *
+     * @param reportId String
+     * @return HttpResponseMessage
+     */
     fun withReportId(reportId: String): HttpResponseMessage {
         // Verify the request is complete and properly formatted
         checkRequired()?.let { return it }
@@ -79,7 +100,7 @@ class AmendReportFunction(
                     reportContent!!,
                     dispositionType
             )
-            return successResponse(reportId)
+            return successResponse(reportId, reportStageName)
 
         } catch (e: BadRequestException) {
             logger.warning("Failed to locate report with reportId = $reportId")
@@ -90,11 +111,15 @@ class AmendReportFunction(
         }
     }
 
-    private fun successResponse(reportId: String): HttpResponseMessage {
+    /**
+     * Helper to provide a successful HTTP response.  Present here for convenient reuse.
+     *
+     * @param reportId String
+     * @return HttpResponseMessage
+     */
+    private fun successResponse(reportId: String, stageName: String): HttpResponseMessage {
 
-        val result = CreateReportResult().apply {
-            this.reportId = reportId
-        }
+        val result = AmendReportResult(reportId, stageName)
 
         return request
                 .createResponseBuilder(HttpStatus.OK)
@@ -103,6 +128,12 @@ class AmendReportFunction(
                 .build()
     }
 
+    /**
+     * Checks that all the required query parameters are present in order to process an amendment request.  If not,
+     * an appropriate HTTP response message is generated with the details.
+     *
+     * @return HttpResponseMessage?
+     */
     private fun checkRequired(): HttpResponseMessage? {
 
         if (reportStageName == null) {

@@ -10,13 +10,19 @@ import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.Report
 import java.util.*
-import java.util.logging.Logger
 
+/**
+ * Collection of ways to get reports.
+ *
+ * @property request HttpRequestMessage<Optional<String>>
+ * @property context ExecutionContext
+ * @constructor
+ */
 class GetReportFunction(
         private val request: HttpRequestMessage<Optional<String>>,
         context: ExecutionContext) {
 
-    private val logger: Logger = context.logger
+    private val logger = context.logger
 
     private val containerName = "Reports"
 
@@ -26,6 +32,12 @@ class GetReportFunction(
         container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
     }
 
+    /**
+     * Retrieve a report with the provided upload ID.
+     *
+     * @param uploadId String
+     * @return HttpResponseMessage
+     */
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
         val sqlQuery = "select * from $containerName r where r.uploadId = '$uploadId'"
@@ -54,6 +66,12 @@ class GetReportFunction(
                 .build()
     }
 
+    /**
+     * Retrieve a report with the provided report ID.
+     *
+     * @param reportId String
+     * @return HttpResponseMessage
+     */
     fun withReportId(reportId: String): HttpResponseMessage {
 
         val sqlQuery = "select * from $containerName r where r.reportId = '$reportId'"

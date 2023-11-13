@@ -10,11 +10,16 @@ import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.Report
 import gov.cdc.ocio.processingstatusapi.model.StageReport
 import java.util.*
-import java.util.logging.Logger
 
+/**
+ * The report manager interacts directly with CosmosDB to persist and retrieve reports.
+ *
+ * @property context ExecutionContext
+ * @constructor
+ */
 class ReportManager(context: ExecutionContext) {
 
-    private val logger: Logger = context.logger
+    private val logger = context.logger
 
     private val containerName = "Reports"
 
@@ -25,6 +30,14 @@ class ReportManager(context: ExecutionContext) {
         container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
     }
 
+    /**
+     * Create a report with the provided information.
+     *
+     * @param uploadId String
+     * @param destinationId String
+     * @param eventType String
+     * @return String
+     */
     fun createReport(uploadId: String, destinationId: String, eventType: String): String {
         val reportId = UUID.randomUUID().toString()
 
@@ -45,6 +58,18 @@ class ReportManager(context: ExecutionContext) {
         return reportId
     }
 
+    /**
+     * Amend an existing report located with the provided upload ID.
+     *
+     * @param uploadId String
+     * @param stageName String
+     * @param contentType String
+     * @param content String
+     * @param dispositionType DispositionType
+     * @return String
+     * @throws BadStateException
+     * @throws BadRequestException
+     */
     @Throws(BadStateException::class, BadRequestException::class)
     fun amendReportWithUploadId(uploadId: String,
                                 stageName: String,
@@ -72,6 +97,16 @@ class ReportManager(context: ExecutionContext) {
         throw BadRequestException("Unable to locate uploadId: $uploadId")
     }
 
+    /**
+     * Amend an existing report located with the provided report ID.
+     *
+     * @param reportId String
+     * @param stageName String
+     * @param contentType String
+     * @param content String
+     * @param dispositionType DispositionType
+     * @throws BadRequestException
+     */
     @Throws(BadRequestException::class)
     fun amendReportWithReportId(reportId: String,
                                 stageName: String,
@@ -94,9 +129,19 @@ class ReportManager(context: ExecutionContext) {
         } else throw BadRequestException("Unable to locate reportId: $reportId")
     }
 
+    /**
+     * Amend the provided report.  Note the dispositionType indicates whether this amendment will add to or
+     * replace any existing reports with this stageName.
+     *
+     * @param report Report
+     * @param stageName String
+     * @param contentType String
+     * @param content String
+     * @param dispositionType DispositionType - indicates whether to add or replace any existing reports for the
+     * given stageName.
+     */
     private fun amendReport(report: Report,
-                            stageName:
-                            String,
+                            stageName: String,
                             contentType: String,
                             content: String,
                             dispositionType: DispositionType) {

@@ -2,6 +2,9 @@ package gov.cdc.ocio.processingstatusapi.model
 
 import com.google.gson.annotations.SerializedName
 
+/**
+ * Request type for service bus messages, which can be to either create or amend an existing report.
+ */
 enum class RequestType {
 
     UNDEFINED,
@@ -29,6 +32,14 @@ enum class DispositionType {
     REPLACE
 }
 
+/**
+ * Base class for all service bus messages.  Contains all the common required parameters for all service bus messages.
+ * Note the ServiceBusMessage class must be *open* not *abstract* as it will need to be initially created to determine
+ * the type.
+ *
+ * @property requestType RequestType
+ * @property dispositionType DispositionType
+ */
 open class ServiceBusMessage {
 
     var requestType = RequestType.UNDEFINED

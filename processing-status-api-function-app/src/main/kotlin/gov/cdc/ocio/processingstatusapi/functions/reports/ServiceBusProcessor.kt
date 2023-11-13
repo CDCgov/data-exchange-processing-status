@@ -7,12 +7,23 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.*
 import java.util.*
-import java.util.logging.Logger
 
+/**
+ * The service bus is another interface for receiving reports.
+ *
+ * @property context ExecutionContext
+ * @constructor
+ */
 class ServiceBusProcessor(private val context: ExecutionContext) {
 
-    private val logger: Logger = context.logger
+    private val logger = context.logger
 
+    /**
+     * Process a service bus message with the provided message.
+     *
+     * @param message String
+     * @throws BadRequestException
+     */
     @Throws(BadRequestException::class)
     fun withMessage(message: String) {
         val serviceBusMessage = try {
@@ -42,6 +53,12 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         }
     }
 
+    /**
+     * Create a report from the provided service bus message.
+     *
+     * @param createReportMessage CreateReportSBMessage
+     * @throws BadRequestException
+     */
     @Throws(BadRequestException::class)
     private fun createReport(createReportMessage: CreateReportSBMessage) {
 
@@ -61,6 +78,12 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         )
     }
 
+    /**
+     * Amend a report from the provided service bus message.
+     *
+     * @param amendReportMessage AmendReportSBMessage
+     * @throws BadRequestException
+     */
     @Throws(BadRequestException::class)
     private fun amendReport(amendReportMessage: AmendReportSBMessage) {
 
