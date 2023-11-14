@@ -10,10 +10,23 @@ import io.opentelemetry.context.Context
 import java.util.*
 
 
+/**
+ * Create a processing status span for a given trace
+ *
+ */
 class AddSpanToTraceFunction {
 
     private var tracer: Tracer? = null
 
+    /**
+     * For a given HTTP request, this method creates a processing status span for a given trace.
+     * In order to process, the HTTP request must contain stageName and spanMark.
+     * @param request HttpRequestMessage<Optional<String>>
+     * @param traceId String
+     * @param spanId String
+     * @param context ExecutionContext
+     * @return HttpResponseMessage - resultant HTTP response message for the given request
+     */
     fun run(
         request: HttpRequestMessage<Optional<String>>,
         traceId: String,
