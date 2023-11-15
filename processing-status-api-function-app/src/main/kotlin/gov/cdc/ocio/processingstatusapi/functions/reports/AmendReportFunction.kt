@@ -1,14 +1,11 @@
 package gov.cdc.ocio.processingstatusapi.functions.reports
 
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.model.AmendReportRequest
 import gov.cdc.ocio.processingstatusapi.model.AmendReportResult
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import java.util.*
@@ -30,20 +27,12 @@ class AmendReportFunction(
 
     private val requestBody = request.body.orElse("")
 
-    private val amendReportRequest = try {
-        Gson().fromJson(requestBody, AmendReportRequest::class.java)
-    } catch (e: JsonSyntaxException) {
-        null
-    }
+    private val dispositionTypeStr = request.queryParameters["dispositionType"]
 
-    private val reportContentType = amendReportRequest?.contentType
-
-    private val reportContent = amendReportRequest?.content
-
-    private val dispositionType = amendReportRequest?.dispositionType ?: DispositionType.APPEND
+    private var dispositionType: DispositionType = DispositionType.APPEND
 
     init {
-        logger.info("reportStageName=$reportStageName, requestBody=$requestBody, reportContentType=$reportContentType, reportContent=$reportContent")
+        logger.info("reportStageName=$reportStageName, requestBody=$requestBody, dispositionType=$dispositionTypeStr")
     }
 
     /**
@@ -53,7 +42,7 @@ class AmendReportFunction(
      * @param uploadId String
      * @return HttpResponseMessage
      */
-    fun withUploadId(uploadId: String): HttpResponseMessage {
+    fun jsonWithUploadId(uploadId: String): HttpResponseMessage {
         // Verify the request is complete and properly formatted
         checkRequired()?.let { return it }
 
@@ -61,8 +50,8 @@ class AmendReportFunction(
             val reportId = ReportManager(context).amendReportWithUploadId(
                     uploadId,
                     reportStageName!!,
-                    reportContentType!!,
-                    reportContent!!,
+                    "json",
+                    requestBody,
                     dispositionType
             )
             return successResponse(reportId, reportStageName)
@@ -88,7 +77,7 @@ class AmendReportFunction(
      * @param reportId String
      * @return HttpResponseMessage
      */
-    fun withReportId(reportId: String): HttpResponseMessage {
+    fun jsonWithReportId(reportId: String): HttpResponseMessage {
         // Verify the request is complete and properly formatted
         checkRequired()?.let { return it }
 
@@ -96,8 +85,8 @@ class AmendReportFunction(
             ReportManager(context).amendReportWithReportId(
                     reportId,
                     reportStageName!!,
-                    reportContentType!!,
-                    reportContent!!,
+                    "json",
+                    requestBody,
                     dispositionType
             )
             return successResponse(reportId, reportStageName)
@@ -143,21 +132,20 @@ class AmendReportFunction(
                     .build()
         }
 
-        if (amendReportRequest == null) {
-            return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body("Malformed request body")
-                    .build()
+        dispositionType = if (dispositionTypeStr.isNullOrBlank())
+            DispositionType.APPEND // default if not
+        else {
+            try {
+                enumValueOf<DispositionType>(dispositionTypeStr.trim().uppercase())
+            } catch (e: Exception) {
+                return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body("dispositionType provided is invalid")
+                        .build()
+            }
         }
 
-        if (reportContentType == null) {
-            return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body("Malformed request body, contentType is required")
-                    .build()
-        }
-
-        if (reportContent == null) {
+        if (requestBody == null) {
             return request
                     .createResponseBuilder(HttpStatus.BAD_REQUEST)
                     .body("Malformed request body, content is required")

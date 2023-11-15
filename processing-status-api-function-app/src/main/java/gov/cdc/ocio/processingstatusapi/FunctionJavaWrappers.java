@@ -92,12 +92,12 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.PUT},
-                    route = "report/uploadId/{uploadId}",
+                    route = "report/json/uploadId/{uploadId}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId,
             final ExecutionContext context) {
-        return new AmendReportFunction(request, context).withUploadId(uploadId);
+        return new AmendReportFunction(request, context).jsonWithUploadId(uploadId);
     }
 
     @FunctionName("AmendReportByReportId")
@@ -105,12 +105,12 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.PUT},
-                    route = "report/reportId/{reportId}",
+                    route = "report/json/reportId/{reportId}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("reportId") String reportId,
             final ExecutionContext context) {
-        return new AmendReportFunction(request, context).withReportId(reportId);
+        return new AmendReportFunction(request, context).jsonWithReportId(reportId);
     }
 
     @FunctionName("GetReportByUploadId")
