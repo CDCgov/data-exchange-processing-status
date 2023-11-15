@@ -6,10 +6,7 @@ import com.microsoft.azure.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.AddSpanToTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
-import gov.cdc.ocio.processingstatusapi.functions.reports.AmendReportFunction;
-import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
-import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
-import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
+import gov.cdc.ocio.processingstatusapi.functions.reports.*;
 
 public class FunctionJavaWrappers {
 
@@ -140,5 +137,18 @@ public class FunctionJavaWrappers {
             @BindingName("reportId") String reportId,
             final ExecutionContext context) {
         return new GetReportFunction(request, context).withReportId(reportId);
+    }
+
+    @FunctionName("GetUploadStatus")
+    public HttpResponseMessage getUploadStatus(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "upload/{destinationId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("destinationId") String destinationId,
+            final ExecutionContext context) {
+        return new GetUploadStatusFunction(request, context).uploadStatus(destinationId, "dex-upload");
     }
 }

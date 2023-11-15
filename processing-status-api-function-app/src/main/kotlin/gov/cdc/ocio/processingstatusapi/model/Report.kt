@@ -24,4 +24,9 @@ class Report {
     var eventType: String? = null
 
     var reports: List<StageReport>? = null
+
+    fun getUploadStage(stageName: String): StageReport? {
+        return reports?.first { stageReport -> stageReport.stageName == stageName }
+    }
+
 }

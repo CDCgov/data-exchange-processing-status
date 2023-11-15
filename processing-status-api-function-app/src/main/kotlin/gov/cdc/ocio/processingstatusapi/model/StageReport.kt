@@ -11,15 +11,15 @@ import java.util.*
  * @property content String?
  * @property timestamp Date
  */
-class StageReport {
+data class StageReport(
 
-    var reportId: String? = null
+    var reportId: String? = null,
 
-    var stageName: String? = null
+    var stageName: String? = null,
 
-    var contentType : String? = null
+    var contentType : String? = null,
 
-    var content: String? = null
+    var content: String? = null,
 
     val timestamp: Date = Date()
-}
+)
