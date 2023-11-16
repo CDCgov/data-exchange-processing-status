@@ -151,4 +151,19 @@ public class FunctionJavaWrappers {
             final ExecutionContext context) {
         return new GetUploadStatusFunction(request, context).uploadStatus(destinationId, "dex-upload");
     }
+
+    @FunctionName("GetReportForStage")
+    public HttpResponseMessage getReportByStage(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/{destinationId}/{stageName}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("destinationId") String destinationId,
+            @BindingName("stageName") String stageName,
+            final ExecutionContext context) {
+        context.getLogger().info("getReportByStage: destinationId=" + destinationId + ", stageName=" + stageName);
+        return new GetReportFunction(request, context).withDestinationId(destinationId, stageName);
+    }
 }

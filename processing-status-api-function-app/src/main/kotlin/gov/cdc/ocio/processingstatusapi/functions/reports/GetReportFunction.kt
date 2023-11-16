@@ -1,14 +1,15 @@
 package gov.cdc.ocio.processingstatusapi.functions.reports
 
-import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.Report
+import gov.cdc.ocio.processingstatusapi.model.StageReport
+import gov.cdc.ocio.processingstatusapi.model.StageReportSerializer
 import java.util.*
 
 /**
@@ -26,11 +27,13 @@ class GetReportFunction(
 
     private val containerName = "Reports"
 
-    private val container: CosmosContainer
+    private val container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
 
-    init {
-        container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
-    }
+    private val gson = GsonBuilder()
+            .registerTypeAdapter(
+                    StageReport::class.java,
+                    StageReportSerializer()
+            ).create()
 
     /**
      * Retrieve a report with the provided upload ID.
@@ -54,7 +57,7 @@ class GetReportFunction(
             return request
                     .createResponseBuilder(HttpStatus.OK)
                     .header("Content-Type", "application/json")
-                    .body(Gson().toJson(report).toString())
+                    .body(gson.toJson(report))
                     .build()
         }
 
@@ -88,7 +91,7 @@ class GetReportFunction(
             return request
                     .createResponseBuilder(HttpStatus.OK)
                     .header("Content-Type", "application/json")
-                    .body(Gson().toJson(report).toString())
+                    .body(gson.toJson(report))
                     .build()
         }
 
@@ -100,4 +103,25 @@ class GetReportFunction(
                 .build()
     }
 
+    fun withDestinationId(destinationId: String, stageName: String): HttpResponseMessage {
+
+        val sqlQuery = "select * from $containerName t where t.destinationId = '$destinationId' and exists (select value u from u in t.reports where u.stageName = '$stageName')"
+
+        // Locate the existing report so we can amend it
+        val reports = container.queryItems(
+                sqlQuery, CosmosQueryRequestOptions(),
+                Report::class.java
+        ).toList()
+
+        val reportStages = mutableListOf<StageReport>()
+        reports.forEach { report ->
+            report.reports?.filter { it.stageName == stageName }?.let { reportStages.addAll(it) }
+        }
+
+        return request
+                .createResponseBuilder(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(gson.toJson(reportStages))
+                .build()
+    }
 }
