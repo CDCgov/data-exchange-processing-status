@@ -11,11 +11,22 @@ import io.opentelemetry.api.trace.Tracer
 import org.json.JSONObject
 import java.util.*
 
-
+/**
+ * Fetch trace information by traceId
+ *
+ */
 class GetTraceFunction {
 
     private var tracer: Tracer? = null
 
+    /**
+     * For a given HTTP request, this method fetches trace information for a given traceId.
+     * In order to process, the HTTP request must contain traceId.
+     * @param request HttpRequestMessage<Optional<String>>
+     * @param traceId String
+     * @param context ExecutionContext
+     * @return HttpResponseMessage - resultant HTTP response message for the given request
+     */
     fun run(
         request: HttpRequestMessage<Optional<String>>,
         traceId: String,
