@@ -1,8 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.model
+import com.google.gson.annotations.SerializedName
 
 class Data {
-    var traceID : String = ""
-    var spans : List<Spans>? = null
-    var processes : Processes? = null
-    var warnings : String = ""
+
+    @SerializedName("traceID"   ) var traceID   : String?          = null
+    @SerializedName("spans"     ) var spans     : ArrayList<Spans> = arrayListOf()
+    @SerializedName("processes" ) var processes : Processes?       = Processes()
+    @SerializedName("warnings"  ) var warnings  : String?          = null
 }

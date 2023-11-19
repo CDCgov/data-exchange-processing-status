@@ -34,7 +34,7 @@ class GetTraceFunction {
         val obj : JSONObject = response.jsonObject
         logger.info("$obj")
 
-        if(response.statusCode != 200) {
+        if(response.statusCode != HttpStatus.OK.value()) {
             return request
                 .createResponseBuilder(HttpStatus.valueOf(response.statusCode))
                 .header("Content-Type", "application/json")
@@ -49,14 +49,12 @@ class GetTraceFunction {
         result.traceId = traceModel.data?.get(0)?.traceID
         result.spanId = traceModel.data?.get(0)?.spans?.get(0)?.spanID
         result.upload_id=""
-        //result.timestamp = traceModel.data?.get(0)?.spans?.get(0)?.startTime
         result.status=""
-        result.elapsed=null
+        result.elapsed=traceModel.data?.get(0)?.spans?.get(0)?.duration
         //result.timestamp = traceModel.data?.get(0)?.spans?.get(0)?.startTime
-        //result.duration = traceModel.data?.get(0)?.spans?.get(0)?.duration
         result.destination_id=""
         result.event_type=""
-        result.metadata = traceModel.data?.get(0)?.spans?.get(0)?.tags
+        result.metadata = traceModel.data?.get(0)?.spans?.get(0)?.tags?.filter { it.key.equals("stageName") }
 
         return request
             .createResponseBuilder(HttpStatus.OK)
@@ -64,7 +62,5 @@ class GetTraceFunction {
             .body(result)
             .build()
     }
-
-
 
 }

@@ -1,6 +1,8 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import com.google.gson.annotations.SerializedName
+
 class P1 {
-    var serviceName : String = ""
-    var tags : List<Tags>? = null
+    @SerializedName("serviceName" ) var serviceName : String?         = null
+    @SerializedName("tags"        ) var tags        : ArrayList<Tags> = arrayListOf()
 }
