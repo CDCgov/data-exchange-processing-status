@@ -105,11 +105,18 @@ class GetReportFunction(
 
     fun withDestinationId(destinationId: String, stageName: String): HttpResponseMessage {
 
-        val sqlQuery = "select * from $containerName t where t.destinationId = '$destinationId' and exists (select value u from u in t.reports where u.stageName = '$stageName')"
+        val eventType = request.queryParameters["eventType"]
+
+        val sqlQuery = StringBuilder()
+        sqlQuery.append("select * from $containerName t where t.destinationId = '$destinationId' and exists (select value u from u in t.reports where u.stageName = '$stageName')")
+
+        eventType?.run {
+            sqlQuery.append(" and t.eventType = '$eventType'")
+        }
 
         // Locate the existing report so we can amend it
         val reports = container.queryItems(
-                sqlQuery, CosmosQueryRequestOptions(),
+                sqlQuery.toString(), CosmosQueryRequestOptions(),
                 Report::class.java
         ).toList()
 
