@@ -54,4 +54,16 @@ public class FunctionJavaWrappers {
         return new GetTraceFunction().run(request, traceId, context);
     }
 
+    @FunctionName("GetTrace")
+    public HttpResponseMessage getTraceByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "trace/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        return new GetTraceByUploadIdFunction().run(request, uploadId, context);
+    }
+
 }
