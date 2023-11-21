@@ -3,9 +3,7 @@ package gov.cdc.ocio.processingstatusapi;
 import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
-import gov.cdc.ocio.processingstatusapi.functions.AddSpanToTraceFunction;
-import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
-import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
+import gov.cdc.ocio.processingstatusapi.functions.*;
 
 public class FunctionJavaWrappers {
 
@@ -42,6 +40,30 @@ public class FunctionJavaWrappers {
             @BindingName("spanId") String spanId,
             final ExecutionContext context) {
         return new AddSpanToTraceFunction().run(request, traceId, spanId, context);
+    }
+
+    @FunctionName("GetTrace")
+    public HttpResponseMessage getTraceById(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "trace/traceId/{traceId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @BindingName("traceId") String traceId,
+            final ExecutionContext context) {
+        return new GetTraceFunction().run(request, traceId, context);
+    }
+
+    @FunctionName("GetTraceByUploadId")
+    public HttpResponseMessage getTraceByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "trace/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        return new GetTraceByUploadIdFunction().run(request, uploadId, context);
     }
 
 }
