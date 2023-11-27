@@ -4,6 +4,7 @@ import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.*;
+import gov.cdc.ocio.processingstatusapi.functions.reports.*;
 
 public class FunctionJavaWrappers {
 
