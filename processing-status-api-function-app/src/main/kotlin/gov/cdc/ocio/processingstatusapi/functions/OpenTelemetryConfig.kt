@@ -45,10 +45,10 @@ internal object OpenTelemetryConfig {
      * @param jaegerEndpoint The endpoint of your Jaeger instance.
      * @return A ready-to-use [OpenTelemetry] instance.
      */
-    fun initOpenTelemetry(jaegerEndpoint: String?): OpenTelemetry {
+    fun initOpenTelemetry(): OpenTelemetry {
         // Export traces to Jaeger over OTLP
         val jaegerOtlpExporter: OtlpGrpcSpanExporter = OtlpGrpcSpanExporter.builder()
-            .setEndpoint(jaegerEndpoint)
+            .setEndpoint(System.getenv("JAEGER_OTEL_COLLECTOR_END_POINT"))
             .setTimeout(30, TimeUnit.SECONDS)
             .build()
         val serviceNameResource: Resource =

@@ -3,10 +3,7 @@ package gov.cdc.ocio.processingstatusapi;
 import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
-import gov.cdc.ocio.processingstatusapi.functions.AddSpanToTraceFunction;
-import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
-import gov.cdc.ocio.processingstatusapi.functions.TraceFunction;
-import gov.cdc.ocio.processingstatusapi.functions.reports.*;
+import gov.cdc.ocio.processingstatusapi.functions.*;
 
 public class FunctionJavaWrappers {
 
@@ -26,12 +23,10 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.POST},
-                    route = "trace/{spanName}",
-                    //authLevel = AuthorizationLevel.FUNCTION) HttpRequestMessage<Optional<String>> request,
+                    route = "trace",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("spanName") String spanName,
             final ExecutionContext context) {
-        return new TraceFunction().run(request, spanName, context);
+        return new TraceFunction().run(request, context);
     }
 
     @FunctionName("AddSpanToTrace")
@@ -39,13 +34,36 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.PUT},
-                    route = "span/{traceId}/{spanId}/{spanName}",
+                    route = "trace/addSpan/{traceId}/{spanId}",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("traceId") String traceId,
             @BindingName("spanId") String spanId,
-            @BindingName("spanName") String spanName,
             final ExecutionContext context) {
-        return new AddSpanToTraceFunction().run(request, traceId, spanId, spanName, context);
+        return new AddSpanToTraceFunction().run(request, traceId, spanId, context);
+    }
+
+    @FunctionName("GetTrace")
+    public HttpResponseMessage getTraceById(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "trace/traceId/{traceId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @BindingName("traceId") String traceId,
+            final ExecutionContext context) {
+        return new GetTraceFunction().run(request, traceId, context);
+    }
+
+    @FunctionName("GetTraceByUploadId")
+    public HttpResponseMessage getTraceByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "trace/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        return new GetTraceByUploadIdFunction().run(request, uploadId, context);
     }
 
     @FunctionName("CreateReport")
