@@ -57,10 +57,10 @@ class AmendReportFunction(
             return successResponse(reportId, reportStageName)
 
         } catch (e: BadRequestException) {
-            logger.warning("Failed to locate report with uploadId = $uploadId")
+            logger.warning("Failed to amend report with uploadId = $uploadId: ${e.localizedMessage}")
             return request
                     .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body("Invalid uploadId provided")
+                    .body(e.localizedMessage)
                     .build()
         } catch (e: BadStateException) {
             return request
@@ -95,7 +95,7 @@ class AmendReportFunction(
             logger.warning("Failed to locate report with reportId = $reportId")
             return request
                     .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body("Invalid reportId provided")
+                    .body(e.localizedMessage)
                     .build()
         }
     }

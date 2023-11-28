@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.model.stagereports
 
+import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -11,8 +12,8 @@ import java.util.*
  * @property size Long
  * @property filename String?
  * @property metadata Map<String, Any>?
- * @property start_time_epoch_millis Long
- * @property end_time_epoch_millis Long
+ * @property startTimeEpochMillis Long
+ * @property endTimeEpochMillis Long
  */
 class UploadStage: SchemaDefinition() {
 
@@ -26,12 +27,14 @@ class UploadStage: SchemaDefinition() {
 
     var metadata : Map<String, Any>? = null
 
-    var start_time_epoch_millis: Long = 0
+    @SerializedName("start_time_epoch_millis")
+    var startTimeEpochMillis: Long = 0
 
-    var end_time_epoch_millis: Long = 0
+    @SerializedName("end_time_epoch_millis")
+    var endTimeEpochMillis: Long = 0
 
     fun getTimestamp(): String {
-        val date = Date(start_time_epoch_millis)
+        val date = Date(startTimeEpochMillis)
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
         sdf.timeZone = TimeZone.getTimeZone("UTC")
         return sdf.format(date)

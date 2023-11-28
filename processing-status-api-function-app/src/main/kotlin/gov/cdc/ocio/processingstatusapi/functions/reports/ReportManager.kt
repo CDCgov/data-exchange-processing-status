@@ -2,13 +2,16 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.google.gson.Gson
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
+import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.Report
 import gov.cdc.ocio.processingstatusapi.model.StageReport
+import gov.cdc.ocio.processingstatusapi.model.stagereports.SchemaDefinition
 import java.util.*
 
 /**
@@ -76,6 +79,13 @@ class ReportManager(context: ExecutionContext) {
                                 contentType: String,
                                 content: String,
                                 dispositionType: DispositionType): String {
+        // Verify the content contains the minimum schema information
+        try {
+            SchemaDefinition.fromJsonString(content)
+        } catch(e: InvalidSchemaDefException) {
+            throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
+        }
+
         val sqlQuery = "select * from $containerName r where r.uploadId = '$uploadId'"
 
         // Locate the existing report so we can amend it
@@ -113,6 +123,13 @@ class ReportManager(context: ExecutionContext) {
                                 contentType: String,
                                 content: String,
                                 dispositionType: DispositionType) {
+        // Verify the content contains the minimum schema information
+        try {
+            SchemaDefinition.fromJsonString(content)
+        } catch(e: InvalidSchemaDefException) {
+            throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
+        }
+
         val sqlQuery = "select * from $containerName r where r.reportId = '$reportId'"
 
         // Locate the existing report so we can amend it

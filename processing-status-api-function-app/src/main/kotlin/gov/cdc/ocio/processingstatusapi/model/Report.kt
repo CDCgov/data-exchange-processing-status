@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Report definition.  A report is an aggregate of smaller reports from each of the stages that make up a service
  * line or processing pipeline.
@@ -15,12 +17,16 @@ class Report {
 
     var id : String? = null
 
+    @SerializedName("report_id")
     var reportId: String? = null
 
+    @SerializedName("upload_id")
     var uploadId: String? = null
 
+    @SerializedName("destination_id")
     var destinationId: String? = null
 
+    @SerializedName("event_type")
     var eventType: String? = null
 
     var reports: List<StageReport>? = null

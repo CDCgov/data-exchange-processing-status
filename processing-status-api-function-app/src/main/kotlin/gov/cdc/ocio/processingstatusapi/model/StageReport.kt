@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
 import com.google.gson.*
+import com.google.gson.annotations.SerializedName
 import java.lang.reflect.Type
 import java.util.*
 
@@ -15,10 +16,13 @@ import java.util.*
  */
 data class StageReport(
 
+    @SerializedName("report_id")
     var reportId: String? = null,
 
+    @SerializedName("stage_name")
     var stageName: String? = null,
 
+    @SerializedName("content_type")
     var contentType : String? = null,
 
     var content: String? = null,
@@ -36,8 +40,8 @@ class StageReportSerializer : JsonSerializer<StageReport> {
         val jsonObject = JsonObject()
 
         try {
-            jsonObject.add("reportId", context?.serialize(src?.reportId))
-            jsonObject.add("stageName", context?.serialize(src?.stageName))
+            jsonObject.add("report_id", context?.serialize(src?.reportId))
+            jsonObject.add("stage_name", context?.serialize(src?.stageName))
             jsonObject.add("timestamp", context?.serialize(src?.timestamp))
             if (src?.contentType == "json") {
                 jsonObject.add("content", JsonParser.parseString(src.content))
