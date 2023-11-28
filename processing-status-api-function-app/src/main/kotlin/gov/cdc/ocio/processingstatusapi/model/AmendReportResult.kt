@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Contains all the properties for the return response when a report has been successfully amended.
  *
@@ -7,4 +9,5 @@ package gov.cdc.ocio.processingstatusapi.model
  * @property stageName String
  * @constructor
  */
-data class AmendReportResult(val reportId: String, val stageName: String)
+data class AmendReportResult(@SerializedName("report_id") val reportId: String,
+                             @SerializedName("stage_name") val stageName: String)

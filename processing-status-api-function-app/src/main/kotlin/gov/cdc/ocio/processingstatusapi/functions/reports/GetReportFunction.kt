@@ -99,7 +99,7 @@ class GetReportFunction(
 
         return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("Invalid reportId provided")
+                .body("Invalid reportId provided: $reportId")
                 .build()
     }
 

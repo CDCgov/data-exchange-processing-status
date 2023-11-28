@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.model.stagereports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.model.stagereports.UploadStage
@@ -23,16 +24,22 @@ class UploadStatus {
 
     var status: String? = null
 
+    @SerializedName("percent_complete")
     var percentComplete: Float = 0F
 
+    @SerializedName("filename")
     var fileName: String? = null
 
+    @SerializedName("file_size_bytes")
     var fileSizeBytes: Long = 0
 
+    @SerializedName("bytes_uploaded")
     var bytesUploaded: Long = 0
 
+    @SerializedName("tud_upload_id")
     var tusUploadId: String? = null
 
+    @SerializedName("time_uploading_sec")
     var timeUploadingSec: Double = 0.0
 
     var metadata: Map<String, Any>? = null
@@ -71,7 +78,7 @@ class UploadStatus {
 
             val isUploadInProgress = (uploadStage.offset < uploadStage.size)
             val statusMessage = if (isUploadInProgress) "Uploading" else "UploadComplete"
-            val endTimeEpochMillis = if (isUploadInProgress) Date().time/1000 else uploadStage.end_time_epoch_millis
+            val endTimeEpochMillis = if (isUploadInProgress) Date().time/1000 else uploadStage.endTimeEpochMillis
             return UploadStatus().apply {
                 status = statusMessage
                 tusUploadId = uploadStage.tguid
@@ -79,7 +86,7 @@ class UploadStatus {
                 fileSizeBytes = uploadStage.size
                 bytesUploaded = uploadStage.offset
                 percentComplete = calculatedPercentComplete
-                timeUploadingSec = (endTimeEpochMillis - uploadStage.start_time_epoch_millis) / 1000.0
+                timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
                 metadata = uploadStage.metadata
                 timestamp = uploadStage.getTimestamp()
             }

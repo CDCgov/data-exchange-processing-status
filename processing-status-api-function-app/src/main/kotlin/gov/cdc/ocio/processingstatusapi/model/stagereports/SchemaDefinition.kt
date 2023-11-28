@@ -1,5 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.model.stagereports
 
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
+
 /**
  * Schema definition for all stages.  Every stage must inherit this class.
  *
@@ -7,7 +11,8 @@ package gov.cdc.ocio.processingstatusapi.model.stagereports
  * @property schemaVersion String?
  * @constructor
  */
-open class SchemaDefinition(var schemaName: String? = null, var schemaVersion: String? = null) {
+open class SchemaDefinition(@SerializedName("schema_name") var schemaName: String? = null,
+                            @SerializedName("schema_version") var schemaVersion: String? = null) {
 
     /**
      * Hash operator
@@ -45,5 +50,22 @@ open class SchemaDefinition(var schemaName: String? = null, var schemaVersion: S
      */
     override fun toString(): String {
         return "SchemaDefinition(schemaName=$schemaName, schemaVersion=$schemaVersion)"
+    }
+
+    companion object {
+
+        @Throws(InvalidSchemaDefException::class)
+        fun fromJsonString(jsonContent: String?): SchemaDefinition {
+            if (jsonContent == null) throw InvalidSchemaDefException("Missing schema definition")
+
+            val schemaDefinition = Gson().fromJson(jsonContent, SchemaDefinition::class.java)
+            if (schemaDefinition?.schemaName.isNullOrEmpty())
+                throw InvalidSchemaDefException("Invalid schema_name provided")
+
+            if (schemaDefinition.schemaVersion.isNullOrEmpty())
+                throw InvalidSchemaDefException("Invalid schema_version provided")
+
+            return schemaDefinition
+        }
     }
 }
