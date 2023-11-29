@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.google.gson.Gson
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -12,6 +11,7 @@ import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.Report
 import gov.cdc.ocio.processingstatusapi.model.StageReport
 import gov.cdc.ocio.processingstatusapi.model.stagereports.SchemaDefinition
+import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import java.util.*
 
 /**
@@ -90,8 +90,8 @@ class ReportManager(context: ExecutionContext) {
 
         // Locate the existing report so we can amend it
         val items = container.queryItems(
-                sqlQuery, CosmosQueryRequestOptions(),
-                Report::class.java
+            sqlQuery, CosmosQueryRequestOptions(),
+            Report::class.java
         )
         if (items.count() > 0) {
             logger.info("Successfully located report with uploadId = $uploadId")
@@ -134,8 +134,8 @@ class ReportManager(context: ExecutionContext) {
 
         // Locate the existing report so we can amend it
         val items = container.queryItems(
-                sqlQuery, CosmosQueryRequestOptions(),
-                Report::class.java
+            sqlQuery, CosmosQueryRequestOptions(),
+            Report::class.java
         )
         if (items.count() > 0) {
             logger.info("Successfully located report with reportId = $reportId")
@@ -176,7 +176,7 @@ class ReportManager(context: ExecutionContext) {
             this.reportId = UUID.randomUUID().toString()
             this.stageName = stageName
             this.contentType = contentType
-            this.content = content
+            this.content = if (contentType.lowercase() == "json") JsonUtils.minifyJson(content) else content
         }
         reports.add(stageReport)
 
