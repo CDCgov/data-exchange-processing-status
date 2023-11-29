@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Create a report service bus message.
  *
@@ -9,9 +11,12 @@ package gov.cdc.ocio.processingstatusapi.model
  */
 class CreateReportSBMessage: ServiceBusMessage() {
 
+    @SerializedName("upload_id")
     val uploadId: String? = null
 
+    @SerializedName("destination_id")
     val destinationId: String? = null
 
+    @SerializedName("event_type")
     val eventType: String? = null
 }
