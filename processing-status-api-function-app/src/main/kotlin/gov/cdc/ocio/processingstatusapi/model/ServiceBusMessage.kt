@@ -42,8 +42,10 @@ enum class DispositionType {
  */
 open class ServiceBusMessage {
 
+    @SerializedName("request_type")
     var requestType = RequestType.UNDEFINED
 
+    @SerializedName("disposition_type")
     // Default is to append
     var dispositionType = DispositionType.APPEND
 }

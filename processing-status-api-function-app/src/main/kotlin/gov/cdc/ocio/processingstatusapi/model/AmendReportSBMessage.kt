@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Amend an existing report service bus message.
  *
@@ -10,10 +12,13 @@ package gov.cdc.ocio.processingstatusapi.model
  */
 class AmendReportSBMessage: ServiceBusMessage() {
 
+    @SerializedName("upload_id")
     val uploadId: String? = null
 
+    @SerializedName("stage_name")
     val stageName: String? = null
 
+    @SerializedName("content_type")
     val contentType: String? = null
 
     val content: String? = null
