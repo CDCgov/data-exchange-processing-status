@@ -58,11 +58,11 @@ repositories {
 }
 
 azurefunctions {
-    subscription = '8f37eaa5-78c4-43ac-801a-75b8118d73f7'
-    resourceGroup = 'ocio-omhs-dev-moderate-rg'
-    appName = 'ocio-omhs-dev-moderate-test-fa'
+    subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
+    resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'
+    appName = 'ocio-ede-dev-moderate-pstatus-fa'
     allowTelemetry = 'false'
-    appServicePlanName = 'ocio-omhs-dev-moderate-test-asp'
+    appServicePlanName = 'ocio-ede-dev-pstatus-linux-function-plan'
     runtime {
       os = 'linux'
     }
