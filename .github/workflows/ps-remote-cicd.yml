@@ -32,13 +32,13 @@ on:
       - 'develop'
       - 'main'
     paths:
-    - processing-status-api-function-app/**
+    - processing-status-cicd-poc-app/**
   push:
     branches:
       - 'develop'
       - 'main'
     paths:
-    - processing-status-api-function-app/**
+    - processing-status-cicd-poc-app/**
   
 jobs:      
   invoke-manual-cicd-trigger:
