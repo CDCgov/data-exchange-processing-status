@@ -13,7 +13,7 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "status/health",
+                    route = "health",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
         return new HealthCheckFunction().run(request, context);
