@@ -39,8 +39,6 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
 
     implementation 'com.azure:azure-messaging-servicebus:7.13.3'
-    implementation 'com.microsoft.azure:azure-servicebus:3.6.7'
-    implementation 'com.azure:azure-identity:1.8.0'
 
     implementation 'org.danilopianini:khttp:1.3.1'
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.9'
@@ -60,13 +58,24 @@ repositories {
 }
 
 azurefunctions {
-    subscription = System.getProperty("subscription")
-    resourceGroup = System.getProperty("resourceGroup")
-    appName = System.getProperty("appName")
-    allowTelemetry = false
-
-    auth {
-        type = 'azure_cli'
+    subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
+    resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'
+    appName = 'ocio-ede-dev-moderate-pstatus-fa'
+    allowTelemetry = 'false'
+    appServicePlanName = 'ocio-ede-dev-pstatus-linux-function-plan'
+    runtime {
+      os = 'linux'
     }
-}
+    auth {        
+        client = ''
+        tenant = ''
+        key = ''
+        environment = 'AZURE'
+    }
+    localDebug = "transport=dt_socket,server=y,suspend=n,address=5005"
+    deployment {
+        type = 'run_from_blob'
+    }
+}    
+
 
