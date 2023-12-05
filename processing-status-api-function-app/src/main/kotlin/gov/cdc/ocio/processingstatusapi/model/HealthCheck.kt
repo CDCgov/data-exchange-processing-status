@@ -19,13 +19,13 @@ class ServiceBus: HealthCheckSystem(){
 }
 
 class HealthCheck {
-    fun total_checks_duration(time: Long) {
+    fun total_checks_duration(time: String) {
         this.total_checks_duration = time;
     }
 
     var status : String? = "DOWN"
 
-    var total_checks_duration : Long?=null
+    var total_checks_duration : String?=null
 
     var dependency_health_checks : ArrayList<HealthCheckSystem> = arrayListOf()
 

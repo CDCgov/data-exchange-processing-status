@@ -49,7 +49,8 @@ class HealthCheckFunction {
         if(cosmosDBHealthy && serviceBusHealthy){
             result.status = "UP"
         }
-        result.total_checks_duration(time)
+
+        result.total_checks_duration(formatMillisToHMS(time))
         result.dependency_health_checks.add(cosmosDBHealth)
         result.dependency_health_checks.add(serviceBusHealth)
         return request
@@ -80,6 +81,16 @@ class HealthCheckFunction {
         val queueClient = QueueClient(ConnectionStringBuilder(connectionString, queueName), ReceiveMode.PEEKLOCK)
         queueClient.close()
         return true;
+    }
+
+    fun formatMillisToHMS(millis: Long): String {
+        val seconds = millis / 1000
+        val hours = seconds / 3600
+        val minutes = (seconds % 3600) / 60
+        val remainingSeconds = seconds % 60
+        val remainingMillis = millis % 1000
+
+        return "%02d:%02d:%02d.%02d".format(hours, minutes, remainingSeconds, remainingMillis / 10)
     }
 
 
