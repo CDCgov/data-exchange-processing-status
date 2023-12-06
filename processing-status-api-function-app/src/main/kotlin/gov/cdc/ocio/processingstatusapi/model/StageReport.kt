@@ -8,6 +8,7 @@ import java.util.*
 /**
  * Report for a given stage.
  *
+ * @property uploadId String?
  * @property reportId String?
  * @property stageName String?
  * @property contentType String?
@@ -16,11 +17,19 @@ import java.util.*
  */
 data class StageReport(
 
+    var id : String? = null,
+
+    @SerializedName("upload_id")
+    var uploadId: String? = null,
+
     @SerializedName("report_id")
     var reportId: String? = null,
 
     @SerializedName("stage_name")
     var stageName: String? = null,
+
+    @SerializedName("stage_report_id")
+    var stageReportId: String? = null,
 
     @SerializedName("content_type")
     var contentType : String? = null,
@@ -40,7 +49,8 @@ class StageReportSerializer : JsonSerializer<StageReport> {
         val jsonObject = JsonObject()
 
         try {
-            jsonObject.add("report_id", context?.serialize(src?.reportId))
+            jsonObject.add("upload_id", context?.serialize(src?.uploadId))
+            jsonObject.add("stage_report_id", context?.serialize(src?.stageReportId))
             jsonObject.add("stage_name", context?.serialize(src?.stageName))
             jsonObject.add("timestamp", context?.serialize(src?.timestamp))
             if (src?.contentType == "json") {

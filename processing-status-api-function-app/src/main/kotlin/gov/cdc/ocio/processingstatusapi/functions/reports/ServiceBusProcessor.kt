@@ -99,12 +99,16 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         val content = amendReportMessage.content
                 ?: throw BadRequestException("Missing required field content")
 
+        // Never attempt to cross-reference the report ID when amending stage reports originating from the service
+        // bus.  Due to the async nature of cosmosdb the stage report may be created before the report and the
+        // cross-reference will fail.
         ReportManager(context).amendReportWithUploadId(
                 uploadId,
                 stageName,
                 contentType,
                 content,
-                amendReportMessage.dispositionType
+                amendReportMessage.dispositionType,
+                crossReferenceReportId = false
         )
     }
 

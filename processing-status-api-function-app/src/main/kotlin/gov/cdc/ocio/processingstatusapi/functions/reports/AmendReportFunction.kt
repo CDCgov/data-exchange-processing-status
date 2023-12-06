@@ -47,14 +47,14 @@ class AmendReportFunction(
         checkRequired()?.let { return it }
 
         try {
-            val reportId = ReportManager(context).amendReportWithUploadId(
+            val stageReportId = ReportManager(context).amendReportWithUploadId(
                     uploadId,
                     reportStageName!!,
                     "json",
                     requestBody,
                     dispositionType
             )
-            return successResponse(reportId, reportStageName)
+            return successResponse(stageReportId, reportStageName)
 
         } catch (e: BadRequestException) {
             logger.warning("Failed to amend report with uploadId = $uploadId: ${e.localizedMessage}")
@@ -82,14 +82,14 @@ class AmendReportFunction(
         checkRequired()?.let { return it }
 
         try {
-            ReportManager(context).amendReportWithReportId(
+            val stageReportId = ReportManager(context).amendReportWithReportId(
                     reportId,
                     reportStageName!!,
                     "json",
                     requestBody,
                     dispositionType
             )
-            return successResponse(reportId, reportStageName)
+            return successResponse(stageReportId, reportStageName)
 
         } catch (e: BadRequestException) {
             logger.warning("Failed to locate report with reportId = $reportId")
@@ -103,12 +103,12 @@ class AmendReportFunction(
     /**
      * Helper to provide a successful HTTP response.  Present here for convenient reuse.
      *
-     * @param reportId String
+     * @param stageReportId String
      * @return HttpResponseMessage
      */
-    private fun successResponse(reportId: String, stageName: String): HttpResponseMessage {
+    private fun successResponse(stageReportId: String, stageName: String): HttpResponseMessage {
 
-        val result = AmendReportResult(reportId, stageName)
+        val result = AmendReportResult(stageReportId, stageName)
 
         return request
                 .createResponseBuilder(HttpStatus.OK)

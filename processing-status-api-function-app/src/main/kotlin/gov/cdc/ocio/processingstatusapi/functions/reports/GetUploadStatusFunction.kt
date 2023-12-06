@@ -35,7 +35,7 @@ class GetUploadStatusFunction(
     private val container: CosmosContainer
 
     init {
-        container = CosmosContainerManager.initDatabaseContainer(context, containerName)!!
+        container = CosmosContainerManager.initDatabaseContainer(context, containerName, "/uploadId")!!
     }
 
     /**
@@ -166,17 +166,17 @@ class GetUploadStatusFunction(
         }
 
         val uploadsStatus = UploadsStatus()
-        reports.forEach { report ->
-            report.getUploadStage(stageName)?.let { stageReport ->
-                try {
-                    logger.info("*** stageReport = $stageReport")
-                    val uploadStatus = UploadStatus.createFromStageReport(stageReport)
-                    uploadsStatus.items.add(uploadStatus)
-                } catch (e: ContentException) {
-                    logger.warning("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
-                }
-            }
-        }
+//        reports.forEach { report ->
+//            report.getUploadStage(stageName)?.let { stageReport ->
+//                try {
+//                    logger.info("*** stageReport = $stageReport")
+//                    val uploadStatus = UploadStatus.createFromStageReport(stageReport)
+//                    uploadsStatus.items.add(uploadStatus)
+//                } catch (e: ContentException) {
+//                    logger.warning("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
+//                }
+//            }
+//        }
 
         uploadsStatus.summary.pageNumber = pageNumberAsInt
         uploadsStatus.summary.pageSize = pageSizeAsInt
