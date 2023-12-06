@@ -28,13 +28,14 @@ class GetReportFunction(
 
     private val reportsContainerName = "Reports"
     private val stageReportsContainerName = "StageReports"
+    private val partitionKey = "/uploadId"
 
     private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(context, reportsContainerName, "/uploadId")!!
+        CosmosContainerManager.initDatabaseContainer(context, reportsContainerName, partitionKey)!!
     }
 
     private val stageReportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(context, stageReportsContainerName, "/uploadId")!!
+        CosmosContainerManager.initDatabaseContainer(context, stageReportsContainerName, partitionKey)!!
     }
 
     private val gson = GsonBuilder()
