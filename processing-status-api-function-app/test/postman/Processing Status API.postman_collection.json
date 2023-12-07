@@ -13,18 +13,8 @@
 					"name": "Happy Paths",
 					"item": [
 						{
-							"name": "Create report",
+							"name": "Create \"upload\" report",
 							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.report_id);"
-										],
-										"type": "text/javascript"
-									}
-								},
 								{
 									"listen": "prerequest",
 									"script": {
@@ -42,27 +32,39 @@
 							"request": {
 								"method": "POST",
 								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"upload\",\n    \"schema_version\": \"1.0\",\n    \"tguid\": \"{{uploadId}}\",\n    \"offset\": 0,\n    \"size\": 27472691,\n    \"filename\": \"some_upload1.csv\",\n    \"meta_destination_id\": \"ndlp\",\n    \"meta_ext_event\": \"routineImmunization\",\n    \"end_time_epoch_millis\": 1700009141546,\n    \"start_time_epoch_millis\": 1700009137234,\n    \"metadata\": {\n        \"filename\": \"10MB-test-file\",\n        \"filetype\": \"text/plain\",\n        \"meta_destination_id\": \"ndlp\",\n        \"meta_ext_event\": \"routineImmunization\",\n        \"meta_ext_source\": \"IZGW\",\n        \"meta_ext_sourceversion\": \"V2022-12-31\",\n        \"meta_ext_entity\": \"DD2\",\n        \"meta_username\": \"ygj6@cdc.gov\",\n        \"meta_ext_objectkey\": \"2b18d70c-8559-11ee-b9d1-0242ac120002\",\n        \"meta_ext_filename\": \"10MB-test-file\",\n        \"meta_ext_submissionperiod\": \"1\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report?uploadId={{uploadId}}&destinationId=ndlp&eventType=routineImmunization",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
-										"report"
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
 									],
 									"query": [
 										{
-											"key": "uploadId",
-											"value": "{{uploadId}}"
+											"key": "stageName",
+											"value": "dex-upload"
 										},
 										{
 											"key": "destinationId",
-											"value": "ndlp"
+											"value": "dex-testing"
 										},
 										{
 											"key": "eventType",
-											"value": "routineImmunization"
+											"value": "test-event1"
 										}
 									]
 								}
@@ -70,7 +72,7 @@
 							"response": []
 						},
 						{
-							"name": "Replace \"upload\" report (ref=uploadId)",
+							"name": "Replace \"upload\" report",
 							"request": {
 								"method": "PUT",
 								"header": [],
@@ -84,7 +86,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&dispositionType=replace",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&dispositionType=replace&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -103,82 +105,14 @@
 										{
 											"key": "dispositionType",
 											"value": "replace"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Replace \"dex-metadata\" report (ref=uploadId)",
-							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"dex-metadata\",\n    \"schema_version\": \"1.0\",\n    \"metadata\": {\n        \"filename\": \"10MB-test-file\",\n        \"filetype\": \"text/plain\",\n        \"meta_destination_id\": \"ndlp\",\n        \"meta_ext_event\": \"routineImmunization\",\n        \"meta_ext_source\": \"IZGW\",\n        \"meta_ext_sourceversion\": \"V2022-12-31\",\n        \"meta_ext_entity\": \"DD2\",\n        \"meta_username\": \"ygj6@cdc.gov\",\n        \"meta_ext_objectkey\": \"2b18d70c-8559-11ee-b9d1-0242ac120002\",\n        \"meta_ext_filename\": \"10MB-test-file\",\n        \"meta_ext_submissionperiod\": \"1\"\n    }\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-metadata&dispositionType=replace",
-									"host": [
-										"{{PROCESSING_STATUS_BASE_URL}}"
-									],
-									"path": [
-										"api",
-										"report",
-										"json",
-										"uploadId",
-										"{{uploadId}}"
-									],
-									"query": [
-										{
-											"key": "stageName",
-											"value": "dex-metadata"
 										},
 										{
-											"key": "dispositionType",
-											"value": "replace"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Amend \"stage2\" report (ref=uploadId)",
-							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"stage2\",\n    \"schema_version\": \"1.0\",\n    \"field1\": \"123\",\n    \"fiedl2\": \"345\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=stage2",
-									"host": [
-										"{{PROCESSING_STATUS_BASE_URL}}"
-									],
-									"path": [
-										"api",
-										"report",
-										"json",
-										"uploadId",
-										"{{uploadId}}"
-									],
-									"query": [
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
 										{
-											"key": "stageName",
-											"value": "stage2"
+											"key": "eventType",
+											"value": "test-event1"
 										}
 									]
 								}
@@ -186,81 +120,9 @@
 							"response": []
 						},
 						{
-							"name": "Amend \"stage3\" report (ref=reportId)",
+							"name": "Create \"dex-routing\" report",
 							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"stage3\",\n    \"schema_version\": \"1.0\",\n    \"field1\": \"678\",\n    \"fiedl2\": \"901\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/reportId/{{reportId}}?stageName=stage3",
-									"host": [
-										"{{PROCESSING_STATUS_BASE_URL}}"
-									],
-									"path": [
-										"api",
-										"report",
-										"json",
-										"reportId",
-										"{{reportId}}"
-									],
-									"query": [
-										{
-											"key": "stageName",
-											"value": "stage3"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Amend \"hl7-validation\" report (ref=uploadId)",
-							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"hl7-validation\",\n    \"schema_version\": \"1.0\",\n    \"message_uuid\": \"\",\n    \"entries\": {\n        \"structure\": [\n            {\n                \"line\": 14,\n                \"column\": 56,\n                \"path\": \"OBX[10]-5[1].2\",\n                \"description\": \"test is not a valid Number. The format should be: [+|-]digits[.digits]\",\n                \"category\": \"Format\",\n                \"classification\": \"Error\"\n            }\n        ],\n        \"content\": [\n            {\n                \"line\": 3,\n                \"column\": 99,\n                \"path\": \"OBR[1]-7[1].1\",\n                \"description\": \"DateTimeOrAll0s - If TS.1 (Time) is valued then TS.1 (Time) shall follow the date/time pattern 'YYYYMMDDHHMMSS[.S[S[S[S]]]][+/-ZZZZ]]'.\",\n                \"category\": \"Constraint Failure\",\n                \"classification\": \"Error\"\n            }\n        ],\n        \"value-set\": []\n    },\n    \"error-count\": {\n        \"structure\": 1,\n        \"value-set\": 0,\n        \"content\": 1\n    },\n    \"warning-count\": {\n        \"structure\": 0,\n        \"value-set\": 0,\n        \"content\": 0\n    },\n    \"status\": \"STRUCTURE_ERRORS\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=hl7-validation",
-									"host": [
-										"{{PROCESSING_STATUS_BASE_URL}}"
-									],
-									"path": [
-										"api",
-										"report",
-										"json",
-										"uploadId",
-										"{{uploadId}}"
-									],
-									"query": [
-										{
-											"key": "stageName",
-											"value": "hl7-validation"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Amend \"dex-routing\" report (ref=uploadId)",
-							"request": {
-								"method": "PUT",
+								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -272,7 +134,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-routing",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-routing&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -287,6 +149,14 @@
 										{
 											"key": "stageName",
 											"value": "dex-routing"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
 										}
 									]
 								}
@@ -294,7 +164,139 @@
 							"response": []
 						},
 						{
-							"name": "Get report (ref=uploadId)",
+							"name": "Create \"stage2\" report",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"stage2\",\n    \"schema_version\": \"1.0\",\n    \"field1\": \"123\",\n    \"fiedl2\": \"345\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=stage2&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "stage2"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create \"stage3\" report",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"stage3\",\n    \"schema_version\": \"1.0\",\n    \"field1\": \"678 123\",\n    \"fiedl2\": \"901\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=stage3&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "stage3"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create \"dex-hl7-validation\" report",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"hl7-validation\",\n    \"schema_version\": \"1.0\",\n    \"message_uuid\": \"\",\n    \"entries\": {\n        \"structure\": [\n            {\n                \"line\": 14,\n                \"column\": 56,\n                \"path\": \"OBX[10]-5[1].2\",\n                \"description\": \"test is not a valid Number. The format should be: [+|-]digits[.digits]\",\n                \"category\": \"Format\",\n                \"classification\": \"Error\"\n            }\n        ],\n        \"content\": [\n            {\n                \"line\": 3,\n                \"column\": 99,\n                \"path\": \"OBR[1]-7[1].1\",\n                \"description\": \"DateTimeOrAll0s - If TS.1 (Time) is valued then TS.1 (Time) shall follow the date/time pattern 'YYYYMMDDHHMMSS[.S[S[S[S]]]][+/-ZZZZ]]'.\",\n                \"category\": \"Constraint Failure\",\n                \"classification\": \"Error\"\n            }\n        ],\n        \"value-set\": []\n    },\n    \"error-count\": {\n        \"structure\": 1,\n        \"value-set\": 0,\n        \"content\": 1\n    },\n    \"warning-count\": {\n        \"structure\": 0,\n        \"value-set\": 0,\n        \"content\": 0\n    },\n    \"status\": \"STRUCTURE_ERRORS\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-hl7-validation&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-hl7-validation"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get report (ref = uploadId)",
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
 							},
@@ -326,7 +328,7 @@
 							"response": []
 						},
 						{
-							"name": "Get report (ref=reportId)",
+							"name": "Get report (ref = reportId)",
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
 							},
@@ -358,6 +360,38 @@
 							"response": []
 						},
 						{
+							"name": "Get report (uploadId HARD KEYED)",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/3e58f78c-72ae-4b47-9fab-c0eca219e4c7",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"uploadId",
+										"3e58f78c-72ae-4b47-9fab-c0eca219e4c7"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Get reports for \"dex-upload\" stage",
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
@@ -375,20 +409,21 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/ndlp/dex-upload?eventType=routineImmunization",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/dex-testing/dex-upload",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
-										"ndlp",
+										"dex-testing",
 										"dex-upload"
 									],
 									"query": [
 										{
 											"key": "eventType",
-											"value": "routineImmunization"
+											"value": "routineImmunization",
+											"disabled": true
 										}
 									]
 								}
@@ -413,20 +448,20 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/ndlp/stage2?eventType=routineImmunization",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/dex-testing/stage2?eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
-										"ndlp",
+										"dex-testing",
 										"stage2"
 									],
 									"query": [
 										{
 											"key": "eventType",
-											"value": "routineImmunization"
+											"value": "test-event1"
 										}
 									]
 								}
@@ -434,7 +469,7 @@
 							"response": []
 						},
 						{
-							"name": "Get reports for \"hl7-validation\" stage",
+							"name": "Get reports for \"dex-hl7-validation\" stage",
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
 							},
@@ -451,20 +486,20 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/ndlp/hl7-validation?eventType=routineImmunization",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/dex-testing/dex-hl7-validation?eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
-										"ndlp",
-										"hl7-validation"
+										"dex-testing",
+										"dex-hl7-validation"
 									],
 									"query": [
 										{
 											"key": "eventType",
-											"value": "routineImmunization"
+											"value": "test-event1"
 										}
 									]
 								}
@@ -472,19 +507,19 @@
 							"response": []
 						},
 						{
-							"name": "Get upload status",
+							"name": "Get upload status for \"dex-testing\"",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/upload/ndlp?page_number=1&page_size=10&sort_by=date&sort_order=descending&ext_event=routineImmunization",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/upload/dex-testing?page_number=1&page_size=10&sort_by=date&sort_order=descending&ext_event=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"upload",
-										"ndlp"
+										"dex-testing"
 									],
 									"query": [
 										{
@@ -505,7 +540,7 @@
 										},
 										{
 											"key": "ext_event",
-											"value": "routineImmunization"
+											"value": "test-event1"
 										}
 									]
 								}
@@ -518,56 +553,43 @@
 					"name": "Error Paths",
 					"item": [
 						{
-							"name": "Create report with same uploadId",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.reportId);"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"exec": [
-											"var uuid = require('uuid');",
-											"var uploadId = uuid.v4();",
-											"console.log(uploadId);",
-											"",
-											"pm.environment.set(\"uploadId\", uploadId);"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
+							"name": "Create report with missing schema name",
 							"request": {
 								"method": "POST",
 								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_version\": \"1.0\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report?uploadId=45678&destinationId=ndlp&eventType=routineImmunization",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
-										"report"
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
 									],
 									"query": [
 										{
-											"key": "uploadId",
-											"value": "45678"
+											"key": "stageName",
+											"value": "dex-upload"
 										},
 										{
 											"key": "destinationId",
-											"value": "ndlp"
+											"value": "dex-testing"
 										},
 										{
 											"key": "eventType",
-											"value": "routineImmunization"
+											"value": "test-event1"
 										}
 									]
 								}
@@ -575,13 +597,13 @@
 							"response": []
 						},
 						{
-							"name": "Amend report with missing schema version",
+							"name": "Create report with missing schema version",
 							"request": {
-								"method": "PUT",
+								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"schemaName\": \"upload\"\n}",
+									"raw": "{\n    \"schema_name\": \"upload\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -589,7 +611,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&dispositionType=replace",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -606,8 +628,12 @@
 											"value": "dex-upload"
 										},
 										{
-											"key": "dispositionType",
-											"value": "replace"
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
 										}
 									]
 								}
@@ -615,13 +641,13 @@
 							"response": []
 						},
 						{
-							"name": "Amend report with missing schema name",
+							"name": "Create report with missing destination ID",
 							"request": {
-								"method": "PUT",
+								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"schemaVersion\": \"1.0\"\n}",
+									"raw": "{\n    \"schema_name\": \"upload\",\n    \"schema_version\": \"1.0\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -629,7 +655,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&dispositionType=replace",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -646,8 +672,216 @@
 											"value": "dex-upload"
 										},
 										{
-											"key": "dispositionType",
-											"value": "replace"
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create report with missing event type",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"upload\",\n    \"schema_version\": \"1.0\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-upload"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace report with missing schema name Copy",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_version\": \"1.0\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-upload"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace report with missing schema version Copy",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"upload\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-upload"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace report with missing destination ID Copy",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"upload\",\n    \"schema_version\": \"1.0\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-upload"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace report with missing event type",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"schema_name\": \"upload\",\n    \"schema_version\": \"1.0\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-upload"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
 										}
 									]
 								}
@@ -984,13 +1218,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/status/health",
+					"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/health",
 					"host": [
 						"{{PROCESSING_STATUS_BASE_URL}}"
 					],
 					"path": [
 						"api",
-						"status",
 						"health"
 					]
 				}
