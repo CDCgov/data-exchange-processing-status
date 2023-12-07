@@ -8,6 +8,9 @@ import com.google.gson.annotations.SerializedName
  * @property uploadId String?
  * @property destinationId String?
  * @property eventType String?
+ * @property stageName String?
+ * @property contentType String?
+ * @property content String?
  */
 class CreateReportSBMessage: ServiceBusMessage() {
 
@@ -19,4 +22,12 @@ class CreateReportSBMessage: ServiceBusMessage() {
 
     @SerializedName("event_type")
     val eventType: String? = null
+
+    @SerializedName("stage_name")
+    val stageName: String? = null
+
+    @SerializedName("content_type")
+    val contentType: String? = null
+
+    val content: String? = null
 }

@@ -26,30 +26,11 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
      */
     @Throws(BadRequestException::class)
     fun withMessage(message: String) {
-        val serviceBusMessage = try {
-            Gson().fromJson(message, ServiceBusMessage::class.java)
+        try {
+            createReport(Gson().fromJson(message, CreateReportSBMessage::class.java))
         } catch (e: JsonSyntaxException) {
-            null
-        }
-
-        if (serviceBusMessage != null) {
-            when (serviceBusMessage.requestType) {
-                RequestType.CREATE -> {
-                    try {
-                        createReport(Gson().fromJson(message, CreateReportSBMessage::class.java))
-                    } catch (e: JsonSyntaxException) {
-                        throw BadStateException("Unable to interpret the create report message")
-                    }
-                }
-                RequestType.AMEND -> {
-                    try {
-                        amendReport(Gson().fromJson(message, AmendReportSBMessage::class.java))
-                    } catch (e: JsonSyntaxException) {
-                        throw BadStateException("Unable to interpret the amend report message")
-                    }
-                }
-                else -> throw BadRequestException("Invalid request type")
-            }
+            logger.warning("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
+            throw BadStateException("Unable to interpret the create report message")
         }
     }
 
@@ -63,48 +44,32 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
     private fun createReport(createReportMessage: CreateReportSBMessage) {
 
         val uploadId = createReportMessage.uploadId
-                ?: throw BadRequestException("Missing required field uploadId")
+            ?: throw BadRequestException("Missing required field uploadId")
 
         val destinationId = createReportMessage.destinationId
-                ?: throw BadRequestException("Missing required field destinationId")
+            ?: throw BadRequestException("Missing required field destinationId")
 
         val eventType = createReportMessage.eventType
-                ?: throw BadRequestException("Missing required field eventType")
+            ?: throw BadRequestException("Missing required field eventType")
 
-        ReportManager(context).createReport(
-                uploadId,
-                destinationId,
-                eventType
-        )
-    }
+        val stageName = createReportMessage.stageName
+            ?: throw BadRequestException("Missing required field stageName")
 
-    /**
-     * Amend a report from the provided service bus message.
-     *
-     * @param amendReportMessage AmendReportSBMessage
-     * @throws BadRequestException
-     */
-    @Throws(BadRequestException::class)
-    private fun amendReport(amendReportMessage: AmendReportSBMessage) {
+        val contentType = createReportMessage.contentType
+            ?: throw BadRequestException("Missing required field contentType")
 
-        val uploadId = amendReportMessage.uploadId
-                ?: throw BadRequestException("Missing required field uploadId")
+        val content = createReportMessage.content
+            ?: throw BadRequestException("Missing required field content")
 
-        val stageName = amendReportMessage.stageName
-                ?: throw BadRequestException("Missing required field stageName")
-
-        val contentType = amendReportMessage.contentType
-                ?: throw BadRequestException("Missing required field contentType")
-
-        val content = amendReportMessage.content
-                ?: throw BadRequestException("Missing required field content")
-
-        ReportManager(context).amendReportWithUploadId(
-                uploadId,
-                stageName,
-                contentType,
-                content,
-                amendReportMessage.dispositionType
+        logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
+        ReportManager(context).createReportWithUploadId(
+            uploadId,
+            destinationId,
+            eventType,
+            stageName,
+            contentType,
+            content,
+            createReportMessage.dispositionType
         )
     }
 

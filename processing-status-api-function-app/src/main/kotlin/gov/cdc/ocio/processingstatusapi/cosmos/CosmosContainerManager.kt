@@ -7,7 +7,6 @@ import com.azure.cosmos.CosmosException
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.ThroughputProperties
 import com.microsoft.azure.functions.ExecutionContext
-import gov.cdc.ocio.cosmossync.cosmos.CosmosClientManager
 
 class CosmosContainerManager {
 
@@ -22,7 +21,7 @@ class CosmosContainerManager {
             return cosmosClient.getDatabase(databaseResponse.properties.id)
         }
 
-        fun initDatabaseContainer(context: ExecutionContext, containerName: String): CosmosContainer? {
+        fun initDatabaseContainer(context: ExecutionContext, containerName: String, partitionKey: String): CosmosContainer? {
             try {
                 val logger = context.logger
 
@@ -33,7 +32,7 @@ class CosmosContainerManager {
                 logger.info("calling createDatabaseIfNotExists...")
                 val db = createDatabaseIfNotExists(context, cosmosClient, "ProcessingStatus")!!
 
-                val containerProperties = CosmosContainerProperties(containerName, "/partitionKey")
+                val containerProperties = CosmosContainerProperties(containerName, partitionKey)
 
                 // Provision throughput
                 val throughputProperties = ThroughputProperties.createManualThroughput(400)

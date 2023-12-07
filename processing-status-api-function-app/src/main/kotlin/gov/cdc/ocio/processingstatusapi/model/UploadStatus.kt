@@ -49,19 +49,19 @@ class UploadStatus {
     companion object {
 
         /**
-         * Convenience class method to instantiate an UploadStatus object from a StageReport object.
+         * Convenience class method to instantiate an UploadStatus object from a Report object.
          *
-         * @param stageReport StageReport
+         * @param report StReport
          * @return UploadStatus
          * @throws ContentException
          */
         @Throws(ContentException::class)
-        fun createFromStageReport(stageReport: StageReport): UploadStatus {
+        fun createFromReport(report: Report): UploadStatus {
 
-            if (stageReport.contentType != "json")
+            if (report.contentType != "json")
                 throw ContentException("Content type is not JSON as expected")
 
-            val stageReportJson = stageReport.content
+            val stageReportJson = report.content
 
             val schemaDefinition = Gson().fromJson(stageReportJson, SchemaDefinition::class.java)
 
