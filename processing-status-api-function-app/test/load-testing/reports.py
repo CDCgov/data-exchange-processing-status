@@ -1,16 +1,5 @@
 from datetime import datetime
 
-def create_report(upload_id):
-    message = """
-{
-    "request_type": "create",
-    "upload_id": "%s",
-    "destination_id": "dex-testing",
-    "event_type": "test-event1"
-}
-""" % upload_id
-    return message
-
 def create_upload(upload_id, offset, size):    
     content = """
 {
@@ -47,8 +36,9 @@ def create_upload(upload_id, offset, size):
     
     message = """
 {
-    "request_type": "amend",
     "upload_id": "%s",
+    "destination_id": "dex-testing",
+    "event_type": "test-event1",
     "stage_name": "dex-upload",
     "content_type": "json",
     "content": "%s",
@@ -76,8 +66,9 @@ def create_routing(upload_id):
     
     message = """
 {
-    "request_type": "amend",
     "upload_id": "%s",
+    "destination_id": "dex-testing",
+    "event_type": "test-event1",
     "stage_name": "dex-routing",
     "content_type": "json",
     "content": "%s"
@@ -135,11 +126,13 @@ def create_hl7_validation(upload_id, line):
     
     message = """
 {
-    "request_type": "amend",
     "upload_id": "%s",
+    "destination_id": "dex-testing",
+    "event_type": "test-event1",
     "stage_name": "dex-hl7-validation",
     "content_type": "json",
     "content": "%s"
 }
 """ % (upload_id, escapedContent)
     return message
+

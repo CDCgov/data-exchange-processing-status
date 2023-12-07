@@ -19,7 +19,10 @@ env = {}
 with open(".env") as envfile:
     for line in envfile:
         name, var = line.partition("=")[::2]
-        env[name.strip()] = var.strip('"')
+        var = var.strip()
+        if var.startswith('"') and var.endswith('"'):
+            var = var[1:-1]
+        env[name.strip()] = var
 
 async def send_single_message(sender, message):
     # Create a Service Bus message and send it to the queue
@@ -32,6 +35,9 @@ async def run():
     print("Upload ID = " + upload_id)
     print("Sending simulated messages via the service bus...")
 
+    conn_str1=env["service_bus_connection_str"]
+    print("sb str = " + conn_str1)
+
     # create a Service Bus client using the connection string
     async with ServiceBusClient.from_connection_string(
         conn_str=env["service_bus_connection_str"],
@@ -40,12 +46,6 @@ async def run():
         # Get a Queue Sender object to send messages to the queue
         sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
         async with sender:
-            # Send create message
-            #print(f"Sending: {CREATE_MSG}")
-            print("Sending report creation...")
-            message = reports.create_report(upload_id)
-            await send_single_message(sender, message)
-            time.sleep(1)
             # Send upload messages
             print("Sending simulated UPLOAD reports...")
             num_chunks = 3
