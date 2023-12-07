@@ -12,6 +12,7 @@ plugins {
 }
 apply plugin: "java"
 apply plugin: "kotlin"
+apply plugin: "maven"
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
@@ -56,6 +57,18 @@ targetCompatibility = "1.8"
 repositories {
     mavenCentral()
 }
+uploadArchives {
+    repositories {
+       mavenDeployer {
+             repository(url: "https://imagehub.cdc.gov/repository/maven-ede-snapshot/") {
+             authentication(userName: System.getenv("IMAGEHUB_USERNAME"), password: System.getenv("IMAGEHUB_PASSWORD"))
+}
+             pom.version = "1.0.0-SNAPSHOT"
+             pom.artifactId = "processing-status-fn"
+             pom.groupId = "gov.cdc.dataexchange.processingapi"
+       }
+    }
+}
 
 azurefunctions {
     subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
@@ -67,9 +80,9 @@ azurefunctions {
       os = 'linux'
     }
     auth {        
-        client = ''
-        tenant = ''
-        key = ''
+        client = System.getProperty('client')
+        tenant = System.getProperty('tenant')
+        key = System.getProperty('key')
         environment = 'AZURE'
     }
     localDebug = "transport=dt_socket,server=y,suspend=n,address=5005"
