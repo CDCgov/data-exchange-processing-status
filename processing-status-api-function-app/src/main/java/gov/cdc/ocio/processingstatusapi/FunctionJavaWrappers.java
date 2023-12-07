@@ -5,6 +5,7 @@ import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.reports.*;
+import gov.cdc.ocio.processingstatusapi.model.DispositionType;
 
 public class FunctionJavaWrappers {
 
@@ -67,24 +68,8 @@ public class FunctionJavaWrappers {
         return new GetTraceByUploadIdFunction().run(request, uploadId, context);
     }
 
-    @FunctionName("CreateReport")
-    public HttpResponseMessage createReport(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.POST},
-                    route = "report",
-                    authLevel = AuthorizationLevel.ANONYMOUS
-            ) HttpRequestMessage<Optional<String>> request,
-            final ExecutionContext context) {
-        return new CreateReportFunction(context).withHttpRequest(request);
-    }
-
     /***
-     * Process a message from the service bus queue.  The same queue is used for all
-     * messages to ensure sequential processing.  For example, we need to ensure if a
-     * report is created first that it can be amended.  With separate queues for creating
-     * and amending there would always be a possibility that the amend message is processed
-     * before the create message.
+     * Process a message from the service bus queue.
      *
      * @param message JSON message content
      * @param context Execution context of the service bus message
@@ -106,8 +91,21 @@ public class FunctionJavaWrappers {
         }
     }
 
-    @FunctionName("AmendReportByUploadId")
-    public HttpResponseMessage amendReportByUploadId(
+    @FunctionName("CreateReportByUploadId")
+    public HttpResponseMessage createReportByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.POST},
+                    route = "report/json/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        return new CreateReportFunction(request, context, DispositionType.ADD).jsonWithUploadId(uploadId);
+    }
+
+    @FunctionName("ReplaceReportByUploadId")
+    public HttpResponseMessage replaceReportByUploadId(
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.PUT},
@@ -116,20 +114,7 @@ public class FunctionJavaWrappers {
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId,
             final ExecutionContext context) {
-        return new AmendReportFunction(request, context).jsonWithUploadId(uploadId);
-    }
-
-    @FunctionName("AmendReportByReportId")
-    public HttpResponseMessage amendReportByReportId(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.PUT},
-                    route = "report/json/reportId/{reportId}",
-                    authLevel = AuthorizationLevel.ANONYMOUS
-            ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("reportId") String reportId,
-            final ExecutionContext context) {
-        return new AmendReportFunction(request, context).jsonWithReportId(reportId);
+        return new CreateReportFunction(request, context, DispositionType.REPLACE).jsonWithUploadId(uploadId);
     }
 
     @FunctionName("GetReportByUploadId")

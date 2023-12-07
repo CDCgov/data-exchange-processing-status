@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.functions.reports
 
-import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
@@ -30,12 +29,11 @@ class GetUploadStatusFunction(
 
     private val logger = context.logger
 
-    private val containerName = "Reports"
+    private val reportsContainerName = "Reports"
+    private val partitionKey = "/uploadId"
 
-    private val container: CosmosContainer
-
-    init {
-        container = CosmosContainerManager.initDatabaseContainer(context, containerName, "/uploadId")!!
+    private val reportsContainer by lazy {
+        CosmosContainerManager.initDatabaseContainer(context, reportsContainerName, partitionKey)!!
     }
 
     /**
@@ -68,7 +66,7 @@ class GetUploadStatusFunction(
         }
 
         val sqlQuery = StringBuilder()
-        sqlQuery.append("from $containerName t where t.destinationId = '$destinationId' and exists (select value u from u in t.reports where u.stageName = '$stageName')")
+        sqlQuery.append("from $reportsContainerName t where t.destinationId = '$destinationId' and t.stageName = '$stageName'")
 
         extEvent?.run {
             sqlQuery.append(" and t.eventType = '$extEvent'")
@@ -100,14 +98,16 @@ class GetUploadStatusFunction(
         }
 
         val countQuery = "select value count(1) $sqlQuery"
+        logger.info("upload status count query = $countQuery")
 
         var totalItems = 0L
         try {
-            val count = container.queryItems(
+            val count = reportsContainer.queryItems(
                     countQuery, CosmosQueryRequestOptions(),
                     Long::class.java
             )
             totalItems = if (count.count() > 0) count.first().toLong() else -1
+            logger.info("Upload status matched count = $totalItems")
         } catch (ex: Exception) {
             // no items found or problem with query
             logger.warning(ex.localizedMessage)
@@ -155,7 +155,8 @@ class GetUploadStatusFunction(
             }
             val offset = (pageNumberAsInt - 1) * pageSizeAsInt
             val dataSqlQuery = "select * $sqlQuery offset $offset limit $pageSizeAsInt"
-            reports = container.queryItems(
+            logger.info("upload status data query = $dataSqlQuery")
+            reports = reportsContainer.queryItems(
                     dataSqlQuery, CosmosQueryRequestOptions(),
                     Report::class.java
             ).toList()
@@ -166,17 +167,14 @@ class GetUploadStatusFunction(
         }
 
         val uploadsStatus = UploadsStatus()
-//        reports.forEach { report ->
-//            report.getUploadStage(stageName)?.let { stageReport ->
-//                try {
-//                    logger.info("*** stageReport = $stageReport")
-//                    val uploadStatus = UploadStatus.createFromStageReport(stageReport)
-//                    uploadsStatus.items.add(uploadStatus)
-//                } catch (e: ContentException) {
-//                    logger.warning("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
-//                }
-//            }
-//        }
+        reports.forEach { report ->
+            try {
+               val uploadStatus = UploadStatus.createFromReport(report)
+                uploadsStatus.items.add(uploadStatus)
+            } catch (e: ContentException) {
+                logger.warning("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
+            }
+        }
 
         uploadsStatus.summary.pageNumber = pageNumberAsInt
         uploadsStatus.summary.pageSize = pageSizeAsInt
