@@ -8,7 +8,7 @@ import com.microsoft.azure.functions.HttpStatus
 import com.microsoft.azure.servicebus.QueueClient
 import com.microsoft.azure.servicebus.ReceiveMode
 import com.microsoft.azure.servicebus.primitives.ConnectionStringBuilder
-import gov.cdc.ocio.cosmossync.cosmos.CosmosClientManager.Companion.getCosmosClient
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.model.CosmosDb
 import gov.cdc.ocio.processingstatusapi.model.HealthCheck
 import gov.cdc.ocio.processingstatusapi.model.Report
@@ -24,10 +24,10 @@ class HealthCheckFunction {
     ): HttpResponseMessage {
         val logger = context.logger
         val result = HealthCheck()
-        var cosmosDBHealthy = false;
-        var serviceBusHealthy = false;
-        var cosmosDBHealth = CosmosDb()
-        var serviceBusHealth = ServiceBus()
+        var cosmosDBHealthy = false
+        var serviceBusHealthy = false
+        val cosmosDBHealth = CosmosDb()
+        val serviceBusHealth = ServiceBus()
         val time = measureTimeMillis {
             try {
                 cosmosDBHealthy = isCosmosDBHealthy()
@@ -64,11 +64,11 @@ class HealthCheckFunction {
         val databaseName = System.getenv("CosmosDbDatabaseName")
         val containerName = System.getenv("CosmosDbContainerName")
 
-        val cosmosDB = getCosmosClient().getDatabase(databaseName)
+        val cosmosDB = CosmosClientManager.getCosmosClient().getDatabase(databaseName)
         val container = cosmosDB.getContainer(containerName)
 
         val sqlQuery = "select * from $containerName t OFFSET 0 LIMIT 1"
-        val items = container.queryItems(
+        container.queryItems(
             sqlQuery, CosmosQueryRequestOptions(),
             Report::class.java
         )
@@ -83,7 +83,7 @@ class HealthCheckFunction {
         return true;
     }
 
-    fun formatMillisToHMS(millis: Long): String {
+    private fun formatMillisToHMS(millis: Long): String {
         val seconds = millis / 1000
         val hours = seconds / 3600
         val minutes = (seconds % 3600) / 60
