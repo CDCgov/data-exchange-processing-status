@@ -20,12 +20,30 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     }
 }
 
-group "gov.cdc.ocio"
+group "gov.cdc.dataexchange.processingapi"
 version "1.0.0-SNAPSHOT"
 
 configurations {
     // create a separate configuration for the agent since it should not be a normal dependency
     agent
+}
+
+publishing {
+    publications {
+        maven(MavenPublication){
+            from(components["java"])
+        }
+        }
+    repositories {
+        maven {
+            name 'nexus'
+            url 'https://imagehub.cdc.gov/repository/maven-ede-snapshot/'
+            credentials {
+                username System.getenv("IMAGEHUB_USERNAME")
+                password System.getenv("IMAGEHUB_PASSWORD")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -57,18 +75,7 @@ targetCompatibility = "1.8"
 repositories {
     mavenCentral()
 }
-uploadArchives {
-    repositories {
-       mavenDeployer {
-             repository(url: "https://imagehub.cdc.gov/repository/maven-ede-snapshot/") {
-             authentication(userName: System.getenv("IMAGEHUB_USERNAME"), password: System.getenv("IMAGEHUB_PASSWORD"))
-}
-             pom.version = "1.0.0-SNAPSHOT"
-             pom.artifactId = "processing-status-fn"
-             pom.groupId = "gov.cdc.dataexchange.processingapi"
-       }
-    }
-}
+
 
 azurefunctions {
     subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
