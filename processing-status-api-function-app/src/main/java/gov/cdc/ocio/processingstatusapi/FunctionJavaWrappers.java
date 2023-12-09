@@ -20,7 +20,7 @@ public class FunctionJavaWrappers {
                     route = "health",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
-        return new HealthCheckFunction().run(request, context);
+        return new HealthCheckFunction(request, context).run();
     }
 
     @FunctionName("CreateTrace")
