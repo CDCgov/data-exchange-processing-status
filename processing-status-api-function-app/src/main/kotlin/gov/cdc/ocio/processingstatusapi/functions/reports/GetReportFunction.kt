@@ -65,7 +65,7 @@ class GetReportFunction(
                 stageReportsSqlQuery, CosmosQueryRequestOptions(),
                 Report::class.java
             )
-            if (reportItems.count() > 0) {
+            if (stageReportItems.count() > 0) {
                 val stageReportItemList = stageReportItems.toList()
 
                 logger.info("Successfully located report with uploadId = $uploadId")
