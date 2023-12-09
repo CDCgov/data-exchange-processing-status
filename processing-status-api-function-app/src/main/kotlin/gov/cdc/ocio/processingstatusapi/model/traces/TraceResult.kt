@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.model.traces
 
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.model.traces.Tags
 import java.util.*
 
 data class TraceResult(
