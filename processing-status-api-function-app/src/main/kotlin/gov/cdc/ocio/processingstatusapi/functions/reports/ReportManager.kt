@@ -9,8 +9,8 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
-import gov.cdc.ocio.processingstatusapi.model.Report
-import gov.cdc.ocio.processingstatusapi.model.stagereports.SchemaDefinition
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import java.util.*
 

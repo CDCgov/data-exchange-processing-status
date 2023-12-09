@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.model.stagereports
+package gov.cdc.ocio.processingstatusapi.model.reports.stagereports
 
 import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat

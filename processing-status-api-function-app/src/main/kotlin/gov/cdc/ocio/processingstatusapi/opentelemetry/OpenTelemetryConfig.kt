@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.functions
+package gov.cdc.ocio.processingstatusapi.opentelemetry
 
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator

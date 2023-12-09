@@ -8,10 +8,10 @@ import com.microsoft.azure.functions.HttpStatus
 import com.microsoft.azure.servicebus.QueueClient
 import com.microsoft.azure.servicebus.ReceiveMode
 import com.microsoft.azure.servicebus.primitives.ConnectionStringBuilder
-import gov.cdc.ocio.cosmossync.cosmos.CosmosClientManager.Companion.getCosmosClient
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.model.CosmosDb
 import gov.cdc.ocio.processingstatusapi.model.HealthCheck
-import gov.cdc.ocio.processingstatusapi.model.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.ServiceBus
 import java.util.*
 import kotlin.system.measureTimeMillis
@@ -64,7 +64,7 @@ class HealthCheckFunction {
         val databaseName = System.getenv("CosmosDbDatabaseName")
         val containerName = System.getenv("CosmosDbContainerName")
 
-        val cosmosDB = getCosmosClient().getDatabase(databaseName)
+        val cosmosDB = CosmosClientManager.getCosmosClient().getDatabase(databaseName)
         val container = cosmosDB.getContainer(containerName)
 
         val sqlQuery = "select * from $containerName t OFFSET 0 LIMIT 1"
