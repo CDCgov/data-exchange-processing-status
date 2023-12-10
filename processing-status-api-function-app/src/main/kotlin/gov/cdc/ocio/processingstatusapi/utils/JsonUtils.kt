@@ -28,6 +28,11 @@ class JsonUtils {
             return gson.toJson(jsonElement)
         }
 
+        /**
+         * Gson with UTC dates for serialization
+         *
+         * @return Gson
+         */
         fun getGsonBuilderWithUTC(): Gson {
             return GsonBuilder()
                 .registerTypeAdapter(Date::class.java,
