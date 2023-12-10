@@ -1,12 +1,14 @@
 package gov.cdc.ocio.processingstatusapi.functions.traces
 
+import com.google.gson.Gson
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.model.traces.SpanMarkType
-import gov.cdc.ocio.processingstatusapi.opentelemetry.OpenTelemetryConfig
+import gov.cdc.ocio.processingstatusapi.model.traces.Tags
 import gov.cdc.ocio.processingstatusapi.model.traces.TraceResult
+import gov.cdc.ocio.processingstatusapi.opentelemetry.OpenTelemetryConfig
 import io.opentelemetry.api.trace.*
 import io.opentelemetry.context.Context
 import java.util.*
@@ -33,6 +35,8 @@ class AddSpanToTraceFunction(
 
     private var spanMarkType = SpanMarkType.UNKNOWN
 
+    private val requestBody = request.body.orElse("")
+
     /**
      * For a given HTTP request, this method creates a processing status span for a given trace.
      * In order to process, the HTTP request must contain stageName and spanMark.
@@ -53,7 +57,19 @@ class AddSpanToTraceFunction(
 
         logger.info("stageName: $stageName")
         logger.info("spanMark: $spanMark")
-        logger.info(spanMark)
+
+        // See if we were given any optional tags
+        var tags: Array<Tags>? = null
+        try {
+            if (requestBody.isNotBlank()) {
+                tags = Gson().fromJson(requestBody, Array<Tags>::class.java)
+            }
+        } catch (e: Exception) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("Failed to parse the optional metadata tags in the request body")
+                .build()
+        }
 
         val spanContext = SpanContext.createFromRemoteParent(
             traceId,
@@ -66,6 +82,10 @@ class AddSpanToTraceFunction(
             .setParent(Context.current().with(Span.wrap(spanContext)))
             .startSpan()
         span.setAttribute("spanMark", spanMark!!)
+        tags?.forEach {
+            if (it.key != null && it.value != null)
+                span.setAttribute(it.key!!, it.value!!)
+        }
         span.end()
 
         val result = TraceResult().apply {
