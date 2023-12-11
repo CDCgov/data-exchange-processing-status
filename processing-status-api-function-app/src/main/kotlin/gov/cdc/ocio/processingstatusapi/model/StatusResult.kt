@@ -1,11 +1,22 @@
 package gov.cdc.ocio.processingstatusapi.model
 
-import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
-import gov.cdc.ocio.processingstatusapi.model.traces.TraceResult
+import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.traces.TraceDao
 
 data class StatusResult(
 
-    var trace: TraceResult? = null,
+    @SerializedName("upload_id")
+    var uploadId: String? = null,
 
-    var report: ReportDao? = null
+    @SerializedName("destination_id")
+    var destinationId: String? = null,
+
+    @SerializedName("event_type")
+    var eventType: String? = null,
+
+    @SerializedName("trace")
+    var trace: TraceDao? = null,
+
+    var reports: List<Report>? = null
 )

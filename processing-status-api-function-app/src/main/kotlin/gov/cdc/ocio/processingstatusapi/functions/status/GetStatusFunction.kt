@@ -13,6 +13,7 @@ import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
 import gov.cdc.ocio.processingstatusapi.model.traces.*
+import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import java.util.*
 
 
@@ -40,7 +41,12 @@ class GetStatusFunction(
         .registerTypeAdapter(
             Report::class.java,
             ReportSerializer()
-        ).create()
+        )
+        .registerTypeAdapter(
+            Date::class.java,
+            JsonUtils.GsonUTCDateAdapter()
+        )
+        .create()
 
     /**
      * Retrieve a complete status (traces + reports) for the provided upload ID.
@@ -73,8 +79,11 @@ class GetStatusFunction(
         }
 
         val status = StatusResult().apply {
-            trace = traceResult
-            report = reportResult
+            this.uploadId = traceResult?.uploadId
+            this.destinationId = traceResult?.destinationId
+            this.eventType = traceResult?.eventType
+            trace = traceResult?.let { TraceDao.buildFromTraceResult(it) }
+            reports = reportResult?.reports
         }
 
         return request
