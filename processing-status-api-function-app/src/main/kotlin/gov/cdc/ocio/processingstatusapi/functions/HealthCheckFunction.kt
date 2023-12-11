@@ -8,6 +8,7 @@ import com.microsoft.azure.functions.HttpStatus
 import com.microsoft.azure.servicebus.QueueClient
 import com.microsoft.azure.servicebus.ReceiveMode
 import com.microsoft.azure.servicebus.primitives.ConnectionStringBuilder
+import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.model.CosmosDb
 import gov.cdc.ocio.processingstatusapi.model.HealthCheck
@@ -29,12 +30,7 @@ class HealthCheckFunction(
 ) {
     private val logger = context.logger
 
-    fun run(
-        request: HttpRequestMessage<Optional<String>>,
-        context: ExecutionContext,
-    ): HttpResponseMessage {
-        val logger = context.logger
-        val result = HealthCheck()
+    fun run(): HttpResponseMessage {
         var cosmosDBHealthy = false
         var serviceBusHealthy = false
         val cosmosDBHealth = CosmosDb()
