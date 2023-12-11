@@ -5,6 +5,7 @@ import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.reports.*;
+import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.AddSpanToTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.GetTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction;
@@ -172,5 +173,19 @@ public class FunctionJavaWrappers {
             final ExecutionContext context) {
         context.getLogger().info("getReportByStage: destinationId=" + destinationId + ", stageName=" + stageName);
         return new GetReportFunction(request, context).withDestinationId(destinationId, stageName);
+    }
+
+    @FunctionName("GetStatusByUploadId")
+    public HttpResponseMessage getStatusByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "status/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        context.getLogger().info("getStatusByUploadId: uploadId=" + uploadId);
+        return new GetStatusFunction(request, context).withUploadId(uploadId);
     }
 }
