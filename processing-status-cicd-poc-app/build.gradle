@@ -67,9 +67,9 @@ azurefunctions {
       os = 'linux'
     }
     auth {        
-        client = System.getProperty('client')
-        tenant = System.getProperty('tenant')
-        key = System.getProperty('key')
+        client = System.getenv("AZURE_CLIENT_ID")
+        tenant = System.getenv("AZURE_TENANT_ID")
+        key = System.getenv("AZURE_SECRET")
         environment = 'AZURE'
     }
     localDebug = "transport=dt_socket,server=y,suspend=n,address=5005"
