@@ -3,7 +3,6 @@ import uuid
 import time
 import requests
 import reports
-import json
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus import TransportType
@@ -26,10 +25,20 @@ with open(".env") as envfile:
             var = var[1:-1]
         env[name.strip()] = var
 
+pstatus_base_url=env["pstatus_api_base_url"]
+
 async def send_single_message(sender, message):
     # Create a Service Bus message and send it to the queue
     message = ServiceBusMessage(message)
     await sender.send_messages(message)
+
+def send_start_trace(trace_id, parent_span_id, stage_name):
+    url = f'{pstatus_base_url}/api/trace/addSpan/{trace_id}/{parent_span_id}?stageName={stage_name}&spanMark=start'
+    requests.put(url)
+
+def send_stop_trace(trace_id, parent_span_id, stage_name):
+    url = f'{pstatus_base_url}/api/trace/addSpan/{trace_id}/{parent_span_id}?stageName={stage_name}&spanMark=stop'
+    requests.put(url)
 
 async def run():
     # Generate a unqiue upload ID
@@ -39,8 +48,6 @@ async def run():
 
     conn_str1=env["service_bus_connection_str"]
     print("sb str = " + conn_str1)
-
-    pstatus_base_url=env["pstatus_api_base_url"]
 
     # create a Service Bus client using the connection string
     async with ServiceBusClient.from_connection_string(
@@ -56,8 +63,10 @@ async def run():
             response_json = response.json()
             trace_id = response_json["trace_id"]
             parent_span_id = response_json["span_id"]
-            url = f'{pstatus_base_url}/api/trace/addSpan/{trace_id}/{parent_span_id}?stageName=dex-upload&spanMark=start'
-            requests.put(url)
+
+            # Send the start trace
+            send_start_trace(trace_id, parent_span_id, "dex-upload")
+
             # Send upload messages
             print("Sending simulated UPLOAD reports...")
             num_chunks = 3
@@ -68,14 +77,22 @@ async def run():
                 #print(f"Sending: {message}")
                 await send_single_message(sender, message)
                 time.sleep(1)
-            url = f'{pstatus_base_url}/api/trace/addSpan/{trace_id}/{parent_span_id}?stageName=dex-upload&spanMark=stop'
-            requests.put(url)
+            # Send the stop trace
+            send_stop_trace(trace_id, parent_span_id, "dex-upload")
+
+            # Send the start trace
+            send_start_trace(trace_id, parent_span_id, "dex-routing")
+
             # Send routing message
             print("Sending simulated ROUTING report...")
             message = reports.create_routing(upload_id)
             #print(f"Sending: {message}")
             await send_single_message(sender, message)
+            # Send the stop trace
+            send_stop_trace(trace_id, parent_span_id, "dex-routing")
 
+            # Send the start trace
+            send_start_trace(trace_id, parent_span_id, "dex-hl7-validation")
             # Send hl7 validation messages
             print("Sending simulated HL7-VALIDATION reports...")
             num_lines = 2
@@ -84,6 +101,8 @@ async def run():
                 message = reports.create_hl7_validation(upload_id, line)
                 #print(f"Sending: {message}")
                 await send_single_message(sender, message)
+            # Send the stop trace
+            send_stop_trace(trace_id, parent_span_id, "dex-hl7-validation")
 
 asyncio.run(run())
 print("Done sending messages")
