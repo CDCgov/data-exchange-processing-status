@@ -89,7 +89,4 @@ class GetTraceFunction(
             .build()
     }
 
-    companion object {
-        val excludedSpanTags = listOf("spanMark", "span.kind", "internal.span.format")
-    }
 }

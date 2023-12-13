@@ -120,7 +120,7 @@ class GetStatusFunction(
     }
 
     companion object {
-        val excludedSpanTags = listOf("spanMark", "span.kind", "internal.span.format")
+        val excludedSpanTags = listOf("spanMark", "span.kind", "internal.span.format", "otel.library.name")
     }
 
 //    private fun getTraces(uploadId: String): TraceResult? {
