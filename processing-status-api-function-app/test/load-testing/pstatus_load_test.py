@@ -46,9 +46,6 @@ async def run():
     print("Upload ID = " + upload_id)
     print("Sending simulated messages via the service bus...")
 
-    conn_str1=env["service_bus_connection_str"]
-    print("sb str = " + conn_str1)
-
     # create a Service Bus client using the connection string
     async with ServiceBusClient.from_connection_string(
         conn_str=env["service_bus_connection_str"],
