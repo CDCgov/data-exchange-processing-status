@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.model
+package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
 
 /**
  * Report data access object.  A report is an aggregate of smaller reports from each of the stages that make up a service

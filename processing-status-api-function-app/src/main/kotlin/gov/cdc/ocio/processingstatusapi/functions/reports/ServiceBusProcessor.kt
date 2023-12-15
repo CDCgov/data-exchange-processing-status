@@ -6,6 +6,7 @@ import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.*
+import gov.cdc.ocio.processingstatusapi.model.reports.CreateReportSBMessage
 import java.util.*
 
 /**

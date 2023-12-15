@@ -6,7 +6,7 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.model.CreateReportResult
+import gov.cdc.ocio.processingstatusapi.model.reports.CreateReportResult
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import java.util.*
 

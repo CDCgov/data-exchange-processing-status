@@ -5,6 +5,10 @@ import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.*;
 import gov.cdc.ocio.processingstatusapi.functions.reports.*;
+import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
+import gov.cdc.ocio.processingstatusapi.functions.traces.AddSpanToTraceFunction;
+import gov.cdc.ocio.processingstatusapi.functions.traces.GetTraceFunction;
+import gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction;
 import gov.cdc.ocio.processingstatusapi.model.DispositionType;
 
 public class FunctionJavaWrappers {
@@ -17,18 +21,18 @@ public class FunctionJavaWrappers {
                     route = "health",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
-        return new HealthCheckFunction().run(request, context);
+        return new HealthCheckFunction(request, context).run();
     }
 
-    @FunctionName("Trace")
-    public HttpResponseMessage trace(
+    @FunctionName("CreateTrace")
+    public HttpResponseMessage createTrace(
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.POST},
                     route = "trace",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
-        return new TraceFunction().run(request, context);
+        return new CreateTraceFunction(request, context).create();
     }
 
     @FunctionName("AddSpanToTrace")
@@ -41,11 +45,11 @@ public class FunctionJavaWrappers {
             @BindingName("traceId") String traceId,
             @BindingName("spanId") String spanId,
             final ExecutionContext context) {
-        return new AddSpanToTraceFunction().run(request, traceId, spanId, context);
+        return new AddSpanToTraceFunction(request, context).addSpan(traceId, spanId);
     }
 
-    @FunctionName("GetTrace")
-    public HttpResponseMessage getTraceById(
+    @FunctionName("GetTraceByTraceId")
+    public HttpResponseMessage getTraceByTraceId(
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
@@ -53,7 +57,7 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("traceId") String traceId,
             final ExecutionContext context) {
-        return new GetTraceFunction().run(request, traceId, context);
+        return new GetTraceFunction(request, context).withTraceId(traceId);
     }
 
     @FunctionName("GetTraceByUploadId")
@@ -65,7 +69,7 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId,
             final ExecutionContext context) {
-        return new GetTraceByUploadIdFunction().run(request, uploadId, context);
+        return new GetTraceFunction(request, context).withUploadId(uploadId);
     }
 
     /***
@@ -169,5 +173,19 @@ public class FunctionJavaWrappers {
             final ExecutionContext context) {
         context.getLogger().info("getReportByStage: destinationId=" + destinationId + ", stageName=" + stageName);
         return new GetReportFunction(request, context).withDestinationId(destinationId, stageName);
+    }
+
+    @FunctionName("GetStatusByUploadId")
+    public HttpResponseMessage getStatusByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "status/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        context.getLogger().info("getStatusByUploadId: uploadId=" + uploadId);
+        return new GetStatusFunction(request, context).withUploadId(uploadId);
     }
 }

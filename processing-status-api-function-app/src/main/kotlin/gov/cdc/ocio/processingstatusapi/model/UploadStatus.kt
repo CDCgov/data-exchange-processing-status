@@ -3,8 +3,9 @@ package gov.cdc.ocio.processingstatusapi.model
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.model.stagereports.SchemaDefinition
-import gov.cdc.ocio.processingstatusapi.model.stagereports.UploadStage
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.UploadStage
 import java.util.*
 
 /**

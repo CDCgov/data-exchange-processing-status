@@ -8,6 +8,9 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.*
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
+import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
 import java.util.*
 
 /**
@@ -62,7 +65,7 @@ class GetReportFunction(
                 stageReportsSqlQuery, CosmosQueryRequestOptions(),
                 Report::class.java
             )
-            if (reportItems.count() > 0) {
+            if (stageReportItems.count() > 0) {
                 val stageReportItemList = stageReportItems.toList()
 
                 logger.info("Successfully located report with uploadId = $uploadId")

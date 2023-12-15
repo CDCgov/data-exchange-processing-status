@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.model
+package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.processingstatusapi.model.ServiceBusMessage
 
 /**
  * Create a report service bus message.
