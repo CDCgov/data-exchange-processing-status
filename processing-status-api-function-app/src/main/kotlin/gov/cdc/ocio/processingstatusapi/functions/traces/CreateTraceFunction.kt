@@ -1,11 +1,11 @@
 package gov.cdc.ocio.processingstatusapi.functions.traces
 
-import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.opentelemetry.OpenTelemetryConfig
 import gov.cdc.ocio.processingstatusapi.model.traces.TraceResult
+import mu.KotlinLogging
 import java.util.*
 
 
@@ -13,10 +13,9 @@ import java.util.*
  *  Creates a new distributed tracing trace for the given HTTP request
  */
 class CreateTraceFunction(
-    private val request: HttpRequestMessage<Optional<String>>,
-    context: ExecutionContext
+    private val request: HttpRequestMessage<Optional<String>>
 ) {
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     private val openTelemetry by lazy {
         OpenTelemetryConfig.initOpenTelemetry()

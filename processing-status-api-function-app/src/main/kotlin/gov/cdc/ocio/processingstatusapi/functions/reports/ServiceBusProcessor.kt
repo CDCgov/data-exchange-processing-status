@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.CreateReportSBMessage
+import mu.KotlinLogging
 import java.util.*
 
 /**
@@ -17,7 +18,7 @@ import java.util.*
  */
 class ServiceBusProcessor(private val context: ExecutionContext) {
 
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Process a service bus message with the provided message.
@@ -30,7 +31,7 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         try {
             createReport(Gson().fromJson(message, CreateReportSBMessage::class.java))
         } catch (e: JsonSyntaxException) {
-            logger.warning("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
+            logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadStateException("Unable to interpret the create report message")
         }
     }
@@ -63,7 +64,7 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
             ?: throw BadRequestException("Missing required field content")
 
         logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
-        ReportManager(context).createReportWithUploadId(
+        ReportManager().createReportWithUploadId(
             uploadId,
             destinationId,
             eventType,

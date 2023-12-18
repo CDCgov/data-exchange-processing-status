@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.functions.reports
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
@@ -11,10 +10,10 @@ import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.UploadStatus
 import gov.cdc.ocio.processingstatusapi.model.UploadsStatus
+import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.logging.Level
 
 /**
  * Collection of ways to get upload status.
@@ -24,16 +23,16 @@ import java.util.logging.Level
  * @constructor
  */
 class GetUploadStatusFunction(
-        private val request: HttpRequestMessage<Optional<String>>,
-        context: ExecutionContext) {
+    private val request: HttpRequestMessage<Optional<String>>
+) {
 
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     private val reportsContainerName = "Reports"
     private val partitionKey = "/uploadId"
 
     private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(context, reportsContainerName, partitionKey)!!
+        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)!!
     }
 
     /**
@@ -77,7 +76,7 @@ class GetUploadStatusFunction(
                 val dateStartEpochSecs = getEpochFromDateString(dateStart, "date_start")
                 sqlQuery.append(" and t._ts >= $dateStartEpochSecs")
             } catch (e: BadRequestException) {
-                logger.log(Level.SEVERE, e.localizedMessage)
+                logger.error(e.localizedMessage)
                 return request
                         .createResponseBuilder(HttpStatus.BAD_REQUEST)
                         .body(e.localizedMessage)
@@ -89,7 +88,7 @@ class GetUploadStatusFunction(
                 val dateEndEpochSecs = getEpochFromDateString(dateEnd, "date_end")
                 sqlQuery.append(" and t._ts < $dateEndEpochSecs")
             } catch (e: BadRequestException) {
-                logger.log(Level.SEVERE, e.localizedMessage)
+                logger.error(e.localizedMessage)
                 return request
                         .createResponseBuilder(HttpStatus.BAD_REQUEST)
                         .body(e.localizedMessage)
@@ -110,7 +109,7 @@ class GetUploadStatusFunction(
             logger.info("Upload status matched count = $totalItems")
         } catch (ex: Exception) {
             // no items found or problem with query
-            logger.warning(ex.localizedMessage)
+            logger.error(ex.localizedMessage)
         }
 
         val numberOfPages: Int
@@ -172,7 +171,7 @@ class GetUploadStatusFunction(
                val uploadStatus = UploadStatus.createFromReport(report)
                 uploadsStatus.items.add(uploadStatus)
             } catch (e: ContentException) {
-                logger.warning("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
+                logger.error("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
             }
         }
 
