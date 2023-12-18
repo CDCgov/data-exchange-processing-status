@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
-import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
@@ -12,6 +11,7 @@ import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
+import mu.KotlinLogging
 import java.util.*
 
 /**
@@ -20,15 +20,15 @@ import java.util.*
  * @property context ExecutionContext
  * @constructor
  */
-class ReportManager(context: ExecutionContext) {
+class ReportManager {
 
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     private val reportsContainerName = "Reports"
     private val partitionKey = "/uploadId"
 
     private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(context, reportsContainerName, partitionKey)!!
+        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)!!
     }
 
     /**

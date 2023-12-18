@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.google.gson.GsonBuilder
-import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
@@ -11,6 +10,7 @@ import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
+import mu.KotlinLogging
 import java.util.*
 
 /**
@@ -21,16 +21,16 @@ import java.util.*
  * @constructor
  */
 class GetReportFunction(
-        private val request: HttpRequestMessage<Optional<String>>,
-        context: ExecutionContext) {
+    private val request: HttpRequestMessage<Optional<String>>
+) {
 
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     private val reportsContainerName = "Reports"
     private val partitionKey = "/uploadId"
 
     private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(context, reportsContainerName, partitionKey)!!
+        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)!!
     }
 
     private val gson = GsonBuilder()
@@ -83,7 +83,7 @@ class GetReportFunction(
                     .build()
             }
         }
-        logger.warning("Failed to locate report with uploadId = $uploadId")
+        logger.error("Failed to locate report with uploadId = $uploadId")
 
         return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -117,7 +117,7 @@ class GetReportFunction(
                     .build()
         }
 
-        logger.warning("Failed to locate report with reportId = $reportId")
+        logger.error("Failed to locate report with reportId = $reportId")
 
         return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)

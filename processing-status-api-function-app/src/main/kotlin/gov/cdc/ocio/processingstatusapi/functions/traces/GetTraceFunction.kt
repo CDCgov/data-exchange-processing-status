@@ -1,22 +1,21 @@
 package gov.cdc.ocio.processingstatusapi.functions.traces
 
 import com.google.gson.*
-import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
+import mu.KotlinLogging
 import java.util.*
 
 /**
  * Collection of functions to get traces.
  */
 class GetTraceFunction(
-    private val request: HttpRequestMessage<Optional<String>>,
-    context: ExecutionContext
+    private val request: HttpRequestMessage<Optional<String>>
 ) {
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     private val gson = JsonUtils.getGsonBuilderWithUTC()
 

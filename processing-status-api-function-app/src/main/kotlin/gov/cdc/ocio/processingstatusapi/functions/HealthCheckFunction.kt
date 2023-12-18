@@ -14,6 +14,7 @@ import gov.cdc.ocio.processingstatusapi.model.CosmosDb
 import gov.cdc.ocio.processingstatusapi.model.HealthCheck
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.ServiceBus
+import mu.KotlinLogging
 import java.util.*
 import kotlin.system.measureTimeMillis
 
@@ -25,10 +26,9 @@ import kotlin.system.measureTimeMillis
  * @constructor
  */
 class HealthCheckFunction(
-    private val request: HttpRequestMessage<Optional<String>>,
-    context: ExecutionContext
+    private val request: HttpRequestMessage<Optional<String>>
 ) {
-    private val logger = context.logger
+    val logger = KotlinLogging.logger {}
 
     fun run(): HttpResponseMessage {
         var cosmosDBHealthy = false
@@ -41,7 +41,7 @@ class HealthCheckFunction(
                 cosmosDBHealth.status = "UP"
             } catch (ex: Exception) {
                 cosmosDBHealth.healthIssues = ex.message
-                logger.warning("CosmosDB is not healthy: ${ex.message}")
+                logger.error("CosmosDB is not healthy: ${ex.message}")
             }
 
             try {
@@ -49,7 +49,7 @@ class HealthCheckFunction(
                 serviceBusHealth.status = "UP"
             } catch (ex: Exception) {
                 serviceBusHealth.healthIssues = ex.message
-                logger.warning("Azure Service Bus is not healthy: ${ex.message}")
+                logger.error("Azure Service Bus is not healthy: ${ex.message}")
             }
         }
 

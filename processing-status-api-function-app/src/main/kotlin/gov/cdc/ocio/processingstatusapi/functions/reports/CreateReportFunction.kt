@@ -8,6 +8,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.reports.CreateReportResult
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
+import mu.KotlinLogging
 import java.util.*
 
 /**
@@ -19,10 +20,9 @@ import java.util.*
  */
 class CreateReportFunction(
         private val request: HttpRequestMessage<Optional<String>>,
-        private val context: ExecutionContext,
         private val dispositionType: DispositionType) {
 
-    private val logger = context.logger
+    private val logger = KotlinLogging.logger {}
 
     private val destinationId = request.queryParameters["destinationId"]
 
@@ -48,7 +48,7 @@ class CreateReportFunction(
         checkRequired()?.let { return it }
 
         try {
-            val stageReportId = ReportManager(context).createReportWithUploadId(
+            val stageReportId = ReportManager().createReportWithUploadId(
                 uploadId,
                 destinationId!!,
                 eventType!!,
@@ -60,7 +60,7 @@ class CreateReportFunction(
             return successResponse(stageReportId, reportStageName)
 
         } catch (e: BadRequestException) {
-            logger.warning("Failed to amend report with uploadId = $uploadId: ${e.localizedMessage}")
+            logger.error("Failed to amend report with uploadId = $uploadId: ${e.localizedMessage}")
             return request
                     .createResponseBuilder(HttpStatus.BAD_REQUEST)
                     .body(e.localizedMessage)
