@@ -65,13 +65,22 @@ repositories {
 }
 
 azurefunctions {
-    subscription = System.getProperty("subscription")
-    resourceGroup = System.getProperty("resourceGroup")
-    appName = System.getProperty("appName")
-    allowTelemetry = false
-
-    auth {
-        type = 'azure_cli'
+    subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
+    resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'
+    appName = 'ocio-ede-dev-pstatus-api'
+    allowTelemetry = 'false'
+    appServicePlanName = 'ocio-ede-dev-processingstatus-linux-function-plan'
+    runtime {
+      os = 'linux'
+    }
+    auth {        
+        client = System.getenv("AZURE_CLIENT_ID")
+        tenant = System.getenv("AZURE_TENANT_ID")
+        key = System.getenv("AZURE_SECRET")
+        environment = 'AZURE'
+    }
+    localDebug = "transport=dt_socket,server=y,suspend=n,address=5005"
+    deployment {
+        type = 'run_from_blob'
     }
 }
-
