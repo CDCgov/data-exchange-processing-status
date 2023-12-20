@@ -69,7 +69,7 @@ azurefunctions {
     resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'
     appName = 'ocio-ede-dev-pstatus-api'
     allowTelemetry = 'false'
-    appServicePlanName = 'ocio-ede-dev-processingstatus-linux-function-plan'
+    appServicePlanName = 'ocio-ede-dev-pstatus-linux-function-plan'
     runtime {
       os = 'linux'
     }
