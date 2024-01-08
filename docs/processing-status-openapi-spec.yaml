@@ -50,12 +50,24 @@ paths:
       description: >-
         Creates a new distributed tracing trace.
       parameters:
-        - name: stageName
+        - name: uploadId
           in: query
           required: true
           schema:
             type: string
-          description: Name of the stage providing the trace.
+          description: Upload identifier.
+        - name: destinationId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Destination identifier.
+        - name: eventType
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Event Type.
       responses:
         '200':
           description: Report for the given identifier
@@ -64,7 +76,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateTrace'
         '400':
-          description: Bad request.  The provided stageName is not allowed.
+          description: uploadId, destinationId and eventType are required.
         '401':
           description: Authorization information is missing or invalid.
   '/trace/addSpan/{traceId}/{spanId}':
@@ -206,8 +218,19 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Upload identifier this report is associated with.
+          description: Upload identifier.
+        - name: destinationId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Destination identifier.
+        - name: eventType
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Event Type.
       description: >-
         Creates an initial report.  The initial report is blank until ammended by the stages.
       responses:
@@ -221,7 +244,7 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report/uploadId/{uploadId}':
+  '/report/json/uploadId/{uploadId}':
     put:
       tags:
         - DEX Reports
@@ -270,7 +293,7 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report/reportId/{reportId}':
+  '/report/json/reportId/{reportId}':
     put:
       tags:
         - DEX Reports
@@ -519,7 +542,7 @@ paths:
           description: Bad request.  The upload identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/status/{destinationId}':
+  '/upload/{destinationId}':
     get:
       tags:
         - DEX Status
