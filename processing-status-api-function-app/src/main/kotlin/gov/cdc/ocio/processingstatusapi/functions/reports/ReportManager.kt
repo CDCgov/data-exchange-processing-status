@@ -28,7 +28,7 @@ class ReportManager {
     private val partitionKey = "/uploadId"
 
     private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)!!
+        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)
     }
 
     /**
@@ -92,14 +92,14 @@ class ReportManager {
                 logger.info("Replacing report(s) with stage name = $stageName")
                 // Delete all stages matching the report ID with the same stage name
                 val sqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId' and r.stageName = '$stageName'"
-                val items = reportsContainer.queryItems(
+                val items = reportsContainer?.queryItems(
                     sqlQuery, CosmosQueryRequestOptions(),
                     Report::class.java
                 )
-                if (items.count() > 0) {
+                if ((items?.count() ?: 0) > 0) {
                     try {
-                        items.forEach {
-                            reportsContainer.deleteItem(
+                        items?.forEach {
+                            reportsContainer?.deleteItem(
                                 it.id,
                                 PartitionKey(it.uploadId),
                                 CosmosItemRequestOptions()
@@ -150,12 +150,12 @@ class ReportManager {
             this.content = if (contentType.lowercase() == "json") JsonUtils.minifyJson(content) else content
         }
 
-        val response = reportsContainer.createItem(
+        val response = reportsContainer?.createItem(
             stageReport,
             PartitionKey(uploadId),
             CosmosItemRequestOptions()
         )
-        logger.info("Created at ${Date()}, reportId = ${response.item.reportId}")
+        logger.info("Created at ${Date()}, reportId = ${response?.item?.reportId}")
         return stageReportId
     }
 }

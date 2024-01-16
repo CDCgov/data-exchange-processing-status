@@ -28,12 +28,7 @@ def create_upload(upload_id, offset, size):
     }
 }
 """ % (upload_id, offset, size)
-    escapedContent = content.translate(str.maketrans(
-    {
-        "\"": r"\"",
-        "\\": r"\\"
-    }))
-    
+
     message = """
 {
     "upload_id": "%s",
@@ -41,10 +36,10 @@ def create_upload(upload_id, offset, size):
     "event_type": "test-event1",
     "stage_name": "dex-upload",
     "content_type": "json",
-    "content": "%s",
+    "content": %s,
     "disposition_type": "replace"
 }
-""" % (upload_id, escapedContent)
+""" % (upload_id, content)
     return message
 
 def create_routing(upload_id):
@@ -58,12 +53,7 @@ def create_routing(upload_id):
     "result": "success"
 }
 """ % (datetime.now())
-    escapedContent = content.translate(str.maketrans(
-    {
-        "\"": r"\"",
-        "\\": r"\\"
-    }))
-    
+
     message = """
 {
     "upload_id": "%s",
@@ -71,9 +61,9 @@ def create_routing(upload_id):
     "event_type": "test-event1",
     "stage_name": "dex-routing",
     "content_type": "json",
-    "content": "%s"
+    "content": %s
 }
-""" % (upload_id, escapedContent)
+""" % (upload_id, content)
     return message
 
 def create_hl7_validation(upload_id, line):
@@ -118,11 +108,6 @@ def create_hl7_validation(upload_id, line):
     "status": "STRUCTURE_ERRORS"
 }
 """ % (line, line)
-    escapedContent = content.translate(str.maketrans(
-    {
-        "\"": r"\"",
-        "\\": r"\\"
-    }))
     
     message = """
 {
@@ -131,8 +116,8 @@ def create_hl7_validation(upload_id, line):
     "event_type": "test-event1",
     "stage_name": "dex-hl7-validation",
     "content_type": "json",
-    "content": "%s"
+    "content": %s
 }
-""" % (upload_id, escapedContent)
+""" % (upload_id, content)
     return message
 
