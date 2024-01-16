@@ -46,22 +46,28 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
     private fun createReport(createReportMessage: CreateReportSBMessage) {
 
         val uploadId = createReportMessage.uploadId
-            ?: throw BadRequestException("Missing required field uploadId")
+            ?: throw BadRequestException("Missing required field upload_id")
 
         val destinationId = createReportMessage.destinationId
-            ?: throw BadRequestException("Missing required field destinationId")
+            ?: throw BadRequestException("Missing required field destination_id")
 
         val eventType = createReportMessage.eventType
-            ?: throw BadRequestException("Missing required field eventType")
+            ?: throw BadRequestException("Missing required field event_type")
 
         val stageName = createReportMessage.stageName
-            ?: throw BadRequestException("Missing required field stageName")
+            ?: throw BadRequestException("Missing required field stage_name")
 
         val contentType = createReportMessage.contentType
-            ?: throw BadRequestException("Missing required field contentType")
+            ?: throw BadRequestException("Missing required field content_type")
 
-        val content = createReportMessage.content
-            ?: throw BadRequestException("Missing required field content")
+        val content: String
+        try {
+            content = createReportMessage.contentAsString
+                ?: throw BadRequestException("Missing required field content")
+        } catch (ex: BadStateException) {
+            // assume a bad request
+            throw BadRequestException(ex.localizedMessage)
+        }
 
         logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
         ReportManager().createReportWithUploadId(
