@@ -618,7 +618,7 @@ paths:
   '/notifications/subscribe/emails/{destinationId}':
     put:
       tags:
-        - DEX Tracing
+        - DEX Notifications
       summary: Create a subscription on the given destinationId, stageNames and event types for the provided email.
       description: >-
         Creates a new subscription for the email.
@@ -661,7 +661,7 @@ paths:
   '/notifications/subscribe/websockets/{destinationId}':
     put:
       tags:
-        - DEX Tracing
+        - DEX Notifications
       summary: Create a subscription on the given destinationId, stageNames and event types for the provided web socket url.
       description: >-
         Creates a new subscription for the web socket url.
@@ -704,7 +704,7 @@ paths:
   '/notifications/unsubscribe/emails/{destinationId}':
     put:
       tags:
-        - DEX Tracing
+        - DEX Notifications
       summary: Unsubscribe to the email subscriptions for the given destinationId, optional stageName and eventType provided the valid emailId.
       description: >-
         Removes an existing subscription of the email channel from the given destinationId, stage and eventType.
@@ -747,7 +747,7 @@ paths:
   '/notifications/unsubscribe/websockets/{destinationId}':
     put:
       tags:
-        - DEX Tracing
+        - DEX Notifications
       summary: Unsubscribe to the websocket subscriptions for the given destinationId, optional stageName and eventType provided the web socket url.
       description: >-
         Removes an existing subscription of the web socket channel from the given destinationId, stage and eventType.
