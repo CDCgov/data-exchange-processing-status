@@ -615,56 +615,62 @@ paths:
                   timestamp:
                     type: string
                     format: date
-  '/notifications/subscribe/emails/{destinationId}':
-    put:
+  '/notifications/subscribe/email/{destinationId}/{eventType}':
+    post:
       tags:
         - DEX Notifications
       summary: Create a subscription on the given destinationId, stageNames and event types for the provided email.
       description: >-
-        Creates a new subscription for the email.
+        Creates a new email subscription for the notification of any type of status updates(warnings, errors or success) of pipeline.
       parameters:
         - name: destinationId
           in: path
           required: true
           schema:
             type: string
-          description: Destination ID
+          description: Destination Id or Program Id to subscribe for notifications.
+        - name: eventType
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Event type within the program to subscribe.
         - name: email
           in: query
           required: true
           schema:
             type: string
-          description: Valid Email address to subscribe.
+          description: Valid Email address of the user to subscribe with where the user will get notification.
         - name: stageName
           in: query
-          required: false
+          required: true
           schema:
             type: string
-          description: Stage name to subscribe. By default you subscribe to all.
-        - name: eventType
+          description: Stage name to subscribe.
+        - name: statusType
           in: query
-          required: false
+          required: true
           schema:
             type: string
-          description: Event type to subscribe. By default subscribe to all.
+          description: Status Type could be the status of the pipeline, i.e. 'Success', 'Failure' or 'Warning'.
       responses:
         '200':
           description: Subscription Id with success message
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessingStatus'
+                $ref: '#/components/schemas/EmailSubscriptionNotification'
         '400':
           description: Bad request. The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/notifications/subscribe/websockets/{destinationId}':
-    put:
+  '/notifications/subscribe/websocket/{destinationId}/{eventType}':
+    post:
       tags:
         - DEX Notifications
       summary: Create a subscription on the given destinationId, stageNames and event types for the provided web socket url.
       description: >-
-        Creates a new subscription for the web socket url.
+        Creates a new websocket subscription for the notification of any type of status updates(warnings, errors or success) of pipeline.
       parameters:
         - name: destinationId
           in: path
@@ -672,117 +678,68 @@ paths:
           schema:
             type: string
           description: Destination ID
+        - name: eventType
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Event type to subscribe.
         - name: url
           in: query
           required: true
           schema:
             type: string
-          description: valid web socket url.
+          description: Valid Websocket URL to subscribe.
         - name: stageName
           in: query
-          required: false
+          required: true
           schema:
             type: string
-          description: Stage name to subscribe. By default you subscribe to all.
-        - name: eventType
+          description: Stage name to subscribe.
+        - name: statusType
           in: query
-          required: false
+          required: true
           schema:
             type: string
-          description: Event type to subscribe. By default subscribe to all.
+          description: Status Type could be the status of the pipeline, i.e. 'Success', 'Failure' or 'Warning'.
       responses:
         '200':
           description: Subscription Id with success message
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessingStatus'
+                $ref: '#/components/schemas/WebsocketSubscriptionNotification'
         '400':
           description: Bad request. The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/notifications/unsubscribe/emails/{destinationId}':
-    put:
+  '/notifications/unsubscribe/{notificationType}/{subscriptionId}':
+    post:
       tags:
         - DEX Notifications
-      summary: Unsubscribe to the email subscriptions for the given destinationId, optional stageName and eventType provided the valid emailId.
+      summary: Unsubscribe to the existing subscriptions.
       description: >-
-        Removes an existing subscription of the email channel from the given destinationId, stage and eventType.
+        Removes an existing subscription with given subscriptionId from the database.
       parameters:
-        - name: destinationId
+        - name: notificationType
           in: path
           required: true
           schema:
             type: string
-          description: Destination ID
-        - name: email
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Valid Email address to unsubscribe.
-        - name: stageName
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Stage name to unsubscribe. By default unsubscribes to all.
-        - name: eventType
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Event type to unsubscribe. By default unsubscribes to all.
-      responses:
-        '200':
-          description: Subscription Id with confirmation message.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProcessingStatus'
-        '400':
-          description: Bad request. The identifier provided was not found.
-        '401':
-          description: Authorization information is missing or invalid.
-  '/notifications/unsubscribe/websockets/{destinationId}':
-    put:
-      tags:
-        - DEX Notifications
-      summary: Unsubscribe to the websocket subscriptions for the given destinationId, optional stageName and eventType provided the web socket url.
-      description: >-
-        Removes an existing subscription of the web socket channel from the given destinationId, stage and eventType.
-      parameters:
-        - name: destinationId
+          description: The value of this field could be 'email' or 'websocket'
+        - name: subscriptionId
           in: path
           required: true
           schema:
             type: string
-          description: Destination ID
-        - name: url
-          in: query
-          required: true
-          schema:
-            type: string
-          description: valid web socket url.
-        - name: stageName
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Stage name to unsubscribe. By default you unsubscribe for all stages.
-        - name: eventType
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Event type to subscribe. By default unsubscribe for all eventTypes.
+          description: The Subscription ID
       responses:
         '200':
-          description: Subscription Id with confirmation message.
+          description: Subscription Id with confirmation message of unsubscription.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessingStatus'
+                $ref: '#/components/schemas/UnSubscribeNotification'
         '400':
           description: Bad request. The identifier provided was not found.
         '401':
@@ -810,7 +767,7 @@ components:
         upload_id:
           type: string
           format: uuid
-        timesteamp:
+        timestamp:
           type: string
           format: date-time
         status:
@@ -1067,6 +1024,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProcessingStatus'
+    EmailSubscriptionNotification:
+      type: object
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+        error_msg:
+          type: string
+          example: "Invalid subscription"
+    WebsocketSubscriptionNotification:
+      type: object
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+        error_msg:
+          type: string
+          example: "Invalid subscription"
+    UnSubscribeNotification:
+      type: object
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+        error_msg:
+          type: string
+          example: "Invalid subscription"
     PageSummary:
       type: object
       properties:
