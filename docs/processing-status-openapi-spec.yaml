@@ -652,6 +652,7 @@ paths:
           required: true
           schema:
             type: string
+            enum: [ success, failure, warning ]
           description: Status Type could be the status of the pipeline, i.e. 'Success', 'Failure' or 'Warning'.
       responses:
         '200':
@@ -701,6 +702,7 @@ paths:
           required: true
           schema:
             type: string
+            enum: [ success, failure, warning ]
           description: Status Type could be the status of the pipeline, i.e. 'Success', 'Failure' or 'Warning'.
       responses:
         '200':
