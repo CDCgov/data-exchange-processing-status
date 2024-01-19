@@ -38,6 +38,7 @@ data class TraceResult(
             val uploadIdTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("uploadId") }
             val destinationIdTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("destinationId") }
             val eventTypeTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("eventType") }
+            val parentSpanId = traceModel.spans[0].spanID
 
             // Remove the parent span since we'll be doing a foreach on all remaining spans
             traceModel.spans.removeAt(0)
@@ -95,7 +96,7 @@ data class TraceResult(
 
             val result = TraceResult().apply {
                 this.traceId = traceModel.traceID
-                spanId = traceModel.spans[0].spanID
+                spanId = parentSpanId
                 uploadId = uploadIdTag?.value
                 destinationId = destinationIdTag?.value
                 eventType = eventTypeTag?.value
