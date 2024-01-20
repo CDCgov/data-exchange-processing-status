@@ -20,6 +20,30 @@ either through the processing status service bus or through HTTP calls into the 
 - DEX routing stage
 - DEX upload API copy stage - used when bypassing DEX Routing for blob file copying files straight to the EDAV storage account
 
+
+## dex-Receiver-debatcher
+```json
+{
+  "schema_name": "dex-debatcher",
+  "schema_version": "1.0.0",
+  "file_name": "demo/AL_COVID19_test10.txt",
+  "file_uuid": "18fd9e1e-f173-44a3-a511-c58524877e02",
+  "message_batch": "SINGLE",
+  "number_of_messages": 1,
+  "number_of_valid_messages": 0,
+  "number_of_messages_not_propagated": 1,
+  "error_messages": [
+    {
+      "message_index": 1,
+      "message_uuid": "b3a2c3ce-72f5-486b-86a2-3903ce0e0360",
+      "error_message": "Message missing required metadata."
+    }
+  ]
+}
+
+### Usages
+- DEX HL7 Pipeline (Debatcher report)
+
 ## dex-hl7v2-validation
 ```json
 {
