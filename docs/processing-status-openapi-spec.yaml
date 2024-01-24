@@ -665,6 +665,8 @@ paths:
           description: Bad request. The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+        '403':
+          description: Unauthorized access.
   '/notifications/subscribe/websocket/{destinationId}/{eventType}':
     post:
       tags:
@@ -715,6 +717,8 @@ paths:
           description: Bad request. The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+        '403':
+          description: Unauthorized access.
   '/notifications/unsubscribe/{notificationType}/{subscriptionId}':
     post:
       tags:
@@ -728,6 +732,7 @@ paths:
           required: true
           schema:
             type: string
+            enum: [ email, websocket ]
           description: The value of this field could be 'email' or 'websocket'
         - name: subscriptionId
           in: path
@@ -746,6 +751,8 @@ paths:
           description: Bad request. The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+        '403':
+          description: Unauthorized access.
 components:
   securitySchemes:
     bearerAuth:
