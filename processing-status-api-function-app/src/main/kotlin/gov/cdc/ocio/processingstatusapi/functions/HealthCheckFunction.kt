@@ -12,6 +12,7 @@ import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.model.CosmosDb
 import gov.cdc.ocio.processingstatusapi.model.HealthCheck
+import gov.cdc.ocio.processingstatusapi.model.Jaeger
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.ServiceBus
 import mu.KotlinLogging
@@ -33,8 +34,10 @@ class HealthCheckFunction(
     fun run(): HttpResponseMessage {
         var cosmosDBHealthy = false
         var serviceBusHealthy = false
+        var jaegerHealthy = false
         val cosmosDBHealth = CosmosDb()
         val serviceBusHealth = ServiceBus()
+        val jaegerHealth = Jaeger()
         val time = measureTimeMillis {
             try {
                 cosmosDBHealthy = isCosmosDBHealthy()
@@ -51,13 +54,24 @@ class HealthCheckFunction(
                 serviceBusHealth.healthIssues = ex.message
                 logger.error("Azure Service Bus is not healthy: ${ex.message}")
             }
+
+            try {
+                jaegerHealthy = isJaegerHealthy()
+                if(jaegerHealthy){
+                    jaegerHealth.status = "UP"
+                }
+            } catch (ex: Exception) {
+                jaegerHealth.healthIssues = ex.message
+                logger.error("Jaeger is not healthy: ${ex.message}")
+            }
         }
 
         val result = HealthCheck().apply {
-            status = if (cosmosDBHealthy && serviceBusHealthy) "UP" else "DOWN"
+            status = if (cosmosDBHealthy && serviceBusHealthy && jaegerHealthy) "UP" else "DOWN"
             totalChecksDuration = formatMillisToHMS(time)
             dependencyHealthChecks.add(cosmosDBHealth)
             dependencyHealthChecks.add(serviceBusHealth)
+            dependencyHealthChecks.add(jaegerHealth)
         }
 
         return request
@@ -99,6 +113,14 @@ class HealthCheckFunction(
         val queueClient = QueueClient(ConnectionStringBuilder(connectionString, queueName), ReceiveMode.PEEKLOCK)
         queueClient.close()
         return true
+    }
+
+    private fun isJaegerHealthy(): Boolean {
+        val healthEndPoint = System.getenv("JAEGER_HEALTH_END_POINT")
+        logger.info("healthEndPoint: $healthEndPoint")
+        val response =  khttp.get(healthEndPoint)
+        logger.info("response.statusCode:" + response.statusCode)
+        return response.statusCode == HttpStatus.OK.value();
     }
 
     /**
