@@ -1,12 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.functions.status
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
+import gov.cdc.ocio.processingstatusapi.functions.traces.TraceUtils
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
@@ -56,7 +56,7 @@ class GetStatusFunction(
      */
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
-        val traces = getTraces(uploadId)
+        val traces = TraceUtils.getTraces(uploadId)
         var traceResult: TraceResult? = null
         if (traces != null) {
             if (traces.size != 1) {
@@ -91,32 +91,6 @@ class GetStatusFunction(
             .header("Content-Type", "application/json")
             .body(gson.toJson(status))
             .build()
-    }
-
-    private fun getTraces(uploadId: String): List<Data>? {
-        // TODO: This is very temporary!
-        // This is very inefficient and won't scale at all.  Once a better understanding
-        // of querying, and if it can be used to search by a tag then we'll use that.  Otherwise, we may need to
-        // query the storage directly; i.e. elasticsearch, once it is available
-
-        val traceEndPoint = System.getenv("JAEGER_TRACE_END_POINT") + "api/traces?limit=20000&service=dex-processing-status"
-        val response = khttp.get(traceEndPoint)
-
-        if (response.statusCode != HttpStatus.OK.value()) {
-            return null
-        }
-
-        val obj = response.jsonObject
-        val traces = Gson().fromJson(obj.toString(), Base::class.java)
-        val traceMatches = traces.data.filter { data ->
-            data.spans.any { span ->
-                span.tags.any { tag ->
-                    tag.key.equals("uploadId") && tag.value.equals(uploadId)
-                }
-            }
-        }
-
-        return traceMatches
     }
 
     companion object {
