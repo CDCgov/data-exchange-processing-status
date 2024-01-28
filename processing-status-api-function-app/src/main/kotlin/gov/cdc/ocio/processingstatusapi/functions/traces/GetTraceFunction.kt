@@ -64,27 +64,24 @@ class GetTraceFunction(
         logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
         logger.info("Upload Id = $uploadId")
 
-        val traceEndPoint = System.getenv("JAEGER_TRACE_END_POINT")+"api/traces/$uploadId"
-        logger.info("traceEndPoint: $traceEndPoint")
-        val response = khttp.get(traceEndPoint)
-        val obj = response.jsonObject
-        logger.info("$obj")
+        val traces = TraceUtils.getTraces(uploadId)
+            ?: return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("The uploadId provided was not found.")
+                .build()
 
-        if (response.statusCode != HttpStatus.OK.value()) {
+        if (traces.size != 1) {
             return request
-                .createResponseBuilder(HttpStatus.valueOf(response.statusCode))
-                .header("Content-Type", "application/json")
-                .body("Bad request. The identifier provided was not found.")
+                .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Trace inconsistency found, expected exactly one trace for uploadId = $uploadId, but got ${traces.size}")
                 .build()
         }
-
-        val traceModel = Gson().fromJson(obj.toString(), Base::class.java)
-        val result = TraceResult.buildFromTrace(traceModel.data[0])
+        val traceResult = TraceResult.buildFromTrace(traces[0])
 
         return request
             .createResponseBuilder(HttpStatus.OK)
             .header("Content-Type", "application/json")
-            .body(gson.toJson(result))
+            .body(gson.toJson(traceResult))
             .build()
     }
 
