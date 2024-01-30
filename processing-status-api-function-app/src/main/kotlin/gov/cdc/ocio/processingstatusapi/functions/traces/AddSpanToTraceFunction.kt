@@ -4,7 +4,8 @@ import com.google.gson.Gson
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
-import gov.cdc.ocio.processingstatusapi.model.traces.SpanMarkType
+import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.traces.Tags
 import gov.cdc.ocio.processingstatusapi.model.traces.TraceResult
 import gov.cdc.ocio.processingstatusapi.opentelemetry.OpenTelemetryConfig
@@ -28,12 +29,6 @@ class AddSpanToTraceFunction(
 
     private val tracer = openTelemetry.getTracer(AddSpanToTraceFunction::class.java.name)
 
-    private val stageName = request.queryParameters["stageName"]
-
-    private val spanMark = request.queryParameters["spanMark"]
-
-    private var spanMarkType = SpanMarkType.UNKNOWN
-
     private val requestBody = request.body.orElse("")
 
     /**
@@ -41,55 +36,63 @@ class AddSpanToTraceFunction(
      * In order to process, the HTTP request must contain stageName and spanMark.
      *
      * @param traceId String
-     * @param spanId String
+     * @param parentSpanId String parent span ID
      * @return HttpResponseMessage - resultant HTTP response message for the given request
      */
-    fun addSpan(
+    fun startSpan(
         traceId: String,
-        spanId: String
+        parentSpanId: String
     ): HttpResponseMessage {
-
-        // Verify the request is complete and properly formatted
-        checkRequired()?.let { return it }
 
         logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
 
-        logger.info("stageName: $stageName")
-        logger.info("spanMark: $spanMark")
+        val stageName = request.queryParameters["stageName"]
+            ?: return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("stageName is required")
+                .build()
 
-        // See if we were given any optional tags
-        var tags: Array<Tags>? = null
+        logger.info("stageName: $stageName")
+
+        val result: TraceResult
         try {
-            if (requestBody.isNotBlank()) {
-                tags = Gson().fromJson(requestBody, Array<Tags>::class.java)
+            // See if we were given any optional tags
+            var tags: Array<Tags>? = null
+            try {
+                if (requestBody.isNotBlank()) {
+                    tags = Gson().fromJson(requestBody, Array<Tags>::class.java)
+                }
+            } catch (e: Exception) {
+                throw BadRequestException("Failed to parse the optional metadata tags in the request body")
             }
-        } catch (e: Exception) {
+
+            val spanContext = SpanContext.createFromRemoteParent(
+                traceId,
+                parentSpanId,
+                TraceFlags.getSampled(),
+                TraceState.getDefault()
+            )
+
+            val span = tracer!!.spanBuilder(stageName)
+                .setParent(Context.current().with(Span.wrap(spanContext)))
+                .startSpan()
+
+            tags?.forEach {
+                if (it.key != null && it.value != null)
+                    span.setAttribute(it.key!!, it.value!!)
+            }
+            span.end()
+
+            result = TraceResult().apply {
+                this.traceId = span.spanContext.traceId
+                this.spanId = span.spanContext.spanId
+            }
+
+        } catch (ex: BadRequestException) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("Failed to parse the optional metadata tags in the request body")
+                .body(ex.localizedMessage)
                 .build()
-        }
-
-        val spanContext = SpanContext.createFromRemoteParent(
-            traceId,
-            spanId,
-            TraceFlags.getSampled(),
-            TraceState.getDefault()
-        )
-
-        val span = tracer!!.spanBuilder(stageName!!)
-            .setParent(Context.current().with(Span.wrap(spanContext)))
-            .startSpan()
-        span.setAttribute("spanMark", spanMark!!)
-        tags?.forEach {
-            if (it.key != null && it.value != null)
-                span.setAttribute(it.key!!, it.value!!)
-        }
-        span.end()
-
-        val result = TraceResult().apply {
-            this.traceId = traceId
-            this.spanId = spanId
         }
 
         return request
@@ -100,41 +103,45 @@ class AddSpanToTraceFunction(
     }
 
     /**
-     * Checks that all the required query parameters are present in order to process the request.  If not,
-     * an appropriate HTTP response message is generated with the details.
+     * For a given HTTP request, this method creates a processing status span for a given trace.
+     * In order to process, the HTTP request must contain stageName and spanMark.
      *
-     * @return HttpResponseMessage?
+     * @param traceId String
+     * @param spanId String
+     * @return HttpResponseMessage - resultant HTTP response message for the given request
+     * @throws BadRequestException
+     * @throws BadStateException
      */
-    private fun checkRequired(): HttpResponseMessage? {
+    fun stopSpan(
+        traceId: String,
+        spanId: String
+    ): HttpResponseMessage {
 
-        if (stageName == null) {
+        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
+
+        try {
+           val spanContext = SpanContext.createFromRemoteParent(
+                traceId,
+                spanId,
+                TraceFlags.getSampled(),
+                TraceState.getDefault()
+            )
+            val span = tracer!!.spanBuilder(spanId)
+                .setParent(Context.current().with(Span.wrap(spanContext)))
+                .startSpan()
+            span.end()
+
+        } catch (ex: BadRequestException) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("stageName is required")
+                .body(ex.localizedMessage)
                 .build()
         }
 
-        if (spanMark == null) {
-            return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("spanMark is required")
-                .build()
-        }
-
-        spanMarkType = when (spanMark.lowercase(Locale.getDefault())) {
-            "start" -> SpanMarkType.START
-            "stop" -> SpanMarkType.STOP
-            else -> SpanMarkType.UNKNOWN
-        }
-
-        if (spanMarkType == SpanMarkType.UNKNOWN) {
-            return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("spanMark is not a recognized value")
-                .build()
-        }
-
-        return null
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .build()
     }
 
 }

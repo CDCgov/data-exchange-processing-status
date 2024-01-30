@@ -45,13 +45,38 @@ data class TraceResult(
 
             // Iterate through all the remaining spans and map them by operationName aka stageName
             val spanMap = mutableMapOf<String, List<Spans>>()
-            traceModel.spans.forEach { span ->
+            val parentSpans = traceModel.spans.filter { span -> span.references.any { ref -> ref.spanID == parentSpanId } }
+            parentSpans.forEach { span ->
                 span.operationName?.let { stageName ->
                     var spansList = spanMap[stageName]?.toMutableList()
                     if (spansList == null)
                         spansList = mutableListOf()
+                    val tag = Tags().apply {
+                        key = "spanMark"
+                        value = "start"
+                    }
+                    span.tags.add(tag)
                     spansList.add(span)
                     spanMap[stageName] = spansList
+                }
+            }
+            val childSpans = traceModel.spans.filter { span -> span.references.any { ref -> ref.refType == "CHILD_OF" } }
+            childSpans.forEach { span ->
+                // Find the parent span
+                val matchParentSpanId = span.references.firstOrNull { ref -> ref.refType == "CHILD_OF" }?.spanID
+                val match = spanMap.values.firstOrNull { spanList -> spanList.any { span -> span.spanID == matchParentSpanId } }
+                val stageName = match?.get(0)?.operationName
+                stageName?.let {
+                    var stageSpansList = spanMap[stageName]?.toMutableList()
+                    if (stageSpansList == null)
+                        stageSpansList = mutableListOf()
+                    val tag = Tags().apply {
+                        key = "spanMark"
+                        value = "stop"
+                    }
+                    span.tags.add(tag)
+                    stageSpansList.add(span)
+                    spanMap[stageName] = stageSpansList
                 }
             }
 

@@ -41,16 +41,28 @@ public class FunctionJavaWrappers {
         return new CreateTraceFunction(request).create();
     }
 
-    @FunctionName("AddSpanToTrace")
-    public HttpResponseMessage addSpanToTrace(
+    @FunctionName("TraceStartSpan")
+    public HttpResponseMessage traceStartSpan(
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.PUT},
-                    route = "trace/addSpan/{traceId}/{spanId}",
+                    route = "trace/startSpan/{traceId}/{parentSpanId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+            @BindingName("traceId") String traceId,
+            @BindingName("parentSpanId") String parentSpanId) {
+        return new AddSpanToTraceFunction(request).startSpan(traceId, parentSpanId);
+    }
+
+    @FunctionName("TraceStopSpan")
+    public HttpResponseMessage traceStopSpan(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.PUT},
+                    route = "trace/stopSpan/{traceId}/{spanId}",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("traceId") String traceId,
             @BindingName("spanId") String spanId) {
-        return new AddSpanToTraceFunction(request).addSpan(traceId, spanId);
+        return new AddSpanToTraceFunction(request).stopSpan(traceId, spanId);
     }
 
     @FunctionName("GetTraceByTraceId")
