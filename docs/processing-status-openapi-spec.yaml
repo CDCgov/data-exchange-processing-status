@@ -15,9 +15,9 @@ info:
     ## Functionality
     The processing status API provides three areas of functionality including tracing, reporting, and notifications.
       * **Tracing** - Traces are used to indicate the completion of a phase of processing.  For example, as a file is uploaded it progresses through a pipeline.  As milestones are completed in the pipeline a trace is used to indicate the successful completion of that milestone.
-      
+    
       * **Reports** - Reports are used to provide feedback whenever one of the processing pipeline stages has warnings, errors, or fails.  There can be more than one processing report for the processing pipeline.  For example, there may be warnings on the structure validation, which reports to the processing API, but the file is allowed to continue processing.  The next stage, content validation, may then have some critical failures that cause the pipeline to stop, which is provided in a second report.
-      
+    
       * **Notifications** - Notifications define the methods and filters used to provide feedback to listeners.  Notification setups need to be established and once created persist until cancelled by the listener.  Notification listeners will provide a request to indicate what type of notification they want such as a webhook HTTP call whenever a relevant event occurs.  Notifications apply to both traces and reports.  Notifications may be fired for a trace or report as they are generated or fired when the pipeline concludes.  If the latter, the entire collection of traces or reports is provided all at once, whether because of a failure or it completed successfully.
   version: 1.0.0
 servers:
@@ -75,7 +75,7 @@ paths:
           description: Event Type.
       responses:
         '200':
-          description: Report for the given identifier
+          description: Trace and parent span information for the trace created
           content:
             application/json:
               schema:
@@ -84,13 +84,13 @@ paths:
           description: uploadId, destinationId and eventType are required.
         '401':
           description: Authorization information is missing or invalid.
-  '/trace/addSpan/{traceId}/{spanId}':
+  '/trace/startSpan/{traceId}/{parentSpanId}':
     put:
       tags:
         - DEX Tracing
-      summary: Create a processing status span for a given trace.
+      summary: Creates a processing status span for a given trace.  Span will be marked as started at the time this call is made.
       description: >-
-        Creates a new distributed tracing span.
+        Creates and starts a new distributed tracing span.
       parameters:
         - name: traceId
           in: path
@@ -98,7 +98,7 @@ paths:
           schema:
             type: string
           description: Trace ID
-        - name: spanId
+        - name: parentSpanId
           in: path
           required: true
           schema:
@@ -109,13 +109,6 @@ paths:
           required: true
           schema:
             type: string
-          description: Name of the stage providing the trace.
-        - name: spanMark
-          in: query
-          required: true
-          schema:
-            type: string
-            enum: [start, stop]
           description: Name of the stage providing the trace.
       requestBody:
         description: >-
@@ -128,11 +121,47 @@ paths:
               $ref: '#/components/schemas/Tags'
       responses:
         '200':
-          description: Report for the given identifier
+          description: Trace and span information for the span created.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateTrace'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/trace/stopSpan/{traceId}/{spanId}':
+    put:
+      tags:
+        - DEX Tracing
+      summary: Stops a processing status span for a given trace.  Span will be marked as stopped at the time this call is made.
+      description: >-
+        Stops an existing distributed tracing span.
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trace ID
+        - name: spanId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Span ID to stop.
+      requestBody:
+        description: >-
+          Optional tags.  If a tag is provided with the same `key` in the stop mark as the start mark, the new tag value will
+          replace the start tag value.
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tags'
+      responses:
+        '200':
+          description: Successfully stopped the provided span.
         '400':
           description: Bad request.  The identifier provided was not found.
         '401':
@@ -464,7 +493,7 @@ paths:
         Provides a list of all known destination IDs.
       responses:
         '200':
-          description: All of the known destination identifiers 
+          description: All of the known destination identifiers
           content:
             application/json:
               schema:
@@ -487,7 +516,7 @@ paths:
             type: string
       responses:
         '200':
-          description: All of the known event types 
+          description: All of the known event types
           content:
             application/json:
               schema:
@@ -506,7 +535,7 @@ paths:
         Provides a list of all known report schema identifiers.
       responses:
         '200':
-          description: All of the known report schema identifiers 
+          description: All of the known report schema identifiers
           content:
             application/json:
               schema:
@@ -1105,5 +1134,5 @@ components:
           type: string
         value:
           oneOf:
-          - type: string
-          - type: number
+            - type: string
+            - type: number
