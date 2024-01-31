@@ -241,6 +241,36 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+  '/trace/span':
+    get:
+      tags:
+        - DEX Tracing
+      summary: Gets a processing status span.
+      description: >-
+        Retrieves a distributed tracing span from the query parameters provided.  If more than one stage name is
+        found that meets the criteria, the one with the most recent timestamp will be provided.
+      parameters:
+        - name: uploadId
+          in: query
+          schema:
+            type: string
+          description: Upload identifier
+        - name: stageName
+          in: query
+          schema:
+            type: string
+          description: Stage name
+      responses:
+        '200':
+          description: Span for the provided query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSpan'
+        '400':
+          description: Bad request.  The span was not found.
+        '401':
+          description: Authorization information is missing or invalid.
   '/report':
     post:
       tags:
@@ -842,6 +872,37 @@ components:
           type: string
         event_type:
           type: string
+        metadata:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: integer
+    GetSpan:
+      type: object
+      properties:
+        stage_name:
+          type: string
+        trace_id:
+          type: string
+          format: uuid
+        span_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [running, completed]
+        elapsed_millis:
+          type: number
+          description: length of time in milliseconds the stage has run or ran if completed
+          example: 6502
         metadata:
           type: array
           items:

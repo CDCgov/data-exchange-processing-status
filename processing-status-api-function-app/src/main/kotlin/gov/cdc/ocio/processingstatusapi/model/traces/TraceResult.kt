@@ -90,12 +90,18 @@ data class TraceResult(
                 // then it is still running.
                 var startTimestamp: Long? = null
                 var stopTimestamp: Long? = null
+                var spanID: String? = null
                 val tags = mutableListOf<Tags>()
                 spansList.forEach { span ->
                     val spanMarkTag = span.tags.firstOrNull { it.key.equals("spanMark") }
                     when (spanMarkTag?.value) {
-                        "start" -> startTimestamp = span.startTime?.div(1000) // microseconds to milliseconds
-                        "stop"  -> stopTimestamp  = span.startTime?.div(1000) // microseconds to milliseconds
+                        "start" -> {
+                            startTimestamp = span.startTime?.div(1000) // microseconds to milliseconds
+                            spanID = span.spanID
+                        }
+                        "stop" -> {
+                            stopTimestamp  = span.startTime?.div(1000) // microseconds to milliseconds
+                        }
                     }
                     tags.addAll(span.tags.filterNot { GetStatusFunction.excludedSpanTags.contains(it.key) })
                 }
@@ -111,6 +117,8 @@ data class TraceResult(
 
                 val spanResult = SpanResult().apply {
                     this.stageName = stageName
+                    this.traceId = traceModel.traceID
+                    this.spanId = spanID
                     timestamp = startTimestamp?.let { Date(it) }
                     status = if (isSpanComplete) "complete" else "running"
                     this.elapsedMillis = elapsedMillis

@@ -13,6 +13,7 @@ import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.AddSpanToTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction;
+import gov.cdc.ocio.processingstatusapi.functions.traces.GetSpanFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.GetTraceFunction;
 import gov.cdc.ocio.processingstatusapi.model.DispositionType;
 
@@ -85,6 +86,16 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId) {
         return new GetTraceFunction(request).withUploadId(uploadId);
+    }
+
+    @FunctionName("GetTraceSpan")
+    public HttpResponseMessage getTraceSpanByUploadIdStageName(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "trace/span",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
+        return new GetSpanFunction(request).withQueryParams();
     }
 
     /***
