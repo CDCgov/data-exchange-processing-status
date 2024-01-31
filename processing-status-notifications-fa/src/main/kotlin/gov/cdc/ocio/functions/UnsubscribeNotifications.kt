@@ -9,13 +9,9 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.annotation.AuthorizationLevel
 import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.model.SubscriptionResult
-import io.opentelemetry.api.trace.Tracer
 import java.time.Instant
-import java.util.logging.Logger
 
 class UnsubscribeNotifications {
-
-    private var tracer: Tracer? = null
 
     fun run(
         @HttpTrigger(name="req",
@@ -27,14 +23,11 @@ class UnsubscribeNotifications {
         context: ExecutionContext):
             HttpResponseMessage {
 
-        // logging and opentelemetry initialization
         val logger = context.logger
-//        val openTelemetry = OpenTelemetryConfig.initOpenTelemetry()
 
         logger.info("NotificationType $notificationType")
         logger.info("SubscriptionId $subscriptionId")
 
-//        tracer = openTelemetry.getTracer(UnsubscribeNotifications::class.java.name)
         val result = SubscriptionResult()
         val unsubscribeSuccessfull = unsubscribeNotifications(notificationType, subscriptionId)
         return if (subscriptionId.isNotBlank() && unsubscribeSuccessfull) {

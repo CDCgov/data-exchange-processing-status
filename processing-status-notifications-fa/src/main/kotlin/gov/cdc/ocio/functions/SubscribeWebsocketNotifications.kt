@@ -9,13 +9,10 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.annotation.AuthorizationLevel
 import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.model.SubscriptionResult
-import io.opentelemetry.api.trace.Tracer
 import java.time.Instant
 
 
 class SubscribeWebsocketNotifications {
-
-    private var tracer: Tracer? = null
 
     fun run(
         @HttpTrigger(name="req",
@@ -26,11 +23,7 @@ class SubscribeWebsocketNotifications {
         eventType: String,
         context: ExecutionContext):
             HttpResponseMessage {
-
-        // logging and opentelemetry initialization
         val logger = context.logger
-//        val openTelemetry = OpenTelemetryConfig.initOpenTelemetry()
-
         // reading query parameters from http request for email subscription
         val url = request.queryParameters["url"]
         val stageName = request.queryParameters["stageName"]
@@ -42,7 +35,6 @@ class SubscribeWebsocketNotifications {
         logger.info("StageName: $stageName")
         logger.info("StatusType: $statusType")
 
-//        tracer = openTelemetry.getTracer(SubscribeEmailNotifications::class.java.name)
         val subscriptionResult = subscribeForEmail(destinationId, eventType, url, stageName, statusType)
         return if (subscriptionResult.subscription_id != null) {
             subscriptionResult.message = "Subscription successfull"
