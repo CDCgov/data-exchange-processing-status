@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.model.traces.Base
 import gov.cdc.ocio.processingstatusapi.model.traces.Data
+import gov.cdc.ocio.processingstatusapi.model.traces.TraceResult
 
 class TraceUtils {
 
@@ -39,6 +40,26 @@ class TraceUtils {
             }
 
             return traceMatches
+        }
+
+        /**
+         * Get a trace for the given trace id and span id.
+         *
+         * @param traceId String
+         * @return TraceResult?
+         */
+        fun getTrace(traceId: String): TraceResult? {
+            val traceEndPoint = System.getenv("JAEGER_TRACE_END_POINT")+"api/traces/$traceId"
+
+            val response = khttp.get(traceEndPoint)
+            val obj = response.jsonObject
+
+            if (response.statusCode != HttpStatus.OK.value()) {
+                return null
+            }
+
+            val traceModel = Gson().fromJson(obj.toString(), Base::class.java)
+            return TraceResult.buildFromTrace(traceModel.data[0])
         }
     }
 }
