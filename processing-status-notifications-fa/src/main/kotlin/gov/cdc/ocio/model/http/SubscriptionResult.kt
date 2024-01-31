@@ -1,4 +1,4 @@
-package gov.cdc.ocio.model
+package gov.cdc.ocio.model.http
 
 import java.util.*
 
