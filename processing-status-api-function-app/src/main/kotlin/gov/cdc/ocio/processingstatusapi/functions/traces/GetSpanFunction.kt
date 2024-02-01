@@ -26,12 +26,23 @@ class GetSpanFunction(
         val stageName = request.queryParameters["stageName"]
 
         if (!uploadId.isNullOrBlank() && !stageName.isNullOrBlank()) {
-            // Attempt to locate the trace by uploadId
-            val traces = TraceUtils.getTraces(uploadId)
-                ?: return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body("The uploadId provided was not found.")
-                    .build()
+            var attempts = 0
+            var traces: List<Data>
+            var latestMatchingSpan: SpanResult?
+            do {
+                // Attempt to locate the trace by uploadId
+                traces = TraceUtils.getTraces(uploadId)
+                    ?: return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body("The uploadId provided was not found.")
+                        .build()
+
+                latestMatchingSpan = checkForStageNameInTraces(traces, stageName)
+                if (latestMatchingSpan != null) {
+                    break
+                }
+                Thread.sleep(500)
+            } while (attempts++ < 20) // try for up to 10 seconds
 
             if (traces.size != 1) {
                 return request
@@ -39,13 +50,6 @@ class GetSpanFunction(
                     .body("Trace inconsistency found, expected exactly one trace for uploadId = $uploadId, but got ${traces.size}")
                     .build()
             }
-            val traceResult = TraceResult.buildFromTrace(traces[0])
-
-            // Found the trace by uploadId, now try to see if we can find at least one stage with a matching name.
-            val latestMatchingSpan = traceResult.spans
-                ?.filter { span -> span.stageName == stageName }
-                ?.sortedBy { spanResult -> spanResult.timestamp } // natural sort order - oldest first to newest
-                ?.lastOrNull() // get the last one, which will be the most recent timestamp
 
             return if (latestMatchingSpan != null) {
                 // Found a match, return it
@@ -66,6 +70,33 @@ class GetSpanFunction(
             .createResponseBuilder(HttpStatus.BAD_REQUEST)
             .body("Unrecognized combination of query parameters provided")
             .build()
+    }
+
+    /**
+     * Check for a span in the given trace with stage name provide.
+     *
+     * @param traces List<Data>
+     * @param stageName String
+     * @return SpanResult?
+     */
+    private fun checkForStageNameInTraces(traces: List<Data>, stageName: String): SpanResult? {
+        if (traces.size != 1)
+            return null
+
+        val traceResult = TraceResult.buildFromTrace(traces[0])
+
+        // Found the trace by uploadId, now try to see if we can find at least one stage with a matching name.
+        val latestMatchingSpan = traceResult.spans
+            ?.filter { span -> span.stageName == stageName }
+            ?.sortedBy { spanResult -> spanResult.timestamp } // natural sort order - oldest first to newest
+            ?.lastOrNull() // get the last one, which will be the most recent timestamp
+
+        if (latestMatchingSpan != null) {
+            // Found a match, return it
+            return latestMatchingSpan
+        }
+
+        return null
     }
 
 }
