@@ -7,7 +7,6 @@ import gov.cdc.ocio.functions.http.UnsubscribeNotifications
 import java.util.*
 
 class FunctionKotlinWrappers {
-
     // Http Triggers for REST Calls
     @FunctionName("SubscribeEmail")
     fun subscribeEmail(
@@ -18,11 +17,9 @@ class FunctionKotlinWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) request: HttpRequestMessage<Optional<String>>,
         @BindingName("destinationId") destinationId: String,
-        @BindingName("eventType") eventType: String,
-        context: ExecutionContext
+        @BindingName("eventType") eventType: String
     ): HttpResponseMessage {
-        context.logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-        return SubscribeEmailNotifications().run(request, destinationId, eventType, context);
+        return SubscribeEmailNotifications(request).run(destinationId, eventType);
     }
 
     @FunctionName("SubscribeWebsocket")
@@ -34,11 +31,9 @@ class FunctionKotlinWrappers {
             authLevel = AuthorizationLevel.ANONYMOUS
         ) request: HttpRequestMessage<Optional<String>>,
         @BindingName("destinationId") destinationId: String,
-        @BindingName("eventType") eventType: String,
-        context: ExecutionContext
+        @BindingName("eventType") eventType: String
     ): HttpResponseMessage {
-        context.logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-        return SubscribeWebsocketNotifications().run(request, destinationId, eventType, context);
+        return SubscribeWebsocketNotifications(request).run(destinationId, eventType);
     }
 
     @FunctionName("Unsubscribe")
@@ -50,11 +45,9 @@ class FunctionKotlinWrappers {
             authLevel = AuthorizationLevel.ANONYMOUS
         ) request: HttpRequestMessage<Optional<String>>,
         @BindingName("notificationType") notificationType: String,
-        @BindingName("subscriptionId") subscriptionId: String,
-        context: ExecutionContext
+        @BindingName("subscriptionId") subscriptionId: String
     ): HttpResponseMessage {
-        context.logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-        return UnsubscribeNotifications().run(request, notificationType, subscriptionId, context);
+        return UnsubscribeNotifications(request).run(notificationType, subscriptionId);
     }
 
 }

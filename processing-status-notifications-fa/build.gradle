@@ -26,6 +26,13 @@ dependencies {
     implementation 'com.microsoft.azure.functions:azure-functions-java-library:3.0.0'
     implementation 'io.github.oshai:kotlin-logging-jvm:5.1.0'
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation group: 'io.github.microutils', name: 'kotlin-logging-jvm', version: '3.0.5'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.11'
+    implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
+    implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
+
 
     implementation 'com.azure:azure-messaging-servicebus:7.13.3'
     implementation 'com.microsoft.azure:azure-servicebus:3.6.7'

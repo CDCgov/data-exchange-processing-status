@@ -1,6 +1,5 @@
 package gov.cdc.ocio.functions.http
 
-import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import java.util.*
@@ -8,23 +7,25 @@ import com.microsoft.azure.functions.HttpMethod
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.annotation.AuthorizationLevel
 import com.microsoft.azure.functions.annotation.HttpTrigger
+import gov.cdc.ocio.cache.InMemoryCacheService
 import gov.cdc.ocio.model.http.SubscriptionResult
+import gov.cdc.ocio.model.message.StatusType
+import gov.cdc.ocio.model.message.SubscriptionType
+import mu.KotlinLogging
 import java.time.Instant
 
 
-class SubscribeEmailNotifications {
-
+class SubscribeEmailNotifications(
+    private val request: HttpRequestMessage<Optional<String>>) {
+    private val logger = KotlinLogging.logger {}
+    private val cacheService: InMemoryCacheService = InMemoryCacheService()
     fun run(
         @HttpTrigger(name="req",
                 methods = [HttpMethod.POST],
                 authLevel = AuthorizationLevel.ANONYMOUS)
-        request: HttpRequestMessage<Optional<String>>,
         destinationId: String,
-        eventType: String,
-        context: ExecutionContext):
+        eventType: String):
             HttpResponseMessage {
-
-        val logger = context.logger
 
         // reading query parameters from http request for email subscription
         val email = request.queryParameters["email"]
@@ -53,8 +54,6 @@ class SubscribeEmailNotifications {
         stageName: String?,
         statusType: String?
     ): SubscriptionResult {
-        // TODO: Add logic to subscribe and return subscription id appropriately
-
         val result = SubscriptionResult()
         if (destinationId.isBlank()
             || eventType.isBlank()
@@ -70,7 +69,7 @@ class SubscribeEmailNotifications {
             result.status = false
             result.message = "Not valid email address"
         } else {
-            result.subscription_id = UUID.randomUUID()
+            result.subscription_id = cacheService.updateNotificationsPreferences(destinationId, eventType, stageName, statusType, email, SubscriptionType.EMAIL)
             result.timestamp = Instant.now().epochSecond
             result.status = true
             result.message = "Subscription for Email setup"
