@@ -43,7 +43,6 @@ class GetReportFunctionTests {
         every { mockCosmosDb.getContainer(any()) } returns mockCosmosContainer
         every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
 
-
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.
         Mockito.doAnswer { invocation ->
             val status = invocation.arguments[0] as HttpStatus
