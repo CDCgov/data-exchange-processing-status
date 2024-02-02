@@ -61,39 +61,12 @@ class GetSpanFunctionTests {
     }
 
     @Test
-    fun testWithQueryParams_ok() {
+    fun testWithQueryParamsOk() {
         val getSpanFunction = GetSpanFunction(request)
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
 
         val result = getSpanFunction.withQueryParams()
         assertEquals(400, result.statusCode)
     }
-
-//    @Test
-//    fun testWithTraceId_bad_request() {
-//        val getStatusFunction = GetStatusFunction(request)
-//        every {mockResponse.statusCode} returns HttpStatus.BAD_REQUEST.value()
-//
-//        val result = getStatusFunction.withTraceId("1")
-//        assertEquals(400, result.statusCode)
-//    }
-//
-//    @Test
-//    fun testWithUploadId_ok() {
-//        val getStatusFunction = GetStatusFunction(request)
-//        every {mockResponse.statusCode} returns HttpStatus.OK.value()
-//
-//        val result = getStatusFunction.withUploadId("1")
-//        assertEquals(200, result.statusCode)
-//    }
-//
-//    @Test
-//    fun testWithUploadId_bad_request() {
-//        val getStatusFunction = GetStatusFunction(request)
-//        every {mockResponse.statusCode} returns HttpStatus.BAD_REQUEST.value()
-//
-//        val result = getStatusFunction.withUploadId("1")
-//        assertEquals(400, result.statusCode)
-//    }
 }
 

@@ -44,7 +44,7 @@ class GetTraceFunctionTests {
     }
 
     @Test
-    fun testWithTraceId_ok() {
+    fun testWithTraceIdOk() {
         val getTraceFunction = GetTraceFunction(request)
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
 
@@ -53,7 +53,7 @@ class GetTraceFunctionTests {
     }
 
     @Test
-    fun testWithTraceId_bad_request() {
+    fun testWithTraceIdBadRequest() {
         val getTraceFunction = GetTraceFunction(request)
         every {mockResponse.statusCode} returns HttpStatus.BAD_REQUEST.value()
 
@@ -62,7 +62,7 @@ class GetTraceFunctionTests {
     }
 
     @Test
-    fun testWithUploadId_ok() {
+    fun testWithUploadIdOk() {
         val getTraceFunction = GetTraceFunction(request)
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
 
@@ -71,7 +71,7 @@ class GetTraceFunctionTests {
     }
 
     @Test
-    fun testWithUploadId_bad_request() {
+    fun testWithUploadIdBadRequest() {
         val getTraceFunction = GetTraceFunction(request)
         every {mockResponse.statusCode} returns HttpStatus.BAD_REQUEST.value()
 

@@ -3,7 +3,6 @@ package test.reports
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetUploadStatusFunction
-import io.mockk.every
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
@@ -31,7 +30,7 @@ class GetUploadStatusFunctionTests {
 
 
     @Test
-    fun testWithUploadStatus_ok() {
+    fun testWithUploadStatusOk() {
         val response =  GetUploadStatusFunction(request).uploadStatus("1", "test");
         assert(response.status == HttpStatus.OK)
     }

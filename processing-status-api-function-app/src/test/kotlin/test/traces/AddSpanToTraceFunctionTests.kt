@@ -47,7 +47,7 @@ class AddSpanToTraceFunctionTests {
     }
 
     @Test
-    fun testWithStartSpan_ok() {
+    fun testWithStartSpanOk() {
         val addSpanToTraceFunction = AddSpanToTraceFunction(request)
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
 

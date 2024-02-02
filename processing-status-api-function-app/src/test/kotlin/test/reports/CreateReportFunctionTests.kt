@@ -48,7 +48,7 @@ class CreateReportFunctionTests {
     }
 
     @Test
-    fun testWithUploadID_missing_destination_id() {
+    fun testWithUploadIDMissingDestinationId() {
         queryParameters= mutableMapOf<String, String?>()
         queryParameters["eventType"] = "1"
         queryParameters["stageName"] = "1"
@@ -60,7 +60,7 @@ class CreateReportFunctionTests {
     }
 
     @Test
-    fun testWithUploadID_missing_event_type() {
+    fun testWithUploadIDMissingEventType() {
         queryParameters= mutableMapOf<String, String?>()
         queryParameters["destinationId"] = "1"
         queryParameters["stageName"] = "1"
@@ -72,7 +72,7 @@ class CreateReportFunctionTests {
     }
 
     @Test
-    fun testWithUploadID_missing_stage_name() {
+    fun testWithUploadIDMissingStageName() {
         queryParameters= mutableMapOf<String, String?>()
         queryParameters["destinationId"] = "1"
         queryParameters["eventType"] = "1"
@@ -84,7 +84,7 @@ class CreateReportFunctionTests {
     }
 
     @Test
-    fun testWithUploadID_InvalidSchema() {
+    fun testWithUploadIDInvalidSchema() {
         queryParameters= mutableMapOf<String, String?>()
         queryParameters["destinationId"] = "1"
         queryParameters["eventType"] = "1"

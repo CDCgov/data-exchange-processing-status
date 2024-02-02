@@ -69,7 +69,7 @@ class GetStatusFunctionTests {
     }
 
     @Test
-    fun testCreate_success() {
+    fun testCreateSuccess() {
         every { items.count() > 0} returns false
 
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
@@ -77,53 +77,6 @@ class GetStatusFunctionTests {
         assert(response.status == HttpStatus.OK)
     }
 
-//    @Test
-//    fun testCreate_uploadId_missing() {
-//        val queryParameters = mutableMapOf<String, String?>()
-//        queryParameters["destinationId"] = "1"
-//        queryParameters["eventType"] = "1"
-//        Mockito.`when`(request.body).thenReturn(Optional.of(testBytes))
-//        Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-//        val response =  CreateTraceFunction(request).create();
-//        assert(response.status == HttpStatus.BAD_REQUEST)
-//    }
-//
-//   @Test
-//    fun testCreate_destinationId_missing() {
-//        val queryParameters = mutableMapOf<String, String?>()
-//        val testMessage = File("./src/test/kotlin/data/reports/createReport_badrequest.json").readText()
-//        queryParameters["eventType"] = "1"
-//        queryParameters["uploadId"] = "1"
-//        Mockito.`when`(request.body).thenReturn(Optional.of(testMessage))
-//        Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-//        val response =  CreateTraceFunction(request).create();
-//        assert(response.status == HttpStatus.BAD_REQUEST)
-//    }
-//
-//    @Test
-//    fun testCreate_event_type_missing() {
-//        val queryParameters = mutableMapOf<String, String?>()
-//        val testMessage = File("./src/test/kotlin/data/reports/createReport_badrequest.json").readText()
-//        queryParameters["destinationId"] = "1"
-//        queryParameters["uploadId"] = "1"
-//        Mockito.`when`(request.body).thenReturn(Optional.of(testMessage))
-//        Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-//        val response =  CreateTraceFunction(request).create();
-//        assert(response.status == HttpStatus.BAD_REQUEST)
-//    }
-//
-//    @Test
-//    fun testCreate_uploadId_good_request() {
-//        val queryParameters = mutableMapOf<String, String?>()
-//        val testMessage = File("./src/test/kotlin/data/reports/createReport_badrequest.json").readText()
-//        queryParameters["uploadId"] = "1"
-//        queryParameters["destinationId"] = "1"
-//        queryParameters["eventType"] = "1"
-//        Mockito.`when`(request.body).thenReturn(Optional.of(testMessage))
-//        Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-//        val response =  CreateTraceFunction(request).create();
-//        assert(response.status == HttpStatus.BAD_REQUEST)
-//    }
 
 }
 

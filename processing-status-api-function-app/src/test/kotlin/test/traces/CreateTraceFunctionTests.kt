@@ -45,13 +45,13 @@ class CreateTraceFunctionTests {
     }
 
     @Test
-    fun testCreate_badrequest() {
+    fun testCreateBadrequest() {
         val response =  CreateTraceFunction(request).create();
         assert(response.status == HttpStatus.BAD_REQUEST)
     }
 
     @Test
-    fun testCreate_uploadId_missing() {
+    fun testCreateUploadIdMissing() {
         val queryParameters = mutableMapOf<String, String?>()
         queryParameters["destinationId"] = "1"
         queryParameters["eventType"] = "1"
@@ -62,7 +62,7 @@ class CreateTraceFunctionTests {
     }
 
     @Test
-    fun testCreate_destinationId_missing() {
+    fun testCreateDestinationIdMissing() {
         val queryParameters = mutableMapOf<String, String?>()
         val testMessage = File("./src/test/kotlin/data/reports/createReport_badrequest.json").readText()
         queryParameters["eventType"] = "1"
@@ -74,7 +74,7 @@ class CreateTraceFunctionTests {
     }
 
     @Test
-    fun testCreate_event_type_missing() {
+    fun testCreateEventTypeMissing() {
         val queryParameters = mutableMapOf<String, String?>()
         val testMessage = File("./src/test/kotlin/data/reports/createReport_badrequest.json").readText()
         queryParameters["destinationId"] = "1"
