@@ -7,6 +7,387 @@
 	},
 	"item": [
 		{
+			"name": "Trace",
+			"item": [
+				{
+					"name": "Create \"dex-testing\" trace",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set(\"traceId\", jsonData.trace_id);",
+									"pm.environment.set(\"parentSpanId\", jsonData.span_id);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var uuid = require('uuid');",
+									"var uploadId = uuid.v4();",
+									"console.log(uploadId);",
+									"",
+									"pm.environment.set(\"uploadId\", uploadId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace?uploadId={{uploadId}}&destinationId=dex-testing&eventType=test-event1",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace"
+							],
+							"query": [
+								{
+									"key": "uploadId",
+									"value": "{{uploadId}}"
+								},
+								{
+									"key": "destinationId",
+									"value": "dex-testing"
+								},
+								{
+									"key": "eventType",
+									"value": "test-event1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start upload span",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set(\"spanId\", jsonData.span_id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"key\": \"extra_field1\",\n        \"value\": \"value1\"\n    },\n    {\n        \"key\": \"extra_field2\",\n        \"value\": \"value2\"\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/startSpan/{{traceId}}/{{parentSpanId}}?stageName=dex-upload",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"startSpan",
+								"{{traceId}}",
+								"{{parentSpanId}}"
+							],
+							"query": [
+								{
+									"key": "stageName",
+									"value": "dex-upload"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stop upload span",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/stopSpan/{{traceId}}/{{spanId}}",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"stopSpan",
+								"{{traceId}}",
+								"{{spanId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start routing span",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set(\"spanId\", jsonData.span_id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/startSpan/{{traceId}}/{{parentSpanId}}?stageName=dex-routing",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"startSpan",
+								"{{traceId}}",
+								"{{parentSpanId}}"
+							],
+							"query": [
+								{
+									"key": "stageName",
+									"value": "dex-routing"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stop routing span",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/stopSpan/{{traceId}}/{{spanId}}",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"stopSpan",
+								"{{traceId}}",
+								"{{spanId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get trace (ref = traceId)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/traceId/{{traceId}}",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"traceId",
+								"{{traceId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get trace (ref = uploadId)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/uploadId/{{uploadId}}",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"uploadId",
+								"{{uploadId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get span (ref = uploadId, stageName)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/span?uploadId={{uploadId}}&stageName=dex-upload",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"trace",
+								"span"
+							],
+							"query": [
+								{
+									"key": "uploadId",
+									"value": "{{uploadId}}"
+								},
+								{
+									"key": "stageName",
+									"value": "dex-upload"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get trace directly",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{JAEGER_TRACE_END_POINT}}/api/traces/{{traceId}}",
+							"host": [
+								"{{JAEGER_TRACE_END_POINT}}"
+							],
+							"path": [
+								"api",
+								"traces",
+								"{{traceId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get list of services",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{JAEGER_TRACE_END_POINT}}/api/services",
+							"host": [
+								"{{JAEGER_TRACE_END_POINT}}"
+							],
+							"path": [
+								"api",
+								"services"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all \"dex-processing\" traces",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{JAEGER_TRACE_END_POINT}}/api/traces?limit=20000&service=dex-processing-status",
+							"host": [
+								"{{JAEGER_TRACE_END_POINT}}"
+							],
+							"path": [
+								"api",
+								"traces"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20000"
+								},
+								{
+									"key": "service",
+									"value": "dex-processing-status"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Report",
 			"item": [
 				{
@@ -23,7 +404,7 @@
 											"var uploadId = uuid.v4();",
 											"console.log(uploadId);",
 											"",
-											"pm.environment.set(\"uploadId\", uploadId);"
+											"//pm.environment.set(\"uploadId\", uploadId);"
 										],
 										"type": "text/javascript"
 									}
@@ -126,7 +507,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"dex-routing\",\n    \"schema_version\": \"1.0\",\n    \"route_source_blob_url\": \"\",\n    \"route_destination_blob_url\": \"\",\n    \"timestamp\": \"\",\n    \"result\": \"success|failed\"\n}",
+									"raw": "{\n    \"schema_name\": \"dex-file-copy\",\n    \"schema_version\": \"1.0\",\n    \"file_source_blob_url\": \"\",\n    \"file_destination_blob_url\": \"\",\n    \"timestamp\": \"\",\n    \"result\": \"success|failed\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -377,7 +758,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/a430989a-4614-492f-99af-cf2db447bb3e",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/846fb6fc-350c-4e75-b36d-2aca9f60ae62",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -385,7 +766,7 @@
 										"api",
 										"report",
 										"uploadId",
-										"a430989a-4614-492f-99af-cf2db447bb3e"
+										"846fb6fc-350c-4e75-b36d-2aca9f60ae62"
 									]
 								}
 							},
@@ -852,357 +1233,6 @@
 			]
 		},
 		{
-			"name": "Trace",
-			"item": [
-				{
-					"name": "Create \"dex-testing\" trace",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = JSON.parse(responseBody);",
-									"pm.environment.set(\"traceId\", jsonData.trace_id);",
-									"pm.environment.set(\"spanId\", jsonData.span_id);"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"var uuid = require('uuid');",
-									"var uploadId = uuid.v4();",
-									"console.log(uploadId);",
-									"",
-									"pm.environment.set(\"uploadId\", uploadId);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace?uploadId={{uploadId}}&destinationId=dex-testing&eventType=test-event1",
-							"host": [
-								"{{PROCESSING_STATUS_BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"trace"
-							],
-							"query": [
-								{
-									"key": "uploadId",
-									"value": "{{uploadId}}"
-								},
-								{
-									"key": "destinationId",
-									"value": "dex-testing"
-								},
-								{
-									"key": "eventType",
-									"value": "test-event1"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Start upload span",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "[\n    {\n        \"key\": \"extra_field1\",\n        \"value\": \"value1\"\n    },\n    {\n        \"key\": \"extra_field2\",\n        \"value\": \"value2\"\n    }\n]",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/addSpan/{{traceId}}/{{spanId}}?stageName=dex-upload&spanMark=start",
-							"host": [
-								"{{PROCESSING_STATUS_BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"trace",
-								"addSpan",
-								"{{traceId}}",
-								"{{spanId}}"
-							],
-							"query": [
-								{
-									"key": "stageName",
-									"value": "dex-upload"
-								},
-								{
-									"key": "spanMark",
-									"value": "start"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Stop upload span",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/addSpan/{{traceId}}/{{spanId}}?stageName=dex-upload&spanMark=stop",
-							"host": [
-								"{{PROCESSING_STATUS_BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"trace",
-								"addSpan",
-								"{{traceId}}",
-								"{{spanId}}"
-							],
-							"query": [
-								{
-									"key": "stageName",
-									"value": "dex-upload"
-								},
-								{
-									"key": "spanMark",
-									"value": "stop"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Start routing span",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/addSpan/{{traceId}}/{{spanId}}?stageName=dex-routing&spanMark=start",
-							"host": [
-								"{{PROCESSING_STATUS_BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"trace",
-								"addSpan",
-								"{{traceId}}",
-								"{{spanId}}"
-							],
-							"query": [
-								{
-									"key": "stageName",
-									"value": "dex-routing"
-								},
-								{
-									"key": "spanMark",
-									"value": "start"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Stop routing span",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/addSpan/{{traceId}}/{{spanId}}?stageName=dex-routing&spanMark=stop",
-							"host": [
-								"{{PROCESSING_STATUS_BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"trace",
-								"addSpan",
-								"{{traceId}}",
-								"{{spanId}}"
-							],
-							"query": [
-								{
-									"key": "stageName",
-									"value": "dex-routing"
-								},
-								{
-									"key": "spanMark",
-									"value": "stop"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get trace (ref = traceId)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/trace/traceId/{{traceId}}",
-							"host": [
-								"{{PROCESSING_STATUS_BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"trace",
-								"traceId",
-								"{{traceId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get trace directly",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://ocioededevjaeger.eastus.azurecontainer.io:16686/api/traces/{{traceId}}",
-							"protocol": "http",
-							"host": [
-								"ocioededevjaeger",
-								"eastus",
-								"azurecontainer",
-								"io"
-							],
-							"port": "16686",
-							"path": [
-								"api",
-								"traces",
-								"{{traceId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get list of services",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://ocioededevjaeger.eastus.azurecontainer.io:16686/api/services",
-							"protocol": "http",
-							"host": [
-								"ocioededevjaeger",
-								"eastus",
-								"azurecontainer",
-								"io"
-							],
-							"port": "16686",
-							"path": [
-								"api",
-								"services"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get all \"dex-processing\" traces",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://ocioededevjaeger.eastus.azurecontainer.io:16686/api/traces?limit=20000&service=dex-processing-status",
-							"protocol": "http",
-							"host": [
-								"ocioededevjaeger",
-								"eastus",
-								"azurecontainer",
-								"io"
-							],
-							"port": "16686",
-							"path": [
-								"api",
-								"traces"
-							],
-							"query": [
-								{
-									"key": "limit",
-									"value": "20000"
-								},
-								{
-									"key": "service",
-									"value": "dex-processing-status"
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
 			"name": "Status",
 			"item": [
 				{
@@ -1268,7 +1298,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n    {\n        \"key\": \"extra_field1\",\n        \"value\": \"value1\"\n    },\n    {\n        \"key\": \"extra_field2\",\n        \"value\": \"value2\"\n    }\n]",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1276,14 +1306,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/status/84be1edc-9d86-47f0-bc2b-a87e90990c27",
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/status/4585fef0-2d22-4e9c-b9d6-6e5e660573db",
 							"host": [
 								"{{PROCESSING_STATUS_BASE_URL}}"
 							],
 							"path": [
 								"api",
 								"status",
-								"84be1edc-9d86-47f0-bc2b-a87e90990c27"
+								"4585fef0-2d22-4e9c-b9d6-6e5e660573db"
 							]
 						}
 					},

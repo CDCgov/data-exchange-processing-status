@@ -33,11 +33,13 @@ async def send_single_message(sender, message):
     await sender.send_messages(message)
 
 def send_start_trace(trace_id, parent_span_id, stage_name):
-    url = f'{pstatus_base_url}/api/trace/addSpan/{trace_id}/{parent_span_id}?stageName={stage_name}&spanMark=start'
-    requests.put(url)
+    url = f'{pstatus_base_url}/api/trace/startSpan/{trace_id}/{parent_span_id}?stageName={stage_name}'
+    r = requests.put(url)
+    json_response = r.json()
+    return json_response['span_id']
 
-def send_stop_trace(trace_id, parent_span_id, stage_name):
-    url = f'{pstatus_base_url}/api/trace/addSpan/{trace_id}/{parent_span_id}?stageName={stage_name}&spanMark=stop'
+def send_stop_trace(trace_id, span_id):
+    url = f'{pstatus_base_url}/api/trace/stopSpan/{trace_id}/{span_id}'
     requests.put(url)
 
 async def run():
@@ -62,7 +64,7 @@ async def run():
             parent_span_id = response_json["span_id"]
 
             # Send the start trace
-            send_start_trace(trace_id, parent_span_id, "dex-upload")
+            span_id = send_start_trace(trace_id, parent_span_id, "dex-upload")
 
             # Send upload messages
             print("Sending simulated UPLOAD reports...")
@@ -75,10 +77,10 @@ async def run():
                 await send_single_message(sender, message)
                 time.sleep(1)
             # Send the stop trace
-            send_stop_trace(trace_id, parent_span_id, "dex-upload")
+            send_stop_trace(trace_id, span_id)
 
             # Send the start trace
-            send_start_trace(trace_id, parent_span_id, "dex-routing")
+            span_id = send_start_trace(trace_id, parent_span_id, "dex-routing")
 
             # Send routing message
             print("Sending simulated ROUTING report...")
@@ -86,10 +88,10 @@ async def run():
             #print(f"Sending: {message}")
             await send_single_message(sender, message)
             # Send the stop trace
-            send_stop_trace(trace_id, parent_span_id, "dex-routing")
+            send_stop_trace(trace_id, span_id)
 
             # Send the start trace
-            send_start_trace(trace_id, parent_span_id, "dex-hl7-validation")
+            span_id = send_start_trace(trace_id, parent_span_id, "dex-hl7-validation")
             # Send hl7 validation messages
             print("Sending simulated HL7-VALIDATION reports...")
             num_lines = 2
@@ -99,7 +101,7 @@ async def run():
                 #print(f"Sending: {message}")
                 await send_single_message(sender, message)
             # Send the stop trace
-            send_stop_trace(trace_id, parent_span_id, "dex-hl7-validation")
+            send_stop_trace(trace_id, span_id)
 
 asyncio.run(run())
 print("Done sending messages")
