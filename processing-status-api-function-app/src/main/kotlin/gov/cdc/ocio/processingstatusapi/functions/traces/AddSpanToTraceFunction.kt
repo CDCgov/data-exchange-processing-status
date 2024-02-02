@@ -44,8 +44,6 @@ class AddSpanToTraceFunction(
         parentSpanId: String
     ): HttpResponseMessage {
 
-        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
-
         val stageName = request.queryParameters["stageName"]
             ?: return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -117,7 +115,6 @@ class AddSpanToTraceFunction(
         spanId: String
     ): HttpResponseMessage {
 
-        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
 
         try {
            val spanContext = SpanContext.createFromRemoteParent(
