@@ -73,6 +73,14 @@ class HealthCheckFunction(
             dependencyHealthChecks.add(jaegerHealth)
         }
 
+        if(result.status == "DOWN"){
+            return request
+                .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                .header("Content-Type", "application/json")
+                .body(result)
+                .build()
+        }
+
         return request
             .createResponseBuilder(HttpStatus.OK)
             .header("Content-Type", "application/json")
