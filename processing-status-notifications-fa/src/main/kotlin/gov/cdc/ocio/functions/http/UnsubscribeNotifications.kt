@@ -29,8 +29,8 @@ class UnsubscribeNotifications(
     ):
             HttpResponseMessage {
 
-        logger.info("NotificationType $notificationType")
-        logger.info("SubscriptionId $subscriptionId")
+        logger.info { "NotificationType $notificationType" }
+        logger.info { "SubscriptionId $subscriptionId" }
 
         val result = SubscriptionResult()
         val unsubscribeSuccessfull = unsubscribeNotifications(subscriptionId)
@@ -43,13 +43,13 @@ class UnsubscribeNotifications(
         } else {
             result.status = false
             result.message = "Unsubscription unsuccessfull for $notificationType"
-            request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(result).build();
+            request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(result).build()
         }
     }
 
     private fun unsubscribeNotifications(
         subscriptionId: String,
     ): Boolean {
-        return cacheService.unsubscribeNotifications(subscriptionId);
+        return cacheService.unsubscribeNotifications(subscriptionId)
     }
 }

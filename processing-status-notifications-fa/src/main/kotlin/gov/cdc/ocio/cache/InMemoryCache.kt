@@ -10,13 +10,14 @@ import kotlin.collections.HashMap
 
 
 object InMemoryCache {
-    private val logger = KotlinLogging.logger {};
+    private val logger = KotlinLogging.logger {}
     private val readWriteLock = ReentrantReadWriteLock()
 
     // Cache to store "SubscriptionRule HashSet ->  SubscriptionId"
-    private val subscriptionRuleCache = HashMap<String, String>();
+    private val subscriptionRuleCache = HashMap<String, String>()
+
     // Cache to store "SubscriptionId ->  Subscriber Info (Email or Url and type of subscription)"
-    private val subscriberCache = HashMap<String, NotificationSubscriber>();
+    private val subscriberCache = HashMap<String, NotificationSubscriber>()
 
 
     fun updateCacheForSubscription(subscriptionRule: String,
@@ -34,7 +35,7 @@ object InMemoryCache {
 
     fun unsubscribeSubscriber(subscriptionId: String): Boolean {
       if (subscriberCache.containsKey(subscriptionId)) {
-          val subscriber = subscriberCache.get(subscriptionId);
+          val subscriber = subscriberCache.get(subscriptionId)
           readWriteLock.writeLock().lock()
           try {
               subscriberCache.remove(subscriptionId)
@@ -47,13 +48,13 @@ object InMemoryCache {
           return true
       } else {
           logger.info("Subscription $subscriptionId doesn't exist ")
-          return false;
+          return false
       }
     }
 
     private fun updateSubscriptionRuleCache(subscriptionRule: String): String {
         // Try to read from existing cache to see an existing subscription rule
-        var existingSubscriptionId: String? = null;
+        var existingSubscriptionId: String? = null
         readWriteLock.readLock().lock()
         try {
             existingSubscriptionId = subscriptionRuleCache.get(subscriptionRule)
@@ -67,7 +68,7 @@ object InMemoryCache {
             return existingSubscriptionId
         } else {
             // create unique subscription
-            val subscriptionId = generateUniqueSubscriptionId();
+            val subscriptionId = generateUniqueSubscriptionId()
             logger.info("Subscription Id for this new rule has been generated $subscriptionId")
             readWriteLock.writeLock().lock()
             try {

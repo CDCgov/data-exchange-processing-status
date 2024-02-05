@@ -19,7 +19,7 @@ class FunctionKotlinWrappers {
         @BindingName("destinationId") destinationId: String,
         @BindingName("eventType") eventType: String
     ): HttpResponseMessage {
-        return SubscribeEmailNotifications(request).run(destinationId, eventType);
+        return SubscribeEmailNotifications(request).run(destinationId, eventType)
     }
 
     @FunctionName("SubscribeWebsocket")
@@ -33,7 +33,7 @@ class FunctionKotlinWrappers {
         @BindingName("destinationId") destinationId: String,
         @BindingName("eventType") eventType: String
     ): HttpResponseMessage {
-        return SubscribeWebsocketNotifications(request).run(destinationId, eventType);
+        return SubscribeWebsocketNotifications(request).run(destinationId, eventType)
     }
 
     @FunctionName("Unsubscribe")
@@ -47,7 +47,7 @@ class FunctionKotlinWrappers {
         @BindingName("notificationType") notificationType: String,
         @BindingName("subscriptionId") subscriptionId: String
     ): HttpResponseMessage {
-        return UnsubscribeNotifications(request).run(notificationType, subscriptionId);
+        return UnsubscribeNotifications(request).run(notificationType, subscriptionId)
     }
 
 }

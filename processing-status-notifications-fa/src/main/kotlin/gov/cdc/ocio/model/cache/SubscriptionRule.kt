@@ -6,15 +6,15 @@ class SubscriptionRule(val destinationId: String,
                        val statusType: String) {
 
     override fun hashCode(): Int {
-        var result = destinationId?.hashCode() ?: 0
-        result = 31 * result + (eventType?.hashCode() ?: 0)
-        result = 31 * result + (stageName?.hashCode() ?: 0)
-        result = 31 * result + (statusType?.hashCode() ?: 0)
+        var result = destinationId.hashCode()
+        result = 31 * result + eventType.hashCode()
+        result = 31 * result + stageName.hashCode()
+        result = 31 * result + statusType.hashCode()
         return result
     }
 
     fun getStringHash(): String {
-        return Integer.toHexString(hashCode());
+        return Integer.toHexString(hashCode())
     }
 
     override fun equals(other: Any?): Boolean {

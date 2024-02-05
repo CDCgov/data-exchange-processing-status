@@ -8,9 +8,7 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.annotation.AuthorizationLevel
 import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.cache.InMemoryCacheService
-import gov.cdc.ocio.exceptions.BadRequestException
 import gov.cdc.ocio.model.http.SubscriptionResult
-import gov.cdc.ocio.model.message.StatusType
 import gov.cdc.ocio.model.message.SubscriptionType
 import mu.KotlinLogging
 import java.time.Instant
@@ -79,6 +77,6 @@ class SubscribeEmailNotifications(
             result.message = "Subscription for Email setup"
         }
 
-        return result;
+        return result
     }
 }

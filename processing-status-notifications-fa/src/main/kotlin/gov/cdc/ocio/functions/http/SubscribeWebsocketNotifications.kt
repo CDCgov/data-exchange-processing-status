@@ -42,7 +42,7 @@ class SubscribeWebsocketNotifications(
             subscriptionResult.message = "Subscription successfull"
             request.createResponseBuilder(HttpStatus.OK).body(subscriptionResult).build()
         } else {
-            request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(subscriptionResult).build();
+            request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(subscriptionResult).build()
         }
     }
 
@@ -76,6 +76,6 @@ class SubscribeWebsocketNotifications(
             result.message = "Subscription for Websocket setup"
         }
 
-        return result;
+        return result
     }
 }

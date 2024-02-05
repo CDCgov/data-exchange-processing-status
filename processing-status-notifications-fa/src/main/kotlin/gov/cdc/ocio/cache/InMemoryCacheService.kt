@@ -18,7 +18,7 @@ class InMemoryCacheService {
             val subscriptionId =  InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
             return subscriptionId
         } catch (e: BadStateException) {
-            throw e;
+            throw e
         }
 
     }
@@ -27,7 +27,7 @@ class InMemoryCacheService {
         try {
             return InMemoryCache.unsubscribeSubscriber(subscriptionId)
         } catch (e: BadStateException) {
-            throw e;
+            throw e
         }
 
     }
