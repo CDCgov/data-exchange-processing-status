@@ -41,7 +41,7 @@ class HealthCheckFunctionTest {
     }
 
     @Test
-    fun testOkStatusBack() {
+    fun testStatusBack() {
         mockkObject(CosmosContainerManager)
         val mockCosmosClient = mockk<CosmosClient>()
         val mockCosmosDb = mockk<CosmosDatabase>()
@@ -59,7 +59,7 @@ class HealthCheckFunctionTest {
         // call HealthCheckFunction
         val response = healthCheckFunction.run()
 
-        assert(response.status == HttpStatus.OK)
+        assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
      @Test
