@@ -1,14 +1,16 @@
 package gov.cdc.ocio.model.cache
 
-import java.util.Objects
-
 class SubscriptionRule(val destinationId: String,
                        val eventType: String,
                        val stageName: String,
                        val statusType: String) {
 
     override fun hashCode(): Int {
-        return Objects.hash(destinationId, eventType, stageName, statusType)
+        var result = destinationId?.hashCode() ?: 0
+        result = 31 * result + (eventType?.hashCode() ?: 0)
+        result = 31 * result + (stageName?.hashCode() ?: 0)
+        result = 31 * result + (statusType?.hashCode() ?: 0)
+        return result
     }
 
     fun getStringHash(): String {
