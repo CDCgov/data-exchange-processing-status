@@ -1,7 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.model.reports.stagereports
 
-import java.util.*
-
 class UploadMetadataVerifyStage: SchemaDefinition() {
 
     var filename : String? = null
