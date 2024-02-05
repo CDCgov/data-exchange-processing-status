@@ -9,7 +9,7 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel
 import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.cache.InMemoryCacheService
 import gov.cdc.ocio.model.http.SubscriptionResult
-import gov.cdc.ocio.model.message.SubscriptionType
+import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging
 import java.time.Instant
 

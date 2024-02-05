@@ -2,7 +2,7 @@ package gov.cdc.ocio.cache
 
 import gov.cdc.ocio.exceptions.BadStateException
 import gov.cdc.ocio.model.cache.SubscriptionRule
-import gov.cdc.ocio.model.message.SubscriptionType
+import gov.cdc.ocio.model.http.SubscriptionType
 
 
 class InMemoryCacheService {
@@ -12,7 +12,8 @@ class InMemoryCacheService {
                                                     stageName: String,
                                                     statusType: String,
                                                     emailOrUrl: String,
-                                                    subscriptionType: SubscriptionType): String{
+                                                    subscriptionType: SubscriptionType
+    ): String{
         try {
             val subscriptionRule = SubscriptionRule(destinationId, eventType, stageName, statusType)
             val subscriptionId =  InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)

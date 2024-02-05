@@ -2,7 +2,7 @@ package gov.cdc.ocio.cache
 
 import gov.cdc.ocio.exceptions.BadStateException
 import gov.cdc.ocio.model.cache.NotificationSubscriber
-import gov.cdc.ocio.model.message.SubscriptionType
+import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -21,8 +21,8 @@ object InMemoryCache {
 
 
     fun updateCacheForSubscription(subscriptionRule: String,
-                    subscriptionType: SubscriptionType,
-                    emailOrUrl: String): String {
+                                   subscriptionType: SubscriptionType,
+                                   emailOrUrl: String): String {
         if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBSOCKET) {
             // If subscription type is EMAIL or WEBSOCKET then proceed else throw BAdState Exception
             val subscriptionId = updateSubscriptionRuleCache(subscriptionRule)
