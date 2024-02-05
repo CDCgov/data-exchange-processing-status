@@ -46,7 +46,7 @@ object InMemoryCache {
                   "${subscriber?.subscriberType} ")
           return true
       } else {
-          logger.info("Subscription ${subscriptionId} doesn't exist ")
+          logger.info("Subscription $subscriptionId doesn't exist ")
           return false;
       }
     }

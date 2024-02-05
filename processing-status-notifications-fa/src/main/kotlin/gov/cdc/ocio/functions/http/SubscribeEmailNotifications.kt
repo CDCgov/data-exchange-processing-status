@@ -8,6 +8,7 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.annotation.AuthorizationLevel
 import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.cache.InMemoryCacheService
+import gov.cdc.ocio.exceptions.BadRequestException
 import gov.cdc.ocio.model.http.SubscriptionResult
 import gov.cdc.ocio.model.message.StatusType
 import gov.cdc.ocio.model.message.SubscriptionType
@@ -38,13 +39,16 @@ class SubscribeEmailNotifications(
         logger.info("StageName: $stageName")
         logger.info("StatusType: $statusType")
 
-        val subscriptionResult = subscribeForEmail(destinationId, eventType, email, stageName, statusType)
-        return if (subscriptionResult.subscription_id != null) {
-            subscriptionResult.message = "Subscription successfull"
-            request.createResponseBuilder(HttpStatus.OK).body(subscriptionResult).build()
-        } else {
-            request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(subscriptionResult).build();
+        var subscriptionResult = SubscriptionResult()
+        if (!(email == null || stageName == null || statusType == null)) {
+            subscriptionResult = subscribeForEmail(destinationId, eventType, email, stageName, statusType)
+            if (subscriptionResult.subscription_id != null) {
+                return request.createResponseBuilder(HttpStatus.OK).body(subscriptionResult).build()
+            }
         }
+        subscriptionResult.message = "Invalid Request"
+        subscriptionResult.status = false
+        return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(subscriptionResult).build()
     }
 
     private fun subscribeForEmail(
