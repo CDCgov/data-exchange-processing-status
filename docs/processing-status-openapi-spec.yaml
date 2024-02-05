@@ -771,7 +771,7 @@ paths:
           description: Authorization information is missing or invalid.
         '403':
           description: Unauthorized access.
-  '/notifications/unsubscribe/{notificationType}/{subscriptionId}':
+  '/notifications/unsubscribe/{subscriptionId}':
     post:
       tags:
         - DEX Notifications
@@ -779,13 +779,6 @@ paths:
       description: >-
         Removes an existing subscription with given subscriptionId from the database.
       parameters:
-        - name: notificationType
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ email, websocket ]
-          description: The value of this field could be 'email' or 'websocket'
         - name: subscriptionId
           in: path
           required: true
