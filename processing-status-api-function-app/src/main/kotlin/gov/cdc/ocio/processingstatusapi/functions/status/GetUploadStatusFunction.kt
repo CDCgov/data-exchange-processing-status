@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.functions.reports
+package gov.cdc.ocio.processingstatusapi.functions.status
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.microsoft.azure.functions.HttpRequestMessage
@@ -6,10 +6,13 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.UploadStatus
 import gov.cdc.ocio.processingstatusapi.model.UploadsStatus
+import gov.cdc.ocio.processingstatusapi.model.reports.UploadCounts
+import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -27,6 +30,8 @@ class GetUploadStatusFunction(
 ) {
 
     private val logger = KotlinLogging.logger {}
+
+    private val gson = JsonUtils.getGsonBuilderWithUTC()
 
     private val reportsContainerName = "Reports"
     private val partitionKey = "/uploadId"
@@ -64,7 +69,7 @@ class GetUploadStatusFunction(
         }
 
         val sqlQuery = StringBuilder()
-        sqlQuery.append("from $reportsContainerName t where t.destinationId = '$destinationId' and t.stageName = '$stageName'")
+        sqlQuery.append("from $reportsContainerName t where t.destinationId = '$destinationId'")
 
         extEvent?.run {
             sqlQuery.append(" and t.eventType = '$extEvent'")
@@ -94,17 +99,19 @@ class GetUploadStatusFunction(
                         .build()
             }
         }
+        sqlQuery.append(" group by t.uploadId")
 
-        val countQuery = "select value count(1) $sqlQuery"
+        // SELECT count(1) as reportCounts, t.uploadId from Reports t where t.destinationId = 'dex-testing' group by t.uploadId
+        val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
         logger.info("upload status count query = $countQuery")
 
         var totalItems = 0L
         try {
             val count = reportsContainer.queryItems(
-                    countQuery, CosmosQueryRequestOptions(),
-                    Long::class.java
+                countQuery, CosmosQueryRequestOptions(),
+                UploadCounts::class.java
             )
-            totalItems = if (count.count() > 0) count.first().toLong() else -1
+            totalItems = count.count().toLong()
             logger.info("Upload status matched count = $totalItems")
         } catch (ex: Exception) {
             // no items found or problem with query
@@ -113,7 +120,7 @@ class GetUploadStatusFunction(
 
         val numberOfPages: Int
         val pageNumberAsInt: Int
-        val reports: List<Report>
+        val reports = mutableMapOf<String, List<Report>>()
         if (totalItems > 0L) {
             numberOfPages =  (totalItems / pageSizeAsInt + if (totalItems % pageSizeAsInt > 0) 1 else 0).toInt()
 
@@ -126,48 +133,65 @@ class GetUploadStatusFunction(
                         .build()
             }
 
-            sortBy?.run {
-                val sortField = when (sortBy) {
-                    "date" -> "_ts"
-                    else -> {
-                        return request
-                                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                                .body("sort_by must be one of the following: [date]")
-                                .build()
-                    }
-                }
-                var sortOrderVal = DEFAULT_SORT_ORDER
-                sortOrder?.run {
-                    sortOrderVal = when (sortOrder) {
-                        "ascending" -> "asc"
-                        "descending" -> "desc"
-                        else -> {
-                            return request
-                                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                                    .body("sort_order must be one of the following: [ascending, descending]")
-                                    .build()
-                        }
-                    }
-                }
-                sqlQuery.append(" order by t.$sortField $sortOrderVal")
-            }
+            // order by not working
+//            sortBy?.run {
+//                val sortField = when (sortBy) {
+//                    "date" -> "_ts"
+//                    else -> {
+//                        return request
+//                                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+//                                .body("sort_by must be one of the following: [date]")
+//                                .build()
+//                    }
+//                }
+//                var sortOrderVal = DEFAULT_SORT_ORDER
+//                sortOrder?.run {
+//                    sortOrderVal = when (sortOrder) {
+//                        "ascending" -> "asc"
+//                        "descending" -> "desc"
+//                        else -> {
+//                            return request
+//                                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+//                                    .body("sort_order must be one of the following: [ascending, descending]")
+//                                    .build()
+//                        }
+//                    }
+//                }
+//                sqlQuery.append(" order by t.$sortField $sortOrderVal")
+//            }
+            // SELECT count(1) as reportCounts, t.uploadId, t._ts from Reports t where t.destinationId = 'dex-testing' group by t.uploadId, t._ts order by t._ts asc offset 0 limit 10
             val offset = (pageNumberAsInt - 1) * pageSizeAsInt
-            val dataSqlQuery = "select * $sqlQuery offset $offset limit $pageSizeAsInt"
+            val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
             logger.info("upload status data query = $dataSqlQuery")
-            reports = reportsContainer.queryItems(
+            val results = reportsContainer.queryItems(
                     dataSqlQuery, CosmosQueryRequestOptions(),
-                    Report::class.java
+                    UploadCounts::class.java
             ).toList()
+
+            results.forEach { report ->
+                val uploadId = report.uploadId
+                    ?: return request
+                        .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Upload ID unexpectedly null")
+                        .build()
+                val reportsSqlQuery = "select * from $reportsContainerName t where t.uploadId = '$uploadId'"
+                logger.info("get reports for upload query = $reportsSqlQuery")
+                val reportsForUploadId = reportsContainer.queryItems(
+                    reportsSqlQuery, CosmosQueryRequestOptions(),
+                    Report::class.java
+                ).toList()
+
+                reports[uploadId] = reportsForUploadId
+            }
         } else {
             numberOfPages = 0
             pageNumberAsInt = 0
-            reports = listOf()
         }
 
         val uploadsStatus = UploadsStatus()
         reports.forEach { report ->
             try {
-               val uploadStatus = UploadStatus.createFromReport(report)
+               val uploadStatus = UploadStatus.createFromReports(uploadId = report.key, reports = report.value)
                 uploadsStatus.items.add(uploadStatus)
             } catch (e: ContentException) {
                 logger.error("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
@@ -182,7 +206,7 @@ class GetUploadStatusFunction(
         return request
                 .createResponseBuilder(HttpStatus.OK)
                 .header("Content-Type", "application/json")
-                .body(uploadsStatus)
+                .body(gson.toJson(uploadsStatus))
                 .build()
     }
 

@@ -51,7 +51,7 @@ class JsonUtils {
     internal class GsonUTCDateAdapter : JsonSerializer<Date>, JsonDeserializer<Date> {
 
         override fun serialize(date: Date, type: Type, jsonSerializationContext: JsonSerializationContext): JsonElement {
-            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
             format.timeZone = TimeZone.getTimeZone("UTC")
             return JsonPrimitive(format.format(date))
         }
@@ -59,7 +59,7 @@ class JsonUtils {
         override fun deserialize(jsonElement: JsonElement, type: Type, jsonDeserializationContext: JsonDeserializationContext): Date {
             val dateString = jsonElement.asString
             try {
-                val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+                val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
                 format.timeZone = TimeZone.getTimeZone("UTC")
                 return format.parse(dateString) as Date
             } catch (e: ParseException) {

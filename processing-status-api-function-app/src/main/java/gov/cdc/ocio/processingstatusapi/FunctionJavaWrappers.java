@@ -8,7 +8,7 @@ import com.microsoft.azure.functions.annotation.*;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
-import gov.cdc.ocio.processingstatusapi.functions.reports.GetUploadStatusFunction;
+import gov.cdc.ocio.processingstatusapi.functions.status.GetUploadStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.AddSpanToTraceFunction;

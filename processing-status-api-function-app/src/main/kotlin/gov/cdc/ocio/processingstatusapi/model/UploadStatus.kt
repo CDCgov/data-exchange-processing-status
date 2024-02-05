@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.UploadMetadataVerifyStage
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.UploadStage
 import java.util.*
 
@@ -26,71 +27,99 @@ class UploadStatus {
     var status: String? = null
 
     @SerializedName("percent_complete")
-    var percentComplete: Float = 0F
+    var percentComplete: Float? = null
 
     @SerializedName("filename")
     var fileName: String? = null
 
     @SerializedName("file_size_bytes")
-    var fileSizeBytes: Long = 0
+    var fileSizeBytes: Long? = null
 
     @SerializedName("bytes_uploaded")
-    var bytesUploaded: Long = 0
+    var bytesUploaded: Long? = null
 
-    @SerializedName("tud_upload_id")
-    var tusUploadId: String? = null
+    @SerializedName("upload_id")
+    var uploadId: String? = null
 
     @SerializedName("time_uploading_sec")
-    var timeUploadingSec: Double = 0.0
+    var timeUploadingSec: Double? = null
 
     var metadata: Map<String, Any>? = null
 
-    var timestamp: String? = null
+    var issues: MutableList<String>? = null
+
+    var timestamp: Date? = null
 
     companion object {
 
         /**
-         * Convenience class method to instantiate an UploadStatus object from a Report object.
+         * Convenience class method to instantiate an UploadStatus object from a Report list.
          *
-         * @param report StReport
+         * @param uploadId String
+         * @param reports List<Report>
          * @return UploadStatus
          * @throws ContentException
          */
         @Throws(ContentException::class)
-        fun createFromReport(report: Report): UploadStatus {
+        fun createFromReports(uploadId: String, reports: List<Report>): UploadStatus {
 
-            if (report.contentType != "json")
-                throw ContentException("Content type is not JSON as expected")
+            val uploadStatus = UploadStatus()
+            var isFailedUpload = false
+            reports.forEach { report ->
+                if (report.contentType != "json")
+                    throw ContentException("Content type is not JSON as expected")
 
-            val stageReportJson = report.content
+                val stageReportJson = report.content
 
-            val schemaDefinition = Gson().fromJson(stageReportJson, SchemaDefinition::class.java)
+                val schemaDefinition = Gson().fromJson(stageReportJson, SchemaDefinition::class.java)
 
-            // Attempt to interpret the stage as an upload stage
-            if (schemaDefinition != UploadStage.schemaDefinition)
-                throw ContentException("Schema definition of stage report report=$schemaDefinition mismatch from upload=${UploadStage.schemaDefinition}")
+                // Attempt to interpret the stage as an upload stage
+                when (schemaDefinition) {
+                    UploadStage.schemaDefinition -> {
+                        val uploadStage = Gson().fromJson(stageReportJson, UploadStage::class.java)
+                            ?: throw ContentException("Unable to interpret stage report content as an upload stage")
+                        var calculatedPercentComplete = 0F
+                        if (uploadStage.size > 0)
+                            calculatedPercentComplete = uploadStage.offset.toFloat() / uploadStage.size * 100
 
-            val uploadStage = Gson().fromJson(stageReportJson, UploadStage::class.java)
-                    ?: throw ContentException("Unable to interpret stage report content as an upload state")
+                        val isUploadInProgress = (uploadStage.offset < uploadStage.size)
+                        val statusMessage = if (isUploadInProgress) "Uploading" else "UploadComplete"
+                        val endTimeEpochMillis = if (isUploadInProgress) Date().time/1000 else uploadStage.endTimeEpochMillis
 
-            var calculatedPercentComplete = 0F
-            if (uploadStage.size > 0)
-                calculatedPercentComplete = uploadStage.offset.toFloat() / uploadStage.size * 100
-
-            val isUploadInProgress = (uploadStage.offset < uploadStage.size)
-            val statusMessage = if (isUploadInProgress) "Uploading" else "UploadComplete"
-            val endTimeEpochMillis = if (isUploadInProgress) Date().time/1000 else uploadStage.endTimeEpochMillis
-            return UploadStatus().apply {
-                status = statusMessage
-                tusUploadId = uploadStage.tguid
-                fileName = uploadStage.filename
-                fileSizeBytes = uploadStage.size
-                bytesUploaded = uploadStage.offset
-                percentComplete = calculatedPercentComplete
-                timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
-                metadata = uploadStage.metadata
-                timestamp = uploadStage.getTimestamp()
+                        if (!isFailedUpload) {
+                            uploadStatus.status = statusMessage
+                            uploadStatus.fileSizeBytes = uploadStage.size
+                            uploadStatus.bytesUploaded = uploadStage.offset
+                            uploadStatus.percentComplete = calculatedPercentComplete
+                        }
+                        uploadStatus.uploadId = uploadId
+                        uploadStatus.fileName = uploadStage.filename
+                        uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
+                        uploadStatus.metadata = uploadStage.metadata
+                        uploadStatus.timestamp = report.timestamp
+                    }
+                    UploadMetadataVerifyStage.schemaDefinition -> {
+                        val metadataVerifyStage = Gson().fromJson(stageReportJson, UploadMetadataVerifyStage::class.java)
+                            ?: throw ContentException("Unable to interpret stage report content as a metadata verify stage")
+                        metadataVerifyStage.issues?.let { issues->
+                            uploadStatus.status = "FailedMetadata"
+                            uploadStatus.fileSizeBytes = null
+                            uploadStatus.bytesUploaded = null
+                            uploadStatus.percentComplete = null
+                            uploadStatus.uploadId = uploadId
+                            uploadStatus.fileName = metadataVerifyStage.filename
+                            uploadStatus.metadata = metadataVerifyStage.metadata
+                            uploadStatus.timestamp = report.timestamp
+                            if (uploadStatus.issues == null)
+                                uploadStatus.issues = mutableListOf()
+                            uploadStatus.issues?.addAll(issues)
+                            isFailedUpload = true
+                        }
+                    }
+                }
             }
+
+            return uploadStatus
         }
     }
 }
