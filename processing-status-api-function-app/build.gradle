@@ -12,6 +12,7 @@ plugins {
 }
 apply plugin: "java"
 apply plugin: "kotlin"
+apply plugin: "jacoco"
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
@@ -74,6 +75,27 @@ test {
     // Set the test classpath, if required
 }
 
+jacoco {
+    toolVersion = "0.8.7"
+    reportsDirectory = file("$buildDir/jacocoXml")
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+    reports {
+        html.required = true
+        xml.required = true
+        html.destination file("$buildDir/jacocoHtml")
+    }
+    afterEvaluate{
+        classDirectories.setFrom(files(classDirectories.files.collect{
+            fileTree(dir: it, exclude: ["**/gov/cdc/ocio/processingstatusapi/opentelemetry/**",
+                                        "**/gov/cdc/ocio/processingstatusapi/cosmos/**"])
+        }))
+    }
+}
 azurefunctions {
     subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
     resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'

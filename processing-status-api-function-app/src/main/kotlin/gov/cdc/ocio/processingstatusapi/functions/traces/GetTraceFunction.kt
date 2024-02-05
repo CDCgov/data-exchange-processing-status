@@ -27,7 +27,6 @@ class GetTraceFunction(
      */
     fun withTraceId(traceId: String): HttpResponseMessage {
 
-        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
         logger.info("Trace Id = $traceId")
 
         val traceEndPoint = System.getenv("JAEGER_TRACE_END_POINT")+"api/traces/$traceId"
@@ -61,7 +60,6 @@ class GetTraceFunction(
      */
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
-        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
         logger.info("Upload Id = $uploadId")
 
         val traces = TraceUtils.getTraces(uploadId)

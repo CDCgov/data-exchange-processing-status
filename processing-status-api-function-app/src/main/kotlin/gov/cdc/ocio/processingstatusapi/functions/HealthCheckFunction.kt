@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.functions
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
@@ -13,8 +12,8 @@ import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.model.CosmosDb
 import gov.cdc.ocio.processingstatusapi.model.HealthCheck
 import gov.cdc.ocio.processingstatusapi.model.Jaeger
-import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.ServiceBus
+import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import mu.KotlinLogging
 import java.util.*
 import kotlin.system.measureTimeMillis
@@ -72,6 +71,14 @@ class HealthCheckFunction(
             dependencyHealthChecks.add(cosmosDBHealth)
             dependencyHealthChecks.add(serviceBusHealth)
             dependencyHealthChecks.add(jaegerHealth)
+        }
+
+        if(result.status == "DOWN"){
+            return request
+                .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                .header("Content-Type", "application/json")
+                .body(result)
+                .build()
         }
 
         return request
