@@ -63,9 +63,9 @@ object InMemoryCache {
         }
 
         // if subscription doesn't exist, it will add it else it will return the existing subscription id
-        if (existingSubscriptionId != null) {
+        return if (existingSubscriptionId != null) {
             logger.info("Subscription Rule exists")
-            return existingSubscriptionId
+            existingSubscriptionId
         } else {
             // create unique subscription
             val subscriptionId = generateUniqueSubscriptionId()
@@ -76,7 +76,7 @@ object InMemoryCache {
             } finally {
                 readWriteLock.writeLock().unlock()
             }
-            return subscriptionId
+            subscriptionId
         }
     }
 
