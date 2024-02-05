@@ -44,10 +44,9 @@ class FunctionKotlinWrappers {
             route = "unsubscribe/{notificationType}/{subscriptionId}",
             authLevel = AuthorizationLevel.ANONYMOUS
         ) request: HttpRequestMessage<Optional<String>>,
-        @BindingName("notificationType") notificationType: String,
         @BindingName("subscriptionId") subscriptionId: String
     ): HttpResponseMessage {
-        return UnsubscribeNotifications(request).run(notificationType, subscriptionId)
+        return UnsubscribeNotifications(request).run(subscriptionId)
     }
 
 }

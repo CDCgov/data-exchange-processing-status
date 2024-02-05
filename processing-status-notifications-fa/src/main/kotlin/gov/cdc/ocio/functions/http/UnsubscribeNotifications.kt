@@ -24,12 +24,10 @@ class UnsubscribeNotifications(
             methods = [HttpMethod.PUT],
             authLevel = AuthorizationLevel.ANONYMOUS
         )
-        notificationType: String,
         subscriptionId: String
     ):
             HttpResponseMessage {
 
-        logger.info { "NotificationType $notificationType" }
         logger.info { "SubscriptionId $subscriptionId" }
 
         val result = SubscriptionResult()
@@ -38,11 +36,11 @@ class UnsubscribeNotifications(
             result.subscription_id = subscriptionId
             result.timestamp = Instant.now().epochSecond
             result.status = false
-            result.message = "Unsubscription successfull for $notificationType"
+            result.message = "Unsubscription successfull"
             request.createResponseBuilder(HttpStatus.OK).body(result).build()
         } else {
             result.status = false
-            result.message = "Unsubscription unsuccessfull for $notificationType"
+            result.message = "Unsubscription unsuccessfull"
             request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body(result).build()
         }
     }
