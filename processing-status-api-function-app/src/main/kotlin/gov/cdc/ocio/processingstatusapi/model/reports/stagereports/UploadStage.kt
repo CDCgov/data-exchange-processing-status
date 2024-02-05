@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.model.reports.stagereports
 
 import com.google.gson.annotations.SerializedName
-import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -33,11 +32,8 @@ class UploadStage: SchemaDefinition() {
     @SerializedName("end_time_epoch_millis")
     var endTimeEpochMillis: Long = 0
 
-    fun getTimestamp(): String {
-        val date = Date(startTimeEpochMillis)
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
-        sdf.timeZone = TimeZone.getTimeZone("UTC")
-        return sdf.format(date)
+    fun getTimestamp(): Date {
+        return Date(startTimeEpochMillis)
     }
 
     companion object {

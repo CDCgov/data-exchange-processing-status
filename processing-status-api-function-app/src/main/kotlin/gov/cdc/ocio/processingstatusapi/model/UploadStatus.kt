@@ -27,40 +27,41 @@ class UploadStatus {
     var status: String? = null
 
     @SerializedName("percent_complete")
-    var percentComplete: Float? = 0F
+    var percentComplete: Float? = null
 
     @SerializedName("filename")
     var fileName: String? = null
 
     @SerializedName("file_size_bytes")
-    var fileSizeBytes: Long? = 0
+    var fileSizeBytes: Long? = null
 
     @SerializedName("bytes_uploaded")
-    var bytesUploaded: Long? = 0
+    var bytesUploaded: Long? = null
 
-    @SerializedName("tud_upload_id")
-    var tusUploadId: String? = null
+    @SerializedName("upload_id")
+    var uploadId: String? = null
 
     @SerializedName("time_uploading_sec")
-    var timeUploadingSec: Double = 0.0
+    var timeUploadingSec: Double? = null
 
     var metadata: Map<String, Any>? = null
 
     var issues: MutableList<String>? = null
 
-    var timestamp: String? = null
+    var timestamp: Date? = null
 
     companion object {
 
         /**
          * Convenience class method to instantiate an UploadStatus object from a Report list.
          *
+         * @param uploadId String
          * @param reports List<Report>
          * @return UploadStatus
          * @throws ContentException
          */
         @Throws(ContentException::class)
-        fun createFromReports(reports: List<Report>): UploadStatus {
+        fun createFromReports(uploadId: String, reports: List<Report>): UploadStatus {
 
             val uploadStatus = UploadStatus()
             var isFailedUpload = false
@@ -91,11 +92,11 @@ class UploadStatus {
                             uploadStatus.bytesUploaded = uploadStage.offset
                             uploadStatus.percentComplete = calculatedPercentComplete
                         }
-                        uploadStatus.tusUploadId = uploadStage.tguid
+                        uploadStatus.uploadId = uploadId
                         uploadStatus.fileName = uploadStage.filename
                         uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
                         uploadStatus.metadata = uploadStage.metadata
-                        uploadStatus.timestamp = uploadStage.getTimestamp()
+                        uploadStatus.timestamp = report.timestamp
                     }
                     UploadMetadataVerifyStage.schemaDefinition -> {
                         val metadataVerifyStage = Gson().fromJson(stageReportJson, UploadMetadataVerifyStage::class.java)
@@ -105,6 +106,9 @@ class UploadStatus {
                             uploadStatus.fileSizeBytes = null
                             uploadStatus.bytesUploaded = null
                             uploadStatus.percentComplete = null
+                            uploadStatus.uploadId = uploadId
+                            uploadStatus.fileName = metadataVerifyStage.filename
+                            uploadStatus.timestamp = report.timestamp
                             if (uploadStatus.issues == null)
                                 uploadStatus.issues = mutableListOf()
                             uploadStatus.issues?.addAll(issues)

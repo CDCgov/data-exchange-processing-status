@@ -12,6 +12,7 @@ import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.UploadStatus
 import gov.cdc.ocio.processingstatusapi.model.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.model.reports.UploadCounts
+import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -29,6 +30,8 @@ class GetUploadStatusFunction(
 ) {
 
     private val logger = KotlinLogging.logger {}
+
+    private val gson = JsonUtils.getGsonBuilderWithUTC()
 
     private val reportsContainerName = "Reports"
     private val partitionKey = "/uploadId"
@@ -189,7 +192,7 @@ class GetUploadStatusFunction(
         val uploadsStatus = UploadsStatus()
         reports.forEach { report ->
             try {
-               val uploadStatus = UploadStatus.createFromReports(report.value)
+               val uploadStatus = UploadStatus.createFromReports(uploadId = report.key, reports = report.value)
                 uploadsStatus.items.add(uploadStatus)
             } catch (e: ContentException) {
                 logger.error("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
@@ -204,7 +207,7 @@ class GetUploadStatusFunction(
         return request
                 .createResponseBuilder(HttpStatus.OK)
                 .header("Content-Type", "application/json")
-                .body(uploadsStatus)
+                .body(gson.toJson(uploadsStatus))
                 .build()
     }
 
