@@ -108,6 +108,7 @@ class UploadStatus {
                             uploadStatus.percentComplete = null
                             uploadStatus.uploadId = uploadId
                             uploadStatus.fileName = metadataVerifyStage.filename
+                            uploadStatus.metadata = metadataVerifyStage.metadata
                             uploadStatus.timestamp = report.timestamp
                             if (uploadStatus.issues == null)
                                 uploadStatus.issues = mutableListOf()

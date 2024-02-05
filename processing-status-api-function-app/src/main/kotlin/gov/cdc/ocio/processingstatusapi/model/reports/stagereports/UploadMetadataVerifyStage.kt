@@ -10,8 +10,6 @@ class UploadMetadataVerifyStage: SchemaDefinition() {
 
     var issues: List<String>? = null
 
-    val timestamp: Date? = null
-
     companion object {
         val schemaDefinition = SchemaDefinition(schemaName = "dex-metadata-verify", schemaVersion = "0.0.1")
     }
