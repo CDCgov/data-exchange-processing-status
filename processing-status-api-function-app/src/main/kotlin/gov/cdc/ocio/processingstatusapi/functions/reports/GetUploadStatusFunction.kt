@@ -44,7 +44,6 @@ class GetUploadStatusFunction(
      */
     fun uploadStatus(destinationId: String, stageName: String): HttpResponseMessage {
 
-        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
         logger.info("destinationId = $destinationId")
 
         val dateStart = request.queryParameters["date_start"]

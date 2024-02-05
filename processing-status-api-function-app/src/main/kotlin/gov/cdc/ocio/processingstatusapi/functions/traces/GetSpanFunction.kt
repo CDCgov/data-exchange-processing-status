@@ -19,7 +19,6 @@ class GetSpanFunction(
     private val gson = JsonUtils.getGsonBuilderWithUTC()
 
     fun withQueryParams(): HttpResponseMessage {
-        logger.info("HTTP trigger processed a ${request.httpMethod.name} request.")
 
         val uploadId = request.queryParameters["uploadId"]
 
