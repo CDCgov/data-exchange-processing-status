@@ -1,8 +1,5 @@
 package gov.cdc.ocio.model.http
 
-import com.google.gson.annotations.SerializedName
-import java.util.*
-
 class SubscriptionResult {
     var subscription_id: String? = null
     var timestamp: Long? = null
@@ -18,5 +15,5 @@ enum class StatusType {
 
 enum class SubscriptionType {
     EMAIL,
-    WEBSOCKET,
+    WEBSOCKET
 }

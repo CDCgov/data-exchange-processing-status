@@ -48,5 +48,4 @@ class FunctionKotlinWrappers {
     ): HttpResponseMessage {
         return UnsubscribeNotifications(request).run(subscriptionId)
     }
-
 }

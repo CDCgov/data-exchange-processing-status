@@ -18,7 +18,6 @@ class SubscribeEmailNotifications(
     fun run(destinationId: String,
         eventType: String):
             HttpResponseMessage {
-
         // reading query parameters from http request for email subscription
         val email = request.queryParameters["email"]
         val stageName = request.queryParameters["stageName"]
