@@ -1,5 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.model.reports.stagereports
 
+/**
+ * DEX upload metadata verify stage definition.
+ *
+ * @property filename String?
+ * @property metadata Map<String, Any>?
+ * @property issues List<String>?
+ */
 class UploadMetadataVerifyStage: SchemaDefinition() {
 
     var filename : String? = null
