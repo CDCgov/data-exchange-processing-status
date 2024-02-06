@@ -3,10 +3,7 @@ package gov.cdc.ocio.functions.http
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import java.util.*
-import com.microsoft.azure.functions.HttpMethod
 import com.microsoft.azure.functions.HttpResponseMessage
-import com.microsoft.azure.functions.annotation.AuthorizationLevel
-import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.cache.InMemoryCacheService
 import gov.cdc.ocio.model.http.SubscriptionResult
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -18,16 +15,7 @@ class UnsubscribeNotifications(
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
-    fun run(
-        @HttpTrigger(
-            name = "req",
-            methods = [HttpMethod.PUT],
-            authLevel = AuthorizationLevel.ANONYMOUS
-        )
-        subscriptionId: String
-    ):
-            HttpResponseMessage {
-
+    fun run(subscriptionId: String): HttpResponseMessage {
         logger.info { "SubscriptionId $subscriptionId" }
 
         val result = SubscriptionResult()

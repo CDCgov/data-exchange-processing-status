@@ -3,10 +3,7 @@ package gov.cdc.ocio.functions.http
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import java.util.*
-import com.microsoft.azure.functions.HttpMethod
 import com.microsoft.azure.functions.HttpResponseMessage
-import com.microsoft.azure.functions.annotation.AuthorizationLevel
-import com.microsoft.azure.functions.annotation.HttpTrigger
 import gov.cdc.ocio.cache.InMemoryCacheService
 import gov.cdc.ocio.model.http.SubscriptionResult
 import gov.cdc.ocio.model.http.SubscriptionType
@@ -19,11 +16,7 @@ class SubscribeWebsocketNotifications(
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
-    fun run(
-        @HttpTrigger(name="req",
-                methods = [HttpMethod.POST],
-                authLevel = AuthorizationLevel.ANONYMOUS)
-        destinationId: String,
+    fun run(destinationId: String,
         eventType: String):
             HttpResponseMessage {
         // reading query parameters from http request for email subscription
