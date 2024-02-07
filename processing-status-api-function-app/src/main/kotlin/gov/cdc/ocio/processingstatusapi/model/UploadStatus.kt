@@ -65,6 +65,9 @@ class UploadStatus {
 
             val uploadStatus = UploadStatus()
             var isFailedUpload = false
+
+            // Convert the reports to their schema objects
+            val reportsWithSchemaPairs = mutableListOf<Pair<SchemaDefinition, Report>>()
             reports.forEach { report ->
                 if (report.contentType != "json")
                     throw ContentException("Content type is not JSON as expected")
@@ -72,6 +75,17 @@ class UploadStatus {
                 val stageReportJson = report.content
 
                 val schemaDefinition = Gson().fromJson(stageReportJson, SchemaDefinition::class.java)
+                reportsWithSchemaPairs.add(Pair(schemaDefinition, report))
+            }
+
+            // Sort the reports according to their schema type.
+            reportsWithSchemaPairs.sortedBy { it.first }
+
+            reportsWithSchemaPairs.forEach { reportWithSchemaPair ->
+
+                val report = reportWithSchemaPair.second
+                val schemaDefinition = reportWithSchemaPair.first
+                val stageReportJson = report.content
 
                 // Attempt to interpret the stage as an upload stage
                 when (schemaDefinition) {
@@ -117,6 +131,12 @@ class UploadStatus {
                                 uploadStatus.issues?.addAll(issues)
                                 isFailedUpload = true
                             }
+                        } else {
+                            uploadStatus.status = "PassedMetadata"
+                            uploadStatus.uploadId = uploadId
+                            uploadStatus.fileName = metadataVerifyStage.filename
+                            uploadStatus.metadata = metadataVerifyStage.metadata
+                            uploadStatus.timestamp = report.timestamp
                         }
                     }
                 }
