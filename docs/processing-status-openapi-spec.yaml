@@ -295,7 +295,7 @@ paths:
           schema:
             type: string
           description: Event Type.
-        - name: reportStageName
+        - name: stageName
           in: query
           required: true
           schema:
@@ -315,7 +315,7 @@ paths:
     put:
       tags:
         - DEX Reports
-      summary: Ammend an existing report using the provided upload identifier to lookup the report.
+      summary: Replace an existing report using the provided upload identifier to lookup the report.
       parameters:
         - name: uploadId
           in: path
@@ -335,7 +335,7 @@ paths:
           schema:
             type: string
           description: Event Type.
-        - name: reportStageName
+        - name: stageName
           in: query
           required: true
           schema:
