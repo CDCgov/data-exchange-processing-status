@@ -2,7 +2,7 @@ package test.reports
 
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
-import gov.cdc.ocio.processingstatusapi.functions.reports.GetUploadStatusFunction
+import gov.cdc.ocio.processingstatusapi.functions.status.GetUploadStatusFunction
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
