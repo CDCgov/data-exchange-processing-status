@@ -220,9 +220,9 @@ paths:
     get:
       tags:
         - DEX Tracing
-      summary: Gets a processing status trace from a report ID.
+      summary: Gets a processing status trace from a report ID.(Not yet implemented)
       description: >-
-        Retrieves a distributed tracing trace.
+        Retrieves a distributed tracing trace.(Not yet implemented)
       parameters:
         - name: reportId
           in: path
@@ -271,48 +271,11 @@ paths:
           description: Bad request.  The span was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report':
+  '/report/json/uploadId/{uploadId}':
     post:
       tags:
         - DEX Reports
-      summary: Create an initial report.
-      parameters:
-        - name: uploadId
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Upload identifier.
-        - name: destinationId
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Destination identifier.
-        - name: eventType
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Event Type.
-      description: >-
-        Creates an initial report.  The initial report is blank until ammended by the stages.
-      responses:
-        '200':
-          description: Report successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateReport'
-        '400':
-          description: Bad request.  The identifier provided was not found.
-        '401':
-          description: Authorization information is missing or invalid.
-  '/report/json/uploadId/{uploadId}':
-    put:
-      tags:
-        - DEX Reports
-      summary: Ammend an existing report using the provided upload identifier to lookup the report.
+      summary: Create a report using the provided upload identifier.
       parameters:
         - name: uploadId
           in: path
@@ -320,6 +283,64 @@ paths:
           schema:
             type: string
           description: Upload ID.
+        - name: destinationId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Destination ID.
+        - name: eventType
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Event Type.
+        - name: stageName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Report Stage Name.  
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateReport'
+        '400':
+          description: Bad request. Failed to create report.
+        '401':
+          description: Authorization information is missing or invalid.
+    put:
+      tags:
+        - DEX Reports
+      summary: Replace an existing report using the provided upload identifier to lookup the report.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Upload ID.
+        - name: destinationId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Destination ID.
+        - name: eventType
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Event Type.
+        - name: stageName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Report Stage Name.  
       responses:
         '200':
           description: Trace for the given upload dentifier
@@ -357,60 +378,11 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report/json/reportId/{reportId}':
-    put:
-      tags:
-        - DEX Reports
-      summary: Ammend an existing report with the given report identifier
-      parameters:
-        - name: reportId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Report ID.
-      responses:
-        '200':
-          description: Trace for the given upload dentifier
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AmmendReport'
-        '400':
-          description: Bad request.  The report identifier provided was not found.
-        '401':
-          description: Authorization information is missing or invalid.
-    get:
-      tags:
-        - DEX Reports
-      summary: Retrieve a report for the given report ID.
-      description: >-
-        Creates a status report for the given report identifier.
-      parameters:
-        - name: reportId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Report identifier of the report to retrieve.
-      responses:
-        '200':
-          description: Report for the given identifier
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/HL7Report'
-                  - $ref: '#/components/schemas/CSVReport'
-        '400':
-          description: Bad request.  The identifier provided was not found.
-        '401':
-          description: Authorization information is missing or invalid.
   '/report/traceId/{traceId}':
     put:
       tags:
         - DEX Reports
-      summary: Ammend an existing report using the provided trace identifier to lookup the report.
+      summary: Ammend an existing report using the provided trace identifier to lookup the report.(Not yet implemented)
       parameters:
         - name: traceId
           in: path
@@ -459,7 +431,7 @@ paths:
     get:
       tags:
         - DEX Reports
-      summary: Provides list of report identifiers for given criteria
+      summary: Provides list of report identifiers for given criteria(Not yet implemented)
       parameters:
         - name: ext_event
           in: query
@@ -467,7 +439,7 @@ paths:
             type: string
           description: >-
             If specified, also filter by meta_ext_event that was provided with
-            the upload.
+            the upload.(Not yet implemented)
           example: RoutineImmunization
         - name: destinationId
           in: path
@@ -520,10 +492,10 @@ paths:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known destination IDs.
+        Provides a list of all known destination IDs.(Not yet implemented)
       responses:
         '200':
-          description: All of the known destination identifiers
+          description: All of the known destination identifiers(Not yet implemented)
           content:
             application/json:
               schema:
@@ -537,7 +509,7 @@ paths:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known event types for the given destination identifier.
+        Provides a list of all known event types for the given destination identifier.(Not yet implemented)
       parameters:
         - name: destinationId
           in: path
@@ -562,7 +534,7 @@ paths:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known report schema identifiers.
+        Provides a list of all known report schema identifiers.(Not yet implemented)
       responses:
         '200':
           description: All of the known report schema identifiers
@@ -926,18 +898,19 @@ components:
     CreateReport:
       type: object
       properties:
-        report_id:
+        stage_report_id:
           type: string
           format: uuid
+        stage_name:
+          type: string
     AmmendReport:
       type: object
       properties:
-        parent_report_id:
+        stage_report_id:
           type: string
           format: uuid
-        ammended_report_id:
+        stage_name:
           type: string
-          format: uuod
     HL7Report:
       type: object
       properties:

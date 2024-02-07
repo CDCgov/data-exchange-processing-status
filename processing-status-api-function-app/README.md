@@ -13,6 +13,7 @@ In addition to the standard required application settings, the processing status
 
 - `JAEGER_OTEL_COLLECTOR_END_POINT` - URL of the Jaeger trace collector, listening on port 4317
 - `JAEGER_TRACE_ENDPOINT` - URL of the Jaeger web UI, listening on port 16686
+- `JAEGER_HEALTH_END_POINT` - URL of the Jaeger health end point, listening on port 14269
 - `CosmosDbEndpoint` - URL of the cosmos database
 - `CosmosDbKey` - shared key used to connect to the cosmos database
 - `ServiceBusQueueName` - service bus queue name, which should always be `processing-status-cosmos-db-queue`
@@ -26,3 +27,16 @@ To build and deploy you can use the Azure Functions Gradle plugin. You can do th
  gradle azureFunctionsDeploy -Dsubscription=<subcription_id> -DresourceGroup=<resource_group> -DappName=<function_app_name>
  ```
  Replace the `subscription`, `resourceGroup` and `appName` parameters with the actual values.
+ 
+## Code coverage metrics
+
+JaCoCo plugin provides code coverage metrics. The JacocoReport task has been added to build.gradle to generate code coverage reports
+in different formats. 
+
+To check the code coverage, run the following command:
+
+```
+./gradlew test jacocoTestReport 
+```
+
+The html version of the code coverage report can be found in build/jacocoHtml folder, index.html.
