@@ -101,7 +101,8 @@ class GetUploadStatusFunction(
         }
         sqlQuery.append(" group by t.uploadId")
 
-        // SELECT count(1) as reportCounts, t.uploadId from Reports t where t.destinationId = 'dex-testing' group by t.uploadId
+        // Query for getting counts in the structure of UploadCounts object.  Note the MAX aggregate which is used to
+        // get the latest timestamp from t._ts.
         val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
         logger.info("upload status count query = $countQuery")
 
@@ -159,7 +160,6 @@ class GetUploadStatusFunction(
 //                }
 //                sqlQuery.append(" order by t.$sortField $sortOrderVal")
 //            }
-            // SELECT count(1) as reportCounts, t.uploadId, t._ts from Reports t where t.destinationId = 'dex-testing' group by t.uploadId, t._ts order by t._ts asc offset 0 limit 10
             val offset = (pageNumberAsInt - 1) * pageSizeAsInt
             val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
             logger.info("upload status data query = $dataSqlQuery")
