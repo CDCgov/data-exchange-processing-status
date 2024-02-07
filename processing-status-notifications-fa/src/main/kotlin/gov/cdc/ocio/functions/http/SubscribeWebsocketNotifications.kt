@@ -10,7 +10,21 @@ import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging
 import java.time.Instant
 
-
+/**
+ * This method is used by HTTP endpoints to subscribe for Websocket notifications
+ * based on rules sent in required parameters/arguments
+ *              destinationId
+ *              eventType
+ *              stageName
+ *              statusType ("warning", "success", "error")
+ *              url (websocket url)
+ *
+ *
+ * @property request HttpRequestMessage<Optional<String>>
+ * @property logger KLogger
+ * @property cacheService InMemoryCacheService
+ * @constructor
+ */
 class SubscribeWebsocketNotifications(
     private val request: HttpRequestMessage<Optional<String>>) {
     private val logger = KotlinLogging.logger {}

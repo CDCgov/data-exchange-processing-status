@@ -9,6 +9,15 @@ import gov.cdc.ocio.model.http.SubscriptionResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Instant
 
+/**
+ * This method is used by HTTP endpoints to unsubscribe for any notifications
+ * by passing required parameter of subscriptionId
+ *
+ * @property request HttpRequestMessage<Optional<String>>
+ * @property logger KLogger
+ * @property cacheService InMemoryCacheService
+ * @constructor
+ */
 class UnsubscribeNotifications(
     private val request: HttpRequestMessage<Optional<String>>
 ) {
