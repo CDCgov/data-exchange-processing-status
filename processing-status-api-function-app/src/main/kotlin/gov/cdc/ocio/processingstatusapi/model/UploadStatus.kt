@@ -101,19 +101,22 @@ class UploadStatus {
                     UploadMetadataVerifyStage.schemaDefinition -> {
                         val metadataVerifyStage = Gson().fromJson(stageReportJson, UploadMetadataVerifyStage::class.java)
                             ?: throw ContentException("Unable to interpret stage report content as a metadata verify stage")
-                        metadataVerifyStage.issues?.let { issues->
-                            uploadStatus.status = "FailedMetadata"
-                            uploadStatus.fileSizeBytes = null
-                            uploadStatus.bytesUploaded = null
-                            uploadStatus.percentComplete = null
-                            uploadStatus.uploadId = uploadId
-                            uploadStatus.fileName = metadataVerifyStage.filename
-                            uploadStatus.metadata = metadataVerifyStage.metadata
-                            uploadStatus.timestamp = report.timestamp
-                            if (uploadStatus.issues == null)
-                                uploadStatus.issues = mutableListOf()
-                            uploadStatus.issues?.addAll(issues)
-                            isFailedUpload = true
+                        val hasIssues = metadataVerifyStage.issues != null && (metadataVerifyStage.issues?.count() ?: 0) > 0
+                        if (hasIssues) {
+                            metadataVerifyStage.issues?.let { issues ->
+                                uploadStatus.status = "FailedMetadata"
+                                uploadStatus.fileSizeBytes = null
+                                uploadStatus.bytesUploaded = null
+                                uploadStatus.percentComplete = null
+                                uploadStatus.uploadId = uploadId
+                                uploadStatus.fileName = metadataVerifyStage.filename
+                                uploadStatus.metadata = metadataVerifyStage.metadata
+                                uploadStatus.timestamp = report.timestamp
+                                if (uploadStatus.issues == null)
+                                    uploadStatus.issues = mutableListOf()
+                                uploadStatus.issues?.addAll(issues)
+                                isFailedUpload = true
+                            }
                         }
                     }
                 }
