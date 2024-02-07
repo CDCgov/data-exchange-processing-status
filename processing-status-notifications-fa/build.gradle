@@ -49,6 +49,14 @@ repositories {
     mavenCentral()
 }
 
+test {
+    useTestNG()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    // Set the test classpath, if required
+}
+
 azurefunctions {
     // subscription = '<your subscription id>'
     resourceGroup = 'java-functions-group'

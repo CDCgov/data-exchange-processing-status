@@ -41,7 +41,7 @@ class FunctionKotlinWrappers {
         @HttpTrigger(
             name = "req",
             methods = [HttpMethod.PUT],
-            route = "unsubscribe/{notificationType}/{subscriptionId}",
+            route = "unsubscribe/{subscriptionId}",
             authLevel = AuthorizationLevel.ANONYMOUS
         ) request: HttpRequestMessage<Optional<String>>,
         @BindingName("subscriptionId") subscriptionId: String
