@@ -83,8 +83,9 @@ class UploadStatus {
 
             reportsWithSchemaPairs.forEach { reportWithSchemaPair ->
 
-                val report = reportWithSchemaPair.second
                 val schemaDefinition = reportWithSchemaPair.first
+
+                val report = reportWithSchemaPair.second
                 val stageReportJson = report.content
 
                 // Attempt to interpret the stage as an upload stage
