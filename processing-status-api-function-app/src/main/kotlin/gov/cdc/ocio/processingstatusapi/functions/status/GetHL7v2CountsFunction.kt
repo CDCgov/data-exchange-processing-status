@@ -9,6 +9,7 @@ import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.HL7v2Counts
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.ReportCount
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
@@ -76,7 +77,25 @@ class GetHL7v2CountsFunction(
                     this.uploadId = uploadId
                     this.destinationId = report.destinationId
                     this.eventType = report.eventType
-                    this.reportCount = stageReportItemList.count()
+                    val reportCountsMap = mutableMapOf<String, Int>()
+                    stageReportItemList.forEach { report ->
+                        report.stageName?.let { stageName ->
+                            var reportCounts = reportCountsMap[stageName]
+                            if (reportCounts == null)
+                                reportCounts = 1
+                            else
+                                reportCounts++
+                            reportCountsMap[stageName] = reportCounts
+                        }
+                    }
+                    this.reportCounts = mutableListOf()
+                    reportCountsMap.entries.forEach {
+                        val reportCount = ReportCount().apply {
+                            this.stageName = it.key
+                            this.counts = it.value
+                        }
+                        this.reportCounts?.add(reportCount)
+                    }
                 }
 
                 return request

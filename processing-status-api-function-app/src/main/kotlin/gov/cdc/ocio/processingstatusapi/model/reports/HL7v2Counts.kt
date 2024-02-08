@@ -2,15 +2,14 @@ package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * Report data access object.  A report is an aggregate of smaller reports from each of the stages that make up a service
- * line or processing pipeline.
- *
- * @property uploadId String?
- * @property destinationId String?
- * @property eventType String?
- * @property reports List<StageReport>?
- */
+class ReportCount {
+
+    @SerializedName("stage_name")
+    var stageName: String? = null
+
+    var counts: Int? = null
+}
+
 class HL7v2Counts {
 
     @SerializedName("upload_id")
@@ -23,5 +22,5 @@ class HL7v2Counts {
     var eventType: String? = null
 
     @SerializedName("report_count")
-    var reportCount: Int? = null
+    var reportCounts: MutableList<ReportCount>? = null
 }
