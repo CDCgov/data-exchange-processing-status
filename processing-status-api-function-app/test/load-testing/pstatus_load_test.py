@@ -68,7 +68,7 @@ async def run():
 
             # Send upload messages
             print("Sending simulated UPLOAD reports...")
-            num_chunks = 3
+            num_chunks = 1
             size = 27472691
             for index in range(num_chunks):
                 offset = (index+1) * size / num_chunks
@@ -94,13 +94,15 @@ async def run():
             span_id = send_start_trace(trace_id, parent_span_id, "dex-hl7-validation")
             # Send hl7 validation messages
             print("Sending simulated HL7-VALIDATION reports...")
+            batch_message = await sender.create_message_batch()
             num_lines = 2
             for index in range(num_lines):
                 line = index + 1
                 message = reports.create_hl7_validation(upload_id, line)
                 #print(f"Sending: {message}")
-                await send_single_message(sender, message)
+                batch_message.add_message(ServiceBusMessage(message))
             # Send the stop trace
+            await sender.send_messages(batch_message)
             send_stop_trace(trace_id, span_id)
 
 asyncio.run(run())
