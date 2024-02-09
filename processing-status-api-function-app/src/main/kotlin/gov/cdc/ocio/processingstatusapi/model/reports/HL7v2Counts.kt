@@ -2,14 +2,6 @@ package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.annotations.SerializedName
 
-class ReportCount {
-
-    @SerializedName("stage_name")
-    var stageName: String? = null
-
-    var counts: Int? = null
-}
-
 class HL7v2Counts {
 
     @SerializedName("upload_id")
@@ -22,5 +14,5 @@ class HL7v2Counts {
     var eventType: String? = null
 
     @SerializedName("report_count")
-    var reportCounts: MutableList<ReportCount>? = null
+    var reportCounts: MutableList<ReportCounts>? = null
 }

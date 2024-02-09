@@ -7,10 +7,7 @@ import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.*
-import gov.cdc.ocio.processingstatusapi.model.reports.HL7v2Counts
-import gov.cdc.ocio.processingstatusapi.model.reports.Report
-import gov.cdc.ocio.processingstatusapi.model.reports.ReportCount
-import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
+import gov.cdc.ocio.processingstatusapi.model.reports.*
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
@@ -51,59 +48,37 @@ class GetHL7v2CountsFunction(
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
         // Get the reports
-        val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+        val reportsSqlQuery = "select count(1) as counts, r.stageName from $reportsContainerName r where r.uploadId = '$uploadId' group by r.stageName"
 
-        // Locate the existing report so we can amend it
         val reportItems = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
-            Report::class.java
+            ReportCounts::class.java
         )
         if (reportItems.count() > 0) {
-            val report = reportItems.elementAt(0)
 
-            val stageReportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+            val firstReportSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId' offset 0 limit 1"
 
-            // Locate the existing stage reports
-            val stageReportItems = reportsContainer.queryItems(
-                stageReportsSqlQuery, CosmosQueryRequestOptions(),
+            val firstReportItems = reportsContainer.queryItems(
+                firstReportSqlQuery, CosmosQueryRequestOptions(),
                 Report::class.java
             )
-            if (stageReportItems.count() > 0) {
-                val stageReportItemList = stageReportItems.toList()
+            val firstReport = firstReportItems.firstOrNull()
 
-                logger.info("Successfully located report with uploadId = $uploadId")
+            logger.info("Successfully located report with uploadId = $uploadId")
 
-                val reportResult = HL7v2Counts().apply {
-                    this.uploadId = uploadId
-                    this.destinationId = report.destinationId
-                    this.eventType = report.eventType
-                    val reportCountsMap = mutableMapOf<String, Int>()
-                    stageReportItemList.forEach { report ->
-                        report.stageName?.let { stageName ->
-                            var reportCounts = reportCountsMap[stageName]
-                            if (reportCounts == null)
-                                reportCounts = 1
-                            else
-                                reportCounts++
-                            reportCountsMap[stageName] = reportCounts
-                        }
-                    }
-                    this.reportCounts = mutableListOf()
-                    reportCountsMap.entries.forEach {
-                        val reportCount = ReportCount().apply {
-                            this.stageName = it.key
-                            this.counts = it.value
-                        }
-                        this.reportCounts?.add(reportCount)
-                    }
-                }
-
-                return request
-                    .createResponseBuilder(HttpStatus.OK)
-                    .header("Content-Type", "application/json")
-                    .body(gson.toJson(reportResult))
-                    .build()
+            val reportResult = HL7v2Counts().apply {
+                this.uploadId = uploadId
+                this.destinationId = firstReport?.destinationId
+                this.eventType = firstReport?.eventType
+                this.reportCounts = mutableListOf()
+                this.reportCounts?.addAll(reportItems)
             }
+
+            return request
+                .createResponseBuilder(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(gson.toJson(reportResult))
+                .build()
         }
 
         logger.error("Failed to locate report with uploadId = $uploadId")
