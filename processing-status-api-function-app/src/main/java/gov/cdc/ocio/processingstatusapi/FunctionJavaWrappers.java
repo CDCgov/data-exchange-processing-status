@@ -8,7 +8,7 @@ import com.microsoft.azure.functions.annotation.*;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
-import gov.cdc.ocio.processingstatusapi.functions.status.GetHL7v2CountsFunction;
+import gov.cdc.ocio.processingstatusapi.functions.status.GetReportCountsFunction;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetUploadStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
@@ -197,6 +197,18 @@ public class FunctionJavaWrappers {
         return new GetReportFunction(request).withDestinationId(destinationId, stageName);
     }
 
+    @FunctionName("GetReportCountsByUploadId")
+    public HttpResponseMessage getReportCountsByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId) {
+        return new GetReportCountsFunction(request).withUploadId(uploadId);
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(
@@ -209,17 +221,5 @@ public class FunctionJavaWrappers {
             final ExecutionContext context) {
         context.getLogger().info("getStatusByUploadId: uploadId=" + uploadId);
         return new GetStatusFunction(request).withUploadId(uploadId);
-    }
-
-    @FunctionName("GetHL7v2CountsByUploadId")
-    public HttpResponseMessage getHL7v2CountsByUploadId(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.GET},
-                    route = "status/hl7v2counts/{uploadId}",
-                    authLevel = AuthorizationLevel.ANONYMOUS
-            ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("uploadId") String uploadId) {
-        return new GetHL7v2CountsFunction(request).withUploadId(uploadId);
     }
 }

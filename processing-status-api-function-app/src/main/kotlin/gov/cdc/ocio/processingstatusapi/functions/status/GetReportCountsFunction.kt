@@ -21,7 +21,7 @@ import java.util.*
  * @property context ExecutionContext
  * @constructor
  */
-class GetHL7v2CountsFunction(
+class GetReportCountsFunction(
     private val request: HttpRequestMessage<Optional<String>>
 ) {
 
