@@ -166,12 +166,11 @@ class ReportManager {
                     return stageReportId
                 }
                 429 -> {
-                    // When a 429 occurs, the documentation states the following:
-                    // "The collection has exceeded the provisioned throughput limit. Retry the request after the server
-                    // specified retry after duration. For more information, see request units."
-                    // See: https://learn.microsoft.com/en-us/rest/api/cosmos-db/http-status-codes-for-cosmosdb
-                    val recommendedDuration = response.duration
-                    Thread.sleep(recommendedDuration.toMillis())
+                    // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
+                    val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
+                    logger.warn("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
+                    val waitMillis = recommendedDuration?.toLong()
+                    Thread.sleep(waitMillis ?: 500)
                 }
                 else -> {
                     // Need to retry regardless
