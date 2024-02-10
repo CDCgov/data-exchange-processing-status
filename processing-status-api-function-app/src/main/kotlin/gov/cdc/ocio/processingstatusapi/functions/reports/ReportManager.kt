@@ -130,8 +130,10 @@ class ReportManager {
      * @param stageName String
      * @param contentType String
      * @param content String
-     * @return String - stage report identifier
+     * @return String
+     * @throws BadStateException
      */
+    @Throws(BadStateException::class)
     private fun createStageReport(uploadId: String,
                                   destinationId: String,
                                   eventType: String,
@@ -150,12 +152,34 @@ class ReportManager {
             this.content = if (contentType.lowercase() == "json") JsonUtils.minifyJson(content) else content
         }
 
-        val response = reportsContainer?.createItem(
-            stageReport,
-            PartitionKey(uploadId),
-            CosmosItemRequestOptions()
-        )
-        logger.info("Created at ${Date()}, reportId = ${response?.item?.reportId}")
-        return stageReportId
+        var attempts = 0
+        do {
+            val response = reportsContainer?.createItem(
+                stageReport,
+                PartitionKey(uploadId),
+                CosmosItemRequestOptions()
+            )
+
+            when (response?.statusCode) {
+                200 -> {
+                    logger.info("Created at ${Date()}, reportId = ${response.item?.reportId}")
+                    return stageReportId
+                }
+                429 -> {
+                    // When a 429 occurs, the documentation states the following:
+                    // "The collection has exceeded the provisioned throughput limit. Retry the request after the server
+                    // specified retry after duration. For more information, see request units."
+                    // See: https://learn.microsoft.com/en-us/rest/api/cosmos-db/http-status-codes-for-cosmosdb
+                    val recommendedDuration = response.duration
+                    Thread.sleep(recommendedDuration.toMillis())
+                }
+                else -> {
+                    // Need to retry regardless
+                    Thread.sleep(500)
+                }
+            }
+        } while (attempts++ < 100)
+
+        throw BadStateException("Failed to create reportId = ${stageReport.reportId}")
     }
 }
