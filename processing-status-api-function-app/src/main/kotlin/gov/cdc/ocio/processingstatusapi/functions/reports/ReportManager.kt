@@ -171,6 +171,8 @@ class ReportManager {
 
                     HttpStatus.TOO_MANY_REQUESTS.value() -> {
                         // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
+                        // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
+                        // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
                         val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
                         logger.warn("Received 429 (too many requests) from cosmossb, attempt ${attempts+1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
                         val waitMillis = recommendedDuration?.toLong()
