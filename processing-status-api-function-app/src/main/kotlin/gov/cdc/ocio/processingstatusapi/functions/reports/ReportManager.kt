@@ -161,6 +161,8 @@ class ReportManager {
                 CosmosItemRequestOptions()
             )
 
+            logger.info("Creating report, response http status code = ${response?.statusCode}")
+
             when (response?.statusCode) {
                 HttpStatus.OK.value() -> {
                     logger.info("Created at ${Date()}, reportId = ${response.item?.reportId}")
@@ -169,12 +171,13 @@ class ReportManager {
                 HttpStatus.TOO_MANY_REQUESTS.value() -> {
                     // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
                     val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                    logger.info("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
+                    logger.warn("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
                     val waitMillis = recommendedDuration?.toLong()
                     Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
                 }
                 else -> {
                     // Need to retry regardless
+                    logger.warn("Received response code ${response?.statusCode}, attempting retry after $DEFAULT_RETRY_INTERVAL_MILLIS millis")
                     Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
                 }
             }
