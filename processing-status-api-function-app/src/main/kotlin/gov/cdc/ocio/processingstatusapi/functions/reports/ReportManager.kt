@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
+import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
@@ -161,24 +162,29 @@ class ReportManager {
             )
 
             when (response?.statusCode) {
-                200 -> {
+                HttpStatus.OK.value() -> {
                     logger.info("Created at ${Date()}, reportId = ${response.item?.reportId}")
                     return stageReportId
                 }
-                429 -> {
+                HttpStatus.TOO_MANY_REQUESTS.value() -> {
                     // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
                     val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                    logger.warn("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
+                    logger.info("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
                     val waitMillis = recommendedDuration?.toLong()
-                    Thread.sleep(waitMillis ?: 500)
+                    Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
                 }
                 else -> {
                     // Need to retry regardless
-                    Thread.sleep(500)
+                    Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
                 }
             }
-        } while (attempts++ < 100)
+        } while (attempts++ < MAX_RETRY_ATTEMPTS)
 
         throw BadStateException("Failed to create reportId = ${stageReport.reportId}")
+    }
+
+    companion object {
+        const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
+        const val MAX_RETRY_ATTEMPTS = 100
     }
 }
