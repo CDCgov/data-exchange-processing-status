@@ -162,25 +162,32 @@ class ReportManager {
             )
 
             logger.info("Creating report, response http status code = ${response?.statusCode}")
+            if (response != null) {
+                when (response.statusCode) {
+                    HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
+                        logger.info("Created report with reportId = ${response.item?.reportId}")
+                        return stageReportId
+                    }
 
-            when (response?.statusCode) {
-                HttpStatus.OK.value() -> {
-                    logger.info("Created at ${Date()}, reportId = ${response.item?.reportId}")
-                    return stageReportId
+                    HttpStatus.TOO_MANY_REQUESTS.value() -> {
+                        // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
+                        val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
+                        logger.warn("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
+                        val waitMillis = recommendedDuration?.toLong()
+                        Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
+                    }
+
+                    else -> {
+                        // Need to retry regardless
+                        logger.warn("Received response code ${response.statusCode}, attempting retry after $DEFAULT_RETRY_INTERVAL_MILLIS millis")
+                        Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
+                    }
                 }
-                HttpStatus.TOO_MANY_REQUESTS.value() -> {
-                    // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
-                    val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                    logger.warn("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis")
-                    val waitMillis = recommendedDuration?.toLong()
-                    Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
-                }
-                else -> {
-                    // Need to retry regardless
-                    logger.warn("Received response code ${response?.statusCode}, attempting retry after $DEFAULT_RETRY_INTERVAL_MILLIS millis")
-                    Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
-                }
+            } else {
+                logger.warn("Received null response from cosmosdb, attempting retry after $DEFAULT_RETRY_INTERVAL_MILLIS millis")
+                Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
             }
+
         } while (attempts++ < MAX_RETRY_ATTEMPTS)
 
         throw BadStateException("Failed to create reportId = ${stageReport.reportId}")
