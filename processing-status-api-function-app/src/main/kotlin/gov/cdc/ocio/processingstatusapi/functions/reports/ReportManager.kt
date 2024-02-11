@@ -181,7 +181,7 @@ class ReportManager {
                         // Need to retry regardless
                         val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
                         logger.warn("Received response code ${response.statusCode}, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                        Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
+                        Thread.sleep(retryAfterDurationMillis)
                     }
                 }
             } else {
