@@ -172,25 +172,31 @@ class ReportManager {
                     HttpStatus.TOO_MANY_REQUESTS.value() -> {
                         // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
                         val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                        logger.warn("Received 429 (too many requests) attempting to create reportId = ${stageReport.reportId}, waiting $recommendedDuration millis, uploadId = $uploadId")
+                        logger.warn("Received 429 (too many requests) from cosmossb, attempt ${attempts+1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
                         val waitMillis = recommendedDuration?.toLong()
                         Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
                     }
 
                     else -> {
                         // Need to retry regardless
-                        logger.warn("Received response code ${response.statusCode}, attempting retry after $DEFAULT_RETRY_INTERVAL_MILLIS millis, uploadId = $uploadId")
+                        val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                        logger.warn("Received response code ${response.statusCode}, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
                         Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
                     }
                 }
             } else {
-                logger.warn("Received null response from cosmosdb, attempting retry after $DEFAULT_RETRY_INTERVAL_MILLIS millis, uploadId = $uploadId")
-                Thread.sleep(DEFAULT_RETRY_INTERVAL_MILLIS)
+                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                logger.warn("Received null response from cosmosdb, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                Thread.sleep(retryAfterDurationMillis)
             }
 
         } while (attempts++ < MAX_RETRY_ATTEMPTS)
 
         throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
+    }
+
+    private fun getCalculatedRetryDuration(attempt: Int): Long {
+        return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
     }
 
     companion object {
