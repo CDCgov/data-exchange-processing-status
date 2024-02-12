@@ -4,8 +4,15 @@ import com.google.gson.annotations.SerializedName
 
 data class ReportCounts(
 
-    @SerializedName("stage_name")
-    var stageName: String? = null,
+    @SerializedName("upload_id")
+    var uploadId: String? = null,
 
-    var counts: Int? = null,
+    @SerializedName("destination_id")
+    var destinationId: String? = null,
+
+    @SerializedName("event_type")
+    var eventType: String? = null,
+
+    @SerializedName("report_count")
+    var reportCounts: MutableList<StageCounts>? = null
 )

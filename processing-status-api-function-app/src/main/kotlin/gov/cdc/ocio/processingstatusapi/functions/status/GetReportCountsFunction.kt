@@ -52,7 +52,7 @@ class GetReportCountsFunction(
 
         val reportItems = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
-            ReportCounts::class.java
+            StageCounts::class.java
         )
         if (reportItems.count() > 0) {
 
@@ -66,7 +66,7 @@ class GetReportCountsFunction(
 
             logger.info("Successfully located report with uploadId = $uploadId")
 
-            val reportResult = HL7v2Counts().apply {
+            val reportResult = ReportCounts().apply {
                 this.uploadId = uploadId
                 this.destinationId = firstReport?.destinationId
                 this.eventType = firstReport?.eventType
