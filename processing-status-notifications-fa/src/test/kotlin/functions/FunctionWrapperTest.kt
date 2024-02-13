@@ -3,7 +3,7 @@ package functions
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.functions.FunctionKotlinWrappers
-import httpmock.HttpResponseMessageMock
+import functions.httpMockData.HttpResponseMessageMock
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.testng.annotations.BeforeMethod
