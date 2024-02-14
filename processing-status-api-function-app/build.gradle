@@ -97,15 +97,14 @@ jacocoTestReport {
     }
 }
 azurefunctions {
-    subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
-    resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'
-    appName = 'ocio-ede-dev-pstatus-api'
+    subscription = System.getenv("AZURE_SUBSCRIPTION")
+    resourceGroup = System.getenv("RESOURCE_GROUP")
+    appName = System.getenv("FUNCTION_NAME")
     allowTelemetry = 'false'
-    appServicePlanName = 'ocio-ede-dev-pstatus-linux-function-plan'
     runtime {
-      os = 'linux'
+        os = 'linux'
     }
-    auth {        
+    auth {
         client = System.getenv("AZURE_CLIENT_ID")
         tenant = System.getenv("AZURE_TENANT_ID")
         key = System.getenv("AZURE_SECRET")
