@@ -1,32 +1,35 @@
 package gov.cdc.ocio.processingstatusapi.model
 
+import com.google.gson.annotations.SerializedName
 
-open class HealthCheckSystem() {
+
+open class HealthCheckSystem {
+
     var status: String = "DOWN"
-    var health_issues: String? = ""
 
-    fun health_issues(message: String?) {
-        health_issues = message
-    }
+    @SerializedName("health_issues")
+    var healthIssues: String? = ""
 }
 
-class CosmosDb: HealthCheckSystem(){
+class CosmosDb: HealthCheckSystem() {
     var service: String = "Cosmos DB"
 }
 
-class ServiceBus: HealthCheckSystem(){
+class ServiceBus: HealthCheckSystem() {
     var service: String = "Azure Service Bus"
 }
 
+class Jaeger: HealthCheckSystem() {
+    var service: String = "Jaeger"
+}
+
 class HealthCheck {
-    fun total_checks_duration(time: String) {
-        this.total_checks_duration = time;
-    }
 
     var status : String? = "DOWN"
 
-    var total_checks_duration : String?=null
+    @SerializedName("total_checks_duration")
+    var totalChecksDuration : String? = null
 
-    var dependency_health_checks : ArrayList<HealthCheckSystem> = arrayListOf()
-
+    @SerializedName("dependency_health_checks")
+    var dependencyHealthChecks = arrayListOf<HealthCheckSystem>()
 }

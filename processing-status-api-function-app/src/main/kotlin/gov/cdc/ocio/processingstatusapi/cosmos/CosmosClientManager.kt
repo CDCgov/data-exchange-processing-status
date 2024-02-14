@@ -1,4 +1,4 @@
-package gov.cdc.ocio.cosmossync.cosmos
+package gov.cdc.ocio.processingstatusapi.cosmos
 
 import com.azure.cosmos.ConsistencyLevel
 import com.azure.cosmos.CosmosClient

@@ -3,20 +3,6 @@ package gov.cdc.ocio.processingstatusapi.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Request type for service bus messages, which can be to either create or amend an existing report.
- */
-enum class RequestType {
-
-    UNDEFINED,
-
-    @SerializedName("create")
-    CREATE,
-
-    @SerializedName("amend")
-    AMEND
-}
-
-/**
  * Disposition type specifies whether an amended report replaces an existing one
  * or adds a new one.  If *replace* is specified but none exists then it will
  * be added.  The *replace* disposition type is useful when a stage wants to provide
@@ -26,7 +12,7 @@ enum class RequestType {
 enum class DispositionType {
 
     @SerializedName("add")
-    APPEND,
+    ADD,
 
     @SerializedName("replace")
     REPLACE
@@ -37,15 +23,11 @@ enum class DispositionType {
  * Note the ServiceBusMessage class must be *open* not *abstract* as it will need to be initially created to determine
  * the type.
  *
- * @property requestType RequestType
  * @property dispositionType DispositionType
  */
 open class ServiceBusMessage {
 
-    @SerializedName("request_type")
-    var requestType = RequestType.UNDEFINED
-
     @SerializedName("disposition_type")
-    // Default is to append
-    var dispositionType = DispositionType.APPEND
+    // Default is to add
+    var dispositionType = DispositionType.ADD
 }
