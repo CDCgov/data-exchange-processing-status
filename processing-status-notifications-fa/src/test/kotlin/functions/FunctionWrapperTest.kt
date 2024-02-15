@@ -3,14 +3,9 @@ package functions
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
-<<<<<<< Updated upstream
-import gov.cdc.ocio.functions.FunctionKotlinWrappers
 import functions.httpMockData.HttpResponseMessageMock
-=======
 import gov.cdc.ocio.FunctionJavaWrappers
 import gov.cdc.ocio.exceptions.BadStateException
-import httpmock.HttpResponseMessageMock
->>>>>>> Stashed changes
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.testng.Assert
