@@ -2,7 +2,6 @@ package gov.cdc.ocio.functions.servicebus
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
-import com.google.gson.ToNumberPolicy
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.exceptions.BadRequestException
 import gov.cdc.ocio.exceptions.BadStateException

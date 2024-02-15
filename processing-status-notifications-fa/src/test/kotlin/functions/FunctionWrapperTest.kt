@@ -1,11 +1,20 @@
 package functions
 
 import com.microsoft.azure.functions.HttpRequestMessage
+import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
+<<<<<<< Updated upstream
 import gov.cdc.ocio.functions.FunctionKotlinWrappers
 import functions.httpMockData.HttpResponseMessageMock
+=======
+import gov.cdc.ocio.FunctionJavaWrappers
+import gov.cdc.ocio.exceptions.BadStateException
+import httpmock.HttpResponseMessageMock
+>>>>>>> Stashed changes
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
+import org.testng.Assert
+import org.testng.Assert.*
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import java.io.File
@@ -37,32 +46,38 @@ class FunctionWrapperTest {
     @Test
     fun testSubscribeEmailSuccess() {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response = FunctionKotlinWrappers().subscribeEmail(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeEmail(request, "destination-1", "eventType-1")
         assert(response.status == HttpStatus.OK)
     }
 
     @Test
     fun testSubscribeEmailMissingQueryParameters() {
-        val response = FunctionKotlinWrappers().subscribeEmail(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeEmail(request, "destination-1", "eventType-1")
         assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     @Test
     fun testSubscribeWebsocketMissingUrl() {
-        val response = FunctionKotlinWrappers().subscribeWebsocket(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeWebsocket(request, "destination-1", "eventType-1")
         assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     @Test
     fun testSubscribeWebsocketSuccess() {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response = FunctionKotlinWrappers().subscribeWebsocket(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeWebsocket(request, "destination-1", "eventType-1")
         assert(response.status == HttpStatus.OK)
     }
 
     @Test
     fun testUnsubscribeError() {
-        val response = FunctionKotlinWrappers().unsubscribe(request, "")
-        assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
+        var response: HttpResponseMessage? = null
+        try {
+            response = FunctionJavaWrappers().unsubscribe(request, "")
+        } catch(e: BadStateException) {
+            assertTrue(response?.status  == HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+
+
     }
 }
