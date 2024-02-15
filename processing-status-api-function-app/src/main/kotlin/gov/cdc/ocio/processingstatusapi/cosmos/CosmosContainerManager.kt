@@ -34,9 +34,9 @@ class CosmosContainerManager {
                 val containerProperties = CosmosContainerProperties(containerName, partitionKey)
 
                 // Provision throughput
-                val throughputProperties = ThroughputProperties.createManualThroughput(400)
+                val throughputProperties = ThroughputProperties.createAutoscaledThroughput(50000)
 
-                //  Create container with 400 RU/s
+                //  Create container with 50000 RU/s
                 logger.info("calling createContainerIfNotExists...")
                 val databaseResponse = db.createContainerIfNotExists(containerProperties, throughputProperties)
 
