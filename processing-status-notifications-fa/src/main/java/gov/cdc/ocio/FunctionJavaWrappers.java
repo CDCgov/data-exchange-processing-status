@@ -14,7 +14,13 @@ import gov.cdc.ocio.functions.http.UnsubscribeNotifications;
 import java.util.Optional;
 
 public class FunctionJavaWrappers {
-    @FunctionName("SubscribeEmail")
+    /**
+     * Subscribe for email notifications using Rest endpoint
+     * @param request HttpRequest
+     * @param destinationId destinationId of the report
+     * @param eventType eventType of the report
+     * @return HttpResponse
+     */
     public HttpResponseMessage subscribeEmail(
             @HttpTrigger(
                     name = "req",
@@ -28,6 +34,13 @@ public class FunctionJavaWrappers {
         return new SubscribeEmailNotifications(request).run(destinationId, eventType);
     }
 
+    /**
+     * Subscribes for websocket notifications using Rest endpoint
+     * @param request HttpRequest
+     * @param destinationId destinationId of the report
+     * @param eventType eventType of the report
+     * @return HttpResponse
+     */
     @FunctionName("SubscribeWebsocket")
     public HttpResponseMessage subscribeWebsocket(
             @HttpTrigger(
@@ -42,6 +55,12 @@ public class FunctionJavaWrappers {
         return new SubscribeWebsocketNotifications(request).run(destinationId, eventType);
     }
 
+    /**
+     * Unsubscribes for given subscriptionId using Rest endpoint
+     * @param request HttpRequest
+     * @param subscriptionId unique identifier for subscription
+     * @return HttpResponse
+     */
     @FunctionName("Unsubscribe")
     public HttpResponseMessage unsubscribe(
             @HttpTrigger(

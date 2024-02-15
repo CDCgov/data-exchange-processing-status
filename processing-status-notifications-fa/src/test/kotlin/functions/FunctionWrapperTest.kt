@@ -8,7 +8,6 @@ import gov.cdc.ocio.FunctionJavaWrappers
 import gov.cdc.ocio.exceptions.BadStateException
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
-import org.testng.Assert
 import org.testng.Assert.*
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
@@ -72,7 +71,5 @@ class FunctionWrapperTest {
         } catch(e: BadStateException) {
             assertTrue(response?.status  == HttpStatus.INTERNAL_SERVER_ERROR)
         }
-
-
     }
 }
