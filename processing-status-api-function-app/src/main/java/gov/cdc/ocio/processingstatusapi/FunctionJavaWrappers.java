@@ -209,6 +209,17 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).withUploadId(uploadId);
     }
 
+    @FunctionName("GetReportCountsWithQueryParams")
+    public HttpResponseMessage getReportCountsWithQueryParams(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).withQueryParams();
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(
