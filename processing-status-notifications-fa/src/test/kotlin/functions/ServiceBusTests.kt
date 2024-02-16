@@ -6,6 +6,7 @@ import gov.cdc.ocio.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor
 import org.mockito.Mockito
 import org.testng.Assert
+import org.testng.Assert.*
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import java.io.File
@@ -125,40 +126,49 @@ class ServiceBusTests {
         Assert.assertTrue(exceptionThrown)
     }
 
-
+    // HL7 Report Tests
     @Test(description = "Test for valid json content format in hL7 report with all 'SUCCESS' status")
     fun testValidJL7ReportWithSuccess() {
         val testMessage = File("./src/test/kotlin/functions/serviceMockData/hl7/sb_good_message_hl7_report_with_success.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
-        Assert.assertEquals(status, "success")
+        assertEquals(status, "success")
     }
 
     @Test(description = "Test for valid json content format in hL7 report with few 'WARNING' status")
     fun testValidJL7ReportWithWarning() {
         val testMessage = File("./src/test/kotlin/functions/serviceMockData/hl7/sb_good_message_hl7_report_with_warning.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
-        Assert.assertEquals(status, "warning")
+        assertEquals(status, "warning")
     }
 
     @Test(description = "Test for valid json content format in hL7 report with all mixed ('WARNING','SUCCESS' & 'FAILURE') status")
     fun testValidJL7ReportWithFailure() {
         val testMessage = File("./src/test/kotlin/functions/serviceMockData/hl7/sb_good_message_hl7_report_with_failure.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
-        Assert.assertEquals(status, "failure")
+        assertEquals(status, "failure")
     }
 
      // File Copy Report Tests
     @Test(description = "Tests for validating 'success' status from file copy report")
     fun testValidFileCopyReportWithStatusSuccess() {
-        val testMessage = File("./src/test/kotlin/functions/serviceMockData/fileCopy/sb_file_copy_report_success.json").readText()
+        val testMessage = File("./src/test/kotlin/functions/serviceMockData/fileCopy/sb_good_message_file_copy_report_success.json").readText()
          val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
-         Assert.assertEquals(status, "success")
+         assertEquals(status, "success")
     }
 
     @Test(description = "Tests for validating 'failure' status from file copy report")
     fun testValidFileCopyReportWithStatusFailure() {
-        val testMessage = File("./src/test/kotlin/functions/serviceMockData/fileCopy/sb_file_copy_report_failure.json").readText()
+        val testMessage = File("./src/test/kotlin/functions/serviceMockData/fileCopy/sb_good_message_file_copy_report_failure.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
-        Assert.assertEquals(status, "failure")
+        assertEquals(status, "failure")
     }
+
+    @Test(description = "Tests for checking invalidStatusType status from file copy report")
+    fun testValidFileCopyReportWithStatusInvalid() {
+        val testMessage = File("./src/test/kotlin/functions/serviceMockData/fileCopy/sb_good_message_file_copy_report_invalid.json").readText()
+        val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
+        assertTrue(status != "success")
+        assertTrue(status != "failure")
+    }
+
 }
