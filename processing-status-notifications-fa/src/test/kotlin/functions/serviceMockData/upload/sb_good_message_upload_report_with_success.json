@@ -2,7 +2,7 @@
   "upload_id": "4f99cfde-7c83-44e5-bd49-206ca4df7e16",
   "destination_id": "dex-testing",
   "event_type": "test-event1",
-  "stage_name": "dex-hl7-validation",
+  "stage_name": "upload-stage",
   "content_type": "json",
   "content": {
     "schema_name": "upload",

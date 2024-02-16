@@ -79,7 +79,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             // assume an invalid request
             throw InvalidSchemaDefException(ex.localizedMessage)
         }
-        return status
+        return status.lowercase()
     }
 
 }
