@@ -11,21 +11,28 @@ import kotlin.collections.HashMap
  */
 class ReportParser {
 
+    private val reportTypeToStatusFieldMapping: MutableMap<String, String> = mutableMapOf("dex-hl7-validation" to "status",
+                                            "dex-file-copy" to "result",
+                                            "dex-metadata-verify" to "issues",
+                                            "upload" to "abc" // TODO : find this
+        )
+
     /**
-     * Method which parses different types of notification reports for various fields like 'StatusType'
+     * Method which parses different types of notification reports for report status
      * @param content String
      * @return Unit
      */
-    fun parseReport(content: String): Unit {
-        val reportMetricMap = HashMap<String, String>();
-        val factory: JsonFactory = JsonFactory();
-        val mapper: ObjectMapper = ObjectMapper(factory);
+    fun parseReportForStatus(content: String, fileType: String?): String {
+        val reportMetricCollector = HashMap<String, String>()
+        val factory = JsonFactory();
+        val mapper = ObjectMapper(factory);
         val rootNode: JsonNode = mapper.readTree(content);
-       parseReportHelper(rootNode, reportMetricMap)
-
+        val statusFieldName = reportTypeToStatusFieldMapping[fileType]
+        recurseParseHelper(rootNode, reportMetricCollector, statusFieldName!!)
+        return reportMetricCollector.get(statusFieldName)!!;
     }
 
-    fun parseReportHelper(node: JsonNode, reportMetricMap: HashMap<String, String>) {
+    private fun recurseParseHelper(node: JsonNode, reportMetricMap: HashMap<String, String>, statusFieldName: String) {
         if (node.isNull) {
             return
         }
@@ -35,20 +42,40 @@ class ReportParser {
             val field: Map.Entry<String,JsonNode>  = fieldsIterator.next();
            if (field.value.isArray) {
                 for(element in field.value) {
-                    parseReportHelper(element, reportMetricMap)
+                    recurseParseHelper(element, reportMetricMap, statusFieldName)
                 }
             } else if (field.value.isObject){
-                parseReportHelper(field.value, reportMetricMap)
+               recurseParseHelper(field.value, reportMetricMap, statusFieldName)
             } else {
-                if (field.key.contains("status")) {
-                    val metric = field.key
-                    if (!reportMetricMap.containsKey(metric)) {
-                        reportMetricMap.put(metric, field.value.textValue())
-                    }
+                if (field.key.equals(statusFieldName, true)) {
+                    processStatusValueInArray(field, reportMetricMap, statusFieldName)
                 }
-               System.out.println(field.key + " : " + field.value);
            }
 
         }
+    }
+
+    private fun processStatusValueInArray(field: Map.Entry<String,JsonNode>, reportMetricMap: HashMap<String, String>, statusFieldName: String) {
+        if (!reportMetricMap.containsKey(statusFieldName)) {
+            reportMetricMap.put(statusFieldName, field.value.textValue())
+        } else {
+            val existingStatus = getPrecedenceOfStatus(reportMetricMap.get(statusFieldName))
+            val newStatus = getPrecedenceOfStatus(field.value.textValue())
+            if (existingStatus < newStatus) {
+                reportMetricMap.put(statusFieldName, field.value.textValue())
+            }
+        }
+    }
+
+    fun getPrecedenceOfStatus(status: String?): Int {
+        if (status != null) {
+            return when (status.lowercase()) {
+                "success" -> 1
+                "warning" -> 2
+                "failure" -> 3
+                else -> 0
+            }
+        }
+        return 0;
     }
 }

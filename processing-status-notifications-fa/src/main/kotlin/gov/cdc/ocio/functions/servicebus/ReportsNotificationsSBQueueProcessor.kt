@@ -34,9 +34,9 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
      * @throws BadStateException
      */
     @Throws(BadRequestException::class, InvalidSchemaDefException::class)
-    fun withMessage(message: String) {
+    fun withMessage(message: String): String {
         try {
-            sendNotificationForReport(gson.fromJson(message, ReportNotificationSBMessage::class.java))
+            return sendNotificationForReportStatus(gson.fromJson(message, ReportNotificationSBMessage::class.java))
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadRequestException("Unable to interpret the create report message")
@@ -44,13 +44,13 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
     }
 
     /**
-     * Subscribe for email from the provided service bus message.
+     * Subscribe for notifications from the provided service bus message.
      *
      * @param reportNotification ReportNotificationMessage
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class,InvalidSchemaDefException::class)
-    private fun sendNotificationForReport(reportNotification: ReportNotificationSBMessage) {
+    private fun sendNotificationForReportStatus(reportNotification: ReportNotificationSBMessage): String {
 
         val destinationId = reportNotification.destinationId
             ?: throw BadRequestException("Missing required field destination_id")
@@ -65,11 +65,13 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             ?: throw BadRequestException("Missing required field content_type")
 
         val content: String
+        val status: String
         try {
             content = reportNotification.contentAsString
                 ?: throw BadRequestException("Missing required field content")
-            ReportParser().parseReport(content)
-            SchemaDefinition.fromJsonString(content)
+            val schemaDef = SchemaDefinition.fromJsonString(content)
+
+            status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)
@@ -77,7 +79,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             // assume an invalid request
             throw InvalidSchemaDefException(ex.localizedMessage)
         }
-
+        return status
     }
 
 }
