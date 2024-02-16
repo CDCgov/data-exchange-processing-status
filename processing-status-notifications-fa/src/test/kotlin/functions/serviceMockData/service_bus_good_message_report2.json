@@ -1,0 +1,9 @@
+{
+  "schema_name": "dex-file-copy",
+  "schema_version": "0.0.1",
+  "file_source_blob_url": "",
+  "file_destination_blob_url": "",
+  "timestamp": "",
+  "result": "success|failed",
+  "error_description": ""
+}

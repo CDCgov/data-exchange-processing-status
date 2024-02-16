@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.exceptions
+package gov.cdc.ocio.exceptions
 
 /**
  * Intended use of this exception is for invalid schema definitions.

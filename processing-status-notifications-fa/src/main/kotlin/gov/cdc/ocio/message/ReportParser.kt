@@ -3,6 +3,7 @@ package gov.cdc.ocio.message
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlin.collections.HashMap
 
 /**
  * Class containing util methods to parse the content of the report
@@ -16,14 +17,38 @@ class ReportParser {
      * @return Unit
      */
     fun parseReport(content: String): Unit {
+        val reportMetricMap = HashMap<String, String>();
         val factory: JsonFactory = JsonFactory();
         val mapper: ObjectMapper = ObjectMapper(factory);
         val rootNode: JsonNode = mapper.readTree(content);
-        val fieldsIterator: Iterator<Map.Entry<String,JsonNode>>  = rootNode.fields();
-        while (fieldsIterator.hasNext()) {
+       parseReportHelper(rootNode, reportMetricMap)
 
+    }
+
+    fun parseReportHelper(node: JsonNode, reportMetricMap: HashMap<String, String>) {
+        if (node.isNull) {
+            return
+        }
+
+        val fieldsIterator: Iterator<Map.Entry<String,JsonNode>>  = node.fields();
+        while (fieldsIterator.hasNext()) {
             val field: Map.Entry<String,JsonNode>  = fieldsIterator.next();
-            System.out.println("Key: " + field.key + "\tValue:" + field.value);
+           if (field.value.isArray) {
+                for(element in field.value) {
+                    parseReportHelper(element, reportMetricMap)
+                }
+            } else if (field.value.isObject){
+                parseReportHelper(field.value, reportMetricMap)
+            } else {
+                if (field.key.contains("status")) {
+                    val metric = field.key
+                    if (!reportMetricMap.containsKey(metric)) {
+                        reportMetricMap.put(metric, field.value.textValue())
+                    }
+                }
+               System.out.println(field.key + " : " + field.value);
+           }
+
         }
     }
 }

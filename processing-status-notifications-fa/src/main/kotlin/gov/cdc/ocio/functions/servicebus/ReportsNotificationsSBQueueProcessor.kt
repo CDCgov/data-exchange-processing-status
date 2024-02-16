@@ -6,11 +6,11 @@ import com.google.gson.ToNumberPolicy
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.exceptions.BadRequestException
 import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.message.ReportParser
-import gov.cdc.ocio.model.*
-import gov.cdc.ocio.processingstatusapi.model.reports.ReportNotificationSBMessage
+import gov.cdc.ocio.model.message.ReportNotificationSBMessage
+import gov.cdc.ocio.model.message.SchemaDefinition
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.util.*
 
 /**
  * The service bus is another interface for subscribing for notifications through email.
@@ -33,13 +33,13 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
      * @param message String
      * @throws BadStateException
      */
-    @Throws(BadStateException::class)
+    @Throws(BadRequestException::class, InvalidSchemaDefException::class)
     fun withMessage(message: String) {
         try {
             sendNotificationForReport(gson.fromJson(message, ReportNotificationSBMessage::class.java))
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
-            throw BadStateException("Unable to interpret the create report message")
+            throw BadRequestException("Unable to interpret the create report message")
         }
     }
 
@@ -49,7 +49,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
      * @param reportNotification ReportNotificationMessage
      * @throws BadRequestException
      */
-    @Throws(BadRequestException::class)
+    @Throws(BadRequestException::class,InvalidSchemaDefException::class)
     private fun sendNotificationForReport(reportNotification: ReportNotificationSBMessage) {
 
         val destinationId = reportNotification.destinationId
@@ -69,9 +69,13 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             content = reportNotification.contentAsString
                 ?: throw BadRequestException("Missing required field content")
             ReportParser().parseReport(content)
+            SchemaDefinition.fromJsonString(content)
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)
+        } catch(ex: InvalidSchemaDefException) {
+            // assume an invalid request
+            throw InvalidSchemaDefException(ex.localizedMessage)
         }
 
     }
