@@ -1,4 +1,4 @@
-package test
+package functions
 
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.exceptions.BadRequestException
@@ -146,5 +146,5 @@ class ServiceBusTests {
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
         Assert.assertEquals(status, "FAILURE")
     }
-    
+
 }
