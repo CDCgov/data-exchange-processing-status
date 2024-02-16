@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -11,7 +13,6 @@ import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
-import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
 import java.util.*
 
@@ -150,7 +151,13 @@ class ReportManager {
             this.eventType = eventType
             this.stageName = stageName
             this.contentType = contentType
-            this.content = if (contentType.lowercase() == "json") JsonUtils.minifyJson(content) else content
+
+            if (contentType.lowercase() == "json") {
+                val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
+                val jsonMap: Map<String, Any> = Gson().fromJson(content, typeObject)
+                this.content = jsonMap
+            } else
+                this.content = content
         }
 
         var attempts = 0

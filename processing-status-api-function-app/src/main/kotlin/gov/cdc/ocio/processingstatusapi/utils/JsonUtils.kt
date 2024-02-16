@@ -1,6 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.utils
 
 import com.google.gson.*
+import com.google.gson.reflect.TypeToken
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
+import java.lang.ClassCastException
 import java.util.*
 import java.lang.reflect.Type
 import java.text.ParseException
@@ -12,21 +15,6 @@ import java.text.SimpleDateFormat
 class JsonUtils {
 
     companion object {
-
-        /**
-         * Removes whitespace and CRLF from json string provided.
-         *
-         * @param json String
-         * @return String
-         */
-        fun minifyJson(json: String): String {
-            val gson = GsonBuilder()
-                .registerTypeAdapter(String::class.java,
-                    StringAdapter())
-                .create()
-            val jsonElement = gson.fromJson(json, JsonElement::class.java)
-            return gson.toJson(jsonElement)
-        }
 
         /**
          * Gson with UTC dates for serialization

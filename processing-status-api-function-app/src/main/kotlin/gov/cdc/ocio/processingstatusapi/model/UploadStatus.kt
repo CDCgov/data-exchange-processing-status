@@ -72,9 +72,7 @@ class UploadStatus {
                 if (report.contentType != "json")
                     throw ContentException("Content type is not JSON as expected")
 
-                val stageReportJson = report.content
-
-                val schemaDefinition = Gson().fromJson(stageReportJson, SchemaDefinition::class.java)
+                val schemaDefinition = SchemaDefinition.fromJsonString(report.contentAsString)
                 reportsWithSchemaPairs.add(Pair(schemaDefinition, report))
             }
 
@@ -86,7 +84,7 @@ class UploadStatus {
                 val schemaDefinition = reportWithSchemaPair.first
 
                 val report = reportWithSchemaPair.second
-                val stageReportJson = report.content
+                val stageReportJson = report.contentAsString
 
                 // Attempt to interpret the stage as an upload stage
                 when (schemaDefinition) {
