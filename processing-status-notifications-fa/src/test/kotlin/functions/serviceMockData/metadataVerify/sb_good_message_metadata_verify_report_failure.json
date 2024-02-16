@@ -23,6 +23,9 @@
       "meta_ext_submissionperiod": "1",
       "meta_field2": "value3"
     },
-    "issues": []
+    "issues": [
+      "Missing required metadata field, 'meta_field1'.",
+      "Metadata field, 'meta_field2' is set to 'value3' and does not contain one of the allowed values: [ 'value1', value2' ]"
+    ]
   }
 }

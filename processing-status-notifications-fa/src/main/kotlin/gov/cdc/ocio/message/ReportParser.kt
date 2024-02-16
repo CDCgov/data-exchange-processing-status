@@ -3,6 +3,7 @@ package gov.cdc.ocio.message
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import gov.cdc.ocio.exceptions.ContentException
 import kotlin.collections.HashMap
 
 /**
@@ -22,52 +23,63 @@ class ReportParser {
      * @param content String
      * @return Unit
      */
-    fun parseReportForStatus(content: String, fileType: String?): String {
+    fun parseReportForStatus(content: String, reportType: String?): String {
         val reportMetricCollector = HashMap<String, String>()
         val factory = JsonFactory()
         val mapper = ObjectMapper(factory)
         val rootNode: JsonNode = mapper.readTree(content)
-        val statusFieldName = reportTypeToStatusFieldMapping[fileType]
-        recurseParseHelper(rootNode, reportMetricCollector, statusFieldName!!)
-        return reportMetricCollector[statusFieldName]!!
+
+        recurseParseHelper(rootNode, reportMetricCollector, reportType!!)
+        return reportMetricCollector[reportTypeToStatusFieldMapping[reportType]]!!
     }
 
-    private fun recurseParseHelper(node: JsonNode, reportMetricMap: HashMap<String, String>, statusFieldName: String) {
+    @Throws(ContentException::class)
+    private fun recurseParseHelper(node: JsonNode, reportMetricMap: HashMap<String, String>, reportType: String) {
         if (node.isNull) {
             return
         }
 
+        val statusFieldName = reportTypeToStatusFieldMapping[reportType]
         val fieldsIterator: Iterator<Map.Entry<String,JsonNode>>  = node.fields()
         while (fieldsIterator.hasNext()) {
             val field: Map.Entry<String,JsonNode>  = fieldsIterator.next()
             if (field.value.isArray) {
+                // Specifically for Metadata Report type to figure out the status from issues fields
+                if (field.key.equals(statusFieldName, true) && statusFieldName == "issues") {
+                    if (!field.value.isArray) {
+                        throw ContentException("Invalid content in $reportType")
+                    } else {
+                        val status = if (field.value.size() > 0) "failure" else "success"
+                        reportMetricMap[statusFieldName] = status
+                        return
+                    }
+                }
+
                 for(element in field.value) {
-                    recurseParseHelper(element, reportMetricMap, statusFieldName)
+                    recurseParseHelper(element, reportMetricMap, reportType)
                 }
             } else if (field.value.isObject){
-               recurseParseHelper(field.value, reportMetricMap, statusFieldName)
+               recurseParseHelper(field.value, reportMetricMap, reportType)
             } else {
                 if (field.key.equals(statusFieldName, true)) {
-                    processStatusValueInArray(field, reportMetricMap, statusFieldName)
+                    processStatusValueInArray(field, reportMetricMap, reportType)
                 }
            }
 
         }
     }
-
     private fun processStatusValueInArray(field: Map.Entry<String,JsonNode>, reportMetricMap: HashMap<String, String>, statusFieldName: String) {
         if (!reportMetricMap.containsKey(statusFieldName)) {
-            reportMetricMap.put(statusFieldName, field.value.textValue())
+            reportMetricMap[statusFieldName] = field.value.textValue()
         } else {
             val existingStatus = getPrecedenceOfStatus(reportMetricMap.get(statusFieldName))
             val newStatus = getPrecedenceOfStatus(field.value.textValue())
             if (existingStatus < newStatus) {
-                reportMetricMap.put(statusFieldName, field.value.textValue())
+                reportMetricMap[statusFieldName] = field.value.textValue()
             }
         }
     }
-
-    fun getPrecedenceOfStatus(status: String?): Int {
+    private fun getPrecedenceOfStatus(status: String?): Int {
         if (status != null) {
             return when (status.lowercase()) {
                 "success" -> 1

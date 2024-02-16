@@ -2,6 +2,7 @@ package functions
 
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.exceptions.BadRequestException
+import gov.cdc.ocio.exceptions.ContentException
 import gov.cdc.ocio.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor
 import org.mockito.Mockito
@@ -31,7 +32,7 @@ class ServiceBusTests {
         } catch(ex: BadRequestException) {
             exceptionThrown = ex.localizedMessage == "Missing required field destination_id"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
 
@@ -45,7 +46,7 @@ class ServiceBusTests {
         } catch(ex: BadRequestException) {
             exceptionThrown = ex.localizedMessage == "Missing required field event_type"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     @Test(description = "Tests for missing stageName in report json")
@@ -58,7 +59,7 @@ class ServiceBusTests {
         } catch(ex: BadRequestException) {
             exceptionThrown = ex.localizedMessage == "Missing required field stage_name"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     @Test(description = "Tests for missing content_type in report json")
@@ -71,7 +72,7 @@ class ServiceBusTests {
         } catch(ex: BadRequestException) {
             exceptionThrown = ex.localizedMessage == "Missing required field content_type"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     @Test(description = "Tests for missing content in report json")
@@ -84,7 +85,7 @@ class ServiceBusTests {
         } catch(ex: BadRequestException) {
             exceptionThrown = ex.localizedMessage == "Missing required field content"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     @Test(description = "Test for content format ")
@@ -97,7 +98,7 @@ class ServiceBusTests {
         } catch(ex: BadRequestException) {
             exceptionThrown = ex.localizedMessage == "content_type indicates json, but the content is not in JSON format"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     @Test(description = "Test for missing schema name")
@@ -110,7 +111,7 @@ class ServiceBusTests {
         } catch(ex: InvalidSchemaDefException) {
             exceptionThrown = ex.localizedMessage == "Invalid schema_name provided"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     @Test(description = "Test for missing schema version")
@@ -123,7 +124,7 @@ class ServiceBusTests {
         } catch(ex: InvalidSchemaDefException) {
             exceptionThrown = ex.localizedMessage == "Invalid schema_version provided"
         }
-        Assert.assertTrue(exceptionThrown)
+        assertTrue(exceptionThrown)
     }
 
     // HL7 Report Tests
@@ -169,6 +170,21 @@ class ServiceBusTests {
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
         assertTrue(status != "success")
         assertTrue(status != "failure")
+    }
+
+    // Metadata Verify Test
+    @Test(description = "Tests for validating 'success' status from metadata verify report")
+    fun testValidMetadataVerifyReportWithStatusSuccess() {
+        val testMessage = File("./src/test/kotlin/functions/serviceMockData/metadataVerify/sb_good_message_metadata_verify_report_success.json").readText()
+        val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
+        assertEquals(status, "success")
+    }
+
+    @Test(description = "Tests for validating 'failure' status from metadata verify report")
+    fun testValidMetadataVerifyReportWithStatusFailure() {
+        val testMessage = File("./src/test/kotlin/functions/serviceMockData/metadataVerify/sb_good_message_metadata_verify_report_failure.json").readText()
+        val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
+        assertEquals(status, "failure")
     }
 
 }

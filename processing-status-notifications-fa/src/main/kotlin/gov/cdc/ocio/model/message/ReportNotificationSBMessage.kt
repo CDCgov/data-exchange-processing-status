@@ -17,7 +17,7 @@ import java.util.*
  * @property contentType String?
  * @property content String?
  */
-class HL7ReportNotificationSBMessage: ServiceBusMessage() {
+class ReportNotificationSBMessage: ServiceBusMessage() {
 
     @SerializedName("upload_id")
     val uploadId: String? = null
