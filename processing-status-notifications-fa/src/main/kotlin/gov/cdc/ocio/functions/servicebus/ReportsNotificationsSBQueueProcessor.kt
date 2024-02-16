@@ -8,7 +8,7 @@ import gov.cdc.ocio.exceptions.BadRequestException
 import gov.cdc.ocio.exceptions.BadStateException
 import gov.cdc.ocio.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.message.ReportParser
-import gov.cdc.ocio.model.message.ReportNotificationSBMessage
+import gov.cdc.ocio.model.message.HL7ReportNotificationSBMessage
 import gov.cdc.ocio.model.message.SchemaDefinition
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -36,7 +36,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
     @Throws(BadRequestException::class, InvalidSchemaDefException::class)
     fun withMessage(message: String): String {
         try {
-            return sendNotificationForReportStatus(gson.fromJson(message, ReportNotificationSBMessage::class.java))
+            return sendNotificationForReportStatus(gson.fromJson(message, HL7ReportNotificationSBMessage::class.java))
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadRequestException("Unable to interpret the create report message")
@@ -50,7 +50,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class,InvalidSchemaDefException::class)
-    private fun sendNotificationForReportStatus(reportNotification: ReportNotificationSBMessage): String {
+    private fun sendNotificationForReportStatus(reportNotification: HL7ReportNotificationSBMessage): String {
 
         val destinationId = reportNotification.destinationId
             ?: throw BadRequestException("Missing required field destination_id")

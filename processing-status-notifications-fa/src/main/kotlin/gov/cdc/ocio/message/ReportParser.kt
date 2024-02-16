@@ -24,12 +24,12 @@ class ReportParser {
      */
     fun parseReportForStatus(content: String, fileType: String?): String {
         val reportMetricCollector = HashMap<String, String>()
-        val factory = JsonFactory();
-        val mapper = ObjectMapper(factory);
-        val rootNode: JsonNode = mapper.readTree(content);
+        val factory = JsonFactory()
+        val mapper = ObjectMapper(factory)
+        val rootNode: JsonNode = mapper.readTree(content)
         val statusFieldName = reportTypeToStatusFieldMapping[fileType]
         recurseParseHelper(rootNode, reportMetricCollector, statusFieldName!!)
-        return reportMetricCollector.get(statusFieldName)!!;
+        return reportMetricCollector[statusFieldName]!!
     }
 
     private fun recurseParseHelper(node: JsonNode, reportMetricMap: HashMap<String, String>, statusFieldName: String) {
@@ -37,10 +37,10 @@ class ReportParser {
             return
         }
 
-        val fieldsIterator: Iterator<Map.Entry<String,JsonNode>>  = node.fields();
+        val fieldsIterator: Iterator<Map.Entry<String,JsonNode>>  = node.fields()
         while (fieldsIterator.hasNext()) {
-            val field: Map.Entry<String,JsonNode>  = fieldsIterator.next();
-           if (field.value.isArray) {
+            val field: Map.Entry<String,JsonNode>  = fieldsIterator.next()
+            if (field.value.isArray) {
                 for(element in field.value) {
                     recurseParseHelper(element, reportMetricMap, statusFieldName)
                 }
@@ -76,6 +76,6 @@ class ReportParser {
                 else -> 0
             }
         }
-        return 0;
+        return 0
     }
 }
