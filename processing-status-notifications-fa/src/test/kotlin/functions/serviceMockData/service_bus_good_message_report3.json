@@ -1,24 +1,31 @@
 {
-  "schema_version": "0.0.1",
-  "schema_name": "dex-metadata-verify",
-  "filename": "10MB-test-file",
-  "timestamp": "",
-  "metadata": {
+  "upload_id": "4f99cfde-7c83-44e5-bd49-206ca4df7e16",
+  "destination_id": "dex-testing",
+  "event_type": "test-event1",
+  "stage_name": "dex-hl7-validation",
+  "content_type": "json",
+  "content": {
+    "schema_version": "0.0.1",
+    "schema_name": "dex-metadata-verify",
     "filename": "10MB-test-file",
-    "filetype": "text/plain",
-    "meta_destination_id": "ndlp",
-    "meta_ext_event": "routineImmunization",
-    "meta_ext_source": "IZGW",
-    "meta_ext_sourceversion": "V2022-12-31",
-    "meta_ext_entity": "DD2",
-    "meta_username": "ygj6@cdc.gov",
-    "meta_ext_objectkey": "2b18d70c-8559-11ee-b9d1-0242ac120002",
-    "meta_ext_filename": "10MB-test-file",
-    "meta_ext_submissionperiod": "1",
-    "meta_field2": "value3"
-  },
-  "issues": [
-    "Missing required metadata field, 'meta_field1'.",
-    "Metadata field, 'meta_field2' is set to 'value3' and does not contain one of the allowed values: [ 'value1', value2' ]"
-  ]
+    "timestamp": "",
+    "metadata": {
+      "filename": "10MB-test-file",
+      "filetype": "text/plain",
+      "meta_destination_id": "ndlp",
+      "meta_ext_event": "routineImmunization",
+      "meta_ext_source": "IZGW",
+      "meta_ext_sourceversion": "V2022-12-31",
+      "meta_ext_entity": "DD2",
+      "meta_username": "ygj6@cdc.gov",
+      "meta_ext_objectkey": "2b18d70c-8559-11ee-b9d1-0242ac120002",
+      "meta_ext_filename": "10MB-test-file",
+      "meta_ext_submissionperiod": "1",
+      "meta_field2": "value3"
+    },
+    "issues": [
+      "Missing required metadata field, 'meta_field1'.",
+      "Metadata field, 'meta_field2' is set to 'value3' and does not contain one of the allowed values: [ 'value1', value2' ]"
+    ]
+  }
 }
