@@ -1,9 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.utils
 
 import com.google.gson.*
-import com.google.gson.reflect.TypeToken
-import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import java.lang.ClassCastException
 import java.util.*
 import java.lang.reflect.Type
 import java.text.ParseException
