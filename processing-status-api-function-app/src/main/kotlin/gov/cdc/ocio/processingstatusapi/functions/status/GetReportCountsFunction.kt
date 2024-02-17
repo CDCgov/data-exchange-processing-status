@@ -120,14 +120,14 @@ class GetReportCountsFunction(
                     )
 
                     val firstItem = hl7DebatchCountsItems.firstOrNull()
-                    if (firstItem != null) {
-                        stageCountsObj = mapOf(
+                    stageCountsObj = if (firstItem != null) {
+                        mapOf(
                             "counts" to stageCounts.counts,
                             "number_of_messages" to firstItem.numberOfMessages.toLong(),
                             "number_of_messages_not_propagated" to firstItem.numberOfMessagesNotPropagated.toLong()
                         )
                     } else
-                        stageCountsObj = stageCounts.counts!!
+                        stageCounts.counts!!
                 }
                 // No further counts needed
                 else -> {
