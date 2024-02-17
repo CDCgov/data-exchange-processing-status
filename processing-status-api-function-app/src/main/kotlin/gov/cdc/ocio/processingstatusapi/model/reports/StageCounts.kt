@@ -1,10 +1,11 @@
 package gov.cdc.ocio.processingstatusapi.model.reports
 
-import com.google.gson.annotations.SerializedName
-
 data class StageCounts(
 
-    @SerializedName("stage_name")
+    var schema_name: String? = null,
+
+    var schema_version: String? = null,
+
     var stageName: String? = null,
 
     var counts: Int? = null,

@@ -9,6 +9,7 @@ import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.*
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Debatch
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
@@ -52,7 +53,7 @@ class GetReportCountsFunction(
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
         // Get the reports
-        val reportsSqlQuery = "select count(1) as counts, r.stageName from $reportsContainerName r where r.uploadId = '$uploadId' group by r.stageName"
+        val reportsSqlQuery = "select count(1) as counts, r.stageName, r.content.schema_name, r.content.schema_version from $reportsContainerName r where r.uploadId = '$uploadId' group by r.stageName, r.content.schema_name, r.content.schema_version"
 
         val reportItems = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -75,8 +76,7 @@ class GetReportCountsFunction(
                 this.destinationId = firstReport?.destinationId
                 this.eventType = firstReport?.eventType
                 reportItems.forEach { stageCounts ->
-                    if (stageCounts.stageName != null && stageCounts.counts != null)
-                        this.stages[stageCounts.stageName!!] = stageCounts.counts!!
+                    getCounts(listOf(uploadId), stageCounts)?.let { this.stages[stageCounts.stageName!!] = it }
                 }
             }
 
@@ -93,6 +93,49 @@ class GetReportCountsFunction(
             .createResponseBuilder(HttpStatus.BAD_REQUEST)
             .body("Invalid uploadId provided")
             .build()
+    }
+
+    /**
+     * Get the counts, including any special counting based on the schema from the report, from the uploadIds and
+     * stageCounts provided.
+     *
+     * @param uploadId String
+     * @param stageCounts StageCounts
+     */
+    private fun getCounts(uploadIdsList: List<String>, stageCounts: StageCounts): Any? {
+        var stageCountsObj: Any? = null
+        val stageName = stageCounts.stageName
+        if (stageName != null && stageCounts.counts != null) {
+            // Check if further counting needed based on schema name
+            when (stageCounts.schema_name) {
+                HL7Debatch.schemaDefinition.schemaName -> {
+                    val schemaName = HL7Debatch.schemaDefinition.schemaName
+                    val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
+                    val hl7DebatchCountsQuery =
+                        "select SUM(r.content.number_of_messages) as numberOfMessages, SUM(r.content.number_of_messages_not_propagated) as numberOfMessagesNotPropagated from $reportsContainerName r where r.stageName = '$stageName' and r.content.schema_name = '$schemaName' and r.uploadId in ($quotedUploadIds)"
+
+                    val hl7DebatchCountsItems = reportsContainer.queryItems(
+                        hl7DebatchCountsQuery, CosmosQueryRequestOptions(),
+                        HL7DebatchCounts::class.java
+                    )
+
+                    val firstItem = hl7DebatchCountsItems.firstOrNull()
+                    if (firstItem != null) {
+                        stageCountsObj = mapOf(
+                            "counts" to stageCounts.counts,
+                            "number_of_messages" to firstItem.numberOfMessages.toLong(),
+                            "number_of_messages_not_propagated" to firstItem.numberOfMessagesNotPropagated.toLong()
+                        )
+                    } else
+                        stageCountsObj = stageCounts.counts!!
+                }
+                // No further counts needed
+                else -> {
+                    stageCountsObj = stageCounts.counts!!
+                }
+            }
+        }
+        return stageCountsObj
     }
 
     /**
@@ -171,7 +214,7 @@ class GetReportCountsFunction(
             )
 
             if (reportItems.count() > 0) {
-                val uploads = mutableMapOf<String, MutableMap<String, Int>>()
+                val uploads = mutableMapOf<String, MutableMap<String, Any>>()
                 reportItems.forEach {
                     it.uploadId?.let { uploadId ->
                         var stageCountsMap = uploads[uploadId]
