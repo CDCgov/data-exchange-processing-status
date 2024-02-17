@@ -121,6 +121,7 @@ class UploadStatus {
                                 uploadStatus.fileSizeBytes = null
                                 uploadStatus.bytesUploaded = null
                                 uploadStatus.percentComplete = null
+                                uploadStatus.timeUploadingSec = null
                                 uploadStatus.uploadId = uploadId
                                 uploadStatus.fileName = metadataVerifyStage.filename
                                 uploadStatus.metadata = metadataVerifyStage.metadata
