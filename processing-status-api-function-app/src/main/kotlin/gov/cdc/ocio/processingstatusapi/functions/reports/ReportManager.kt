@@ -152,7 +152,7 @@ class ReportManager {
         val stageReport = Report().apply {
             this.id = stageReportId
             this.uploadId = uploadId
-            this.reportId = UUID.randomUUID().toString()
+            this.reportId = stageReportId
             this.destinationId = destinationId
             this.eventType = eventType
             this.stageName = stageName
