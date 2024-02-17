@@ -3,7 +3,8 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
@@ -32,6 +33,11 @@ class ReportManager {
     private val reportsContainer by lazy {
         CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)
     }
+
+    // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
+    private val gson = GsonBuilder()
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .create()
 
     /**
      * Create a report located with the provided upload ID.
@@ -154,7 +160,7 @@ class ReportManager {
 
             if (contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = Gson().fromJson(content, typeObject)
+                val jsonMap: Map<String, Any> = gson.fromJson(content, typeObject)
                 this.content = jsonMap
             } else
                 this.content = content
