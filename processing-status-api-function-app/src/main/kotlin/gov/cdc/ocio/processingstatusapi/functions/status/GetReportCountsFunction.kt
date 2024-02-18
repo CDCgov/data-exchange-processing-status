@@ -107,9 +107,7 @@ class GetReportCountsFunction(
      */
     private fun getCounts(stageCountsByUploadId: Map<String, List<StageCounts>>): Map<String, Map<String, Any>> {
 
-        logger.info("**** version 2")
-
-        val revisedStageCountsByUploadId = mutableMapOf<String, MutableMap<String, Any>>()
+        =val revisedStageCountsByUploadId = mutableMapOf<String, MutableMap<String, Any>>()
 
         // Get counts for any HL7 debatch stages
         val hl7DebatchSchemaName = HL7Debatch.schemaDefinition.schemaName
