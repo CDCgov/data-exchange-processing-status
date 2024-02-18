@@ -30,7 +30,7 @@ configurations {
 
 dependencies {
     implementation "com.microsoft.azure.functions:azure-functions-java-library:3.0.0"
-    implementation 'com.azure:azure-cosmos:4.42.0'
+    implementation 'com.azure:azure-cosmos:4.55.0'
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2"
     implementation 'io.opentelemetry:opentelemetry-api:1.29.0'
     implementation 'io.opentelemetry:opentelemetry-sdk:1.29.0'
@@ -44,7 +44,7 @@ dependencies {
     implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
 
-    implementation 'com.azure:azure-messaging-servicebus:7.13.3'
+    implementation 'com.azure:azure-messaging-servicebus:7.15.0'
     implementation 'com.microsoft.azure:azure-servicebus:3.6.7'
     implementation 'com.azure:azure-identity:1.8.0'
 

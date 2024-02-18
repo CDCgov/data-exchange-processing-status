@@ -8,6 +8,7 @@ import com.microsoft.azure.functions.annotation.*;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
+import gov.cdc.ocio.processingstatusapi.functions.status.GetReportCountsFunction;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetUploadStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
@@ -194,6 +195,29 @@ public class FunctionJavaWrappers {
             final ExecutionContext context) {
         context.getLogger().info("getReportByStage: destinationId=" + destinationId + ", stageName=" + stageName);
         return new GetReportFunction(request).withDestinationId(destinationId, stageName);
+    }
+
+    @FunctionName("GetReportCountsByUploadId")
+    public HttpResponseMessage getReportCountsByUploadId(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId) {
+        return new GetReportCountsFunction(request).withUploadId(uploadId);
+    }
+
+    @FunctionName("GetReportCountsWithQueryParams")
+    public HttpResponseMessage getReportCountsWithQueryParams(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).withQueryParams();
     }
 
     @FunctionName("GetStatusByUploadId")

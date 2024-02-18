@@ -14,21 +14,6 @@ class JsonUtils {
     companion object {
 
         /**
-         * Removes whitespace and CRLF from json string provided.
-         *
-         * @param json String
-         * @return String
-         */
-        fun minifyJson(json: String): String {
-            val gson = GsonBuilder()
-                .registerTypeAdapter(String::class.java,
-                    StringAdapter())
-                .create()
-            val jsonElement = gson.fromJson(json, JsonElement::class.java)
-            return gson.toJson(jsonElement)
-        }
-
-        /**
          * Gson with UTC dates for serialization
          *
          * @return Gson

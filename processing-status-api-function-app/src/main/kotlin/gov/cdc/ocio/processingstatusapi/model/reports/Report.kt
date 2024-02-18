@@ -39,10 +39,25 @@ data class Report(
     @SerializedName("content_type")
     var contentType : String? = null,
 
-    var content: String? = null,
+    var content: Any? = null,
 
     val timestamp: Date = Date()
-)
+) {
+    val contentAsString: String?
+        get() {
+            if (content == null) return null
+
+            return when (contentType?.lowercase(Locale.getDefault())) {
+                "json" -> {
+                    if (content is LinkedHashMap<*, *>)
+                        Gson().toJson(content, MutableMap::class.java).toString()
+                    else
+                        content.toString()
+                }
+                else -> content.toString()
+            }
+        }
+}
 
 /**
  * JSON serializer for Report class.
@@ -57,11 +72,7 @@ class ReportSerializer : JsonSerializer<Report> {
             jsonObject.add("report_id", context?.serialize(src?.reportId))
             jsonObject.add("stage_name", context?.serialize(src?.stageName))
             jsonObject.add("timestamp", context?.serialize(src?.timestamp))
-            if (src?.contentType == "json") {
-                jsonObject.add("content", JsonParser.parseString(src.content))
-            } else {
-                jsonObject.add("content", context?.serialize(src?.content))
-            }
+            jsonObject.add("content", context?.serialize(src?.content))
         } catch (e: Exception) {
             // do nothing
         }

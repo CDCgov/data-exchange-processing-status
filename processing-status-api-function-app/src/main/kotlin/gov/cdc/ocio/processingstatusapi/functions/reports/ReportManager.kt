@@ -3,6 +3,10 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
+import com.google.gson.reflect.TypeToken
+import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
@@ -10,7 +14,6 @@ import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
-import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
 import java.util.*
 
@@ -30,6 +33,11 @@ class ReportManager {
     private val reportsContainer by lazy {
         CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)
     }
+
+    // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
+    private val gson = GsonBuilder()
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .create()
 
     /**
      * Create a report located with the provided upload ID.
@@ -130,8 +138,10 @@ class ReportManager {
      * @param stageName String
      * @param contentType String
      * @param content String
-     * @return String - stage report identifier
+     * @return String
+     * @throws BadStateException
      */
+    @Throws(BadStateException::class)
     private fun createStageReport(uploadId: String,
                                   destinationId: String,
                                   eventType: String,
@@ -142,20 +152,70 @@ class ReportManager {
         val stageReport = Report().apply {
             this.id = stageReportId
             this.uploadId = uploadId
-            this.reportId = UUID.randomUUID().toString()
+            this.reportId = stageReportId
             this.destinationId = destinationId
             this.eventType = eventType
             this.stageName = stageName
             this.contentType = contentType
-            this.content = if (contentType.lowercase() == "json") JsonUtils.minifyJson(content) else content
+
+            if (contentType.lowercase() == "json") {
+                val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
+                val jsonMap: Map<String, Any> = gson.fromJson(content, typeObject)
+                this.content = jsonMap
+            } else
+                this.content = content
         }
 
-        val response = reportsContainer?.createItem(
-            stageReport,
-            PartitionKey(uploadId),
-            CosmosItemRequestOptions()
-        )
-        logger.info("Created at ${Date()}, reportId = ${response?.item?.reportId}")
-        return stageReportId
+        var attempts = 0
+        do {
+            val response = reportsContainer?.createItem(
+                stageReport,
+                PartitionKey(uploadId),
+                CosmosItemRequestOptions()
+            )
+
+            logger.info("Creating report, response http status code = ${response?.statusCode}, attempt = ${attempts+1}, uploadId = $uploadId")
+            if (response != null) {
+                when (response.statusCode) {
+                    HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
+                        logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
+                        return stageReportId
+                    }
+
+                    HttpStatus.TOO_MANY_REQUESTS.value() -> {
+                        // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
+                        // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
+                        // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
+                        val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
+                        logger.warn("Received 429 (too many requests) from cosmossb, attempt ${attempts+1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
+                        val waitMillis = recommendedDuration?.toLong()
+                        Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
+                    }
+
+                    else -> {
+                        // Need to retry regardless
+                        val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                        logger.warn("Received response code ${response.statusCode}, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                        Thread.sleep(retryAfterDurationMillis)
+                    }
+                }
+            } else {
+                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                logger.warn("Received null response from cosmosdb, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                Thread.sleep(retryAfterDurationMillis)
+            }
+
+        } while (attempts++ < MAX_RETRY_ATTEMPTS)
+
+        throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
+    }
+
+    private fun getCalculatedRetryDuration(attempt: Int): Long {
+        return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
+    }
+
+    companion object {
+        const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
+        const val MAX_RETRY_ATTEMPTS = 100
     }
 }
