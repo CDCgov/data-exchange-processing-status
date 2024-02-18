@@ -13,5 +13,5 @@ data class ReportCounts(
     @SerializedName("event_type")
     var eventType: String? = null,
 
-    var stages: MutableMap<String, Any> = mutableMapOf()
+    var stages: Map<String, Any> = mapOf()
 )
