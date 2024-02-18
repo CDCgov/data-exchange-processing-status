@@ -1,0 +1,226 @@
+{
+	"info": {
+		"_postman_id": "fed93595-fe21-471f-8fce-a0204ca774c0",
+		"name": "Async Notifications Api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32549016",
+		"_collection_link": "https://warped-rocket-914985.postman.co/workspace/CDC-DEX~4809cae3-fa77-4dd8-bfdd-f884e393798e/collection/32549016-fed93595-fe21-471f-8fce-a0204ca774c0?action=share&source=collection_link&creator=32549016"
+	},
+	"item": [
+		{
+			"name": "SubscribtionEmailSuccess",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/subscribe/email/123/3345?email=pu@hfk.cdd&statusType=success&stageName=2345",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"subscribe",
+						"email",
+						"123",
+						"3345"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "pu@hfk.cdd"
+						},
+						{
+							"key": "statusType",
+							"value": "success"
+						},
+						{
+							"key": "stageName",
+							"value": "2345"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UnsubscribeEmailNotificationsFailure",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/unsubscribe/email/c1a267ef-096f-4ec4-993d-f54d882b3905",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"unsubscribe",
+						"email",
+						"c1a267ef-096f-4ec4-993d-f54d882b3905"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UnsubscribeWebsocketNotificationsFailure",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/unsubscribe/websocket/c1a267ef-096f-4ec4-993d-f54d882b3905",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"unsubscribe",
+						"websocket",
+						"c1a267ef-096f-4ec4-993d-f54d882b3905"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SubscribeEmailEmptyStatusType",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/subscribe/email/123/3345?email=pu@hfk.cdd&stageName=2345",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"subscribe",
+						"email",
+						"123",
+						"3345"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "pu@hfk.cdd"
+						},
+						{
+							"key": "statusType",
+							"value": "success",
+							"disabled": true
+						},
+						{
+							"key": "stageName",
+							"value": "2345"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SubscriptionEmailInvalidEmailId",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/subscribe/email/123/3345?email=pu@hfkcdd&stageName=2345&statusType=warning",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"subscribe",
+						"email",
+						"123",
+						"3345"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "pu@hfkcdd"
+						},
+						{
+							"key": "stageName",
+							"value": "2345"
+						},
+						{
+							"key": "statusType",
+							"value": "warning"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SubscribtionWebsocketSuccess",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/subscribe/websocket/23/3445?email=wss://www.example.com/socketserver&statusType=success&stageName=2343",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"subscribe",
+						"websocket",
+						"23",
+						"3445"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "wss://www.example.com/socketserver"
+						},
+						{
+							"key": "statusType",
+							"value": "success"
+						},
+						{
+							"key": "stageName",
+							"value": "2343"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UnsubscribeWebsocketNotificationsSuccess",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7071/api/unsubscribe/email/9f5db953-ccca-4978-971f-9cb874441ff7",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7071",
+					"path": [
+						"api",
+						"unsubscribe",
+						"email",
+						"9f5db953-ccca-4978-971f-9cb874441ff7"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
