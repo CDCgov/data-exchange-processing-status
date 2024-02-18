@@ -34,7 +34,7 @@ tags:
       description: Find out more
       url: 'https://github.com/CDCgov/data-exchange-csv'
   - name: DEX Status
-    description: CDC Data Exchange Status
+    description: CDC Data Exchange Status and Data Projections
   - name: DEX Info
     description: CDC Data Exchange Info
   - name: Health
@@ -220,9 +220,9 @@ paths:
     get:
       tags:
         - DEX Tracing
-      summary: Gets a processing status trace from a report ID.(Not yet implemented)
+      summary: Gets a processing status trace from a report ID. (Not yet implemented)
       description: >-
-        Retrieves a distributed tracing trace.(Not yet implemented)
+        Retrieves a distributed tracing trace. **(Not yet implemented)**
       parameters:
         - name: reportId
           in: path
@@ -300,7 +300,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Report Stage Name.  
+          description: Report Stage Name.
       responses:
         '200':
           description: Trace for the given upload dentifier
@@ -340,7 +340,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Report Stage Name.  
+          description: Report Stage Name.
       responses:
         '200':
           description: Trace for the given upload dentifier
@@ -382,7 +382,9 @@ paths:
     put:
       tags:
         - DEX Reports
-      summary: Ammend an existing report using the provided trace identifier to lookup the report.(Not yet implemented)
+      summary: Replace an existing report. (Not yet implemented)
+      description: >-
+        Replace an existing report using the provided trace identifier to lookup the report. **(Not yet implemented)**
       parameters:
         - name: traceId
           in: path
@@ -431,15 +433,16 @@ paths:
     get:
       tags:
         - DEX Reports
-      summary: Provides list of report identifiers for given criteria(Not yet implemented)
+      summary: Provides list of report identifiers for given criteria. (Not yet implemented)
+      description: >-
+        Provides list of report identifiers for the given criteria. **(Not yet implemented)**
       parameters:
         - name: ext_event
           in: query
           schema:
             type: string
           description: >-
-            If specified, also filter by meta_ext_event that was provided with
-            the upload.(Not yet implemented)
+            If specified, also filter by meta_ext_event that was provided with the upload.
           example: RoutineImmunization
         - name: destinationId
           in: path
@@ -492,10 +495,12 @@ paths:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known destination IDs.(Not yet implemented)
+        Provides a list of all known destination IDs. (Not yet implemented)
+      description: >-
+        Provides a list of all known destination IDs. **(Not yet implemented)**
       responses:
         '200':
-          description: All of the known destination identifiers(Not yet implemented)
+          description: All of the known destination identifiers.
           content:
             application/json:
               schema:
@@ -509,7 +514,9 @@ paths:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known event types for the given destination identifier.(Not yet implemented)
+        Provides a list of all known event types. (Not yet implemented)
+      description: >-
+        Provides a list of all known event types for the given destination identifier. **(Not yet implemented)**
       parameters:
         - name: destinationId
           in: path
@@ -534,7 +541,9 @@ paths:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known report schema identifiers.(Not yet implemented)
+        Provides a list of all known report schema identifiers. (Not yet implemented)
+      description: >-
+        Provides a list of all known report schema identifiers. **(Not yet implemented)**
       responses:
         '200':
           description: All of the known report schema identifiers
@@ -647,6 +656,81 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProcessingStatuses'
+        '400':
+          description: Bad request.  The destination identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/report/counts/{uploadId}':
+    get:
+      tags:
+        - DEX Status
+      summary: Report counts for the given upload identifier.
+      description: >-
+        Provides report counts for the given upload identifier.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: >-
+            Upload identifier to retrieve the report counts for.
+      responses:
+        '200':
+          description: Report counts for the given upload identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportCountsForUploadId'
+        '400':
+          description: Bad request.  The destination identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+  '/report/counts':
+    get:
+      tags:
+        - DEX Status
+      summary: Report counts for the given criteria.
+      description: >-
+        Provides report counts for the given criteria.
+      parameters:
+        - name: destination_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Filter by the destination identifier to retrieve the report counts for.
+        - name: ext_event
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Filter by the ext event that was provided with the upload.
+          example: routineImmunization
+        - name: date_start
+          in: query
+          schema:
+            type: string
+          description: >-
+            Start date of filter.  Format is YYYYMMDDTHHMMSSZ (UTC format,
+            inclusive).  Defaults to 3 months prior to today.
+          example: 20231020T14103000Z
+        - name: date_end
+          in: query
+          schema:
+            type: string
+          description: >-
+            End date of filter.  Format is YYYYMMDDTHHMMSSZ (UTC format,
+            exclusive).  Defaults to today.
+          example: 20231030T14103000Z
+      responses:
+        '200':
+          description: Report counts for the given upload identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportCountsForUploads'
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
@@ -904,6 +988,67 @@ components:
           format: uuid
         stage_name:
           type: string
+    ReportCountsForUploadId:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          format: uuid
+        destination_id:
+          type: string
+          example: ndlp
+        event_type:
+          type: string
+          example: routineImmunization
+        stages:
+          type: object
+          properties:
+            dex-metadata-verify:
+              type: integer
+              example: 1
+            dex-upload-status:
+              type: integer
+              example: 1
+            dex-routing:
+              type: integer
+              example: 1
+            dex-hl7-receiver:
+              type: object
+              properties:
+                counts:
+                  type: integer
+                  example: 100
+                number_of_messages:
+                  type: integer
+                  example: 96
+                number_of_messages_not_propogated:
+                  type: integer
+                  example: 4
+            dex-hl7-structure:
+              type: object
+              properties:
+                counts:
+                  type: integer
+                  example: 96
+                valid:
+                  type: integer
+                  example: 90
+                invalid:
+                  type: integer
+                  example: 6
+    ReportCountsForUploads:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            num_uploads:
+              type: integer
+              example: 14
+        uploads:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportCountsForUploadId'
     HL7Report:
       type: object
       properties:
