@@ -155,7 +155,9 @@ class GetReportCountsFunction(
             stageCounts.forEach { stageCount ->
                 when (stageCount.schema_name) {
                     HL7Debatch.schemaDefinition.schemaName -> {
-                        val hl7DebatchCounts = hl7DebatchCountsItems.toList().firstOrNull { it.uploadId == uploadId && it.stageName == stageCount.stageName }
+                        val hl7DebatchCounts = hl7DebatchCountsItems.toList().firstOrNull {
+                            it.uploadId == uploadId && it.stageName == stageCount.stageName
+                        }
                         val counts: Any = if (hl7DebatchCounts != null) {
                             mapOf(
                                 "counts" to stageCount.counts,
@@ -167,7 +169,9 @@ class GetReportCountsFunction(
                         revisedStageCounts[stageCount.stageName!!] = counts
                     }
                     HL7Validation.schemaDefinition.schemaName -> {
-                        val hl7ValidationCounts = hl7ValidationCountsItems.toList().firstOrNull { it.uploadId == uploadId && it.stageName == stageCount.stageName }
+                        val hl7ValidationCounts = hl7ValidationCountsItems.toList().firstOrNull {
+                            it.uploadId == uploadId && it.stageName == stageCount.stageName
+                        }
                         val counts: Any = if (hl7ValidationCounts != null) {
                             mapOf(
                                 "counts" to stageCount.counts,
@@ -218,7 +222,12 @@ class GetReportCountsFunction(
         }
 
         val uploadIdsSqlQuery = StringBuilder()
-        uploadIdsSqlQuery.append("select distinct value r.uploadId from $reportsContainerName r where r.destinationId = '$destinationId' and r.eventType = '$eventType'")
+        uploadIdsSqlQuery.append(
+            "select "
+            + "distinct value r.uploadId "
+            + "from $reportsContainerName r "
+            + "where r.destinationId = '$destinationId' and r.eventType = '$eventType'"
+        )
 
         dateStart?.run {
             try {
@@ -254,8 +263,12 @@ class GetReportCountsFunction(
         if (uploadIds.count() > 0) {
             val uploadIdsList = uploadIds.toList()
             val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
-            val reportsSqlQuery = "select r.uploadId, r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName from $reportsContainerName r where r.uploadId in ($quotedUploadIds) group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
-
+            val reportsSqlQuery = (
+                "select "
+                + "r.uploadId, r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName "
+                + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
+                + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
+            )
             val reportItems = reportsContainer.queryItems(
                 reportsSqlQuery, CosmosQueryRequestOptions(),
                 StageCountsForUpload::class.java
