@@ -10,6 +10,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.*
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Debatch
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Validation
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
@@ -53,8 +54,12 @@ class GetReportCountsFunction(
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
         // Get the reports
-        val reportsSqlQuery = "select count(1) as counts, r.stageName, r.content.schema_name, r.content.schema_version from $reportsContainerName r where r.uploadId = '$uploadId' group by r.stageName, r.content.schema_name, r.content.schema_version"
-
+        val reportsSqlQuery = (
+            "select "
+            + "count(1) as counts, r.stageName, r.content.schema_name, r.content.schema_version "
+            + "from $reportsContainerName r where r.uploadId = '$uploadId' "
+            + "group by r.stageName, r.content.schema_name, r.content.schema_version"
+        )
         val reportItems = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             StageCounts::class.java
@@ -107,18 +112,40 @@ class GetReportCountsFunction(
      */
     private fun getCounts(stageCountsByUploadId: Map<String, List<StageCounts>>): Map<String, Map<String, Any>> {
 
-        =val revisedStageCountsByUploadId = mutableMapOf<String, MutableMap<String, Any>>()
+        val revisedStageCountsByUploadId = mutableMapOf<String, MutableMap<String, Any>>()
+
+        val uploadIdList = stageCountsByUploadId.keys
+        val quotedUploadIds = uploadIdList.joinToString("\",\"", "\"", "\"")
 
         // Get counts for any HL7 debatch stages
         val hl7DebatchSchemaName = HL7Debatch.schemaDefinition.schemaName
-        val uploadIdList = stageCountsByUploadId.keys
-        val quotedUploadIds = uploadIdList.joinToString("\",\"", "\"", "\"")
-        val hl7DebatchCountsQuery =
-            "select r.uploadId, r.stageName, SUM(r.content.number_of_messages) as numberOfMessages, SUM(r.content.number_of_messages_not_propagated) as numberOfMessagesNotPropagated from $reportsContainerName r where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) group by r.uploadId, r.stageName"
-
+        val hl7DebatchCountsQuery = (
+            "select "
+            + "r.uploadId, r.stageName, SUM(r.content.number_of_messages) as numberOfMessages, "
+            + "SUM(r.content.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
+            + "from $reportsContainerName r "
+            + "where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) "
+            + "group by r.uploadId, r.stageName"
+        )
         val hl7DebatchCountsItems = reportsContainer.queryItems(
             hl7DebatchCountsQuery, CosmosQueryRequestOptions(),
             HL7DebatchCounts::class.java
+        )
+
+        val hl7ValidationSchemaName = HL7Validation.schemaDefinition.schemaName
+        val hl7ValidationCountsQuery = (
+            "select "
+            + "r.uploadId, r.stageName, "
+            + "count(contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) as valid, "
+            + "count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) as invalid "
+            + "from $reportsContainerName r "
+            + "where r.content.schema_name = '$hl7ValidationSchemaName' and r.uploadId in ($quotedUploadIds) "
+            + "group by r.uploadId, r.stageName"
+        )
+
+        val hl7ValidationCountsItems = reportsContainer.queryItems(
+            hl7ValidationCountsQuery, CosmosQueryRequestOptions(),
+            HL7ValidationCounts::class.java
         )
 
         stageCountsByUploadId.forEach { entry ->
@@ -134,6 +161,18 @@ class GetReportCountsFunction(
                                 "counts" to stageCount.counts,
                                 "number_of_messages" to hl7DebatchCounts.numberOfMessages.toLong(),
                                 "number_of_messages_not_propagated" to hl7DebatchCounts.numberOfMessagesNotPropagated.toLong()
+                            )
+                        } else
+                            stageCount.counts!!
+                        revisedStageCounts[stageCount.stageName!!] = counts
+                    }
+                    HL7Validation.schemaDefinition.schemaName -> {
+                        val hl7ValidationCounts = hl7ValidationCountsItems.toList().firstOrNull { it.uploadId == uploadId && it.stageName == stageCount.stageName }
+                        val counts: Any = if (hl7ValidationCounts != null) {
+                            mapOf(
+                                "counts" to stageCount.counts,
+                                "valid" to hl7ValidationCounts.valid.toLong(),
+                                "invalid" to hl7ValidationCounts.invalid.toLong()
                             )
                         } else
                             stageCount.counts!!
