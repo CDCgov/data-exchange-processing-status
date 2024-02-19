@@ -187,15 +187,18 @@ class ReportManager {
                 when (response.statusCode) {
                     HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
                         logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
-                        //Send message to reports-notifications-queue
-                        var message = NotificationReport(
-                            response?.item?.reportId,
-                            uploadId, destinationId,eventType,
-                            stageName,
-                            contentType,
-                            content,
-                            source)
-                        sendToReportsQueue(message)
+                        val enableReportForwarding = System.getenv("EnableReportForwarding")
+                        if(enableReportForwarding.equals("True", ignoreCase = true)){
+                            //Send message to reports-notifications-queue
+                            var message = NotificationReport(
+                                response?.item?.reportId,
+                                uploadId, destinationId,eventType,
+                                stageName,
+                                contentType,
+                                content,
+                                source)
+                            sendToReportsQueue(message)
+                        }
                         return stageReportId
                     }
 
