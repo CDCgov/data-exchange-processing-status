@@ -3,16 +3,21 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
+import com.azure.messaging.servicebus.ServiceBusClientBuilder
+import com.azure.messaging.servicebus.ServiceBusMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
+import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
+import gov.cdc.ocio.processingstatusapi.model.reports.NotificationReport
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.Source
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.SchemaDefinition
 import mu.KotlinLogging
 import java.util.*
@@ -61,7 +66,8 @@ class ReportManager {
         stageName: String,
         contentType: String,
         content: String,
-        dispositionType: DispositionType
+        dispositionType: DispositionType,
+        source: Source
     ): String {
         // Verify the content contains the minimum schema information
         try {
@@ -70,7 +76,7 @@ class ReportManager {
             throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
         }
 
-        return createReport(uploadId, destinationId, eventType, stageName, contentType, content, dispositionType)
+        return createReport(uploadId, destinationId, eventType, stageName, contentType, content, dispositionType, source)
     }
 
     /**
@@ -93,7 +99,8 @@ class ReportManager {
                              stageName: String,
                              contentType: String,
                              content: String,
-                             dispositionType: DispositionType): String {
+                             dispositionType: DispositionType,
+                             source: Source): String {
 
         when (dispositionType) {
             DispositionType.REPLACE -> {
@@ -120,11 +127,11 @@ class ReportManager {
                 }
 
                 // Now create the new stage report
-                return createStageReport(uploadId, destinationId, eventType, stageName, contentType, content)
+                return createStageReport(uploadId, destinationId, eventType, stageName, contentType, content, source)
             }
             DispositionType.ADD -> {
                 logger.info("Creating report for stage name = $stageName")
-                return createStageReport(uploadId, destinationId, eventType, stageName, contentType, content)
+                return createStageReport(uploadId, destinationId, eventType, stageName, contentType, content, source)
             }
         }
     }
@@ -147,7 +154,8 @@ class ReportManager {
                                   eventType: String,
                                   stageName: String,
                                   contentType: String,
-                                  content: String): String {
+                                  content: String,
+                                  source: Source): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
             this.id = stageReportId
@@ -179,6 +187,18 @@ class ReportManager {
                 when (response.statusCode) {
                     HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
                         logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
+                        val enableReportForwarding = System.getenv("EnableReportForwarding")
+                        if(enableReportForwarding.equals("True", ignoreCase = true)){
+                            //Send message to reports-notifications-queue
+                            var message = NotificationReport(
+                                response?.item?.reportId,
+                                uploadId, destinationId,eventType,
+                                stageName,
+                                contentType,
+                                content,
+                                source)
+                            sendToReportsQueue(message)
+                        }
                         return stageReportId
                     }
 
@@ -212,6 +232,20 @@ class ReportManager {
 
     private fun getCalculatedRetryDuration(attempt: Int): Long {
         return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
+    }
+
+    @Throws(InterruptedException::class, ServiceBusException::class)
+    private fun sendToReportsQueue(message: NotificationReport){
+        val connectionString = System.getenv("ServiceBusConnectionString")
+        val queueName = System.getenv("ServiceBusReportsQueueName")
+        val sender = ServiceBusClientBuilder()
+            .connectionString(connectionString)
+            .sender()
+            .queueName(queueName)
+            .buildClient()
+        sender.sendMessage(ServiceBusMessage(message.toString()))
+        sender.close()
+
     }
 
     companion object {

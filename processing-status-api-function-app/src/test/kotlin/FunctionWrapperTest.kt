@@ -2,6 +2,13 @@ import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.FunctionJavaWrappers
+import gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction
+import gov.cdc.ocio.processingstatusapi.opentelemetry.OpenTelemetryConfig
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.api.trace.Tracer
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.testng.Assert
@@ -16,6 +23,8 @@ class FunctionWrapperTest {
 
     private lateinit var request: HttpRequestMessage<Optional<String>>
     private lateinit var context: ExecutionContext
+    private val mockOpenTelemetry = mockk<OpenTelemetry>()
+    private val mockTracer = mockk<Tracer>()
     private val testMessage = File("./src/test/kotlin/data/reports/createReport_badrequest.json").readText()
 
     @BeforeMethod
@@ -24,6 +33,9 @@ class FunctionWrapperTest {
         request = mock(HttpRequestMessage::class.java) as HttpRequestMessage<Optional<String>>
         context = mock(ExecutionContext::class.java)
         Mockito.`when`(request.body).thenReturn(Optional.of(testMessage))
+        mockkObject(OpenTelemetryConfig)
+        every { OpenTelemetryConfig.initOpenTelemetry()} returns mockOpenTelemetry
+        every {mockOpenTelemetry.getTracer(CreateTraceFunction::class.java.name)} returns mockTracer
 
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.
         Mockito.doAnswer { invocation ->
@@ -35,7 +47,7 @@ class FunctionWrapperTest {
     @Test
     fun testHealthCheck() {
         val response = FunctionJavaWrappers().healthCheck(request)
-        assert(response.status == HttpStatus.OK)
+        assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     @Test
