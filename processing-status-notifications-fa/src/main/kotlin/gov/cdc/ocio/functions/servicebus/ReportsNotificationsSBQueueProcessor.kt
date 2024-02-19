@@ -9,8 +9,10 @@ import gov.cdc.ocio.exceptions.BadStateException
 import gov.cdc.ocio.exceptions.ContentException
 import gov.cdc.ocio.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.message.ReportParser
+import gov.cdc.ocio.model.cache.SubscriptionRule
 import gov.cdc.ocio.model.message.ReportNotificationSBMessage
 import gov.cdc.ocio.model.message.SchemaDefinition
+import gov.cdc.ocio.rulesEngine.RuleEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
@@ -73,6 +75,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             val schemaDef = SchemaDefinition.fromJsonString(content)
 
             status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
+            RuleEngine.evaluateAllRules(SubscriptionRule(destinationId, eventType, stageName, status).getStringHash())
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)
