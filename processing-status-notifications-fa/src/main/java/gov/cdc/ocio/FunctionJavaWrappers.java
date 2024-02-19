@@ -21,7 +21,6 @@ public class FunctionJavaWrappers {
      * @param eventType eventType of the report
      * @return HttpResponse
      */
-    @FunctionName("SubscribeEmail")
     public HttpResponseMessage subscribeEmail(
             @HttpTrigger(
                     name = "req",
