@@ -30,7 +30,7 @@ class ReportParser {
         val rootNode: JsonNode = mapper.readTree(content)
 
         recurseParseHelper(rootNode, reportMetricCollector, reportType!!)
-        return reportMetricCollector[reportTypeToStatusFieldMapping[reportType]]!!
+        return reportMetricCollector[reportType]!!
     }
 
     @Throws(ContentException::class)
@@ -50,7 +50,7 @@ class ReportParser {
                         throw ContentException("Invalid content in $reportType")
                     } else {
                         val status = if (field.value.size() > 0) "failure" else "success"
-                        reportMetricMap[statusFieldName] = status
+                        reportMetricMap[reportType] = status
                         return
                     }
                 }
@@ -62,20 +62,20 @@ class ReportParser {
                recurseParseHelper(field.value, reportMetricMap, reportType)
             } else {
                 if (field.key.equals(statusFieldName, true)) {
-                    processStatusValueInArray(field, reportMetricMap, reportType)
+                    processStatusValueInArray(field, reportMetricMap, reportType!!)
                 }
            }
 
         }
     }
-    private fun processStatusValueInArray(field: Map.Entry<String,JsonNode>, reportMetricMap: HashMap<String, String>, statusFieldName: String) {
-        if (!reportMetricMap.containsKey(statusFieldName)) {
-            reportMetricMap[statusFieldName] = field.value.textValue()
+    private fun processStatusValueInArray(field: Map.Entry<String,JsonNode>, reportMetricMap: HashMap<String, String>, reportType: String) {
+        if (!reportMetricMap.containsKey(reportType)) {
+            reportMetricMap[reportType] = field.value.textValue()
         } else {
-            val existingStatus = getPrecedenceOfStatus(reportMetricMap.get(statusFieldName))
+            val existingStatus = getPrecedenceOfStatus(reportMetricMap.get(reportType))
             val newStatus = getPrecedenceOfStatus(field.value.textValue())
             if (existingStatus < newStatus) {
-                reportMetricMap[statusFieldName] = field.value.textValue()
+                reportMetricMap[reportType] = field.value.textValue()
             }
         }
     }
