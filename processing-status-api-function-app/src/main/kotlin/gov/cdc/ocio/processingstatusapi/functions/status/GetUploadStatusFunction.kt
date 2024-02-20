@@ -12,10 +12,9 @@ import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.UploadStatus
 import gov.cdc.ocio.processingstatusapi.model.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.model.reports.UploadCounts
+import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
-import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -77,7 +76,7 @@ class GetUploadStatusFunction(
 
         dateStart?.run {
             try {
-                val dateStartEpochSecs = getEpochFromDateString(dateStart, "date_start")
+                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
                 sqlQuery.append(" and t._ts >= $dateStartEpochSecs")
             } catch (e: BadRequestException) {
                 logger.error(e.localizedMessage)
@@ -89,7 +88,7 @@ class GetUploadStatusFunction(
         }
         dateEnd?.run {
             try {
-                val dateEndEpochSecs = getEpochFromDateString(dateEnd, "date_end")
+                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
                 sqlQuery.append(" and t._ts < $dateEndEpochSecs")
             } catch (e: BadRequestException) {
                 logger.error(e.localizedMessage)
@@ -265,27 +264,7 @@ class GetUploadStatusFunction(
         pageNumberAsInt
     }
 
-    /**
-     * Get the epoch time from a string provided.
-     *
-     * @param dateStr String
-     * @param fieldName String
-     * @return Long
-     * @throws BadRequestException
-     */
-    @Throws(BadRequestException::class)
-    private fun getEpochFromDateString(dateStr: String, fieldName: String): Long {
-        try {
-            return sdf.parse(dateStr).time / 1000 // convert to secs from millisecs
-        } catch (e: ParseException) {
-            throw BadRequestException("Failed to parse $fieldName: $dateStr.  Format should be: $DATE_FORMAT.")
-        }
-    }
-
     companion object {
-        private const val DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'"
-        private val sdf = SimpleDateFormat(DATE_FORMAT)
-
         private const val MIN_PAGE_SIZE = 1
         private const val MAX_PAGE_SIZE = 10000
         private const val DEFAULT_PAGE_NUMBER = 1

@@ -8,6 +8,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.model.reports.Source
 import mu.KotlinLogging
 import java.util.*
 
@@ -83,7 +84,8 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
             stageName,
             contentType,
             content,
-            createReportMessage.dispositionType
+            createReportMessage.dispositionType,
+            Source.SERVICEBUS
         )
     }
 

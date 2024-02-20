@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction
 import gov.cdc.ocio.processingstatusapi.functions.reports.ReportManager
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
+import gov.cdc.ocio.processingstatusapi.model.reports.Source
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
@@ -105,7 +106,7 @@ class CreateReportFunctionTests {
         `when`(request.body).thenReturn(Optional.of(testMessage))
         `when` (request.queryParameters).thenReturn(queryParameters)
 
-        every{ ReportManager().createReportWithUploadId(any(), any(), any(), any(), any(), any(), DispositionType.ADD)} returns "1"
+        every{ ReportManager().createReportWithUploadId(any(), any(), any(), any(), any(), any(), DispositionType.ADD, Source.HTTP)} returns "1"
         val response = CreateReportFunction(request, DispositionType.ADD).jsonWithUploadId(uploadId);
         assert(response.status == HttpStatus.BAD_REQUEST)
         //assert(response.body.toString() == "Invalid schema definition: Invalid schema_name provided")

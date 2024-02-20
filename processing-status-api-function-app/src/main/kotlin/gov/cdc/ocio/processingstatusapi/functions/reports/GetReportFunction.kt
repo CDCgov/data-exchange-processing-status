@@ -10,6 +10,7 @@ import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
+import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
 import java.util.*
 
@@ -34,10 +35,15 @@ class GetReportFunction(
     }
 
     private val gson = GsonBuilder()
-            .registerTypeAdapter(
-                    Report::class.java,
-                    ReportSerializer()
-            ).create()
+        .registerTypeAdapter(
+            Report::class.java,
+            ReportSerializer()
+        )
+        .registerTypeAdapter(
+            Date::class.java,
+            JsonUtils.GsonUTCDateAdapter()
+        )
+        .create()
 
     /**
      * Retrieve a report with the provided upload ID.

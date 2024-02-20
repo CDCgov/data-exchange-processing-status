@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.model.reports.CreateReportResult
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
+import gov.cdc.ocio.processingstatusapi.model.reports.Source
 import mu.KotlinLogging
 import java.util.*
 
@@ -54,7 +55,8 @@ class CreateReportFunction(
                 reportStageName!!,
                 "json",
                 requestBody,
-                dispositionType
+                dispositionType,
+                Source.HTTP
             )
             return successResponse(stageReportId, reportStageName)
 
