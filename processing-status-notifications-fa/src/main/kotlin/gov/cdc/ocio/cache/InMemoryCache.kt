@@ -1,7 +1,7 @@
 package gov.cdc.ocio.cache
 
 import gov.cdc.ocio.exceptions.BadStateException
-import gov.cdc.ocio.model.cache.NotificationSubscriber
+import gov.cdc.ocio.model.cache.NotificationSubscription
 import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging
 import java.util.*
@@ -26,7 +26,7 @@ object InMemoryCache {
     Cache to store "SubscriptionId ->  Subscriber Info (Email or Url and type of subscription)"
     subscriberCache = HashMap<String, NotificationSubscriber>()
     */
-    private val subscriberCache = HashMap<String, NotificationSubscriber>()
+    private val subscriberCache = HashMap<String, NotificationSubscription>()
 
 
     /**
@@ -47,7 +47,7 @@ object InMemoryCache {
         if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBSOCKET) {
             // If subscription type is EMAIL or WEBSOCKET then proceed else throw BadState Exception
             val subscriptionId = updateSubscriptionRuleCache(subscriptionRule)
-            updateSubscriberCache(subscriptionId, NotificationSubscriber(emailOrUrl, subscriptionType))
+            updateSubscriberCache(subscriptionId, NotificationSubscription(emailOrUrl, subscriptionType))
             return subscriptionId
         } else {
             throw BadStateException("Not a valid SubscriptionType")
@@ -110,7 +110,7 @@ object InMemoryCache {
      * @param notificationSubscriber NotificationSubscriber
      */
     private fun updateSubscriberCache(subscriptionId: String,
-                                      notificationSubscriber: NotificationSubscriber) {
+                                      notificationSubscriber: NotificationSubscription) {
         logger.info("Subscriber added in subscriber cache")
         readWriteLock.writeLock().lock()
         try {
@@ -146,6 +146,13 @@ object InMemoryCache {
             logger.info("Subscription $subscriptionId doesn't exist ")
             throw BadStateException("Subscription doesn't exist")
         }
+    }
+
+    fun getSubscription(subscriptionId: String) : NotificationSubscription? {
+        if (subscriberCache.containsKey(subscriptionId)) {
+            return subscriberCache[subscriptionId]
+        }
+        return null
     }
 
 

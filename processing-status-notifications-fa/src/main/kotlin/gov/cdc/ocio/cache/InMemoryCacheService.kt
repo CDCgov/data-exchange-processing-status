@@ -1,6 +1,7 @@
 package gov.cdc.ocio.cache
 
 import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.model.cache.NotificationSubscription
 import gov.cdc.ocio.model.cache.SubscriptionRule
 import gov.cdc.ocio.model.http.SubscriptionType
 
@@ -52,6 +53,18 @@ class InMemoryCacheService {
         } catch (e: BadStateException) {
             throw e
         }
+    }
 
+    /**
+     * This methods checks for subscription and returns teh subscription information.
+     * @param subscriptionId String
+     * @return Boolean
+     */
+    fun getSubscription(subscriptionId: String): NotificationSubscription? {
+        try {
+            return InMemoryCache.getSubscription(subscriptionId)
+        } catch (e: BadStateException) {
+            throw e
+        }
     }
 }
