@@ -42,6 +42,7 @@ public class FunctionJavaWrappers {
      * @param eventType eventType of the report
      * @return HttpResponse
      */
+
     @FunctionName("SubscribeWebsocket")
     public HttpResponseMessage subscribeWebsocket(
             @HttpTrigger(

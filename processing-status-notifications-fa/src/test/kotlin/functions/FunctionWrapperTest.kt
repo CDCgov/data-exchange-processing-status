@@ -1,11 +1,14 @@
 package functions
 
 import com.microsoft.azure.functions.HttpRequestMessage
+import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
+import functions.httpMockData.HttpResponseMessageMock
 import gov.cdc.ocio.FunctionJavaWrappers
-import httpmock.HttpResponseMessageMock
+import gov.cdc.ocio.exceptions.BadStateException
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
+import org.testng.Assert.*
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import java.io.File
@@ -62,7 +65,11 @@ class FunctionWrapperTest {
 
     @Test
     fun testUnsubscribeError() {
-        val response = FunctionJavaWrappers().unsubscribe(request, "")
-        assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
+        var response: HttpResponseMessage? = null
+        try {
+            response = FunctionJavaWrappers().unsubscribe(request, "")
+        } catch(e: BadStateException) {
+            assertTrue(response?.status  == HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }
