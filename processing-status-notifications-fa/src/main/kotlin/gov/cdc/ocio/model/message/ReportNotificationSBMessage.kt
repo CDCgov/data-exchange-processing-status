@@ -17,7 +17,7 @@ import java.util.*
  * @property contentType String?
  * @property content String?
  */
-class ReportNotificationSBMessage: ServiceBusMessage() {
+class ReportNotificationSBMessage {
 
     @SerializedName("upload_id")
     val uploadId: String? = null
