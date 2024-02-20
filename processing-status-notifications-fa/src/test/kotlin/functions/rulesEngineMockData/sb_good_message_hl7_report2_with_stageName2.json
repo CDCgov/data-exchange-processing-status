@@ -2,7 +2,7 @@
   "upload_id": "4f99cfde-7c83-44e5-bd49-206ca4df7e16",
   "destination_id": "dex-testing",
   "event_type": "test-event1",
-  "stage_name": "dex-hl7-validation",
+  "stage_name": "dex-hl7-validation-1",
   "content_type": "json",
   "content": {
     "id": "dd1c8c4b-a18d-4449-aaf3-5f0ff505bf38",
@@ -34,7 +34,7 @@
       },
       "processes": [
         {
-          "status": "FAILURE",
+          "status": "WARNING",
           "process_name": "RECEIVER",
           "process_version": "1.0.0",
           "eventhub_queued_time": "2023-12-14T16:36:48.847",
@@ -45,7 +45,7 @@
           "end_processing_time": "2023-12-14T11:36:48.982-05:00"
         },
         {
-          "status": "WARNING",
+          "status": "SUCCESS",
           "report": {
             "entries": [],
             "status": "SUCCESS"
@@ -136,7 +136,7 @@
       ]
     },
     "summary": {
-      "current_status": "ERROR_MESSAGE"
+      "current_status": "VALID_MESSAGE"
     },
     "schema_version": "0.0.1",
     "schema_name": "dex-hl7-validation"

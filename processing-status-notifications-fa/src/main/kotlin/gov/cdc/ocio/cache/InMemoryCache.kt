@@ -26,7 +26,7 @@ object InMemoryCache {
     Cache to store "SubscriptionId ->  Subscriber Info (Email or Url and type of subscription)"
     subscriberCache = HashMap<String, NotificationSubscriber>()
     */
-    private val subscriberCache = HashMap<String, NotificationSubscription>()
+    private val subscriberCache = HashMap<String, MutableList<NotificationSubscription>>()
 
 
     /**
@@ -47,7 +47,7 @@ object InMemoryCache {
         if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBSOCKET) {
             // If subscription type is EMAIL or WEBSOCKET then proceed else throw BadState Exception
             val subscriptionId = updateSubscriptionRuleCache(subscriptionRule)
-            updateSubscriberCache(subscriptionId, NotificationSubscription(emailOrUrl, subscriptionType))
+            updateSubscriberCache(subscriptionId, NotificationSubscription(subscriptionId, emailOrUrl, subscriptionType))
             return subscriptionId
         } else {
             throw BadStateException("Not a valid SubscriptionType")
@@ -114,7 +114,8 @@ object InMemoryCache {
         logger.info("Subscriber added in subscriber cache")
         readWriteLock.writeLock().lock()
         try {
-            subscriberCache.put(subscriptionId, notificationSubscriber)
+            subscriberCache.putIfAbsent(subscriptionId, mutableListOf())
+            subscriberCache[subscriptionId]?.add(notificationSubscriber)
         } finally {
             readWriteLock.writeLock().unlock()
         }
@@ -131,16 +132,14 @@ object InMemoryCache {
      */
     fun unsubscribeSubscriber(subscriptionId: String): Boolean {
         if (subscriberCache.containsKey(subscriptionId)) {
-            val subscriber = subscriberCache.get(subscriptionId)
+            val subscribers = subscriberCache[subscriptionId]?.filter { it.subscriptionId != subscriptionId }.orEmpty().toMutableList()
+
             readWriteLock.writeLock().lock()
             try {
-                subscriberCache.remove(subscriptionId)
+                subscriberCache.replace(subscriptionId, subscribers)
             } finally {
                 readWriteLock.writeLock().unlock()
             }
-            logger.info("Subscriber ${subscriber?.subscriberAddressOrUrl} " +
-                    "has been removed successfully for subscription type of " +
-                    "${subscriber?.subscriberType} ")
             return true
         } else {
             logger.info("Subscription $subscriptionId doesn't exist ")
@@ -148,11 +147,18 @@ object InMemoryCache {
         }
     }
 
-    fun getSubscription(subscriptionId: String) : NotificationSubscription? {
+    fun getSubscriptionId(ruleId: String) : String? {
+        if (subscriptionRuleCache.containsKey(ruleId)) {
+            return subscriptionRuleCache[ruleId]
+        }
+        return null
+    }
+
+    fun getSubscriptionDetails(subscriptionId: String) : List<NotificationSubscription>? {
         if (subscriberCache.containsKey(subscriptionId)) {
             return subscriberCache[subscriptionId]
         }
-        return null
+        return emptyList()
     }
 
 
