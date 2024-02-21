@@ -58,12 +58,9 @@ test {
 }
 
 azurefunctions {
-    subscription = '01f9b1b1-a130-4031-ba25-71771007d3ca'
-    resourceGroup = 'ocio-ede-dev-moderate-processingstatus-rg'
-    appName = 'app-processing-status-notifications-fa-purnima' // please rename the function name
-//    subscription = System.getenv("AZURE_SUBSCRIPTION")
-//    resourceGroup = System.getenv("RESOURCE_GROUP")
-//    appName = System.getenv("FUNCTION_NAME")
+    subscription = System.getenv("AZURE_SUBSCRIPTION")
+    resourceGroup = System.getenv("RESOURCE_GROUP")
+    appName = System.getenv("FUNCTION_NAME")
     allowTelemetry = 'false'
     runtime {
         os = 'linux'
