@@ -38,11 +38,11 @@ class SubscribeWebsocketNotifications(
         val stageName = request.queryParameters["stageName"]
         val statusType = request.queryParameters["statusType"]
 
-        logger.info("DestinationId: $destinationId")
-        logger.info("EventType: $eventType")
-        logger.info("Subscription Websocket Url: $url")
-        logger.info("StageName: $stageName")
-        logger.info("StatusType: $statusType")
+        logger.debug("DestinationId: $destinationId")
+        logger.debug("EventType: $eventType")
+        logger.debug("Subscription Websocket Url: $url")
+        logger.debug("StageName: $stageName")
+        logger.debug("StatusType: $statusType")
 
         val subscriptionResult = subscribeForEmail(destinationId, eventType, url, stageName, statusType)
         return if (subscriptionResult.subscription_id != null) {

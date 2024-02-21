@@ -75,7 +75,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             val schemaDef = SchemaDefinition.fromJsonString(content)
 
             status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
-            logger.info("Report parsed for status $status")
+            logger.debug("Report parsed for status $status")
             RuleEngine.evaluateAllRules(SubscriptionRule(destinationId, eventType, stageName, status).getStringHash())
             return status.lowercase()
         } catch (ex: BadStateException) {

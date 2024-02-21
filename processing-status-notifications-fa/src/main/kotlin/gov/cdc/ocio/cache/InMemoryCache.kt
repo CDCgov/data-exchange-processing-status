@@ -73,12 +73,12 @@ object InMemoryCache {
 
         // if subscription doesn't exist, it will add it else it will return the existing subscription id
         return if (existingSubscriptionId != null) {
-            logger.info("Subscription Rule exists")
+            logger.debug("Subscription Rule exists")
             existingSubscriptionId
         } else {
             // create unique subscription
             val subscriptionId = generateUniqueSubscriptionId()
-            logger.info("Subscription Id for this new rule has been generated $subscriptionId")
+            logger.debug("Subscription Id for this new rule has been generated $subscriptionId")
             readWriteLock.writeLock().lock()
             try {
                 subscriptionRuleCache.put(subscriptionRule, subscriptionId)
@@ -111,7 +111,7 @@ object InMemoryCache {
      */
     private fun updateSubscriberCache(subscriptionId: String,
                                       notificationSubscriber: NotificationSubscription) {
-        logger.info("Subscriber added in subscriber cache")
+        logger.debug("Subscriber added in subscriber cache")
         readWriteLock.writeLock().lock()
         try {
             subscriberCache.putIfAbsent(subscriptionId, mutableListOf())

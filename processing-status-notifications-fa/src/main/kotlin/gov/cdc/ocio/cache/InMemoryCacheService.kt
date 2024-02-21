@@ -33,7 +33,6 @@ class InMemoryCacheService {
     ): String {
         try {
             val subscriptionRule = SubscriptionRule(destinationId, eventType, stageName, statusType)
-            println("rule ${subscriptionRule.getStringHash()} created")
             val subscriptionId =
                 InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
             return subscriptionId

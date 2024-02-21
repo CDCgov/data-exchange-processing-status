@@ -6,6 +6,7 @@ import com.microsoft.azure.functions.HttpStatus
 import functions.httpMockData.HttpResponseMessageMock
 import gov.cdc.ocio.FunctionJavaWrappers
 import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor
+import mu.KotlinLogging
 import org.mockito.Mockito
 import org.testng.Assert.*
 import org.testng.annotations.BeforeTest
@@ -44,26 +45,27 @@ class RulesEngineTest {
 
     @Test(description = "Test for email notification for valid destinationId/eventType")
     fun testHL7ReportWithDestination1EventTypeSuccess() {
-
-        val queryParameters: Map<String, String>  =  mapOf("email" to "uei@hdk.com",
+        println("Test Case 1: Valid Scenerio Email \n Subscription for success status - Valid Params")
+        val queryParameters: Map<String, String>  =  mapOf("email" to "abc@def.com",
             "stageName" to "dex-hl7-validation",
             "statusType" to "success")
 
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response2 = FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event2")
+        FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event2")
 
         val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType2.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
-        assertEquals(status, listOf("Email Event dispatched for uei@hdk.com",""))
+        assertEquals(status, listOf("Email Event dispatched for abc@def.com",""))
     }
 
     @Test(description = "Test for email notification for invalid destinationId/eventType")
     fun testHL7Report2WithDestination1EventType2Success() {
-        val queryParameters: Map<String, String>  =  mapOf("email" to "uei@hdk.com",
+        println("Test Case 2: Invalid Scenerio Email \n Subscription for success status - Invalid params")
+        val queryParameters: Map<String, String>  =  mapOf("email" to "abc@def.com",
             "stageName" to "dex-hl7-validation",
             "statusType" to "success")
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response1 = FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event1")
+        FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event1")
 
         val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
@@ -75,21 +77,23 @@ class RulesEngineTest {
         val queryParameters: Map<String, String>  =  mapOf("stageName" to "dex-hl7-validation-1",
             "statusType" to "warning",
             "url" to "ws://192.34.46/24/45")
+        println("Test Case 3: Invalid Scenerio Email \n Subscription for invalid status - Invalid params")
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response = FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
+        FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
 
         val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
         assertEquals(status, listOf("",""))
     }
 
-    @Test(description = "Test for email notification for valid status type of failure and valid destinationId/eventType/stageName")
+    @Test(description = "Test for websocket notification for valid status type of failure and valid destinationId/eventType/stageName")
     fun testReportValidArgsValidStatusTypeFailure() {
+        println("Test Case 4: Valid Scenerio Websocket \n Subscription for success status - Valid params")
         val queryParameters: Map<String, String>  =  mapOf("stageName" to "dex-hl7-validation-1",
             "statusType" to "success",
             "url" to "ws://192.34.46/24/45")
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response = FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
+        FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
 
         val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
@@ -98,13 +102,14 @@ class RulesEngineTest {
 
     @Test(description = "Test for email and websocket notification for valid statusType and destinationId/eventType/stageName")
     fun testHL7Report2WithDestination1EventType1Success() {
+        println("Test Case 5: Valid Scenerio EMail + Websocket \n Subscription for success status - Valid params")
         val queryParameters: Map<String, String>  =  mapOf("email" to "uei@hdk.com",
             "stageName" to "dex-hl7-validation",
             "statusType" to "success",
             "url" to "ws://192.34.46/24/45")
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response1 = FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event1")
-        val response2 = FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
+        FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event1")
+        FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
 
         val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
