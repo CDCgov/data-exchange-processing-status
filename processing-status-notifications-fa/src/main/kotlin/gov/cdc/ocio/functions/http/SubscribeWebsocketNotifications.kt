@@ -70,7 +70,7 @@ class SubscribeWebsocketNotifications(
             || statusType.isNullOrBlank()) {
             result.status = false
             result.message = "Required fields not sent in request"
-        } else if (!url.lowercase().matches(Regex("^ws[s]*:\\/\\/[0-9a-z.:\\/-]*"))) {
+        } else if (!url.lowercase().matches(Regex("^ws[s]*://[0-9a-zA-Z-_.]*[:]*[0-9a-zA-Z]*"))) {
             result.status = false
             result.message = "Not valid url address"
         } else if (!(statusType.equals("success", true) || statusType.equals("warning", true) || statusType.equals("error", true))) {
