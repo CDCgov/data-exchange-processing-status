@@ -23,7 +23,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  */
 class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext) {
 
-    private val logger = KotlinLogging.logger {}
+    private val logger = mu.KotlinLogging.logger {}
 
     // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     private val gson = GsonBuilder()
@@ -75,6 +75,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             val schemaDef = SchemaDefinition.fromJsonString(content)
 
             status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
+            logger.info("Report parsed for status $status")
             RuleEngine.evaluateAllRules(SubscriptionRule(destinationId, eventType, stageName, status).getStringHash())
             return status.lowercase()
         } catch (ex: BadStateException) {
