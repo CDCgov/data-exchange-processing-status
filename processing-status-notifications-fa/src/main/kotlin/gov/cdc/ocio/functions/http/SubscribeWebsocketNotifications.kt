@@ -70,12 +70,12 @@ class SubscribeWebsocketNotifications(
             || statusType.isNullOrBlank()) {
             result.status = false
             result.message = "Required fields not sent in request"
-        } else if (!url.matches(Regex("^ws[s]*:\\/\\/[0-9a-z.:\\/-]*"))) {
+        } else if (!url.lowercase().matches(Regex("^ws[s]*:\\/\\/[0-9a-z.:\\/-]*"))) {
             result.status = false
             result.message = "Not valid url address"
-        } else if (!(statusType == "success" || statusType == "warning" || statusType == "error")) {
+        } else if (!(statusType.equals("success", true) || statusType.equals("warning", true) || statusType.equals("error", true))) {
             result.status = false
-            result.message = "Not valid url address"
+            result.message = "Not valid status"
         } else {
             result.subscription_id = cacheService.updateNotificationsPreferences(destinationId, eventType, stageName, statusType, url, SubscriptionType.WEBSOCKET)
             result.timestamp = Instant.now().epochSecond
