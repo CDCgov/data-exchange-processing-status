@@ -1,6 +1,7 @@
 package gov.cdc.ocio.cache
 
 import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.model.cache.NotificationSubscription
 import gov.cdc.ocio.model.cache.SubscriptionRule
 import gov.cdc.ocio.model.http.SubscriptionType
 
@@ -22,16 +23,18 @@ class InMemoryCacheService {
      * @param subscriptionType SubscriptionType
      * @return String
      */
-    fun updateNotificationsPreferences(destinationId: String,
-                                                    eventType: String,
-                                                    stageName: String,
-                                                    statusType: String,
-                                                    emailOrUrl: String,
-                                                    subscriptionType: SubscriptionType
-    ): String{
+    fun updateNotificationsPreferences(
+        destinationId: String,
+        eventType: String,
+        stageName: String,
+        statusType: String,
+        emailOrUrl: String,
+        subscriptionType: SubscriptionType
+    ): String {
         try {
             val subscriptionRule = SubscriptionRule(destinationId, eventType, stageName, statusType)
-            val subscriptionId =  InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
+            val subscriptionId =
+                InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
             return subscriptionId
         } catch (e: BadStateException) {
             throw e
@@ -52,6 +55,23 @@ class InMemoryCacheService {
         } catch (e: BadStateException) {
             throw e
         }
+    }
 
+    /**
+     * This methods checks for subscription rule and gets the subscriptionId.
+     * In turn uses the subscription Id to retrieve the NotificationSubscription details
+     * @param ruleId String
+     * @return Boolean
+     */
+    fun getSubscription(ruleId: String): List<NotificationSubscription> {
+        try {
+            val subscriptionId = InMemoryCache.getSubscriptionId(ruleId)
+            if (subscriptionId != null) {
+                return InMemoryCache.getSubscriptionDetails(subscriptionId).orEmpty()
+            }
+            return emptyList()
+        } catch (e: BadStateException) {
+            throw e
+        }
     }
 }

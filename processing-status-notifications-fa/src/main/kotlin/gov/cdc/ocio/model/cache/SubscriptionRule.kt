@@ -6,10 +6,10 @@ class SubscriptionRule(val destinationId: String,
                        val statusType: String) {
 
     override fun hashCode(): Int {
-        var result = destinationId.hashCode()
-        result = 31 * result + eventType.hashCode()
-        result = 31 * result + stageName.hashCode()
-        result = 31 * result + statusType.hashCode()
+        var result = destinationId.lowercase().hashCode()
+        result = 31 * result + eventType.lowercase().hashCode()
+        result = 31 * result + stageName.lowercase().hashCode()
+        result = 31 * result + statusType.lowercase().hashCode()
         return result
     }
 

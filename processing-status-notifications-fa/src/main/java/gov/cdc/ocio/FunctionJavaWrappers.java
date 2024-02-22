@@ -1,15 +1,14 @@
 package gov.cdc.ocio;
 
+import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.HttpMethod;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
-import com.microsoft.azure.functions.annotation.AuthorizationLevel;
-import com.microsoft.azure.functions.annotation.BindingName;
-import com.microsoft.azure.functions.annotation.FunctionName;
-import com.microsoft.azure.functions.annotation.HttpTrigger;
+import com.microsoft.azure.functions.annotation.*;
 import gov.cdc.ocio.functions.http.SubscribeEmailNotifications;
 import gov.cdc.ocio.functions.http.SubscribeWebsocketNotifications;
 import gov.cdc.ocio.functions.http.UnsubscribeNotifications;
+import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor;
 
 import java.util.Optional;
 
@@ -42,6 +41,7 @@ public class FunctionJavaWrappers {
      * @param eventType eventType of the report
      * @return HttpResponse
      */
+
     @FunctionName("SubscribeWebsocket")
     public HttpResponseMessage subscribeWebsocket(
             @HttpTrigger(
@@ -73,5 +73,28 @@ public class FunctionJavaWrappers {
             @BindingName("subscriptionId") String subscriptionId
     ) {
         return new UnsubscribeNotifications(request).run(subscriptionId);
+    }
+
+    /***
+     * Process a message from the service bus queue.
+     *
+     * @param message JSON message content
+     * @param context Execution context of the service bus message
+     */
+    @FunctionName("ServiceBusProcessor")
+    public void serviceBusProcessor(
+            @ServiceBusQueueTrigger(
+                    name = "msg",
+                    queueName = "%ServiceBusQueueName%",
+                    connection = "ServiceBusConnectionString"
+            ) String message,
+            final ExecutionContext context
+    ) {
+        try {
+            context.getLogger().info("Received message: " + message);
+            new ReportsNotificationsSBQueueProcessor(context).withMessage(message);
+        } catch (Exception e) {
+            context.getLogger().warning("Failed to process service bus message: " + e.getLocalizedMessage());
+        }
     }
 }

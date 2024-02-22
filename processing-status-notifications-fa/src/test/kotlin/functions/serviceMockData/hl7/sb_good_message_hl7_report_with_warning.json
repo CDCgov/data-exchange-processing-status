@@ -1,0 +1,144 @@
+{
+  "upload_id": "4f99cfde-7c83-44e5-bd49-206ca4df7e16",
+  "destination_id": "dex-testing",
+  "event_type": "test-event1",
+  "stage_name": "dex-hl7-validation",
+  "content_type": "json",
+  "content": {
+    "id": "dd1c8c4b-a18d-4449-aaf3-5f0ff505bf38",
+    "message_uuid": "dd1c8c4b-a18d-4449-aaf3-5f0ff505bf38",
+    "message_info": {
+      "event_code": "10150",
+      "route": "vaccine_preventable_diseases",
+      "reporting_jurisdiction": "13",
+      "type": "CASE",
+      "local_record_id": "SAI"
+    },
+    "metadata": {
+      "provenance": {
+        "event_id": "9b36fb63-e01e-0066-11ab-2ee31d06a24b",
+        "event_timestamp": "2023-12-14T16:36:47.910526Z",
+        "file_uuid": "03cb333c-46c0-4a96-8bab-bf494df87528",
+        "file_path": "https://tfedemessagestoragedev.blob.core.windows.net/hl7ingress/postman-dtx0-c679a16e-fbfc-4388-9147-18d8a605abc0.txt",
+        "file_timestamp": "2023-12-14T11:36:47-05:00",
+        "file_size": 14813,
+        "single_or_batch": "SINGLE",
+        "message_hash": "74ada45a7c41c98c574b6c4f5c8e1d26",
+        "ext_system_provider": "POSTMAN",
+        "ext_original_file_name": "postman-dtx0-c679a16e-fbfc-4388-9147-18d8a605abc0.txt",
+        "message_index": 1,
+        "ext_original_file_timestamp": "2023-03-09T12:05:04.074",
+        "source_metadata": {
+          "orginal_file_name": "test-d4731f4d-b119-4d78-a0b1-d322658d1d3d.txt"
+        }
+      },
+      "processes": [
+        {
+          "status": "SUCCESS",
+          "process_name": "RECEIVER",
+          "process_version": "1.0.0",
+          "eventhub_queued_time": "2023-12-14T16:36:48.847",
+          "eventhub_offset": 1125281432952,
+          "eventhub_sequence_number": 89766,
+          "configs": [],
+          "start_processing_time": "2023-12-14T11:36:48.892-05:00",
+          "end_processing_time": "2023-12-14T11:36:48.982-05:00"
+        },
+        {
+          "status": "WARNING",
+          "report": {
+            "entries": [],
+            "status": "SUCCESS"
+          },
+          "process_name": "REDACTOR",
+          "process_version": "1.0.0",
+          "eventhub_queued_time": "2023-12-14T16:36:49.253",
+          "eventhub_offset": 1189705961896,
+          "eventhub_sequence_number": 86965,
+          "configs": [
+            "case_config.txt"
+          ],
+          "start_processing_time": "2023-12-14T11:36:49.34-05:00",
+          "end_processing_time": "2023-12-14T11:36:49.436-05:00"
+        },
+        {
+          "status": "SUCCESS",
+          "report": {
+            "entries": {
+              "structure": [
+                {
+                  "line": 4,
+                  "column": 64,
+                  "path": "OBX[1]-5[1]",
+                  "description": "The primitive Field OBX-5 (Observation Value) contains at least one unescaped delimiter",
+                  "category": "Unescaped Separator",
+                  "classification": "Warning"
+                },
+                {
+                  "line": 6,
+                  "column": 68,
+                  "path": "OBX[3]-5[1]",
+                  "description": "The primitive Field OBX-5 (Observation Value) contains at least one unescaped delimiter",
+                  "category": "Unescaped Separator",
+                  "classification": "Warning"
+                },
+                {
+                  "line": 2,
+                  "column": 236,
+                  "path": "PID[1]-11[1].9",
+                  "description": "The primitive Component PID-11.9 (County/Parish Code) contains at least one unescaped delimiter",
+                  "category": "Unescaped Separator",
+                  "classification": "Warning"
+                },
+                {
+                  "line": 2,
+                  "column": 195,
+                  "path": "PID[1]-11[1].4",
+                  "description": "The primitive Component PID-11.4 (State or Province) contains at least one unescaped delimiter",
+                  "category": "Unescaped Separator",
+                  "classification": "Warning"
+                },
+                {
+                  "line": 1,
+                  "column": 226,
+                  "path": "MSH[1]-10[1]",
+                  "description": "The length of Field MSH-10 (Message Control ID) must be within the range [1, 20]. Value \\u003d \\u0027RIBD_N_Meningitidis_Case_Invalid_03\\u0027",
+                  "category": "Length",
+                  "classification": "Warning"
+                }
+              ],
+              "content": [],
+              "value-set": []
+            },
+            "error-count": {
+              "structure": 0,
+              "value-set": 0,
+              "content": 0
+            },
+            "warning-count": {
+              "structure": 5,
+              "value-set": 0,
+              "content": 0
+            },
+            "status": "VALID_MESSAGE"
+          },
+          "process_name": "STRUCTURE-VALIDATOR",
+          "process_version": "1.0.0",
+          "eventhub_queued_time": "2023-12-14T16:36:50.097",
+          "eventhub_offset": 1120986506816,
+          "eventhub_sequence_number": 96087,
+          "configs": [
+            "NOTF_ORU_V3.0"
+          ],
+          "start_processing_time": "2023-12-14T11:36:50.133-05:00",
+          "end_processing_time": "2023-12-14T11:36:50.205-05:00"
+        }
+      ]
+    },
+    "summary": {
+      "current_status": "INVALID_MESSAGE"
+    },
+    "schema_version": "0.0.1",
+    "schema_name": "dex-hl7-validation"
+  }
+}
