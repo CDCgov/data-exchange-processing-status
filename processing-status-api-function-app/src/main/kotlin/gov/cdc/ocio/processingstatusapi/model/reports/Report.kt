@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.model.ReportInterface
 import java.lang.reflect.Type
 import java.util.*
 

@@ -37,7 +37,11 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
     @Throws(BadRequestException::class)
     fun withMessage(message: String) {
         try {
-            createReport(gson.fromJson(message, CreateReportSBMessage::class.java))
+            if(message.contains("destination_id") || message.contains("event_type")){
+                createReport(gson.fromJson(message, CreateReportSBMessage::class.java))
+            } else if(message.contains("data_stream_id") || message.contains("data_stream_route")){
+                createReportV2(gson.fromJson(message, CreateReportSBMessageV2::class.java))
+            }
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadStateException("Unable to interpret the create report message")
