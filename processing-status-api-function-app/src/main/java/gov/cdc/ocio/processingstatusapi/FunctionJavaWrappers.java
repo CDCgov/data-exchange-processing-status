@@ -8,6 +8,7 @@ import com.microsoft.azure.functions.annotation.*;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
+import gov.cdc.ocio.processingstatusapi.functions.reports.MetaImplementation;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetReportCountsFunction;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetUploadStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
@@ -41,6 +42,16 @@ public class FunctionJavaWrappers {
                     route = "trace",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
         return new CreateTraceFunction(request).create();
+    }
+
+    @FunctionName("CreateTraceV2")
+    public HttpResponseMessage createTraceV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.POST},
+                    route = "v2/trace",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
+        return new CreateTraceFunction(request).createV2();
     }
 
     @FunctionName("TraceStartSpan")
@@ -134,6 +145,18 @@ public class FunctionJavaWrappers {
         return new CreateReportFunction(request, DispositionType.ADD).jsonWithUploadId(uploadId);
     }
 
+    @FunctionName("CreateReportByUploadIdV2")
+    public HttpResponseMessage createReportByUploadIdV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.POST},
+                    route = "v2/report/json/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId) {
+        return new CreateReportFunction(request, DispositionType.ADD).jsonWithUploadIdV2(uploadId);
+    }
+
     @FunctionName("ReplaceReportByUploadId")
     public HttpResponseMessage replaceReportByUploadId(
             @HttpTrigger(
@@ -146,6 +169,18 @@ public class FunctionJavaWrappers {
         return new CreateReportFunction(request, DispositionType.REPLACE).jsonWithUploadId(uploadId);
     }
 
+    @FunctionName("ReplaceReportByUploadIdV2")
+    public HttpResponseMessage replaceReportByUploadIdV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.PUT},
+                    route = "v2/report/json/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId) {
+        return new CreateReportFunction(request, DispositionType.REPLACE).jsonWithUploadIdV2(uploadId);
+    }
+
     @FunctionName("GetReportByUploadId")
     public HttpResponseMessage getReportByUploadId(
             @HttpTrigger(
@@ -155,7 +190,19 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId) {
-        return new GetReportFunction(request).withUploadId(uploadId);
+        return new GetReportFunction(request).withUploadId(uploadId, MetaImplementation.V1);
+    }
+
+    @FunctionName("GetReportByUploadIdV2")
+    public HttpResponseMessage getReportByUploadIdV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "v2/report/uploadId/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId) {
+        return new GetReportFunction(request).withUploadId(uploadId, MetaImplementation.V2);
     }
 
     @FunctionName("GetReportByReportId")
@@ -167,7 +214,19 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("reportId") String reportId) {
-        return new GetReportFunction(request).withReportId(reportId);
+        return new GetReportFunction(request).withReportId(reportId, MetaImplementation.V1);
+    }
+
+    @FunctionName("GetReportByReportIdV2")
+    public HttpResponseMessage getReportByReportIdV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "v2/report/reportId/{reportId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("reportId") String reportId) {
+        return new GetReportFunction(request).withReportId(reportId, MetaImplementation.V2);
     }
 
     @FunctionName("GetUploadStatus")
@@ -194,7 +253,22 @@ public class FunctionJavaWrappers {
             @BindingName("stageName") String stageName,
             final ExecutionContext context) {
         context.getLogger().info("getReportByStage: destinationId=" + destinationId + ", stageName=" + stageName);
-        return new GetReportFunction(request).withDestinationId(destinationId, stageName);
+        return new GetReportFunction(request).withDestinationId(destinationId, stageName, MetaImplementation.V1);
+    }
+
+    @FunctionName("GetReportForStageV2")
+    public HttpResponseMessage getReportByStageV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "v2/report/{dataStreamId}/{stageName}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("dataStreamId") String dataStreamId,
+            @BindingName("stageName") String stageName,
+            final ExecutionContext context) {
+        context.getLogger().info("getReportByStage: dataStreamId=" + dataStreamId + ", stageName=" + stageName);
+        return new GetReportFunction(request).withDestinationId(dataStreamId, stageName, MetaImplementation.V2);
     }
 
     @FunctionName("GetReportCountsByUploadId")
@@ -220,6 +294,17 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).withQueryParams();
     }
 
+    @FunctionName("GetReportCountsWithQueryParamsV2")
+    public HttpResponseMessage getReportCountsWithQueryParamsV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "v2/report/counts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).withQueryParamsV2();
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(
@@ -232,5 +317,19 @@ public class FunctionJavaWrappers {
             final ExecutionContext context) {
         context.getLogger().info("getStatusByUploadId: uploadId=" + uploadId);
         return new GetStatusFunction(request).withUploadId(uploadId);
+    }
+
+    @FunctionName("GetStatusByUploadIdV2")
+    public HttpResponseMessage getStatusByUploadIdV2(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "v2/status/{uploadId}",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request,
+            @BindingName("uploadId") String uploadId,
+            final ExecutionContext context) {
+        context.getLogger().info("getStatusByUploadIdV2: uploadId=" + uploadId);
+        return new GetStatusFunction(request).withUploadIdV2(uploadId);
     }
 }

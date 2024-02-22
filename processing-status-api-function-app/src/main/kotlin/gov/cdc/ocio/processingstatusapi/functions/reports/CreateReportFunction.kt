@@ -28,6 +28,10 @@ class CreateReportFunction(
 
     private val eventType = request.queryParameters["eventType"]
 
+    private val dataStreamId = request.queryParameters["dataStreamId"]
+
+    private val dataStreamRoute = request.queryParameters["dataStreamRoute"]
+
     private val reportStageName = request.queryParameters["stageName"]
 
     private val requestBody = request.body.orElse("")
@@ -45,7 +49,7 @@ class CreateReportFunction(
      */
     fun jsonWithUploadId(uploadId: String): HttpResponseMessage {
         // Verify the request is complete and properly formatted
-        checkRequired()?.let { return it }
+        checkRequired(MetaImplementation.V1)?.let { return it }
 
         try {
             val stageReportId = ReportManager().createReportWithUploadId(
@@ -56,7 +60,8 @@ class CreateReportFunction(
                 "json",
                 requestBody,
                 dispositionType,
-                Source.HTTP
+                Source.HTTP,
+                MetaImplementation.V1
             )
             return successResponse(stageReportId, reportStageName)
 
@@ -71,6 +76,45 @@ class CreateReportFunction(
                     .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to amend report: ${e.localizedMessage}")
                     .build()
+        }
+    }
+
+    /**
+     * Create a report for the given upload ID.  The report content type and content is determined from the
+     * request as properties of this class.
+     *
+     * @param uploadId String
+     * @return HttpResponseMessage
+     */
+    fun jsonWithUploadIdV2(uploadId: String): HttpResponseMessage {
+        // Verify the request is complete and properly formatted
+        checkRequired(MetaImplementation.V2)?.let { return it }
+
+        try {
+            val stageReportId = ReportManager().createReportWithUploadId(
+                uploadId,
+                dataStreamId!!,
+                dataStreamRoute!!,
+                reportStageName!!,
+                "json",
+                requestBody,
+                dispositionType,
+                Source.HTTP,
+                MetaImplementation.V2
+            )
+            return successResponse(stageReportId, reportStageName)
+
+        } catch (e: BadRequestException) {
+            logger.error("Failed to amend report with uploadId = $uploadId: ${e.localizedMessage}")
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        } catch (e: BadStateException) {
+            return request
+                .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to amend report: ${e.localizedMessage}")
+                .build()
         }
     }
 
@@ -97,22 +141,36 @@ class CreateReportFunction(
      *
      * @return HttpResponseMessage?
      */
-    private fun checkRequired(): HttpResponseMessage? {
+    private fun checkRequired(version : MetaImplementation): HttpResponseMessage? {
+        if(version == MetaImplementation.V2){
+            if (dataStreamId == null) {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("dataStreamId is required")
+                    .build()
+            }
 
-        if (destinationId == null) {
-            return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("destinationId is required")
-                .build()
+            if (dataStreamRoute == null) {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("dataStreamRoute is required")
+                    .build()
+            }
+        } else {
+            if (destinationId == null) {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("destinationId is required")
+                    .build()
+            }
+
+            if (eventType == null) {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("eventType is required")
+                    .build()
+            }
         }
-
-        if (eventType == null) {
-            return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("eventType is required")
-                .build()
-        }
-
         if (reportStageName == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)

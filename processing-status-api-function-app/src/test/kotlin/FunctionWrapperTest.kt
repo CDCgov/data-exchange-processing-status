@@ -56,6 +56,11 @@ class FunctionWrapperTest {
     }
 
     @Test
+    fun testCreateTraceV2() {
+        val response = FunctionJavaWrappers().createTraceV2(request)
+    }
+
+    @Test
     fun testTraceStartSpan() {
         var exceptionThrown = false
         try {
@@ -105,7 +110,7 @@ class FunctionWrapperTest {
     }
 
     @Test
-    fun tesCreateReportByUploadId() {
+    fun testCreateReportByUploadId() {
         val response = FunctionJavaWrappers().createReportByUploadId(request, "4dad617cd7de019066a0f49cad309948")
     }
 
@@ -152,11 +157,33 @@ class FunctionWrapperTest {
         }
         Assert.assertTrue(exceptionThrown)
     }
+
+    @Test
+    fun testGetReportByStageV2() {
+        var exceptionThrown = false
+        try {
+            FunctionJavaWrappers().getReportByStageV2(request, "4dad617cd7de019066a0f49cad309948", "START", context)
+        } catch(ex: Exception) {
+            exceptionThrown = true
+        }
+        Assert.assertTrue(exceptionThrown)
+    }
     @Test
     fun testGetStatusByUploadId() {
         var exceptionThrown = false
         try {
             FunctionJavaWrappers().getStatusByUploadId(request, "4dad617cd7de019066a0f49cad309948", context)
+        } catch(ex: Exception) {
+            exceptionThrown = true
+        }
+        Assert.assertTrue(exceptionThrown)
+    }
+
+    @Test
+    fun testGetStatusByUploadIdV2() {
+        var exceptionThrown = false
+        try {
+            FunctionJavaWrappers().getStatusByUploadIdV2(request, "4dad617cd7de019066a0f49cad309948", context)
         } catch(ex: Exception) {
             exceptionThrown = true
         }

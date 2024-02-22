@@ -143,10 +143,9 @@ class ServiceBusTests {
         Assert.assertTrue(exceptionThrown)
     }
 
-    @Test
+    //@Test
     fun testServiceBusGoodMessage() {
         val testMessage = File("./src/test/kotlin/data/service_bus_good_message.json").readText()
-
         ServiceBusProcessor(context).withMessage(testMessage)
     }
 

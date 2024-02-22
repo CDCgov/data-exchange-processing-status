@@ -8,9 +8,7 @@ import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.traces.TraceUtils
 import gov.cdc.ocio.processingstatusapi.model.*
-import gov.cdc.ocio.processingstatusapi.model.reports.Report
-import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
-import gov.cdc.ocio.processingstatusapi.model.reports.ReportSerializer
+import gov.cdc.ocio.processingstatusapi.model.reports.*
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
@@ -82,6 +80,45 @@ class GetStatusFunction(
             this.uploadId = traceResult?.uploadId
             this.destinationId = traceResult?.destinationId
             this.eventType = traceResult?.eventType
+            trace = traceResult?.let { TraceDao.buildFromTraceResult(it) }
+            reports = reportResult?.reports
+        }
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(gson.toJson(status))
+            .build()
+    }
+
+    fun withUploadIdV2(uploadId: String): HttpResponseMessage {
+
+        val traces = TraceUtils.getTraces(uploadId)
+        var traceResult: TraceResultV2? = null
+        if (traces != null) {
+            if (traces.size != 1) {
+                return request
+                    .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Trace inconsistency found, expected exactly one trace for uploadId = $uploadId, but got ${traces.size}")
+                    .build()
+            }
+            traceResult = TraceResultV2.buildFromTrace(traces[0])
+        }
+
+        val reportResult = getReportV2(uploadId)
+
+        // Need at least one or the other (report or trace)
+        if (traceResult == null && reportResult == null) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("Invalid uploadId provided")
+                .build()
+        }
+
+        val status = StatusResultV2().apply {
+            this.uploadId = traceResult?.uploadId
+            this.dataStreamId = traceResult?.dataStreamId
+            this.dataStreamRoute = traceResult?.dataStreamRoute
             trace = traceResult?.let { TraceDao.buildFromTraceResult(it) }
             reports = reportResult?.reports
         }
@@ -196,6 +233,46 @@ class GetStatusFunction(
                     this.uploadId = uploadId
                     this.destinationId = report.destinationId
                     this.eventType = report.eventType
+                    this.reports = stageReportItemList
+                }
+                return reportResult
+            }
+        }
+
+        logger.error("Failed to locate report with uploadId = $uploadId")
+
+        return null
+    }
+
+    private fun getReportV2(uploadId: String): ReportDaoV2? {
+
+        // Get the reports
+        val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+
+        // Locate the existing report so we can amend it
+        val reportItems = reportsContainer.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            ReportV2::class.java
+        )
+        if (reportItems.count() > 0) {
+            val report = reportItems.elementAt(0)
+
+            val stageReportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+
+            // Locate the existing stage reports
+            val stageReportItems = reportsContainer.queryItems(
+                stageReportsSqlQuery, CosmosQueryRequestOptions(),
+                ReportV2::class.java
+            )
+            if (stageReportItems.count() > 0) {
+                val stageReportItemList = stageReportItems.toList()
+
+                logger.info("Successfully located report with uploadId = $uploadId")
+
+                val reportResult = ReportDaoV2().apply {
+                    this.uploadId = uploadId
+                    this.dataStreamId = report.dataStreamId
+                    this.dataStreamRoute = report.dataStreamRoute
                     this.reports = stageReportItemList
                 }
                 return reportResult

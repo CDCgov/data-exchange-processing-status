@@ -84,6 +84,43 @@ paths:
           description: uploadId, destinationId and eventType are required.
         '401':
           description: Authorization information is missing or invalid.
+  '/v2/trace':
+    post:
+      tags:
+        - DEX Tracing
+      summary: Create a processing status trace.
+      description: >-
+        Creates a new distributed tracing trace.
+      parameters:
+        - name: uploadId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Upload identifier.
+        - name: dataStreamId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Data Stream identifier.
+        - name: dataStreamRoute
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Data Stream Route.
+      responses:
+        '200':
+          description: Trace and parent span information for the trace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTrace'
+        '400':
+          description: uploadId, destinationId and eventType are required.
+        '401':
+          description: Authorization information is missing or invalid.
   '/trace/startSpan/{traceId}/{parentSpanId}':
     put:
       tags:
@@ -378,6 +415,113 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+  '/v2/report/json/uploadId/{uploadId}':
+    post:
+      tags:
+        - DEX Reports
+      summary: Create a report using the provided upload identifier.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Upload ID.
+        - name: dataStreamId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Data Stream ID.
+        - name: dataStreamRoute
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Data Stream Route.
+        - name: stageName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Report Stage Name.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateReport'
+        '400':
+          description: Bad request. Failed to create report.
+        '401':
+          description: Authorization information is missing or invalid.
+    put:
+      tags:
+        - DEX Reports
+      summary: Replace an existing report using the provided upload identifier to lookup the report.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Upload ID.
+        - name: dataStreamId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Data Stream ID.
+        - name: dataStreamRoute
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Data Stream Route.
+        - name: stageName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Report Stage Name.
+      responses:
+        '200':
+          description: Trace for the given upload dentifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AmmendReport'
+        '400':
+          description: Bad request.  The upload identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.
+    get:
+      tags:
+        - DEX Reports
+      summary: Retrieve a report using the provider upload identifier to lookup the report.
+      description: >-
+        Creates a status report for the given upload identifier.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Destination identifier to retrieve all the upload statuses for.
+      responses:
+        '200':
+          description: Report for the given identifier
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/HL7Report'
+                  - $ref: '#/components/schemas/CSVReport'
+        '400':
+          description: Bad request.  The identifier provided was not found.
+        '401':
+          description: Authorization information is missing or invalid.        
   '/report/traceId/{traceId}':
     put:
       tags:

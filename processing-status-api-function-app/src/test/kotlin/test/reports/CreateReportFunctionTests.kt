@@ -5,6 +5,7 @@ import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction
+import gov.cdc.ocio.processingstatusapi.functions.reports.MetaImplementation
 import gov.cdc.ocio.processingstatusapi.functions.reports.ReportManager
 import gov.cdc.ocio.processingstatusapi.model.DispositionType
 import gov.cdc.ocio.processingstatusapi.model.reports.Source
@@ -106,7 +107,7 @@ class CreateReportFunctionTests {
         `when`(request.body).thenReturn(Optional.of(testMessage))
         `when` (request.queryParameters).thenReturn(queryParameters)
 
-        every{ ReportManager().createReportWithUploadId(any(), any(), any(), any(), any(), any(), DispositionType.ADD, Source.HTTP)} returns "1"
+        every{ ReportManager().createReportWithUploadId(any(), any(), any(), any(), any(), any(), DispositionType.ADD, Source.HTTP, MetaImplementation.V2)} returns "1"
         val response = CreateReportFunction(request, DispositionType.ADD).jsonWithUploadId(uploadId);
         assert(response.status == HttpStatus.BAD_REQUEST)
         //assert(response.body.toString() == "Invalid schema definition: Invalid schema_name provided")

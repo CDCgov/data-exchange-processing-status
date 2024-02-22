@@ -27,5 +27,13 @@ data class TraceDao(
                 this.spans = traceResult.spans
             }
         }
+
+        fun buildFromTraceResult(traceResult: TraceResultV2): TraceDao {
+            return TraceDao().apply {
+                this.traceId = traceResult.traceId
+                this.spanId = traceResult.spanId
+                this.spans = traceResult.spans
+            }
+        }
     }
 }

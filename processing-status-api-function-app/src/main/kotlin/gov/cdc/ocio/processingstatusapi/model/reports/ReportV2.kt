@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.model.ReportInterface
 import java.lang.reflect.Type
 import java.util.*
 
@@ -11,14 +10,14 @@ import java.util.*
  *
  * @property uploadId String?
  * @property reportId String?
- * @property destinationId String?
- * @property eventType String?
+ * @property dataStreamId String?
+ * @property dataStreamRoute String?
  * @property stageName String?
  * @property contentType String?
  * @property content String?
  * @property timestamp Date
  */
-class Report (
+data class ReportV2 (
 
     var id : String? = null,
 
@@ -28,11 +27,11 @@ class Report (
     @SerializedName("report_id")
     var reportId: String? = null,
 
-    @SerializedName("destination_id")
-    var destinationId: String? = null,
+    @SerializedName("data_stream_id")
+    var dataStreamId: String? = null,
 
-    @SerializedName("event_type")
-    var eventType: String? = null,
+    @SerializedName("data_stream_route")
+    var dataStreamRoute: String? = null,
 
     @SerializedName("stage_name")
     var stageName: String? = null,
@@ -61,11 +60,11 @@ class Report (
 }
 
 /**
- * JSON serializer for Report class.
+ * JSON serializer for ReportV2 class.
  */
-class ReportSerializer : JsonSerializer<Report> {
+class ReportSerializerV2 : JsonSerializer<ReportV2> {
 
-    override fun serialize(src: Report?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+    override fun serialize(src: ReportV2?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
 
         val jsonObject = JsonObject()
 

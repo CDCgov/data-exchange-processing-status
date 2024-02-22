@@ -9,7 +9,9 @@ import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction
+import gov.cdc.ocio.processingstatusapi.functions.reports.MetaImplementation
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
+import gov.cdc.ocio.processingstatusapi.model.reports.ReportV2
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -28,6 +30,7 @@ class GetReportFunctionTests {
 
     private lateinit var context: ExecutionContext
     private val items = mockk<CosmosPagedIterable<Report>>()
+    private val itemsV2 = mockk<CosmosPagedIterable<ReportV2>>()
     private val mockCosmosClient = mockk<CosmosClient>()
     private val mockCosmosDb = mockk<CosmosDatabase>()
     private val mockCosmosContainer = mockk<CosmosContainer>()
@@ -42,6 +45,7 @@ class GetReportFunctionTests {
         every { mockCosmosClient.getDatabase(any()) } returns mockCosmosDb
         every { mockCosmosDb.getContainer(any()) } returns mockCosmosContainer
         every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
+        every { mockCosmosContainer.queryItems(any<String>(), any(), ReportV2::class.java) } returns itemsV2
 
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.
         Mockito.doAnswer { invocation ->
@@ -54,30 +58,28 @@ class GetReportFunctionTests {
     @Test
     fun testWithUploadId_ok() {
         every { items.count() > 0} returns false
-        val response =  GetReportFunction(request).withUploadId("1");
+        val response =  GetReportFunction(request).withUploadId("1", MetaImplementation.V2);
         assert(response.status == HttpStatus.BAD_REQUEST)
     }
 
     @Test
     fun testWithReportId_ok() {
-        every { items.count() > 0} returns false
-        val response =  GetReportFunction(request).withReportId("1");
+        every { itemsV2.count() > 0} returns false
+        val response =  GetReportFunction(request).withReportId("1", MetaImplementation.V2);
         assert(response.status == HttpStatus.BAD_REQUEST)
     }
 
     @Test
     fun testWithDestinationId_ok() {
         every { items.count() > 0} returns false
-        val response =  GetReportFunction(request).withDestinationId("1", "");
+        val response =  GetReportFunction(request).withDestinationId("1", "", MetaImplementation.V1);
         assert(response.status == HttpStatus.OK)
     }
 
     //@Test
     fun testWithUploadId_reports() {
-        var itemsR =
-        every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
         every { items.count() > 0} returns true
-        val response =  GetReportFunction(request).withUploadId("1");
+        val response =  GetReportFunction(request).withUploadId("1", MetaImplementation.V2);
         assert(response.status == HttpStatus.OK)
     }
 
