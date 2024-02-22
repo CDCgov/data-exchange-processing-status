@@ -25,7 +25,7 @@ class UnsubscribeNotifications(
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
     fun run(subscriptionId: String): HttpResponseMessage {
-        logger.info { "SubscriptionId $subscriptionId" }
+        logger.debug { "SubscriptionId $subscriptionId" }
 
         val result = SubscriptionResult()
         val unsubscribeSuccessfull = unsubscribeNotifications(subscriptionId)

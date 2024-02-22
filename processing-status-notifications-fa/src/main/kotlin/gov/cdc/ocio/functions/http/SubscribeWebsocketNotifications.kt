@@ -38,11 +38,11 @@ class SubscribeWebsocketNotifications(
         val stageName = request.queryParameters["stageName"]
         val statusType = request.queryParameters["statusType"]
 
-        logger.info("DestinationId: $destinationId")
-        logger.info("EventType: $eventType")
-        logger.info("Subscription Websocket Url: $url")
-        logger.info("StageName: $stageName")
-        logger.info("StatusType: $statusType")
+        logger.debug("DestinationId: $destinationId")
+        logger.debug("EventType: $eventType")
+        logger.debug("Subscription Websocket Url: $url")
+        logger.debug("StageName: $stageName")
+        logger.debug("StatusType: $statusType")
 
         val subscriptionResult = subscribeForEmail(destinationId, eventType, url, stageName, statusType)
         return if (subscriptionResult.subscription_id != null) {
@@ -70,12 +70,13 @@ class SubscribeWebsocketNotifications(
             || statusType.isNullOrBlank()) {
             result.status = false
             result.message = "Required fields not sent in request"
-        } else if (!url.matches(Regex("^(wss?:\\/\\/)[a-zA-Z0-9.?/=]+"))) {
+        } else if (!url.lowercase().startsWith("ws")) {
+//        } else if (!url.lowercase().matches(Regex("^ws[s]*://[0-9a-zA-Z-_.]*[:]*[0-9a-zA-Z]*"))) {
             result.status = false
             result.message = "Not valid url address"
-        } else if (!(statusType == "success" || statusType == "warning" || statusType == "error")) {
+        } else if (!(statusType.equals("success", true) || statusType.equals("warning", true) || statusType.equals("failure", true))) {
             result.status = false
-            result.message = "Not valid url address"
+            result.message = "Not valid status"
         } else {
             result.subscription_id = cacheService.updateNotificationsPreferences(destinationId, eventType, stageName, statusType, url, SubscriptionType.WEBSOCKET)
             result.timestamp = Instant.now().epochSecond

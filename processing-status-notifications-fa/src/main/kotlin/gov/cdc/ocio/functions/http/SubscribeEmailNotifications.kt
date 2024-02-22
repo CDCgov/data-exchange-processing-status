@@ -36,11 +36,11 @@ class SubscribeEmailNotifications(
         val stageName = request.queryParameters["stageName"]
         val statusType = request.queryParameters["statusType"]
 
-        logger.info("DestinationId: $destinationId")
-        logger.info("EventType: $eventType")
-        logger.info("Subscription Email Id: $email")
-        logger.info("StageName: $stageName")
-        logger.info("StatusType: $statusType")
+        logger.debug("DestinationId: $destinationId")
+        logger.debug("EventType: $eventType")
+        logger.debug("Subscription Email Id: $email")
+        logger.debug("StageName: $stageName")
+        logger.debug("StatusType: $statusType")
 
         var subscriptionResult = SubscriptionResult()
         if (!(email == null || stageName == null || statusType == null)) {

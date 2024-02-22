@@ -136,7 +136,7 @@
       ]
     },
     "summary": {
-      "current_status": "VALID_MESSAGE"
+      "current_status": "INVALID_MESSAGE"
     },
     "schema_version": "0.0.1",
     "schema_name": "dex-hl7-validation"

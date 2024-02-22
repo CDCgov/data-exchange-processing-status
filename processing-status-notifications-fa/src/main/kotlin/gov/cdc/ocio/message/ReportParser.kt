@@ -12,7 +12,7 @@ import kotlin.collections.HashMap
  */
 class ReportParser {
 
-    private val reportTypeToStatusFieldMapping: MutableMap<String, String> = mutableMapOf("dex-hl7-validation" to "status",
+    private val reportTypeToStatusFieldMapping: MutableMap<String, String> = mutableMapOf("dex-hl7-validation" to "current_status",
                                             "dex-file-copy" to "result",
                                             "dex-metadata-verify" to "issues",
                                             "upload" to "abc" // TODO : find this
@@ -69,25 +69,39 @@ class ReportParser {
         }
     }
     private fun processStatusValueInArray(field: Map.Entry<String,JsonNode>, reportMetricMap: HashMap<String, String>, reportType: String) {
+        val validStatusValue = getValidStatusValue(field.value.textValue());
         if (!reportMetricMap.containsKey(reportType)) {
-            reportMetricMap[reportType] = field.value.textValue()
+            reportMetricMap[reportType] = validStatusValue
         } else {
             val existingStatus = getPrecedenceOfStatus(reportMetricMap.get(reportType))
             val newStatus = getPrecedenceOfStatus(field.value.textValue())
             if (existingStatus < newStatus) {
-                reportMetricMap[reportType] = field.value.textValue()
+                reportMetricMap[reportType] = validStatusValue
             }
         }
     }
     private fun getPrecedenceOfStatus(status: String?): Int {
-        if (status != null) {
-            return when (status.lowercase()) {
-                "success" -> 1
-                "warning" -> 2
-                "failure" -> 3
-                else -> 0
-            }
+        return when (status?.lowercase()) {
+            "success" -> 1
+            "warning" -> 2
+            "failure" -> 3
+            else -> 0
         }
-        return 0
+    }
+
+    /**
+     * Method to convert erroneous status types to "SUCCESS", "WARNING" or "FAILURE"
+     * @param status String
+     * @return String
+     */
+    private fun getValidStatusValue(status: String): String {
+        var tempStatus = status.lowercase()
+        return if (tempStatus == "success" || (!tempStatus.contains("invalid") && tempStatus.contains("valid"))) {
+            "success"
+        } else if (tempStatus.contains("invalid")|| tempStatus.contains("error") || tempStatus.contains("failure")) {
+            "failure"
+        } else {
+            "warning"
+        }
     }
 }

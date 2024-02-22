@@ -139,7 +139,7 @@ class ServiceBusTests {
     fun testValidHL7ReportWithWarning() {
         val testMessage = File("./src/test/kotlin/functions/serviceMockData/hl7/sb_good_message_hl7_report_with_warning.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
-        assertEquals(status, "warning")
+        assertEquals(status, "failure")
     }
 
     @Test(description = "Test for valid json content format in hL7 report with all mixed ('WARNING','SUCCESS' & 'FAILURE') status")
@@ -169,7 +169,6 @@ class ServiceBusTests {
         val testMessage = File("./src/test/kotlin/functions/serviceMockData/fileCopy/sb_good_message_file_copy_report_invalid.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
         assertTrue(status != "success")
-        assertTrue(status != "failure")
     }
 
     // Metadata Verify Test

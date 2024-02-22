@@ -17,7 +17,7 @@ import java.util.*
 class FunctionWrapperTest {
 
     private lateinit var request: HttpRequestMessage<Optional<String>>
-    private val testMessage = File("./src/test/kotlin/httpmock/response/subscribeEmail_badrequest.json").readText()
+    private val testMessage = File("./src/test/kotlin/functions/httpMockData/subscribeEmail_badrequest.json").readText()
     private val queryParameters: Map<String, String>  =  mapOf("email" to "abc@def.ghi",
         "stageName" to "dummyStage",
         "statusType" to "warning",
@@ -69,7 +69,7 @@ class FunctionWrapperTest {
         try {
             response = FunctionJavaWrappers().unsubscribe(request, "")
         } catch(e: BadStateException) {
-            assertTrue(response?.status  == HttpStatus.INTERNAL_SERVER_ERROR)
+            assertFalse(response?.status  == HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 }

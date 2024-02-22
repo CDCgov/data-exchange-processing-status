@@ -34,7 +34,7 @@
       },
       "processes": [
         {
-          "status": "FAILURE",
+          "status": "SUCCESS",
           "process_name": "RECEIVER",
           "process_version": "1.0.0",
           "eventhub_queued_time": "2023-12-14T16:36:48.847",
@@ -45,7 +45,7 @@
           "end_processing_time": "2023-12-14T11:36:48.982-05:00"
         },
         {
-          "status": "WARNING",
+          "status": "SUCCESS",
           "report": {
             "entries": [],
             "status": "SUCCESS"
@@ -136,7 +136,7 @@
       ]
     },
     "summary": {
-      "current_status": "ERROR_MESSAGE"
+      "current_status": "VALID_MESSAGE"
     },
     "schema_version": "0.0.1",
     "schema_name": "dex-hl7-validation"

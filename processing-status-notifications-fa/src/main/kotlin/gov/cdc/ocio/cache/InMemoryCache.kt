@@ -1,7 +1,7 @@
 package gov.cdc.ocio.cache
 
 import gov.cdc.ocio.exceptions.BadStateException
-import gov.cdc.ocio.model.cache.NotificationSubscriber
+import gov.cdc.ocio.model.cache.NotificationSubscription
 import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging
 import java.util.*
@@ -26,7 +26,7 @@ object InMemoryCache {
     Cache to store "SubscriptionId ->  Subscriber Info (Email or Url and type of subscription)"
     subscriberCache = HashMap<String, NotificationSubscriber>()
     */
-    private val subscriberCache = HashMap<String, NotificationSubscriber>()
+    private val subscriberCache = HashMap<String, MutableList<NotificationSubscription>>()
 
 
     /**
@@ -47,7 +47,7 @@ object InMemoryCache {
         if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBSOCKET) {
             // If subscription type is EMAIL or WEBSOCKET then proceed else throw BadState Exception
             val subscriptionId = updateSubscriptionRuleCache(subscriptionRule)
-            updateSubscriberCache(subscriptionId, NotificationSubscriber(emailOrUrl, subscriptionType))
+            updateSubscriberCache(subscriptionId, NotificationSubscription(subscriptionId, emailOrUrl, subscriptionType))
             return subscriptionId
         } else {
             throw BadStateException("Not a valid SubscriptionType")
@@ -73,12 +73,12 @@ object InMemoryCache {
 
         // if subscription doesn't exist, it will add it else it will return the existing subscription id
         return if (existingSubscriptionId != null) {
-            logger.info("Subscription Rule exists")
+            logger.debug("Subscription Rule exists")
             existingSubscriptionId
         } else {
             // create unique subscription
             val subscriptionId = generateUniqueSubscriptionId()
-            logger.info("Subscription Id for this new rule has been generated $subscriptionId")
+            logger.debug("Subscription Id for this new rule has been generated $subscriptionId")
             readWriteLock.writeLock().lock()
             try {
                 subscriptionRuleCache.put(subscriptionRule, subscriptionId)
@@ -110,11 +110,12 @@ object InMemoryCache {
      * @param notificationSubscriber NotificationSubscriber
      */
     private fun updateSubscriberCache(subscriptionId: String,
-                                      notificationSubscriber: NotificationSubscriber) {
-        logger.info("Subscriber added in subscriber cache")
+                                      notificationSubscriber: NotificationSubscription) {
+        logger.debug("Subscriber added in subscriber cache")
         readWriteLock.writeLock().lock()
         try {
-            subscriberCache.put(subscriptionId, notificationSubscriber)
+            subscriberCache.putIfAbsent(subscriptionId, mutableListOf())
+            subscriberCache[subscriptionId]?.add(notificationSubscriber)
         } finally {
             readWriteLock.writeLock().unlock()
         }
@@ -131,21 +132,33 @@ object InMemoryCache {
      */
     fun unsubscribeSubscriber(subscriptionId: String): Boolean {
         if (subscriberCache.containsKey(subscriptionId)) {
-            val subscriber = subscriberCache.get(subscriptionId)
+            val subscribers = subscriberCache[subscriptionId]?.filter { it.subscriptionId != subscriptionId }.orEmpty().toMutableList()
+
             readWriteLock.writeLock().lock()
             try {
-                subscriberCache.remove(subscriptionId)
+                subscriberCache.replace(subscriptionId, subscribers)
             } finally {
                 readWriteLock.writeLock().unlock()
             }
-            logger.info("Subscriber ${subscriber?.subscriberAddressOrUrl} " +
-                    "has been removed successfully for subscription type of " +
-                    "${subscriber?.subscriberType} ")
             return true
         } else {
             logger.info("Subscription $subscriptionId doesn't exist ")
             throw BadStateException("Subscription doesn't exist")
         }
+    }
+
+    fun getSubscriptionId(ruleId: String) : String? {
+        if (subscriptionRuleCache.containsKey(ruleId)) {
+            return subscriptionRuleCache[ruleId]
+        }
+        return null
+    }
+
+    fun getSubscriptionDetails(subscriptionId: String) : List<NotificationSubscription>? {
+        if (subscriberCache.containsKey(subscriptionId)) {
+            return subscriberCache[subscriptionId]
+        }
+        return emptyList()
     }
 
 
