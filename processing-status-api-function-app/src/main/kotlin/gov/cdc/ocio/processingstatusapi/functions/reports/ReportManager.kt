@@ -10,7 +10,6 @@ import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
 import com.microsoft.azure.servicebus.primitives.ServiceBusException
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
@@ -31,13 +30,6 @@ import java.util.*
 class ReportManager {
 
     private val logger = KotlinLogging.logger {}
-
-    private val reportsContainerName = "Reports"
-    private val partitionKey = "/uploadId"
-
-    private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)
-    }
 
     // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     private val gson = GsonBuilder()
@@ -106,15 +98,15 @@ class ReportManager {
             DispositionType.REPLACE -> {
                 logger.info("Replacing report(s) with stage name = $stageName")
                 // Delete all stages matching the report ID with the same stage name
-                val sqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId' and r.stageName = '$stageName'"
-                val items = reportsContainer?.queryItems(
+                val sqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.uploadId = '$uploadId' and r.stageName = '$stageName'"
+                val items = reportMgrConfig.reportsContainer?.queryItems(
                     sqlQuery, CosmosQueryRequestOptions(),
                     Report::class.java
                 )
                 if ((items?.count() ?: 0) > 0) {
                     try {
                         items?.forEach {
-                            reportsContainer?.deleteItem(
+                            reportMgrConfig.reportsContainer?.deleteItem(
                                 it.id,
                                 PartitionKey(it.uploadId),
                                 CosmosItemRequestOptions()
@@ -176,7 +168,7 @@ class ReportManager {
 
         var attempts = 0
         do {
-            val response = reportsContainer?.createItem(
+            val response = reportMgrConfig.reportsContainer?.createItem(
                 stageReport,
                 PartitionKey(uploadId),
                 CosmosItemRequestOptions()
@@ -251,5 +243,6 @@ class ReportManager {
     companion object {
         const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
         const val MAX_RETRY_ATTEMPTS = 100
+        val reportMgrConfig = ReportManagerConfig()
     }
 }
