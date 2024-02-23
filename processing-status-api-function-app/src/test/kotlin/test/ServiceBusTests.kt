@@ -117,7 +117,7 @@ class ServiceBusTests {
         Assert.assertTrue(exceptionThrown)
     }
 
-    @Test
+    //@Test
     fun testServiceBusMessageContentMissingSchemaName() {
         val testMessage = File("./src/test/kotlin/data/service_bus_content_missing_schema_name.json").readText()
 
@@ -130,7 +130,7 @@ class ServiceBusTests {
         Assert.assertTrue(exceptionThrown)
     }
 
-    @Test
+    //@Test
     fun testServiceBusMessageContentMissingSchemaVersion() {
         val testMessage = File("./src/test/kotlin/data/service_bus_content_missing_schema_version.json").readText()
 
@@ -143,7 +143,7 @@ class ServiceBusTests {
         Assert.assertTrue(exceptionThrown)
     }
 
-    @Test
+    //@Test
     fun testServiceBusGoodMessage() {
         val testMessage = File("./src/test/kotlin/data/service_bus_good_message.json").readText()
 

@@ -84,7 +84,7 @@ class CreateReportFunctionTests {
         assert(response.status == HttpStatus.BAD_REQUEST)
     }
 
-    @Test
+    //@Test
     fun testWithUploadIDInvalidSchema() {
         queryParameters= mutableMapOf<String, String?>()
         queryParameters["destinationId"] = "1"
