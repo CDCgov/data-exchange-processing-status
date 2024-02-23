@@ -3,13 +3,12 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
-import com.azure.messaging.servicebus.ServiceBusClientBuilder
 import com.azure.messaging.servicebus.ServiceBusMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
-import com.microsoft.azure.servicebus.primitives.ServiceBusException
+import gov.cdc.ocio.processingstatusapi.FunctionConfig
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
@@ -197,7 +196,9 @@ class ReportManager {
                                 contentType,
                                 content,
                                 source)
-                            sendToReportsQueue(message)
+                            logger.info("Sending message to Notification queue with uploadId = $uploadId")
+                            fnConfig.serviceBusSender.sendMessage(ServiceBusMessage(message.toString()))
+                            logger.info("Message sent to Notification queue with uploadId = $uploadId")
                         }
                         return stageReportId
                     }
@@ -234,22 +235,9 @@ class ReportManager {
         return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
     }
 
-    @Throws(InterruptedException::class, ServiceBusException::class)
-    private fun sendToReportsQueue(message: NotificationReport){
-        val connectionString = System.getenv("ServiceBusConnectionString")
-        val queueName = System.getenv("ServiceBusReportsQueueName")
-        val sender = ServiceBusClientBuilder()
-            .connectionString(connectionString)
-            .sender()
-            .queueName(queueName)
-            .buildClient()
-        sender.sendMessage(ServiceBusMessage(message.toString()))
-        sender.close()
-
-    }
-
     companion object {
         const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
         const val MAX_RETRY_ATTEMPTS = 100
+        val fnConfig = FunctionConfig()
     }
 }
