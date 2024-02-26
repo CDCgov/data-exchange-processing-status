@@ -394,7 +394,7 @@
 					"name": "Happy Paths",
 					"item": [
 						{
-							"name": "Create \"upload\" report",
+							"name": "Create FAILED \"metadata-verify\" report",
 							"event": [
 								{
 									"listen": "prerequest",
@@ -404,7 +404,151 @@
 											"var uploadId = uuid.v4();",
 											"console.log(uploadId);",
 											"",
-											"//pm.environment.set(\"uploadId\", uploadId);"
+											"pm.environment.set(\"uploadId\", uploadId);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"schema_version\":\"0.0.1\",\n  \"schema_name\":\"dex-metadata-verify\",\n  \"filename\":\"some_upload1.csv\",\n  \"metadata\":{\n    \"meta_field2\":\"value3\"\n  },\n  \"issues\":[\n    \"Missing required metadata field, 'meta_field1'.\",\n    \"Metadata field, 'meta_field2' is set to 'value3' and does not contain one of the allowed values: [ 'value1', value2']\"\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-metadata-verify&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-metadata-verify"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create SUCCESS \"metadata-verify\" report",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var uuid = require('uuid');",
+											"var uploadId = uuid.v4();",
+											"console.log(uploadId);",
+											"",
+											"pm.environment.set(\"uploadId\", uploadId);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"schema_version\": \"0.0.1\",\n  \"schema_name\": \"dex-metadata-verify\",\n  \"filename\": \"some_upload1.csv\",\n  \"metadata\":{\n    \"meta_field1\":\"value1\"\n  },\n  \"issues\": null\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-metadata-verify&destinationId=dex-testing&eventType=test-event1",
+									"host": [
+										"{{PROCESSING_STATUS_BASE_URL}}"
+									],
+									"path": [
+										"api",
+										"report",
+										"json",
+										"uploadId",
+										"{{uploadId}}"
+									],
+									"query": [
+										{
+											"key": "stageName",
+											"value": "dex-metadata-verify"
+										},
+										{
+											"key": "destinationId",
+											"value": "dex-testing"
+										},
+										{
+											"key": "eventType",
+											"value": "test-event1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create \"upload\" report",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -454,6 +598,18 @@
 						},
 						{
 							"name": "Replace \"upload\" report",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
 							"request": {
 								"method": "PUT",
 								"header": [],
@@ -467,7 +623,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&dispositionType=replace&destinationId=dex-testing&eventType=test-event1",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-upload&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -484,10 +640,6 @@
 											"value": "dex-upload"
 										},
 										{
-											"key": "dispositionType",
-											"value": "replace"
-										},
-										{
 											"key": "destinationId",
 											"value": "dex-testing"
 										},
@@ -502,12 +654,24 @@
 						},
 						{
 							"name": "Create \"dex-routing\" report",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"dex-file-copy\",\n    \"schema_version\": \"1.0\",\n    \"file_source_blob_url\": \"\",\n    \"file_destination_blob_url\": \"\",\n    \"timestamp\": \"\",\n    \"result\": \"success|failed\"\n}",
+									"raw": "{\n    \"schema_name\": \"dex-file-copy\",\n    \"schema_version\": \"1.0\",\n    \"file_source_blob_url\": \"../csv_file1.csv\",\n    \"file_destination_blob_url\": \".../edav/csv_file1_87847487844.csv\",\n    \"timestamp\": \"\",\n    \"result\": \"success|failed\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -545,13 +709,25 @@
 							"response": []
 						},
 						{
-							"name": "Create \"stage2\" report",
+							"name": "Create \"dex-hl7-debatch\" report",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"stage2\",\n    \"schema_version\": \"1.0\",\n    \"field1\": \"123\",\n    \"fiedl2\": \"345\"\n}",
+									"raw": "{\n  \"file_name\": \"postman-dtx022-19fcf009-3c83-48d0-be62-d33c2c68c45e.txt\",\n  \"file_uuid\": \"{{$randomUUID}}\",\n  \"routing_metadata\": {\n    \"upload_id\": \"{{uploadId}}\"\n  },\n  \"message_batch\": \"SINGLE\",\n  \"number_of_messages\": 100,\n  \"number_of_messages_not_propagated\": 0,\n  \"error_messages\": [],\n  \"metadata\": {\n    \"processes\": [\n      {\n        \"process_name\": \"RECEIVER\"\n      }\n    ]\n  },\n  \"schema_version\": \"0.0.1\",\n  \"schema_name\": \"hl7_debatch_report\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -559,7 +735,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=stage2&destinationId=dex-testing&eventType=test-event1",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=receiver&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -573,7 +749,7 @@
 									"query": [
 										{
 											"key": "stageName",
-											"value": "stage2"
+											"value": "receiver"
 										},
 										{
 											"key": "destinationId",
@@ -589,57 +765,25 @@
 							"response": []
 						},
 						{
-							"name": "Create \"stage3\" report",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"stage3\",\n    \"schema_version\": \"1.0\",\n    \"field1\": \"678 123\",\n    \"fiedl2\": \"901\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
+							"name": "Create \"dex-hl7-structure\" report",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+										],
+										"type": "text/javascript"
 									}
-								},
-								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=stage3&destinationId=dex-testing&eventType=test-event1",
-									"host": [
-										"{{PROCESSING_STATUS_BASE_URL}}"
-									],
-									"path": [
-										"api",
-										"report",
-										"json",
-										"uploadId",
-										"{{uploadId}}"
-									],
-									"query": [
-										{
-											"key": "stageName",
-											"value": "stage3"
-										},
-										{
-											"key": "destinationId",
-											"value": "dex-testing"
-										},
-										{
-											"key": "eventType",
-											"value": "test-event1"
-										}
-									]
 								}
-							},
-							"response": []
-						},
-						{
-							"name": "Create \"dex-hl7-validation\" report",
+							],
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"schema_name\": \"hl7-validation\",\n    \"schema_version\": \"1.0\",\n    \"message_uuid\": \"\",\n    \"entries\": {\n        \"structure\": [\n            {\n                \"line\": 14,\n                \"column\": 56,\n                \"path\": \"OBX[10]-5[1].2\",\n                \"description\": \"test is not a valid Number. The format should be: [+|-]digits[.digits]\",\n                \"category\": \"Format\",\n                \"classification\": \"Error\"\n            }\n        ],\n        \"content\": [\n            {\n                \"line\": 3,\n                \"column\": 99,\n                \"path\": \"OBR[1]-7[1].1\",\n                \"description\": \"DateTimeOrAll0s - If TS.1 (Time) is valued then TS.1 (Time) shall follow the date/time pattern 'YYYYMMDDHHMMSS[.S[S[S[S]]]][+/-ZZZZ]]'.\",\n                \"category\": \"Constraint Failure\",\n                \"classification\": \"Error\"\n            }\n        ],\n        \"value-set\": []\n    },\n    \"error-count\": {\n        \"structure\": 1,\n        \"value-set\": 0,\n        \"content\": 1\n    },\n    \"warning-count\": {\n        \"structure\": 0,\n        \"value-set\": 0,\n        \"content\": 0\n    },\n    \"status\": \"STRUCTURE_ERRORS\"\n}",
+									"raw": "{\n  \"id\": \"c5d9a1dd-f8e5-44fe-be7c-30cda29f6833\",\n  \"message_uuid\": \"c5d9a1dd-f8e5-44fe-be7c-30cda29f6833\",\n  \"message_info\": {\n    \"event_code\": \"10110\",\n    \"route\": \"hepatitis\",\n    \"reporting_jurisdiction\": \"01\",\n    \"type\": \"CASE\",\n    \"local_record_id\": \"CAS13728088AL01\"\n  },\n  \"routing_metadata\": {\n    \"upload_id\": \"UNKNOWN\"\n  },\n  \"metadata\": {\n    \"provenance\": {\n      \"event_id\": \"876b0c8b-601e-006d-38c5-5d346d06d59d\",\n      \"event_timestamp\": \"2024-02-12T15:06:05.3884264Z\",\n      \"file_uuid\": \"c933b793-65c5-4a5b-b5a1-ae15a8c02eba\",\n      \"file_path\": \"https://ocioedemessagesatst.blob.core.windows.net/hl7ingress/postman-dtx022-e4a79d2c-6654-420b-8d79-e4f2045fae0a.txt\",\n      \"file_timestamp\": \"2024-02-12T15:06:05+00:00\",\n      \"file_size\": 5513,\n      \"single_or_batch\": \"SINGLE\",\n      \"message_hash\": \"7e080a0ef4a2b0b7a1240304602b6197\",\n      \"ext_system_provider\": \"POSTMAN\",\n      \"ext_original_file_name\": \"postman-dtx022-e4a79d2c-6654-420b-8d79-e4f2045fae0a.txt\",\n      \"message_index\": 1,\n      \"ext_original_file_timestamp\": \"dtx0-test\",\n      \"source_metadata\": {\n        \"orginal_file_name\": \"test-da2e4021-4b56-48d0-add1-d3ad9f3d1c53.txt\"\n      }\n    },\n    \"processes\": [\n      {\n        \"status\": \"SUCCESS\",\n        \"process_name\": \"RECEIVER\",\n        \"process_version\": \"1.0.0\",\n        \"eventhub_queued_time\": \"2024-02-12T15:06:06.579\",\n        \"eventhub_offset\": 240518168576,\n        \"eventhub_sequence_number\": 115413,\n        \"configs\": [],\n        \"start_processing_time\": \"2024-02-12T15:06:07.435+00:00\",\n        \"end_processing_time\": \"2024-02-12T15:06:07.53+00:00\"\n      },\n      {\n        \"status\": \"SUCCESS\",\n        \"report\": {\n          \"entries\": [],\n          \"status\": \"SUCCESS\"\n        },\n        \"process_name\": \"REDACTOR\",\n        \"process_version\": \"1.0.0\",\n        \"eventhub_queued_time\": \"2024-02-12T15:06:08.595\",\n        \"eventhub_offset\": 124554051584,\n        \"eventhub_sequence_number\": 5658,\n        \"configs\": [\n          \"case_config.txt\"\n        ],\n        \"start_processing_time\": \"2024-02-12T15:06:09.46+00:00\",\n        \"end_processing_time\": \"2024-02-12T15:06:09.479+00:00\"\n      },\n      {\n        \"status\": \"SUCCESS\",\n        \"report\": {\n          \"entries\": {\n            \"structure\": [],\n            \"content\": [],\n            \"value-set\": []\n          },\n          \"error-count\": {\n            \"structure\": 0,\n            \"value-set\": 0,\n            \"content\": 0\n          },\n          \"warning-count\": {\n            \"structure\": 0,\n            \"value-set\": 0,\n            \"content\": 0\n          },\n          \"status\": \"VALID_MESSAGE\"\n        },\n        \"process_name\": \"STRUCTURE-VALIDATOR\",\n        \"process_version\": \"1.0.0\",\n        \"eventhub_queued_time\": \"2024-02-12T15:06:10.47\",\n        \"eventhub_offset\": 485331304448,\n        \"eventhub_sequence_number\": 188792,\n        \"configs\": [\n          \"NOTF_ORU_V3.0\"\n        ],\n        \"start_processing_time\": \"2024-02-12T15:06:11.454+00:00\",\n        \"end_processing_time\": \"2024-02-12T15:06:11.475+00:00\"\n      }\n    ]\n  },\n  \"summary\": {\n    \"current_status\": \"VALID_MESSAGE\"\n  },\n  \"schema_version\": \"0.0.1\",\n  \"schema_name\": \"DEX HL7v2\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -647,7 +791,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-hl7-validation&destinationId=dex-testing&eventType=test-event1",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/json/uploadId/{{uploadId}}?stageName=dex-hl7-structure&destinationId=dex-testing&eventType=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -661,7 +805,7 @@
 									"query": [
 										{
 											"key": "stageName",
-											"value": "dex-hl7-validation"
+											"value": "dex-hl7-structure"
 										},
 										{
 											"key": "destinationId",
@@ -758,7 +902,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/846fb6fc-350c-4e75-b36d-2aca9f60ae62",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/49f78a80-bf57-4858-bbfb-5b6c7f27ae22",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
@@ -766,7 +910,7 @@
 										"api",
 										"report",
 										"uploadId",
-										"846fb6fc-350c-4e75-b36d-2aca9f60ae62"
+										"49f78a80-bf57-4858-bbfb-5b6c7f27ae22"
 									]
 								}
 							},
@@ -1278,6 +1422,148 @@
 					"response": []
 				},
 				{
+					"name": "Get report counts (ref = uploadId)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts/{{uploadId}}",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"report",
+								"counts",
+								"{{uploadId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get report counts (uploadId HARD KEYED)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts/9de71b83-54ed-4231-a426-ff5f208d75ff",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"report",
+								"counts",
+								"9de71b83-54ed-4231-a426-ff5f208d75ff"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get report counts (query params)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts?destination_id=dex-testing&ext_event=test-event1&date_start=20240207T190000Z",
+							"host": [
+								"{{PROCESSING_STATUS_BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"report",
+								"counts"
+							],
+							"query": [
+								{
+									"key": "destination_id",
+									"value": "dex-testing"
+								},
+								{
+									"key": "ext_event",
+									"value": "test-event1"
+								},
+								{
+									"key": "date_start",
+									"value": "20240207T190000Z"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Get status (uploadId HARD KEYED)",
 					"event": [
 						{
@@ -1306,14 +1592,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/status/4585fef0-2d22-4e9c-b9d6-6e5e660573db",
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/status/9de71b83-54ed-4231-a426-ff5f208d75ff",
 							"host": [
 								"{{PROCESSING_STATUS_BASE_URL}}"
 							],
 							"path": [
 								"api",
 								"status",
-								"4585fef0-2d22-4e9c-b9d6-6e5e660573db"
+								"9de71b83-54ed-4231-a426-ff5f208d75ff"
 							]
 						}
 					},
@@ -1325,7 +1611,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/upload/dex-testing?page_number=1&page_size=10&sort_by=date&sort_order=descending&ext_event=test-event1",
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/upload/dex-testing?page_number=1&page_size=20&sort_by=date&sort_order=descending&ext_event=test-event1&date_start=20240207T190000Z",
 							"host": [
 								"{{PROCESSING_STATUS_BASE_URL}}"
 							],
@@ -1341,7 +1627,7 @@
 								},
 								{
 									"key": "page_size",
-									"value": "10"
+									"value": "20"
 								},
 								{
 									"key": "sort_by",
@@ -1354,6 +1640,10 @@
 								{
 									"key": "ext_event",
 									"value": "test-event1"
+								},
+								{
+									"key": "date_start",
+									"value": "20240207T190000Z"
 								}
 							]
 						}

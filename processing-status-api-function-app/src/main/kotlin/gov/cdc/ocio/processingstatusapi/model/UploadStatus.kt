@@ -65,13 +65,26 @@ class UploadStatus {
 
             val uploadStatus = UploadStatus()
             var isFailedUpload = false
+
+            // Convert the reports to their schema objects
+            val reportsWithSchemaPairs = mutableListOf<Pair<SchemaDefinition, Report>>()
             reports.forEach { report ->
                 if (report.contentType != "json")
                     throw ContentException("Content type is not JSON as expected")
 
-                val stageReportJson = report.content
+                val schemaDefinition = SchemaDefinition.fromJsonString(report.contentAsString)
+                reportsWithSchemaPairs.add(Pair(schemaDefinition, report))
+            }
 
-                val schemaDefinition = Gson().fromJson(stageReportJson, SchemaDefinition::class.java)
+            // Sort the reports according to their schema type.
+            reportsWithSchemaPairs.sortedBy { it.first }
+
+            reportsWithSchemaPairs.forEach { reportWithSchemaPair ->
+
+                val schemaDefinition = reportWithSchemaPair.first
+
+                val report = reportWithSchemaPair.second
+                val stageReportJson = report.contentAsString
 
                 // Attempt to interpret the stage as an upload stage
                 when (schemaDefinition) {
@@ -101,19 +114,29 @@ class UploadStatus {
                     UploadMetadataVerifyStage.schemaDefinition -> {
                         val metadataVerifyStage = Gson().fromJson(stageReportJson, UploadMetadataVerifyStage::class.java)
                             ?: throw ContentException("Unable to interpret stage report content as a metadata verify stage")
-                        metadataVerifyStage.issues?.let { issues->
-                            uploadStatus.status = "FailedMetadata"
-                            uploadStatus.fileSizeBytes = null
-                            uploadStatus.bytesUploaded = null
-                            uploadStatus.percentComplete = null
+                        val hasIssues = metadataVerifyStage.issues != null && (metadataVerifyStage.issues?.count() ?: 0) > 0
+                        if (hasIssues) {
+                            metadataVerifyStage.issues?.let { issues ->
+                                uploadStatus.status = "FailedMetadata"
+                                uploadStatus.fileSizeBytes = null
+                                uploadStatus.bytesUploaded = null
+                                uploadStatus.percentComplete = null
+                                uploadStatus.timeUploadingSec = null
+                                uploadStatus.uploadId = uploadId
+                                uploadStatus.fileName = metadataVerifyStage.filename
+                                uploadStatus.metadata = metadataVerifyStage.metadata
+                                uploadStatus.timestamp = report.timestamp
+                                if (uploadStatus.issues == null)
+                                    uploadStatus.issues = mutableListOf()
+                                uploadStatus.issues?.addAll(issues)
+                                isFailedUpload = true
+                            }
+                        } else {
+                            uploadStatus.status = "PassedMetadata"
                             uploadStatus.uploadId = uploadId
                             uploadStatus.fileName = metadataVerifyStage.filename
                             uploadStatus.metadata = metadataVerifyStage.metadata
                             uploadStatus.timestamp = report.timestamp
-                            if (uploadStatus.issues == null)
-                                uploadStatus.issues = mutableListOf()
-                            uploadStatus.issues?.addAll(issues)
-                            isFailedUpload = true
                         }
                     }
                 }

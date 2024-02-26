@@ -12,7 +12,9 @@ import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
  * @constructor
  */
 open class SchemaDefinition(@SerializedName("schema_name") var schemaName: String? = null,
-                            @SerializedName("schema_version") var schemaVersion: String? = null) {
+                            @SerializedName("schema_version") var schemaVersion: String? = null,
+                            @Transient private val priority: Int = 0) :
+    Comparable<SchemaDefinition> {
 
     /**
      * Hash operator
@@ -23,6 +25,16 @@ open class SchemaDefinition(@SerializedName("schema_name") var schemaName: Strin
         var result = schemaName?.hashCode() ?: 0
         result = 31 * result + (schemaVersion?.hashCode() ?: 0)
         return result
+    }
+
+    /**
+     * Compare operator
+     *
+     * @param other SchemaDefinition
+     * @return Int
+     */
+    override fun compareTo(other: SchemaDefinition): Int {
+        return compareValues(priority, other.priority)
     }
 
     /**
