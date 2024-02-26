@@ -9,7 +9,7 @@ enum class MetadataVersion {
 
 
 abstract class ReportFactory(val metadataVersion: MetadataVersion) {
-    abstract fun createReport(): Map<String,String>
+    abstract fun createReport(): Map<String,Any>
 
 
 }
