@@ -27,7 +27,7 @@ class AddSpanToTraceFunction(
         OpenTelemetryConfig.initOpenTelemetry()
     }
 
-    private val tracer = openTelemetry.getTracer(AddSpanToTraceFunction::class.java.name)
+    private val tracer = openTelemetry?.getTracer(AddSpanToTraceFunction::class.java.name)
 
     private val requestBody = request.body.orElse("")
 
@@ -53,44 +53,51 @@ class AddSpanToTraceFunction(
         logger.info("stageName: $stageName")
 
         val result: TraceResult
-        try {
-            // See if we were given any optional tags
-            var tags: Array<Tags>? = null
+        if (tracer !=null) {
             try {
-                if (requestBody.isNotBlank()) {
-                    tags = Gson().fromJson(requestBody, Array<Tags>::class.java)
+                // See if we were given any optional tags
+                var tags: Array<Tags>? = null
+                try {
+                    if (requestBody.isNotBlank()) {
+                        tags = Gson().fromJson(requestBody, Array<Tags>::class.java)
+                    }
+                } catch (e: Exception) {
+                    throw BadRequestException("Failed to parse the optional metadata tags in the request body")
                 }
-            } catch (e: Exception) {
-                throw BadRequestException("Failed to parse the optional metadata tags in the request body")
+
+                val spanContext = SpanContext.createFromRemoteParent(
+                    traceId,
+                    parentSpanId,
+                    TraceFlags.getSampled(),
+                    TraceState.getDefault()
+                )
+
+                val span = tracer.spanBuilder(stageName)
+                    .setParent(Context.current().with(Span.wrap(spanContext)))
+                    .startSpan()
+
+                tags?.forEach {
+                    if (it.key != null && it.value != null)
+                        span.setAttribute(it.key!!, it.value!!)
+                }
+                span.end()
+
+                result = TraceResult().apply {
+                    this.traceId = span.spanContext.traceId
+                    this.spanId = span.spanContext.spanId
+                }
+
+            } catch (ex: BadRequestException) {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body(ex.localizedMessage)
+                    .build()
             }
-
-            val spanContext = SpanContext.createFromRemoteParent(
-                traceId,
-                parentSpanId,
-                TraceFlags.getSampled(),
-                TraceState.getDefault()
-            )
-
-            val span = tracer!!.spanBuilder(stageName)
-                .setParent(Context.current().with(Span.wrap(spanContext)))
-                .startSpan()
-
-            tags?.forEach {
-                if (it.key != null && it.value != null)
-                    span.setAttribute(it.key!!, it.value!!)
-            }
-            span.end()
-
+        } else {
             result = TraceResult().apply {
-                this.traceId = span.spanContext.traceId
-                this.spanId = span.spanContext.spanId
+                this.traceId = TraceUtils.TRACING_DISABLED
+                this.spanId = TraceUtils.TRACING_DISABLED
             }
-
-        } catch (ex: BadRequestException) {
-            return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body(ex.localizedMessage)
-                .build()
         }
 
         return request
@@ -115,24 +122,25 @@ class AddSpanToTraceFunction(
         spanId: String
     ): HttpResponseMessage {
 
+        if (tracer != null) {
+            try {
+                val spanContext = SpanContext.createFromRemoteParent(
+                    traceId,
+                    spanId,
+                    TraceFlags.getSampled(),
+                    TraceState.getDefault()
+                )
+                val span = tracer.spanBuilder(spanId)
+                    .setParent(Context.current().with(Span.wrap(spanContext)))
+                    .startSpan()
+                span.end()
 
-        try {
-           val spanContext = SpanContext.createFromRemoteParent(
-                traceId,
-                spanId,
-                TraceFlags.getSampled(),
-                TraceState.getDefault()
-            )
-            val span = tracer!!.spanBuilder(spanId)
-                .setParent(Context.current().with(Span.wrap(spanContext)))
-                .startSpan()
-            span.end()
-
-        } catch (ex: BadRequestException) {
-            return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body(ex.localizedMessage)
-                .build()
+            } catch (ex: BadRequestException) {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body(ex.localizedMessage)
+                    .build()
+            }
         }
 
         return request
