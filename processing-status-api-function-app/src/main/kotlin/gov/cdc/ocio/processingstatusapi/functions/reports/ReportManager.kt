@@ -8,7 +8,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
-import gov.cdc.ocio.processingstatusapi.FunctionConfig
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
@@ -165,62 +164,67 @@ class ReportManager {
                 this.content = content
         }
 
-        var attempts = 0
-        do {
-            val response = reportMgrConfig.reportsContainer?.createItem(
-                stageReport,
-                PartitionKey(uploadId),
-                CosmosItemRequestOptions()
-            )
+        reportMgrConfig.reportsContainer?.let { reportsContainer ->
+            var attempts = 0
+            do {
+                val response = reportsContainer.createItem(
+                    stageReport,
+                    PartitionKey(uploadId),
+                    CosmosItemRequestOptions()
+                )
 
-            logger.info("Creating report, response http status code = ${response?.statusCode}, attempt = ${attempts+1}, uploadId = $uploadId")
-            if (response != null) {
-                when (response.statusCode) {
-                    HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
-                        logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
-                        val enableReportForwarding = System.getenv("EnableReportForwarding")
-                        if(enableReportForwarding.equals("True", ignoreCase = true)){
-                            //Send message to reports-notifications-queue
-                            var message = NotificationReport(
-                                response?.item?.reportId,
-                                uploadId, destinationId,eventType,
-                                stageName,
-                                contentType,
-                                content,
-                                source)
-                            logger.info("Sending message to Notification queue with uploadId = $uploadId")
-                            fnConfig.serviceBusSender.sendMessage(ServiceBusMessage(message.toString()))
-                            logger.info("Message sent to Notification queue with uploadId = $uploadId")
+                logger.info("Creating report, response http status code = ${response?.statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
+                if (response != null) {
+                    when (response.statusCode) {
+                        HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
+                            logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
+                            val enableReportForwarding = System.getenv("EnableReportForwarding")
+                            if (enableReportForwarding.equals("True", ignoreCase = true)) {
+                                //Send message to reports-notifications-queue
+                                var message = NotificationReport(
+                                    response?.item?.reportId,
+                                    uploadId, destinationId, eventType,
+                                    stageName,
+                                    contentType,
+                                    content,
+                                    source
+                                )
+                                logger.info("Sending message to Notification queue with uploadId = $uploadId")
+                                reportMgrConfig.serviceBusSender.sendMessage(ServiceBusMessage(message.toString()))
+                                logger.info("Message sent to Notification queue with uploadId = $uploadId")
+                            }
+                            return stageReportId
                         }
-                        return stageReportId
-                    }
 
-                    HttpStatus.TOO_MANY_REQUESTS.value() -> {
-                        // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
-                        // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
-                        // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
-                        val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                        logger.warn("Received 429 (too many requests) from cosmossb, attempt ${attempts+1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
-                        val waitMillis = recommendedDuration?.toLong()
-                        Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
-                    }
+                        HttpStatus.TOO_MANY_REQUESTS.value() -> {
+                            // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
+                            // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
+                            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
+                            val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
+                            logger.warn("Received 429 (too many requests) from cosmossb, attempt ${attempts + 1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
+                            val waitMillis = recommendedDuration?.toLong()
+                            Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
+                        }
 
-                    else -> {
-                        // Need to retry regardless
-                        val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                        logger.warn("Received response code ${response.statusCode}, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                        Thread.sleep(retryAfterDurationMillis)
+                        else -> {
+                            // Need to retry regardless
+                            val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                            logger.warn("Received response code ${response.statusCode}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                            Thread.sleep(retryAfterDurationMillis)
+                        }
                     }
+                } else {
+                    val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                    logger.warn("Received null response from cosmosdb, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                    Thread.sleep(retryAfterDurationMillis)
                 }
-            } else {
-                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                logger.warn("Received null response from cosmosdb, attempt ${attempts+1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                Thread.sleep(retryAfterDurationMillis)
-            }
 
-        } while (attempts++ < MAX_RETRY_ATTEMPTS)
+            } while (attempts++ < MAX_RETRY_ATTEMPTS)
 
-        throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
+            throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
+        }
+
+        return ""
     }
 
     private fun getCalculatedRetryDuration(attempt: Int): Long {
@@ -230,7 +234,7 @@ class ReportManager {
     companion object {
         const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
         const val MAX_RETRY_ATTEMPTS = 100
-        val fnConfig = FunctionConfig()
         val reportMgrConfig = ReportManagerConfig()
+        //val serviceBusManagerConfig = ServiceBusManagerConfig()
     }
 }

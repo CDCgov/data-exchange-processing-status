@@ -7,12 +7,10 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
@@ -42,7 +40,6 @@ class HealthCheckFunctionTest {
 
     @Test
     fun testStatusBack() {
-        mockkObject(CosmosContainerManager)
         val mockCosmosClient = mockk<CosmosClient>()
         val mockCosmosDb = mockk<CosmosDatabase>()
         val mockCosmosContainer = mockk<CosmosContainer>()

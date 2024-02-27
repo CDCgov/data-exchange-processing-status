@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import gov.cdc.ocio.processingstatusapi.model.reports.ReportDao
@@ -25,14 +24,11 @@ class GetReportFunction(
     private val request: HttpRequestMessage<Optional<String>>
 ) {
 
-    private val logger = KotlinLogging.logger {}
-
-    private val reportsContainerName = "Reports"
-    private val partitionKey = "/uploadId"
-
-    private val reportsContainer by lazy {
-        CosmosContainerManager.initDatabaseContainer(reportsContainerName, partitionKey)!!
+    companion object {
+        private val logger = KotlinLogging.logger {}
+        val reportMgrConfig = ReportManagerConfig()
     }
+
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(
@@ -54,32 +50,32 @@ class GetReportFunction(
     fun withUploadId(uploadId: String): HttpResponseMessage {
 
         // Get the report metadata
-        val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+        val reportsSqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.uploadId = '$uploadId'"
 
         // Locate the existing report so we can amend it
-        val reportItems = reportsContainer.queryItems(
+        val reportItems = reportMgrConfig.reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             Report::class.java
         )
-        if (reportItems.count() > 0) {
-            val report = reportItems.elementAt(0)
+        if (reportItems?.count()!! > 0) {
+            val report = reportItems?.elementAt(0)
 
-            val stageReportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+            val stageReportsSqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.uploadId = '$uploadId'"
 
             // Locate the existing stage reports
-            val stageReportItems = reportsContainer.queryItems(
+            val stageReportItems = reportMgrConfig.reportsContainer?.queryItems(
                 stageReportsSqlQuery, CosmosQueryRequestOptions(),
                 Report::class.java
             )
-            if (stageReportItems.count() > 0) {
-                val stageReportItemList = stageReportItems.toList()
+            if (stageReportItems?.count()!! > 0) {
+                val stageReportItemList = stageReportItems?.toList()
 
                 logger.info("Successfully located report with uploadId = $uploadId")
 
                 val reportResult = ReportDao().apply {
                     this.uploadId = uploadId
-                    this.destinationId = report.destinationId
-                    this.eventType = report.eventType
+                    this.destinationId = report?.destinationId
+                    this.eventType = report?.eventType
                     this.reports = stageReportItemList
                 }
                 return request
@@ -105,16 +101,16 @@ class GetReportFunction(
      */
     fun withReportId(reportId: String): HttpResponseMessage {
 
-        val sqlQuery = "select * from $reportsContainerName r where r.reportId = '$reportId'"
+        val sqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.reportId = '$reportId'"
 
         // Locate the existing report so we can amend it
-        val items = reportsContainer.queryItems(
+        val items = reportMgrConfig.reportsContainer?.queryItems(
                 sqlQuery, CosmosQueryRequestOptions(),
                 Report::class.java
         )
-        if (items.count() > 0) {
+        if (items?.count() !!> 0) {
             logger.info("Successfully located report with reportId = $reportId")
-            val report = items.elementAt(0)
+            val report = items?.elementAt(0)
 
             return request
                     .createResponseBuilder(HttpStatus.OK)
@@ -143,17 +139,17 @@ class GetReportFunction(
         val eventType = request.queryParameters["eventType"]
 
         val sqlQuery = StringBuilder()
-        sqlQuery.append("select * from $reportsContainerName t where t.destinationId = '$destinationId' and t.stageName = '$stageName'")
+        sqlQuery.append("select * from ${reportMgrConfig.reportsContainerName} t where t.destinationId = '$destinationId' and t.stageName = '$stageName'")
 
         eventType?.run {
             sqlQuery.append(" and t.eventType = '$eventType'")
         }
 
         // Locate the existing report so we can amend it
-        val reports = reportsContainer.queryItems(
+        val reports = reportMgrConfig.reportsContainer?.queryItems(
                 sqlQuery.toString(), CosmosQueryRequestOptions(),
                 Report::class.java
-        ).toList()
+        )?.toList()
 
         return request
                 .createResponseBuilder(HttpStatus.OK)

@@ -4,6 +4,8 @@ import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.CosmosDatabase
 import com.azure.cosmos.util.CosmosPagedIterable
+import com.azure.messaging.servicebus.ServiceBusClientBuilder
+import com.azure.messaging.servicebus.ServiceBusSenderClient
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
@@ -13,6 +15,7 @@ import gov.cdc.ocio.processingstatusapi.model.reports.Report
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
@@ -25,12 +28,15 @@ import java.util.*
 class GetReportFunctionTests {
 
     private lateinit var request: HttpRequestMessage<Optional<String>>
-
     private lateinit var context: ExecutionContext
     private val items = mockk<CosmosPagedIterable<Report>>()
     private val mockCosmosClient = mockk<CosmosClient>()
     private val mockCosmosDb = mockk<CosmosDatabase>()
     private val mockCosmosContainer = mockk<CosmosContainer>()
+    private val mockServiceBusClient = mockk<ServiceBusSenderClient>()
+    private val mockServiceBusClientBuilder = mockk<ServiceBusClientBuilder>()
+    private val mockServiceBuilder = mockk<ServiceBusClientBuilder>()
+
 
     @BeforeMethod
     fun setUp() {
@@ -42,6 +48,18 @@ class GetReportFunctionTests {
         every { mockCosmosClient.getDatabase(any()) } returns mockCosmosDb
         every { mockCosmosDb.getContainer(any()) } returns mockCosmosContainer
         every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
+
+        mockkStatic(System::class)
+        every {System.getenv("ServiceBusConnectionString")} returns ""
+        every {System.getenv("ServiceBusReportsQueueName")} returns ""
+
+        every{ mockServiceBuilder.connectionString(any())} returns mockServiceBusClientBuilder
+        every {
+            mockServiceBusClientBuilder
+            .sender()
+            .queueName(any())
+            .buildClient()} returns mockServiceBusClient
+
 
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.
         Mockito.doAnswer { invocation ->
@@ -60,21 +78,20 @@ class GetReportFunctionTests {
 
     @Test
     fun testWithReportId_ok() {
-        every { items.count() > 0} returns false
+        every { items?.count() !!> 0} returns false
         val response =  GetReportFunction(request).withReportId("1");
         assert(response.status == HttpStatus.BAD_REQUEST)
     }
 
     @Test
     fun testWithDestinationId_ok() {
-        every { items.count() > 0} returns false
+        every { items?.count() !!> 0} returns false
         val response =  GetReportFunction(request).withDestinationId("1", "");
         assert(response.status == HttpStatus.OK)
     }
 
     //@Test
     fun testWithUploadId_reports() {
-        var itemsR =
         every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
         every { items.count() > 0} returns true
         val response =  GetReportFunction(request).withUploadId("1");
