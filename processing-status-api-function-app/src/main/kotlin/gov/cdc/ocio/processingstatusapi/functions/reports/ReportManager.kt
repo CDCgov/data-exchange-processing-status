@@ -8,6 +8,7 @@ import com.azure.messaging.servicebus.ServiceBusMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
+import com.microsoft.applicationinsights.TelemetryClient
 import com.microsoft.azure.functions.HttpStatus
 import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -30,6 +31,8 @@ import java.util.*
 class ReportManager {
 
     private val logger = KotlinLogging.logger {}
+
+    private val telemetry = TelemetryClient()
 
     // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     private val gson = GsonBuilder()
@@ -166,6 +169,7 @@ class ReportManager {
                 this.content = content
         }
 
+        telemetry.trackEvent("ReportCreateAttempt")
         reportMgrConfig.reportsContainer?.let { reportsContainer ->
             var attempts = 0
             do {
@@ -180,6 +184,7 @@ class ReportManager {
                     when (response.statusCode) {
                         HttpStatus.OK.value(), HttpStatus.CREATED.value() -> {
                             logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
+                            telemetry.trackEvent("ReportCreatedSuccess")
                             val enableReportForwarding = System.getenv("EnableReportForwarding")
                             if (enableReportForwarding.equals("True", ignoreCase = true)) {
                                 //Send message to reports-notifications-queue
@@ -221,6 +226,7 @@ class ReportManager {
 
             } while (attempts++ < MAX_RETRY_ATTEMPTS)
 
+            telemetry.trackEvent("ReportCreatedFailed")
             throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
         }
 

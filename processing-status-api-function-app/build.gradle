@@ -30,6 +30,7 @@ configurations {
 
 dependencies {
     implementation "com.microsoft.azure.functions:azure-functions-java-library:3.0.0"
+    implementation 'com.microsoft.azure:applicationinsights-core:3.4.19'
     implementation 'com.azure:azure-cosmos:4.55.0'
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2"
     implementation 'io.opentelemetry:opentelemetry-api:1.29.0'
