@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.opentelemetry
 
+import gov.cdc.ocio.processingstatusapi.functions.traces.TraceUtils
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
@@ -45,7 +46,10 @@ internal object OpenTelemetryConfig {
      * @param jaegerEndpoint The endpoint of your Jaeger instance.
      * @return A ready-to-use [OpenTelemetry] instance.
      */
-    fun initOpenTelemetry(): OpenTelemetry {
+    fun initOpenTelemetry(): OpenTelemetry? {
+        if (!TraceUtils.tracingEnabled)
+            return null
+
         // Export traces to Jaeger over OTLP
         val jaegerOtlpExporter: OtlpGrpcSpanExporter = OtlpGrpcSpanExporter.builder()
             .setEndpoint(System.getenv("JAEGER_OTEL_COLLECTOR_END_POINT"))

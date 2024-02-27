@@ -3,9 +3,12 @@ package test.traces
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.traces.GetTraceFunction
+import gov.cdc.ocio.processingstatusapi.functions.traces.TraceUtils
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import khttp.responses.Response
 import org.json.JSONObject
@@ -34,6 +37,8 @@ class GetTraceFunctionTests {
         context = Mockito.mock(ExecutionContext::class.java)
         request = Mockito.mock(HttpRequestMessage::class.java) as HttpRequestMessage<Optional<String>>
         mockkStatic("khttp.KHttp")
+        mockkObject(TraceUtils)
+        every { TraceUtils.tracingEnabled } returns true
         every {khttp.get(any())} returns mockResponse
         every {mockResponse.jsonObject} returns jsonObject
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.

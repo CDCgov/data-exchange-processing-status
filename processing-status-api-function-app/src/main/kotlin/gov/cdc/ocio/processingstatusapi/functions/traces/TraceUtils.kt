@@ -10,6 +10,10 @@ class TraceUtils {
 
     companion object {
 
+        const val TRACING_DISABLED = "TracingDisabled"
+
+        val tracingEnabled = System.getenv("EnableTracing").equals("True", ignoreCase = true)
+
         /**
          * Locate all traces for the given uploadId.
          *

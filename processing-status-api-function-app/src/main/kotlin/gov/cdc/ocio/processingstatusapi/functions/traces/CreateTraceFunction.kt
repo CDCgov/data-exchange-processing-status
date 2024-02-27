@@ -21,7 +21,7 @@ class CreateTraceFunction(
         OpenTelemetryConfig.initOpenTelemetry()
     }
 
-    private val tracer = openTelemetry.getTracer(CreateTraceFunction::class.java.name)
+    private val tracer = openTelemetry?.getTracer(CreateTraceFunction::class.java.name)
 
     private val uploadId = request.queryParameters["uploadId"]
 
@@ -41,16 +41,25 @@ class CreateTraceFunction(
 
         logger.info("uploadId: $uploadId")
 
-        val span = tracer!!.spanBuilder(PARENT_SPAN).startSpan()
-        span.setAttribute("uploadId", uploadId!!)
-        span.setAttribute("destinationId", destinationId!!)
-        span.setAttribute("eventType", eventType!!)
-        span.end()
+        val result: TraceResult
+        if (tracer != null) {
+            val span = tracer.spanBuilder(PARENT_SPAN).startSpan()
+            span.setAttribute("uploadId", uploadId!!)
+            span.setAttribute("destinationId", destinationId!!)
+            span.setAttribute("eventType", eventType!!)
+            span.end()
 
-        val result = TraceResult().apply {
-            traceId = span.spanContext.traceId
-            spanId = span.spanContext.spanId
+            result = TraceResult().apply {
+                traceId = span.spanContext.traceId
+                spanId = span.spanContext.spanId
+            }
+        } else {
+            result = TraceResult().apply {
+                traceId = TraceUtils.TRACING_DISABLED
+                spanId = TraceUtils.TRACING_DISABLED
+            }
         }
+
         return request
             .createResponseBuilder(HttpStatus.OK)
             .header("Content-Type", "application/json")
