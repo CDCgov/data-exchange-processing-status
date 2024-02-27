@@ -183,8 +183,8 @@ class ReportManager {
                             val enableReportForwarding = System.getenv("EnableReportForwarding")
                             if (enableReportForwarding.equals("True", ignoreCase = true)) {
                                 //Send message to reports-notifications-queue
-                                var message = NotificationReport(
-                                    response?.item?.reportId,
+                                val message = NotificationReport(
+                                    response.item?.reportId,
                                     uploadId, destinationId, eventType,
                                     stageName,
                                     contentType,
