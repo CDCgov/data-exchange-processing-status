@@ -66,7 +66,11 @@ class GetReportCountsFunction(
         )
         if (reportItems.count() > 0) {
 
-            val firstReportSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId' offset 0 limit 1"
+            // Order by timestamp (ascending) and grab the first one found, which will give us the earliest timestamp.
+            val firstReportSqlQuery = (
+                "select * from $reportsContainerName r where r.uploadId = '$uploadId' "
+                + "order by r.timestamp asc offset 0 limit 1"
+            )
 
             val firstReportItems = reportsContainer.queryItems(
                 firstReportSqlQuery, CosmosQueryRequestOptions(),
@@ -80,6 +84,7 @@ class GetReportCountsFunction(
                 this.uploadId = uploadId
                 this.destinationId = firstReport?.destinationId
                 this.eventType = firstReport?.eventType
+                this.timestamp = firstReport?.timestamp
                 val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
                 val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
                 val revisedStageCounts = revisedStageCountsByUploadId[uploadId]
@@ -265,7 +270,7 @@ class GetReportCountsFunction(
             val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
             val reportsSqlQuery = (
                 "select "
-                + "r.uploadId, r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName "
+                + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
                 + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
                 + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
             )
@@ -276,6 +281,7 @@ class GetReportCountsFunction(
 
             if (reportItems.count() > 0) {
                 val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
+                var earliestTimestamp: Date? = null
                 reportItems.forEach {
                     val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
                     list.add(StageCounts().apply {
@@ -283,6 +289,12 @@ class GetReportCountsFunction(
                         this.schema_version = it.schema_version
                         this.counts = it.counts
                         this.stageName = it.stageName
+                        it.timestamp?.let { timestamp ->
+                            if (earliestTimestamp == null)
+                                earliestTimestamp = timestamp
+                            else if (timestamp.before(earliestTimestamp))
+                                earliestTimestamp = timestamp
+                        }
                     })
                     stageCountsByUploadId[it.uploadId!!] = list
                 }
@@ -294,6 +306,7 @@ class GetReportCountsFunction(
                         this.uploadId = upload.key
                         this.destinationId = destinationId
                         this.eventType = eventType
+                        this.timestamp = earliestTimestamp
                         this.stages = upload.value
                     })
                 }

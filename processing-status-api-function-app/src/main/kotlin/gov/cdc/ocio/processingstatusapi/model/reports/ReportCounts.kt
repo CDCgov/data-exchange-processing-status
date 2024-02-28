@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.annotations.SerializedName
+import java.util.*
 
 data class ReportCounts(
 
@@ -12,6 +13,8 @@ data class ReportCounts(
 
     @SerializedName("event_type")
     var eventType: String? = null,
+
+    var timestamp: Date? = null,
 
     var stages: Map<String, Any> = mapOf()
 )
