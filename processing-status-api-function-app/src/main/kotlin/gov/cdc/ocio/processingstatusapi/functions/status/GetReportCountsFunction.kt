@@ -15,6 +15,8 @@ import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import java.util.*
 
 
@@ -212,6 +214,8 @@ class GetReportCountsFunction(
         val dateStart = request.queryParameters["date_start"]
         val dateEnd = request.queryParameters["date_end"]
 
+        val daysInterval = request.queryParameters["days_interval"]
+
         if (destinationId == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -234,28 +238,45 @@ class GetReportCountsFunction(
             + "where r.destinationId = '$destinationId' and r.eventType = '$eventType'"
         )
 
-        dateStart?.run {
-            try {
-                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-                uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
-            } catch (e: BadRequestException) {
-                logger.error(e.localizedMessage)
-                return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body(e.localizedMessage)
-                    .build()
-            }
+        if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("date_interval and date_start/date_end can't be used simultaneously")
+                .build()
         }
-        dateEnd?.run {
-            try {
-                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-                uploadIdsSqlQuery.append(" and r._ts < $dateEndEpochSecs")
-            } catch (e: BadRequestException) {
-                logger.error(e.localizedMessage)
-                return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body(e.localizedMessage)
-                    .build()
+
+        if (!daysInterval.isNullOrBlank()) {
+            val dateStartEpochSecs = DateTime
+                .now(DateTimeZone.UTC)
+                .minusDays(Integer.parseInt(daysInterval))
+                .withTimeAtStartOfDay()
+                .toDate()
+                .time / 1000
+            uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+        } else {
+            dateStart?.run {
+                try {
+                    val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
+                    uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+                } catch (e: BadRequestException) {
+                    logger.error(e.localizedMessage)
+                    return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body(e.localizedMessage)
+                        .build()
+                }
+            }
+            dateEnd?.run {
+                try {
+                    val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
+                    uploadIdsSqlQuery.append(" and r._ts < $dateEndEpochSecs")
+                } catch (e: BadRequestException) {
+                    logger.error(e.localizedMessage)
+                    return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body(e.localizedMessage)
+                        .build()
+                }
             }
         }
 
