@@ -112,9 +112,9 @@ class GetTraceFunction(
     companion object {
         private val disabledTraceResult = TraceResult().apply {
             this.traceId = TraceUtils.TRACING_DISABLED
-            this.destinationId = TraceUtils.TRACING_DISABLED
+            this.dataStreamId = TraceUtils.TRACING_DISABLED
             this.spanId = TraceUtils.TRACING_DISABLED
-            this.eventType = TraceUtils.TRACING_DISABLED
+            this.dataStreamRoute = TraceUtils.TRACING_DISABLED
             this.uploadId = TraceUtils.TRACING_DISABLED
         }
     }

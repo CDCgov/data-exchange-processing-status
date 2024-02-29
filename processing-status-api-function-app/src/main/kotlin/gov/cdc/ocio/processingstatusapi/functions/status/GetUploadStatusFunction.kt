@@ -41,21 +41,20 @@ class GetUploadStatusFunction(
     /**
      * Advanced query for dex uploads, including sorting, filtering and pagination.
      *
-     * @param destinationId String
+     * @param dataStreamId String
      * @param stageName String
      * @return HttpResponseMessage
      */
-    fun uploadStatus(destinationId: String, stageName: String): HttpResponseMessage {
+    fun uploadStatus(dataStreamId: String, stageName: String): HttpResponseMessage {
 
-        logger.info("destinationId = $destinationId")
+        logger.info("dataStreamId = $dataStreamId")
 
         val dateStart = request.queryParameters["date_start"]
         val dateEnd = request.queryParameters["date_end"]
         val pageSize = request.queryParameters["page_size"]
         val pageNumber = request.queryParameters["page_number"]
-        val extEvent = request.queryParameters["ext_event"]
-        val sortBy = request.queryParameters["sort_by"]
-        val sortOrder = request.queryParameters["sort_order"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
+
 
         val pageSizeAsInt = try {
             getPageSize(pageSize)
@@ -67,10 +66,10 @@ class GetUploadStatusFunction(
         }
 
         val sqlQuery = StringBuilder()
-        sqlQuery.append("from $reportsContainerName t where t.destinationId = '$destinationId'")
+        sqlQuery.append("from $reportsContainerName t where t.dataStreamId = '$dataStreamId'")
 
-        extEvent?.run {
-            sqlQuery.append(" and t.eventType = '$extEvent'")
+        dataStreamRoute?.run {
+            sqlQuery.append(" and t.dataStreamRoute = '$dataStreamRoute'")
         }
 
         dateStart?.run {

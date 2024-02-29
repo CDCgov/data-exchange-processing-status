@@ -55,11 +55,11 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         val uploadId = createReportMessage.uploadId
             ?: throw BadRequestException("Missing required field upload_id")
 
-        val destinationId = createReportMessage.destinationId
-            ?: throw BadRequestException("Missing required field destination_id")
+        val dataStreamId = createReportMessage.dataStreamId
+            ?: throw BadRequestException("Missing required field data_stream_id")
 
-        val eventType = createReportMessage.eventType
-            ?: throw BadRequestException("Missing required field event_type")
+        val dataStreamRoute = createReportMessage.dataStreamRoute
+            ?: throw BadRequestException("Missing required field data_stream_route")
 
         val stageName = createReportMessage.stageName
             ?: throw BadRequestException("Missing required field stage_name")
@@ -79,8 +79,8 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
         ReportManager().createReportWithUploadId(
             uploadId,
-            destinationId,
-            eventType,
+            dataStreamId,
+            dataStreamRoute,
             stageName,
             contentType,
             content,

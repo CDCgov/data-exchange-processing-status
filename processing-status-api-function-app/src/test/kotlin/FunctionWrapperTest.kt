@@ -85,7 +85,7 @@ class FunctionWrapperTest {
         } catch(ex: Exception) {
             exceptionThrown = true
         }
-        Assert.assertTrue(exceptionThrown)
+        Assert.assertFalse(exceptionThrown)
     }
 
     @Test
@@ -96,7 +96,7 @@ class FunctionWrapperTest {
         } catch(ex: Exception) {
             exceptionThrown = true
         }
-        Assert.assertTrue(exceptionThrown)
+        Assert.assertFalse(exceptionThrown)
     }
 
     @Test

@@ -16,11 +16,11 @@ data class TraceResult(
     @SerializedName("upload_id")
     var uploadId: String? = null,
 
-    @SerializedName("destination_id")
-    var destinationId: String? = null,
+    @SerializedName("data_stream_id")
+    var dataStreamId: String? = null,
 
-    @SerializedName("event_type")
-    var eventType: String? = null,
+    @SerializedName("data_stream_route")
+    var dataStreamRoute: String? = null,
 
     var spans: List<SpanResult>? = null
 ) {
@@ -36,8 +36,8 @@ data class TraceResult(
 
             // Parent span will always be the first element in the array
             val uploadIdTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("uploadId") }
-            val destinationIdTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("destinationId") }
-            val eventTypeTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("eventType") }
+            val dataStreamIdTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("dataStreamId") }
+            val dataStreamRouteTag = traceModel.spans[0].tags.firstOrNull { it.key.equals("dataStreamRoute") }
             val parentSpanId = traceModel.spans[0].spanID
 
             // Remove the parent span since we'll be doing a foreach on all remaining spans
@@ -131,8 +131,8 @@ data class TraceResult(
                 this.traceId = traceModel.traceID
                 spanId = parentSpanId
                 uploadId = uploadIdTag?.value
-                destinationId = destinationIdTag?.value
-                eventType = eventTypeTag?.value
+                dataStreamId = dataStreamIdTag?.value
+                dataStreamRoute = dataStreamRouteTag?.value
                 spans = spanResults
             }
 

@@ -4,12 +4,12 @@ import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
 import com.azure.messaging.servicebus.ServiceBusClientBuilder
+import com.azure.messaging.servicebus.ServiceBusException
 import com.azure.messaging.servicebus.ServiceBusMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import com.microsoft.azure.functions.HttpStatus
-import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
@@ -40,8 +40,8 @@ class ReportManager {
      * Create a report located with the provided upload ID.
      *
      * @param uploadId String
-     * @param destinationId String
-     * @param eventType String
+     * @param dataStreamId String
+     * @param dataStreamRoute String
      * @param stageName String
      * @param contentType String
      * @param content String
@@ -53,8 +53,8 @@ class ReportManager {
     @Throws(BadStateException::class, BadRequestException::class)
     fun createReportWithUploadId(
         uploadId: String,
-        destinationId: String,
-        eventType: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
         stageName: String,
         contentType: String,
         content: String,
@@ -68,7 +68,7 @@ class ReportManager {
             throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
         }
 
-        return createReport(uploadId, destinationId, eventType, stageName, contentType, content, dispositionType, source)
+        return createReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, dispositionType, source)
     }
 
     /**
@@ -76,8 +76,8 @@ class ReportManager {
      * report(s) with this stageName.
      *
      * @param uploadId String
-     * @param destinationId String
-     * @param eventType String
+     * @param dataStreamId String
+     * @param dataStreamRoute String
      * @param stageName String
      * @param contentType String
      * @param content String
@@ -86,8 +86,8 @@ class ReportManager {
      * @return String - stage report identifier
      * */
     private fun createReport(uploadId: String,
-                             destinationId: String,
-                             eventType: String,
+                             dataStreamId: String,
+                             dataStreamRoute: String,
                              stageName: String,
                              contentType: String,
                              content: String,
@@ -119,11 +119,11 @@ class ReportManager {
                 }
 
                 // Now create the new stage report
-                return createStageReport(uploadId, destinationId, eventType, stageName, contentType, content, source)
+                return createStageReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, source)
             }
             DispositionType.ADD -> {
                 logger.info("Creating report for stage name = $stageName")
-                return createStageReport(uploadId, destinationId, eventType, stageName, contentType, content, source)
+                return createStageReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, source)
             }
         }
     }
@@ -132,8 +132,8 @@ class ReportManager {
      * Creates a report for the given stage.
      *
      * @param uploadId String
-     * @param destinationId String
-     * @param eventType String
+     * @param dataStreamId String
+     * @param dataStreamRoute String
      * @param stageName String
      * @param contentType String
      * @param content String
@@ -142,8 +142,8 @@ class ReportManager {
      */
     @Throws(BadStateException::class)
     private fun createStageReport(uploadId: String,
-                                  destinationId: String,
-                                  eventType: String,
+                                  dataStreamId: String,
+                                  dataStreamRoute: String,
                                   stageName: String,
                                   contentType: String,
                                   content: String,
@@ -153,8 +153,8 @@ class ReportManager {
             this.id = stageReportId
             this.uploadId = uploadId
             this.reportId = stageReportId
-            this.destinationId = destinationId
-            this.eventType = eventType
+            this.dataStreamId = dataStreamId
+            this.dataStreamRoute = dataStreamRoute
             this.stageName = stageName
             this.contentType = contentType
 
@@ -185,7 +185,7 @@ class ReportManager {
                                 //Send message to reports-notifications-queue
                                 val message = NotificationReport(
                                     response.item?.reportId,
-                                    uploadId, destinationId, eventType,
+                                    uploadId, dataStreamId, dataStreamRoute,
                                     stageName,
                                     contentType,
                                     content,

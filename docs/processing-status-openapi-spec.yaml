@@ -61,18 +61,18 @@ paths:
           schema:
             type: string
           description: Upload identifier.
-        - name: destinationId
+        - name: dataStreamId
           in: query
           required: true
           schema:
             type: string
-          description: Destination identifier.
-        - name: eventType
+          description: Data Stream identifier.
+        - name: dataStreamRoute
           in: query
           required: true
           schema:
             type: string
-          description: Event Type.
+          description: Data Stream Route.
       responses:
         '200':
           description: Trace and parent span information for the trace created
@@ -81,7 +81,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateTrace'
         '400':
-          description: uploadId, destinationId and eventType are required.
+          description: uploadId, dataStreamId and dataStreamRoute are required.
         '401':
           description: Authorization information is missing or invalid.
   '/trace/startSpan/{traceId}/{parentSpanId}':
@@ -283,18 +283,18 @@ paths:
           schema:
             type: string
           description: Upload ID.
-        - name: destinationId
+        - name: dataStreamId
           in: query
           required: true
           schema:
             type: string
-          description: Destination ID.
-        - name: eventType
+          description: Data Stream ID.
+        - name: dataStreamRoute
           in: query
           required: true
           schema:
             type: string
-          description: Event Type.
+          description: Data Stream Route.
         - name: stageName
           in: query
           required: true
@@ -323,18 +323,18 @@ paths:
           schema:
             type: string
           description: Upload ID.
-        - name: destinationId
+        - name: dataStreamId
           in: query
           required: true
           schema:
             type: string
-          description: Destination ID.
-        - name: eventType
+          description: Data Stream ID.
+        - name: dataStreamRoute
           in: query
           required: true
           schema:
             type: string
-          description: Event Type.
+          description: Data Stream Route.
         - name: stageName
           in: query
           required: true
@@ -364,7 +364,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Destination identifier to retrieve all the upload statuses for.
+          description: Upload identifier to retrieve all the upload statuses for.
       responses:
         '200':
           description: Report for the given identifier
@@ -415,7 +415,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Destination identifier to retrieve all the upload statuses for.
+          description: Trace identifier to retrieve all the upload statuses for.
       responses:
         '200':
           description: Report for the given identifier
@@ -429,7 +429,7 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/report/ids/{destinationId}':
+  '/report/ids/{dataStreamId}':
     get:
       tags:
         - DEX Reports
@@ -444,12 +444,12 @@ paths:
           description: >-
             If specified, also filter by meta_ext_event that was provided with the upload.
           example: RoutineImmunization
-        - name: destinationId
+        - name: dataStreamId
           in: path
           required: true
           schema:
             type: string
-          description: Destination identifier to retrieve all the upload statuses for.
+          description: Data Stream identifier to retrieve all the upload statuses for.
         - name: date_start
           in: query
           schema:
@@ -490,14 +490,14 @@ paths:
           description: Bad request.  The identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/info/destinationId':
+  '/info/dataStreamId':
     get:
       tags:
         - DEX Info
       summary: >-
-        Provides a list of all known destination IDs. (Not yet implemented)
+        Provides a list of all known data stream IDs. (Not yet implemented)
       description: >-
-        Provides a list of all known destination IDs. **(Not yet implemented)**
+        Provides a list of all known data stream IDs. **(Not yet implemented)**
       responses:
         '200':
           description: All of the known destination identifiers.
@@ -509,7 +509,7 @@ paths:
                   type: string
         '401':
           description: Authorization information is missing or invalid.
-  '/info/{destinationId}/eventTypes':
+  '/info/{dataStreamId}/eventTypes':
     get:
       tags:
         - DEX Info
@@ -518,7 +518,7 @@ paths:
       description: >-
         Provides a list of all known event types for the given destination identifier. **(Not yet implemented)**
       parameters:
-        - name: destinationId
+        - name: dataStreamId
           in: path
           required: true
           schema:
@@ -587,7 +587,7 @@ paths:
           description: Bad request.  The upload identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
-  '/upload/{destinationId}':
+  '/upload/{dataStreamId}':
     get:
       tags:
         - DEX Status
@@ -595,15 +595,15 @@ paths:
       description: >-
         Provides report for the given identifier.
       parameters:
-        - name: ext_event
+        - name: data_stream_route
           in: query
           schema:
             type: string
           description: >-
-            If specified, also filter by meta_ext_event that was provided with
+            If specified, also filter by meta_data_stream_route that was provided with
             the upload.
           example: RoutineImmunization
-        - name: destinationId
+        - name: dataStreamId
           in: path
           required: true
           schema:
@@ -695,18 +695,18 @@ paths:
       description: >-
         Provides report counts for the given criteria.
       parameters:
-        - name: destination_id
+        - name: data_stream_id
           in: query
           required: true
           schema:
             type: string
-          description: Filter by the destination identifier to retrieve the report counts for.
-        - name: ext_event
+          description: Filter by the data stream identifier to retrieve the report counts for.
+        - name: data_stream_route
           in: query
           required: true
           schema:
             type: string
-          description: Filter by the ext event that was provided with the upload.
+          description: Filter by the data stream route that was provided with the upload.
           example: routineImmunization
         - name: date_start
           in: query
@@ -753,7 +753,7 @@ paths:
                   timestamp:
                     type: string
                     format: date
-  '/notifications/subscribe/email/{destinationId}/{eventType}':
+  '/notifications/subscribe/email/{dataStreamId}/{dataStreamRoute}':
     post:
       tags:
         - DEX Notifications
@@ -761,18 +761,18 @@ paths:
       description: >-
         Creates a new email subscription for the notification of any type of status updates(warnings, errors or success) of pipeline.
       parameters:
-        - name: destinationId
+        - name: dataStreamId
           in: path
           required: true
           schema:
             type: string
-          description: Destination Id or Program Id to subscribe for notifications.
-        - name: eventType
+          description: Data Stream Id or Program Id to subscribe for notifications.
+        - name: dataStreamRoute
           in: path
           required: true
           schema:
             type: string
-          description: Event type within the program to subscribe.
+          description: Data Stream Route within the program to subscribe.
         - name: email
           in: query
           required: true
@@ -805,26 +805,26 @@ paths:
           description: Authorization information is missing or invalid.
         '403':
           description: Unauthorized access.
-  '/notifications/subscribe/websocket/{destinationId}/{eventType}':
+  '/notifications/subscribe/websocket/{dataStreamId}/{dataStreamRoute}':
     post:
       tags:
         - DEX Notifications
-      summary: Create a subscription on the given destinationId, stageNames and event types for the provided web socket url.
+      summary: Create a subscription on the given dataStreamId, stageNames and dataStreamRoute for the provided web socket url.
       description: >-
         Creates a new websocket subscription for the notification of any type of status updates(warnings, errors or success) of pipeline.
       parameters:
-        - name: destinationId
+        - name: dataStreamId
           in: path
           required: true
           schema:
             type: string
-          description: Destination ID
-        - name: eventType
+          description: Data Stream Id
+        - name: dataStreamRoute
           in: path
           required: true
           schema:
             type: string
-          description: Event type to subscribe.
+          description: DataStreamRoute to subscribe.
         - name: url
           in: query
           required: true

@@ -53,27 +53,27 @@ class ServiceBusTests {
     }
 
     @Test
-    fun testServiceBusMessageMissingDestinationId() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_destination_id.json").readText()
+    fun testServiceBusMessageMissingDataStreamId() {
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_id.json").readText()
 
         var exceptionThrown = false
         try {
             ServiceBusProcessor(context).withMessage(testMessage)
         } catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage == "Missing required field destination_id"
+            exceptionThrown = ex.localizedMessage == "Missing required field data_stream_id"
         }
         Assert.assertTrue(exceptionThrown)
     }
 
     @Test
     fun testServiceBusMessageMissingEventType() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_event_type.json").readText()
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_route.json").readText()
 
         var exceptionThrown = false
         try {
             ServiceBusProcessor(context).withMessage(testMessage)
         } catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage == "Missing required field event_type"
+            exceptionThrown = ex.localizedMessage == "Missing required field data_stream_route"
         }
         Assert.assertTrue(exceptionThrown)
     }

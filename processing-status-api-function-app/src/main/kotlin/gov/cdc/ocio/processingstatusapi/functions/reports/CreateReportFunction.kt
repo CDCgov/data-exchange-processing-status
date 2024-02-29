@@ -26,7 +26,11 @@ class CreateReportFunction(
 
     private val destinationId = request.queryParameters["destinationId"]
 
-    private val eventType = request.queryParameters["eventType"]
+    private var dataStreamId = request.queryParameters["dataStreamId"]
+
+    private var eventType = request.queryParameters["eventType"]
+
+    private var dataStreamRoute = request.queryParameters["dataStreamRoute"]
 
     private val reportStageName = request.queryParameters["stageName"]
 
@@ -44,14 +48,16 @@ class CreateReportFunction(
      * @return HttpResponseMessage
      */
     fun jsonWithUploadId(uploadId: String): HttpResponseMessage {
+        dataStreamId = dataStreamId ?: destinationId
+        dataStreamRoute = dataStreamRoute ?: eventType
         // Verify the request is complete and properly formatted
         checkRequired()?.let { return it }
 
         try {
             val stageReportId = ReportManager().createReportWithUploadId(
                 uploadId,
-                destinationId!!,
-                eventType!!,
+                dataStreamId!!,
+                dataStreamRoute!!,
                 reportStageName!!,
                 "json",
                 requestBody,
@@ -99,17 +105,17 @@ class CreateReportFunction(
      */
     private fun checkRequired(): HttpResponseMessage? {
 
-        if (destinationId == null) {
+        if (dataStreamId == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("destinationId is required")
+                .body("destinationId or dataStreamId is required")
                 .build()
         }
 
-        if (eventType == null) {
+        if (dataStreamRoute == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("eventType is required")
+                .body("eventType or dataStreamRoute is required")
                 .build()
         }
 

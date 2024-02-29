@@ -8,8 +8,8 @@ import gov.cdc.ocio.processingstatusapi.model.reports.Report
  * line or processing pipeline.
  *
  * @property uploadId String?
- * @property destinationId String?
- * @property eventType String?
+ * @property dataStreamId String?
+ * @property dataStreamRoute String?
  * @property reports List<StageReport>?
  */
 class ReportDao {
@@ -17,11 +17,11 @@ class ReportDao {
     @SerializedName("upload_id")
     var uploadId: String? = null
 
-    @SerializedName("destination_id")
-    var destinationId: String? = null
+    @SerializedName("data_stream_id")
+    var dataStreamId: String? = null
 
-    @SerializedName("event_type")
-    var eventType: String? = null
+    @SerializedName("data_stream_route")
+    var dataStreamRoute: String? = null
 
     var reports: List<Report>? = null
 }

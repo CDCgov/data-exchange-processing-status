@@ -10,8 +10,8 @@ import java.util.*
  *
  * @property uploadId String?
  * @property reportId String?
- * @property destinationId String?
- * @property eventType String?
+ * @property dataStreamId String?
+ * @property dataStreamRoute String?
  * @property stageName String?
  * @property contentType String?
  * @property content String?
@@ -27,11 +27,11 @@ data class Report(
     @SerializedName("report_id")
     var reportId: String? = null,
 
-    @SerializedName("destination_id")
-    var destinationId: String? = null,
+    @SerializedName("data_stream_id")
+    var dataStreamId: String? = null,
 
-    @SerializedName("event_type")
-    var eventType: String? = null,
+    @SerializedName("data_stream_route")
+    var dataStreamRoute: String? = null,
 
     @SerializedName("stage_name")
     var stageName: String? = null,
