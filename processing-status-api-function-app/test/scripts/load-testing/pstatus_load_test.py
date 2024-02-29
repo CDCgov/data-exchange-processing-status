@@ -17,7 +17,7 @@ from azure.servicebus import TransportType
 QUEUE_NAME = "processing-status-cosmos-db-queue"
 
 env = {}
-with open(".env") as envfile:
+with open("../.env") as envfile:
     for line in envfile:
         name, var = line.partition("=")[::2]
         var = var.strip()
