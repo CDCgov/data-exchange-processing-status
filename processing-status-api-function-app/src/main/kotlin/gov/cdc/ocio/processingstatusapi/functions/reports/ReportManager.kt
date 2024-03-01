@@ -64,8 +64,10 @@ class ReportManager {
         // Verify the content contains the minimum schema information
         try {
             SchemaDefinition.fromJsonString(content)
-        } catch(e: Exception) {
+        } catch(e: InvalidSchemaDefException) {
             throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
+        } catch(e: Exception) {
+            throw BadRequestException("Malformed message: ${e.localizedMessage}")
         }
 
         return createReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, dispositionType, source)
