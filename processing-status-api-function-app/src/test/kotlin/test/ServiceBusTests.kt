@@ -66,7 +66,7 @@ class ServiceBusTests {
     }
 
     @Test
-    fun testServiceBusMessageMissingEventType() {
+    fun testServiceBusMessageMissingRoute() {
         val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_route.json").readText()
 
         var exceptionThrown = false
@@ -141,6 +141,13 @@ class ServiceBusTests {
             exceptionThrown = ex.localizedMessage == "Invalid schema definition: Invalid schema_version provided"
         }
         Assert.assertTrue(exceptionThrown)
+    }
+
+    @Test
+    fun testServiceBusGoodMessage_V1() {
+        val testMessage = File("./src/test/kotlin/data/service_bus_good_message_V1.json").readText()
+
+        ServiceBusProcessor(context).withMessage(testMessage)
     }
 
     @Test

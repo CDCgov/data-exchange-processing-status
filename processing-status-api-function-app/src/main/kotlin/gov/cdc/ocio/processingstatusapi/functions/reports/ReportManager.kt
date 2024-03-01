@@ -64,7 +64,7 @@ class ReportManager {
         // Verify the content contains the minimum schema information
         try {
             SchemaDefinition.fromJsonString(content)
-        } catch(e: InvalidSchemaDefException) {
+        } catch(e: Exception) {
             throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
         }
 

@@ -54,7 +54,8 @@ class GetUploadStatusFunction(
         val pageSize = request.queryParameters["page_size"]
         val pageNumber = request.queryParameters["page_number"]
         val dataStreamRoute = request.queryParameters["data_stream_route"]
-
+        val sortBy = request.queryParameters["sort_by"]
+        val sortOrder = request.queryParameters["sort_order"]
 
         val pageSizeAsInt = try {
             getPageSize(pageSize)
