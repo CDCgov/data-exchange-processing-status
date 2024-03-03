@@ -80,8 +80,8 @@ class GetStatusFunction(
 
         val status = StatusResult().apply {
             this.uploadId = traceResult?.uploadId
-            this.destinationId = traceResult?.destinationId
-            this.eventType = traceResult?.eventType
+            this.dataStreamId = traceResult?.dataStreamId
+            this.dataStreamRoute = traceResult?.dataStreamRoute
             trace = traceResult?.let { TraceDao.buildFromTraceResult(it) }
             reports = reportResult?.reports
         }
@@ -179,29 +179,18 @@ class GetStatusFunction(
         )
         if (reportItems.count() > 0) {
             val report = reportItems.elementAt(0)
+            val stageReportItemList = reportItems.toList()
 
-            val stageReportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+            logger.info("Successfully located report with uploadId = $uploadId")
 
-            // Locate the existing stage reports
-            val stageReportItems = reportsContainer.queryItems(
-                stageReportsSqlQuery, CosmosQueryRequestOptions(),
-                Report::class.java
-            )
-            if (stageReportItems.count() > 0) {
-                val stageReportItemList = stageReportItems.toList()
-
-                logger.info("Successfully located report with uploadId = $uploadId")
-
-                val reportResult = ReportDao().apply {
-                    this.uploadId = uploadId
-                    this.destinationId = report.destinationId
-                    this.eventType = report.eventType
-                    this.reports = stageReportItemList
-                }
-                return reportResult
+            val reportResult = ReportDao().apply {
+                this.uploadId = uploadId
+                this.dataStreamId = report.dataStreamId
+                this.dataStreamRoute = report.dataStreamRoute
+                this.reports = stageReportItemList
             }
+            return reportResult
         }
-
         logger.error("Failed to locate report with uploadId = $uploadId")
 
         return null

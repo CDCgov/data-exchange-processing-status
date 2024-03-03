@@ -49,7 +49,7 @@ class CreateReportFunctionTests {
     }
 
     @Test
-    fun testWithUploadIDMissingDestinationId() {
+    fun testWithUploadIDMissingDataStreamId() {
         queryParameters= mutableMapOf<String, String?>()
         queryParameters["eventType"] = "1"
         queryParameters["stageName"] = "1"

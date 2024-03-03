@@ -84,8 +84,8 @@ class GetReportCountsFunction(
 
             val reportResult = ReportCounts().apply {
                 this.uploadId = uploadId
-                this.destinationId = firstReport?.destinationId
-                this.eventType = firstReport?.eventType
+                this.dataStreamId = firstReport?.dataStreamId
+                this.dataStreamRoute = firstReport?.dataStreamRoute
                 this.timestamp = firstReport?.timestamp
                 val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
                 val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
@@ -208,25 +208,25 @@ class GetReportCountsFunction(
      */
     fun withQueryParams(): HttpResponseMessage {
 
-        val destinationId = request.queryParameters["destination_id"]
-        val eventType = request.queryParameters["ext_event"]
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
 
         val dateStart = request.queryParameters["date_start"]
         val dateEnd = request.queryParameters["date_end"]
 
         val daysInterval = request.queryParameters["days_interval"]
 
-        if (destinationId == null) {
+        if (dataStreamId == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("destination_id is required")
+                .body("data_stream_id is required")
                 .build()
         }
 
-        if (eventType == null) {
+        if (dataStreamRoute == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("ext_event is required")
+                .body("data_stream_route is required")
                 .build()
         }
 
@@ -235,7 +235,7 @@ class GetReportCountsFunction(
             "select "
             + "distinct value r.uploadId "
             + "from $reportsContainerName r "
-            + "where r.destinationId = '$destinationId' and r.eventType = '$eventType'"
+            + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute'"
         )
 
         if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
@@ -325,8 +325,8 @@ class GetReportCountsFunction(
                 revisedStageCountsByUploadId.forEach { upload ->
                     reportCountsList.add(ReportCounts().apply {
                         this.uploadId = upload.key
-                        this.destinationId = destinationId
-                        this.eventType = eventType
+                        this.dataStreamId = dataStreamId
+                        this.dataStreamRoute = dataStreamRoute
                         this.timestamp = earliestTimestamp
                         this.stages = upload.value
                     })

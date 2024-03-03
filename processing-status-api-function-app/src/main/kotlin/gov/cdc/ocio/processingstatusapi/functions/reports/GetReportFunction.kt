@@ -63,31 +63,21 @@ class GetReportFunction(
         )
         if (reportItems.count() > 0) {
             val report = reportItems.elementAt(0)
+            val stageReportItemList = reportItems.toList()
 
-            val stageReportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+            logger.info("Successfully located report with uploadId = $uploadId")
 
-            // Locate the existing stage reports
-            val stageReportItems = reportsContainer.queryItems(
-                stageReportsSqlQuery, CosmosQueryRequestOptions(),
-                Report::class.java
-            )
-            if (stageReportItems.count() > 0) {
-                val stageReportItemList = stageReportItems.toList()
-
-                logger.info("Successfully located report with uploadId = $uploadId")
-
-                val reportResult = ReportDao().apply {
-                    this.uploadId = uploadId
-                    this.destinationId = report.destinationId
-                    this.eventType = report.eventType
-                    this.reports = stageReportItemList
-                }
-                return request
-                    .createResponseBuilder(HttpStatus.OK)
-                    .header("Content-Type", "application/json")
-                    .body(gson.toJson(reportResult))
-                    .build()
+            val reportResult = ReportDao().apply {
+                this.uploadId = uploadId
+                this.dataStreamId = report.dataStreamId
+                this.dataStreamRoute = report.dataStreamRoute
+                this.reports = stageReportItemList
             }
+            return request
+                .createResponseBuilder(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(gson.toJson(reportResult))
+                .build()
         }
         logger.error("Failed to locate report with uploadId = $uploadId")
 
@@ -132,21 +122,21 @@ class GetReportFunction(
     }
 
     /**
-     * Retrieve reports for the provided destination ID and stage name.
+     * Retrieve reports for the provided dataStreamId ID and stage name.
      *
-     * @param destinationId String
+     * @param dataStreamId String
      * @param stageName String
      * @return HttpResponseMessage
      */
-    fun withDestinationId(destinationId: String, stageName: String): HttpResponseMessage {
+    fun withDataStreamId(dataStreamId: String, stageName: String): HttpResponseMessage {
 
-        val eventType = request.queryParameters["eventType"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
 
         val sqlQuery = StringBuilder()
-        sqlQuery.append("select * from $reportsContainerName t where t.destinationId = '$destinationId' and t.stageName = '$stageName'")
+        sqlQuery.append("select * from $reportsContainerName t where t.dataStreamId = '$dataStreamId' and t.stageName = '$stageName'")
 
-        eventType?.run {
-            sqlQuery.append(" and t.eventType = '$eventType'")
+        dataStreamRoute?.run {
+            sqlQuery.append(" and t.dataStreamRoute = '$dataStreamRoute'")
         }
 
         // Locate the existing report so we can amend it
