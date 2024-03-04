@@ -3,7 +3,7 @@ package gov.cdc.ocio.model.message
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
-import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.exception.BadStateException
 import java.lang.ClassCastException
 import java.util.*
 

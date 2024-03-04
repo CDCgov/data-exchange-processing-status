@@ -1,4 +1,4 @@
-package gov.cdc.ocio.exceptions
+package gov.cdc.ocio.exception
 
 /**
  * Intended use of this exception is for internal server issues where we expect to be in a certain state or have

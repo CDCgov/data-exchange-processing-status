@@ -1,11 +1,11 @@
-package functions
+package function
 
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus
-import functions.httpMockData.HttpResponseMessageMock
+import function.httpMockData.HttpResponseMessageMock
 import gov.cdc.ocio.FunctionJavaWrappers
-import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.exception.BadStateException
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.testng.Assert.*
@@ -17,7 +17,7 @@ import java.util.*
 class FunctionWrapperTest {
 
     private lateinit var request: HttpRequestMessage<Optional<String>>
-    private val testMessage = File("./src/test/kotlin/functions/httpMockData/subscribeEmail_badrequest.json").readText()
+    private val testMessage = File("./src/test/kotlin/function/httpMockData/subscribeEmail_badrequest.json").readText()
     private val queryParameters: Map<String, String>  =  mapOf("email" to "abc@def.ghi",
         "stageName" to "dummyStage",
         "statusType" to "warning",

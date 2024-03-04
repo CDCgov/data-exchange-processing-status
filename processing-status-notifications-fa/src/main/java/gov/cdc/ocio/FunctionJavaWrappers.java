@@ -5,10 +5,10 @@ import com.microsoft.azure.functions.HttpMethod;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.annotation.*;
-import gov.cdc.ocio.functions.http.SubscribeEmailNotifications;
-import gov.cdc.ocio.functions.http.SubscribeWebsocketNotifications;
-import gov.cdc.ocio.functions.http.UnsubscribeNotifications;
-import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor;
+import gov.cdc.ocio.function.http.SubscribeEmailNotifications;
+import gov.cdc.ocio.function.http.SubscribeWebsocketNotifications;
+import gov.cdc.ocio.function.http.UnsubscribeNotifications;
+import gov.cdc.ocio.function.servicebus.ReportsNotificationsSBQueueProcessor;
 
 import java.util.Optional;
 

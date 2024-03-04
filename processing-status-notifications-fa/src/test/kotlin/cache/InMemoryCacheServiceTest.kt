@@ -1,7 +1,7 @@
 package cache
 
 import gov.cdc.ocio.cache.InMemoryCacheService
-import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.exception.BadStateException
 import gov.cdc.ocio.model.http.SubscriptionType
 import org.testng.Assert.*
 import org.testng.annotations.Test

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.functions.http
+package gov.cdc.ocio.function.http
 
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus

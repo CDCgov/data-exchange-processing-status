@@ -1,6 +1,7 @@
 package gov.cdc.ocio.rulesEngine
 
 import gov.cdc.ocio.cache.InMemoryCacheService
+import gov.cdc.ocio.dispatcher.EmailDispatcher
 import gov.cdc.ocio.model.cache.NotificationSubscription
 import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging
@@ -34,7 +35,7 @@ class EmailNotificationRule(): Rule {
      * @return String
      */
     override fun dispatchEvent(subscription: NotificationSubscription): String {
-        logger.info("Email event dispatched for ${subscription.subscriberAddressOrUrl}")
-        return "Email Event dispatched for ${subscription.subscriberAddressOrUrl}"
+        val emailDispatcher = EmailDispatcher()
+        return emailDispatcher.dispatchEvent(subscription)
     }
 }

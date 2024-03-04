@@ -1,12 +1,11 @@
-package functions
+package function
 
 import com.microsoft.azure.functions.ExecutionContext
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpStatus
-import functions.httpMockData.HttpResponseMessageMock
+import function.httpMockData.HttpResponseMessageMock
 import gov.cdc.ocio.FunctionJavaWrappers
-import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor
-import mu.KotlinLogging
+import gov.cdc.ocio.function.servicebus.ReportsNotificationsSBQueueProcessor
 import org.mockito.Mockito
 import org.testng.Assert.*
 import org.testng.annotations.BeforeTest
@@ -27,7 +26,7 @@ class RulesEngineTest {
 
     private lateinit var context: ExecutionContext
     private lateinit var request: HttpRequestMessage<Optional<String>>
-    private val testMessage = File("./src/test/kotlin/functions/httpMockData/subscribeEmail_badrequest.json").readText()
+    private val testMessage = File("./src/test/kotlin/function/httpMockData/subscribeEmail_badrequest.json").readText()
 
     @BeforeTest
     fun setUp() {
@@ -53,9 +52,10 @@ class RulesEngineTest {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
         FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event2")
 
-        val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType2.json").readText()
+        val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType2.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
-        assertEquals(status, listOf("Email Event dispatched for abc@def.com",""))
+        assertTrue(status.get(0).contains("cdc.gov Microsoft ESMTP MAIL Service ready", false))
+        assertEquals(status.get(1), "")
     }
 
     @Test(description = "Test for email notification for invalid destinationId/eventType")
@@ -67,7 +67,7 @@ class RulesEngineTest {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
         FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event1")
 
-        val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
+        val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
         assertEquals(status, listOf("",""))
     }
@@ -81,7 +81,7 @@ class RulesEngineTest {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
         FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
 
-        val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
+        val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
         assertEquals(status, listOf("",""))
     }
@@ -95,7 +95,7 @@ class RulesEngineTest {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
         FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
 
-        val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
+        val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report2_with_stageName1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
         assertEquals(status, listOf("","Websocket Event dispatched for ws://192.34.46/24/45"))
     }
@@ -111,8 +111,9 @@ class RulesEngineTest {
         FunctionJavaWrappers().subscribeEmail(request, "dex-testing", "test-event1")
         FunctionJavaWrappers().subscribeWebsocket(request, "dex-testing", "test-event1")
 
-        val testMessage = File("./src/test/kotlin/functions/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType1.json").readText()
+        val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
-        assertEquals(status, listOf("Email Event dispatched for uei@hdk.com","Websocket Event dispatched for ws://192.34.46/24/45"))
+        assertTrue(status.get(0).contains("cdc.gov Microsoft ESMTP MAIL Service ready", false))
+        assertEquals(status.get(1), "Websocket Event dispatched for ws://192.34.46/24/45")
     }
 }

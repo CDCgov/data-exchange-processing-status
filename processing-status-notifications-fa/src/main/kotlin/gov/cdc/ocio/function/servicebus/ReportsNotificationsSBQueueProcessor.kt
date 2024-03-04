@@ -1,19 +1,18 @@
-package gov.cdc.ocio.functions.servicebus
+package gov.cdc.ocio.function.servicebus
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
 import com.microsoft.azure.functions.ExecutionContext
-import gov.cdc.ocio.exceptions.BadRequestException
-import gov.cdc.ocio.exceptions.BadStateException
-import gov.cdc.ocio.exceptions.ContentException
-import gov.cdc.ocio.exceptions.InvalidSchemaDefException
+import gov.cdc.ocio.exception.BadRequestException
+import gov.cdc.ocio.exception.BadStateException
+import gov.cdc.ocio.exception.ContentException
+import gov.cdc.ocio.exception.InvalidSchemaDefException
 import gov.cdc.ocio.message.ReportParser
 import gov.cdc.ocio.model.cache.SubscriptionRule
 import gov.cdc.ocio.model.message.ReportNotificationSBMessage
 import gov.cdc.ocio.model.message.SchemaDefinition
 import gov.cdc.ocio.rulesEngine.RuleEngine
-import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
  * The service bus is another interface for subscribing for notifications through email.
