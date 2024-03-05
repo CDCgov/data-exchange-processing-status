@@ -3,8 +3,6 @@ package gov.cdc.ocio.processingstatusapi.functions.reports
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
-import com.azure.messaging.servicebus.ServiceBusClientBuilder
-import com.azure.messaging.servicebus.ServiceBusException
 import com.azure.messaging.servicebus.ServiceBusMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
@@ -193,7 +191,7 @@ class ReportManager {
                                     content,
                                     source
                                 )
-                                sendToReportsQueue(message)
+                                reportMgrConfig.serviceBusSender.sendMessage(ServiceBusMessage(message.toString()))
                             }
                             return stageReportId
                         }
@@ -231,20 +229,6 @@ class ReportManager {
 
     private fun getCalculatedRetryDuration(attempt: Int): Long {
         return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
-    }
-
-    @Throws(InterruptedException::class, ServiceBusException::class)
-    private fun sendToReportsQueue(message: NotificationReport){
-        val connectionString = System.getenv("ServiceBusConnectionString")
-        val queueName = System.getenv("ServiceBusReportsQueueName")
-        val sender = ServiceBusClientBuilder()
-            .connectionString(connectionString)
-            .sender()
-            .queueName(queueName)
-            .buildClient()
-        sender.sendMessage(ServiceBusMessage(message.toString()))
-        sender.close()
-
     }
 
     companion object {
