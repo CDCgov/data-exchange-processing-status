@@ -11,7 +11,7 @@ import json
 ############################################################################################
 
 env = {}
-with open(".env") as envfile:
+with open("../.env") as envfile:
     for line in envfile:
         name, var = line.partition("=")[::2]
         var = var.strip()

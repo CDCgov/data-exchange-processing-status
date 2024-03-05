@@ -1,4 +1,4 @@
-package httpmock
+package functions.httpMockData
 
 import com.microsoft.azure.functions.HttpResponseMessage
 import com.microsoft.azure.functions.HttpStatus

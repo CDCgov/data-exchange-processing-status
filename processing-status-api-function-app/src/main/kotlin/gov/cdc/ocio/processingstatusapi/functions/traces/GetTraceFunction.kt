@@ -29,26 +29,38 @@ class GetTraceFunction(
 
         logger.info("Trace Id = $traceId")
 
-        val traceEndPoint = System.getenv("JAEGER_TRACE_END_POINT")+"api/traces/$traceId"
-        logger.info("traceEndPoint: $traceEndPoint")
-        val response =  khttp.get(traceEndPoint)
-        val obj = response.jsonObject
-        logger.info("$obj")
+        var traceResult: TraceResult? = null
+        if (TraceUtils.tracingEnabled) {
+            val traceEndPoint = System.getenv("JAEGER_TRACE_END_POINT") + "api/traces/$traceId"
+            logger.info("traceEndPoint: $traceEndPoint")
+            var attempts = 0
+            do {
+                val response = khttp.get(traceEndPoint)
+                val obj = response.jsonObject
+                logger.info("$obj")
 
-        if (response.statusCode != HttpStatus.OK.value()) {
+                if (response.statusCode == HttpStatus.OK.value()) {
+                    val traceModel = Gson().fromJson(obj.toString(), Base::class.java)
+                    traceResult = TraceResult.buildFromTrace(traceModel.data[0])
+                    break
+                }
+                Thread.sleep(500)
+            } while (attempts++ < 20) // try for up to 10 seconds
+        } else {
+            traceResult = disabledTraceResult
+        }
+
+        if (traceResult != null) {
             return request
-                .createResponseBuilder(HttpStatus.valueOf(response.statusCode))
-                .body("Bad request. The identifier provided was not found.")
+                .createResponseBuilder(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(gson.toJson(traceResult))
                 .build()
         }
 
-        val traceModel = Gson().fromJson(obj.toString(), Base::class.java)
-        val result = TraceResult.buildFromTrace(traceModel.data[0])
-
         return request
-            .createResponseBuilder(HttpStatus.OK)
-            .header("Content-Type", "application/json")
-            .body(gson.toJson(result))
+            .createResponseBuilder(HttpStatus.BAD_REQUEST)
+            .body("The trace identifier provided was not found.")
             .build()
     }
 
@@ -62,25 +74,49 @@ class GetTraceFunction(
 
         logger.info("Upload Id = $uploadId")
 
-        val traces = TraceUtils.getTraces(uploadId)
-            ?: return request
-                .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("The uploadId provided was not found.")
-                .build()
+        var traceResult: TraceResult? = null
+        if (TraceUtils.tracingEnabled) {
+            var attempts = 0
+            do {
+                val traces = TraceUtils.getTraces(uploadId)
+                    ?: return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body("The uploadId provided was not found.")
+                        .build()
 
-        if (traces.size != 1) {
+                if (traces.size == 1) {
+                    traceResult = TraceResult.buildFromTrace(traces[0])
+                    break
+                }
+
+                Thread.sleep(500)
+            } while (attempts++ < 20) // try for up to 10 seconds
+        } else {
+            traceResult = disabledTraceResult
+        }
+
+        if (traceResult != null) {
             return request
-                .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Trace inconsistency found, expected exactly one trace for uploadId = $uploadId, but got ${traces.size}")
+                .createResponseBuilder(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(gson.toJson(traceResult))
                 .build()
         }
-        val traceResult = TraceResult.buildFromTrace(traces[0])
 
         return request
-            .createResponseBuilder(HttpStatus.OK)
-            .header("Content-Type", "application/json")
-            .body(gson.toJson(traceResult))
+            .createResponseBuilder(HttpStatus.BAD_REQUEST)
+            .body("The upload identifier provided was not found.")
             .build()
+    }
+
+    companion object {
+        private val disabledTraceResult = TraceResult().apply {
+            this.traceId = TraceUtils.TRACING_DISABLED
+            this.dataStreamId = TraceUtils.TRACING_DISABLED
+            this.spanId = TraceUtils.TRACING_DISABLED
+            this.dataStreamRoute = TraceUtils.TRACING_DISABLED
+            this.uploadId = TraceUtils.TRACING_DISABLED
+        }
     }
 
 }

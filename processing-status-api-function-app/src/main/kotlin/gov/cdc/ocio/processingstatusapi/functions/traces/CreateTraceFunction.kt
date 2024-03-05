@@ -21,13 +21,17 @@ class CreateTraceFunction(
         OpenTelemetryConfig.initOpenTelemetry()
     }
 
-    private val tracer = openTelemetry.getTracer(CreateTraceFunction::class.java.name)
+    private val tracer = openTelemetry?.getTracer(CreateTraceFunction::class.java.name)
 
     private val uploadId = request.queryParameters["uploadId"]
 
-    private val destinationId = request.queryParameters["destinationId"]
+    private var destinationId = request.queryParameters["destinationId"]
 
-    private val eventType = request.queryParameters["eventType"]
+    private var dataStreamId = request.queryParameters["dataStreamId"]
+
+    private var eventType = request.queryParameters["eventType"]
+
+    private var dataStreamRoute = request.queryParameters["dataStreamRoute"]
 
     /**
      * Creates a new distributed tracing trace for the given HTTP request.
@@ -36,21 +40,32 @@ class CreateTraceFunction(
      * @return HttpResponseMessage - resultant HTTP response message for the given request
      */
     fun create(): HttpResponseMessage {
+        dataStreamId = dataStreamId ?: destinationId
+        dataStreamRoute = dataStreamRoute ?: eventType
         // Verify the request is complete and properly formatted
         checkRequired()?.let { return it }
 
         logger.info("uploadId: $uploadId")
 
-        val span = tracer!!.spanBuilder(PARENT_SPAN).startSpan()
-        span.setAttribute("uploadId", uploadId!!)
-        span.setAttribute("destinationId", destinationId!!)
-        span.setAttribute("eventType", eventType!!)
-        span.end()
+        val result: TraceResult
+        if (tracer != null) {
+            val span = tracer.spanBuilder(PARENT_SPAN).startSpan()
+            span.setAttribute("uploadId", uploadId!!)
+            span.setAttribute("dataStreamId", dataStreamId!!)
+            span.setAttribute("dataStreamRoute", dataStreamRoute!!)
+            span.end()
 
-        val result = TraceResult().apply {
-            traceId = span.spanContext.traceId
-            spanId = span.spanContext.spanId
+            result = TraceResult().apply {
+                traceId = span.spanContext.traceId
+                spanId = span.spanContext.spanId
+            }
+        } else {
+            result = TraceResult().apply {
+                traceId = TraceUtils.TRACING_DISABLED
+                spanId = TraceUtils.TRACING_DISABLED
+            }
         }
+
         return request
             .createResponseBuilder(HttpStatus.OK)
             .header("Content-Type", "application/json")
@@ -73,17 +88,17 @@ class CreateTraceFunction(
                 .build()
         }
 
-        if (destinationId == null) {
+        if (dataStreamId == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("destinationId is required")
+                .body("destinationId or dataStreamId is required")
                 .build()
         }
 
-        if (eventType == null) {
+        if (dataStreamRoute == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("eventType is required")
+                .body("eventType or dataStreamRoute is required")
                 .build()
         }
 

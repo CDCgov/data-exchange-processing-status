@@ -66,9 +66,9 @@ class GetReportFunctionTests {
     }
 
     @Test
-    fun testWithDestinationId_ok() {
+    fun testWithDataStreamId_ok() {
         every { items.count() > 0} returns false
-        val response =  GetReportFunction(request).withDestinationId("1", "");
+        val response =  GetReportFunction(request).withDataStreamId("1", "");
         assert(response.status == HttpStatus.OK)
     }
 

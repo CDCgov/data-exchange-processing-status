@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.model.reports
 
+import java.util.*
+
 /**
  * Stage counts for a given upload.  This model is what is returned from a cosmosdb query.
  *
@@ -15,6 +17,8 @@ data class StageCountsForUpload(
     var schema_name: String? = null,
 
     var schema_version: String? = null,
+
+    var timestamp: Date? = null,
 
     var stageName: String? = null,
 

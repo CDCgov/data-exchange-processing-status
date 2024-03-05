@@ -25,29 +25,39 @@ class GetSpanFunction(
         val stageName = request.queryParameters["stageName"]
 
         if (!uploadId.isNullOrBlank() && !stageName.isNullOrBlank()) {
-            var attempts = 0
-            var traces: List<Data>
+
             var latestMatchingSpan: SpanResult?
-            do {
-                // Attempt to locate the trace by uploadId
-                traces = TraceUtils.getTraces(uploadId)
-                    ?: return request
-                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                        .body("The uploadId provided was not found.")
+            if (TraceUtils.tracingEnabled) {
+                var attempts = 0
+                var traces: List<Data>
+                do {
+                    // Attempt to locate the trace by uploadId
+                    traces = TraceUtils.getTraces(uploadId)
+                        ?: return request
+                            .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                            .body("The uploadId provided was not found.")
+                            .build()
+
+                    latestMatchingSpan = checkForStageNameInTraces(traces, stageName)
+                    if (latestMatchingSpan != null) {
+                        break
+                    }
+                    Thread.sleep(500)
+                } while (attempts++ < 20) // try for up to 10 seconds
+
+                if (traces.size != 1) {
+                    return request
+                        .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Trace inconsistency found, expected exactly one trace for uploadId = $uploadId, but got ${traces.size}")
                         .build()
-
-                latestMatchingSpan = checkForStageNameInTraces(traces, stageName)
-                if (latestMatchingSpan != null) {
-                    break
                 }
-                Thread.sleep(500)
-            } while (attempts++ < 20) // try for up to 10 seconds
-
-            if (traces.size != 1) {
-                return request
-                    .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Trace inconsistency found, expected exactly one trace for uploadId = $uploadId, but got ${traces.size}")
-                    .build()
+            } else {
+                latestMatchingSpan = SpanResult().apply {
+                    this.spanId = TraceUtils.TRACING_DISABLED
+                    this.traceId = TraceUtils.TRACING_DISABLED
+                    this.stageName = stageName
+                    this.timestamp = Date()
+                }
             }
 
             return if (latestMatchingSpan != null) {

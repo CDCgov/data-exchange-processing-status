@@ -15,6 +15,8 @@ import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import mu.KotlinLogging
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import java.util.*
 
 
@@ -66,7 +68,11 @@ class GetReportCountsFunction(
         )
         if (reportItems.count() > 0) {
 
-            val firstReportSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId' offset 0 limit 1"
+            // Order by timestamp (ascending) and grab the first one found, which will give us the earliest timestamp.
+            val firstReportSqlQuery = (
+                "select * from $reportsContainerName r where r.uploadId = '$uploadId' "
+                + "order by r.timestamp asc offset 0 limit 1"
+            )
 
             val firstReportItems = reportsContainer.queryItems(
                 firstReportSqlQuery, CosmosQueryRequestOptions(),
@@ -78,8 +84,9 @@ class GetReportCountsFunction(
 
             val reportResult = ReportCounts().apply {
                 this.uploadId = uploadId
-                this.destinationId = firstReport?.destinationId
-                this.eventType = firstReport?.eventType
+                this.dataStreamId = firstReport?.dataStreamId
+                this.dataStreamRoute = firstReport?.dataStreamRoute
+                this.timestamp = firstReport?.timestamp
                 val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
                 val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
                 val revisedStageCounts = revisedStageCountsByUploadId[uploadId]
@@ -201,23 +208,25 @@ class GetReportCountsFunction(
      */
     fun withQueryParams(): HttpResponseMessage {
 
-        val destinationId = request.queryParameters["destination_id"]
-        val eventType = request.queryParameters["ext_event"]
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
 
         val dateStart = request.queryParameters["date_start"]
         val dateEnd = request.queryParameters["date_end"]
 
-        if (destinationId == null) {
+        val daysInterval = request.queryParameters["days_interval"]
+
+        if (dataStreamId == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("destination_id is required")
+                .body("data_stream_id is required")
                 .build()
         }
 
-        if (eventType == null) {
+        if (dataStreamRoute == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("ext_event is required")
+                .body("data_stream_route is required")
                 .build()
         }
 
@@ -226,31 +235,48 @@ class GetReportCountsFunction(
             "select "
             + "distinct value r.uploadId "
             + "from $reportsContainerName r "
-            + "where r.destinationId = '$destinationId' and r.eventType = '$eventType'"
+            + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute'"
         )
 
-        dateStart?.run {
-            try {
-                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-                uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
-            } catch (e: BadRequestException) {
-                logger.error(e.localizedMessage)
-                return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body(e.localizedMessage)
-                    .build()
-            }
+        if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("date_interval and date_start/date_end can't be used simultaneously")
+                .build()
         }
-        dateEnd?.run {
-            try {
-                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-                uploadIdsSqlQuery.append(" and r._ts < $dateEndEpochSecs")
-            } catch (e: BadRequestException) {
-                logger.error(e.localizedMessage)
-                return request
-                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                    .body(e.localizedMessage)
-                    .build()
+
+        if (!daysInterval.isNullOrBlank()) {
+            val dateStartEpochSecs = DateTime
+                .now(DateTimeZone.UTC)
+                .minusDays(Integer.parseInt(daysInterval))
+                .withTimeAtStartOfDay()
+                .toDate()
+                .time / 1000
+            uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+        } else {
+            dateStart?.run {
+                try {
+                    val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
+                    uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+                } catch (e: BadRequestException) {
+                    logger.error(e.localizedMessage)
+                    return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body(e.localizedMessage)
+                        .build()
+                }
+            }
+            dateEnd?.run {
+                try {
+                    val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
+                    uploadIdsSqlQuery.append(" and r._ts < $dateEndEpochSecs")
+                } catch (e: BadRequestException) {
+                    logger.error(e.localizedMessage)
+                    return request
+                        .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                        .body(e.localizedMessage)
+                        .build()
+                }
             }
         }
 
@@ -265,7 +291,7 @@ class GetReportCountsFunction(
             val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
             val reportsSqlQuery = (
                 "select "
-                + "r.uploadId, r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName "
+                + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
                 + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
                 + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
             )
@@ -276,6 +302,7 @@ class GetReportCountsFunction(
 
             if (reportItems.count() > 0) {
                 val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
+                var earliestTimestamp: Date? = null
                 reportItems.forEach {
                     val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
                     list.add(StageCounts().apply {
@@ -283,6 +310,12 @@ class GetReportCountsFunction(
                         this.schema_version = it.schema_version
                         this.counts = it.counts
                         this.stageName = it.stageName
+                        it.timestamp?.let { timestamp ->
+                            if (earliestTimestamp == null)
+                                earliestTimestamp = timestamp
+                            else if (timestamp.before(earliestTimestamp))
+                                earliestTimestamp = timestamp
+                        }
                     })
                     stageCountsByUploadId[it.uploadId!!] = list
                 }
@@ -292,8 +325,9 @@ class GetReportCountsFunction(
                 revisedStageCountsByUploadId.forEach { upload ->
                     reportCountsList.add(ReportCounts().apply {
                         this.uploadId = upload.key
-                        this.destinationId = destinationId
-                        this.eventType = eventType
+                        this.dataStreamId = dataStreamId
+                        this.dataStreamRoute = dataStreamRoute
+                        this.timestamp = earliestTimestamp
                         this.stages = upload.value
                     })
                 }
