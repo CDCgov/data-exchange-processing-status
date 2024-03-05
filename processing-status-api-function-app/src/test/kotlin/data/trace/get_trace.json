@@ -23,12 +23,12 @@
               "value": "gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction"
             },
             {
-              "key": "eventType",
+              "key": "dataStreamRoute",
               "type": "string",
               "value": "upload"
             },
             {
-              "key": "destinationId",
+              "key": "dataStreamId",
               "type": "string",
               "value": "1"
             },

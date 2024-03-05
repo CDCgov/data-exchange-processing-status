@@ -5,8 +5,8 @@ package gov.cdc.ocio.processingstatusapi.model.reports
  *
  * @property uploadId String?
  * @property reportId String?
- * @property destinationId String?
- * @property eventType String?
+ * @property dataStreamId String?
+ * @property dataStreamRoute String?
  * @property stageName String?
  * @property contentType String?
  * @property content String?
@@ -18,9 +18,9 @@ data class NotificationReport(
 
     var reportId: String? = null,
 
-    var destinationId: String? = null,
+    var dataStreamId: String? = null,
 
-    var eventType: String? = null,
+    var dataStreamRoute: String? = null,
 
     var stageName: String? = null,
 

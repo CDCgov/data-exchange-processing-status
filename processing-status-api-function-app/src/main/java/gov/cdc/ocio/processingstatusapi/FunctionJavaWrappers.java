@@ -175,11 +175,11 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "upload/{destinationId}",
+                    route = "upload/{dataStreamId}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("destinationId") String destinationId) {
-        return new GetUploadStatusFunction(request).uploadStatus(destinationId, "dex-upload");
+            @BindingName("dataStreamId") String dataStreamId) {
+        return new GetUploadStatusFunction(request).uploadStatus(dataStreamId, "dex-upload");
     }
 
     @FunctionName("GetReportForStage")
@@ -187,14 +187,14 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/{destinationId}/{stageName}",
+                    route = "report/{dataStreamId}/{stageName}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("destinationId") String destinationId,
+            @BindingName("dataStreamId") String dataStreamId,
             @BindingName("stageName") String stageName,
             final ExecutionContext context) {
-        context.getLogger().info("getReportByStage: destinationId=" + destinationId + ", stageName=" + stageName);
-        return new GetReportFunction(request).withDestinationId(destinationId, stageName);
+        context.getLogger().info("getReportByStage: dataStreamId=" + dataStreamId + ", stageName=" + stageName);
+        return new GetReportFunction(request).withDataStreamId(dataStreamId, stageName);
     }
 
     @FunctionName("GetReportCountsByUploadId")

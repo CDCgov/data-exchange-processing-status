@@ -53,27 +53,27 @@ class ServiceBusTests {
     }
 
     @Test
-    fun testServiceBusMessageMissingDestinationId() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_destination_id.json").readText()
+    fun testServiceBusMessageMissingDataStreamId() {
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_id.json").readText()
 
         var exceptionThrown = false
         try {
             ServiceBusProcessor(context).withMessage(testMessage)
         } catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage == "Missing required field destination_id"
+            exceptionThrown = ex.localizedMessage == "Missing required field data_stream_id"
         }
         Assert.assertTrue(exceptionThrown)
     }
 
     @Test
-    fun testServiceBusMessageMissingEventType() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_event_type.json").readText()
+    fun testServiceBusMessageMissingRoute() {
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_route.json").readText()
 
         var exceptionThrown = false
         try {
             ServiceBusProcessor(context).withMessage(testMessage)
         } catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage == "Missing required field event_type"
+            exceptionThrown = ex.localizedMessage == "Missing required field data_stream_route"
         }
         Assert.assertTrue(exceptionThrown)
     }
@@ -141,6 +141,13 @@ class ServiceBusTests {
             exceptionThrown = ex.localizedMessage == "Invalid schema definition: Invalid schema_version provided"
         }
         Assert.assertTrue(exceptionThrown)
+    }
+
+    @Test
+    fun testServiceBusGoodMessage_V1() {
+        val testMessage = File("./src/test/kotlin/data/service_bus_good_message_V1.json").readText()
+
+        ServiceBusProcessor(context).withMessage(testMessage)
     }
 
     @Test

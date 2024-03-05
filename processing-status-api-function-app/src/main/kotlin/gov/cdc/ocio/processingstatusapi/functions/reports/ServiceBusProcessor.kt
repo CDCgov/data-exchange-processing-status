@@ -35,8 +35,17 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
      */
     @Throws(BadRequestException::class)
     fun withMessage(message: String) {
+        var sbMessage = message
         try {
-            createReport(gson.fromJson(message, CreateReportSBMessage::class.java))
+            logger.info {"Before Message received = $sbMessage" }
+            if(sbMessage.contains("destination_id")){
+                sbMessage = sbMessage.replace("destination_id", "data_stream_id")
+            }
+            if(sbMessage.contains("event_type")){
+                sbMessage = sbMessage.replace("event_type", "data_stream_route")
+            }
+            logger.info { "After Message received = $sbMessage" }
+            createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadStateException("Unable to interpret the create report message")
@@ -55,11 +64,11 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         val uploadId = createReportMessage.uploadId
             ?: throw BadRequestException("Missing required field upload_id")
 
-        val destinationId = createReportMessage.destinationId
-            ?: throw BadRequestException("Missing required field destination_id")
+        val dataStreamId = createReportMessage.dataStreamId
+            ?: throw BadRequestException("Missing required field data_stream_id")
 
-        val eventType = createReportMessage.eventType
-            ?: throw BadRequestException("Missing required field event_type")
+        val dataStreamRoute = createReportMessage.dataStreamRoute
+            ?: throw BadRequestException("Missing required field data_stream_route")
 
         val stageName = createReportMessage.stageName
             ?: throw BadRequestException("Missing required field stage_name")
@@ -79,8 +88,8 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
         logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
         ReportManager().createReportWithUploadId(
             uploadId,
-            destinationId,
-            eventType,
+            dataStreamId,
+            dataStreamRoute,
             stageName,
             contentType,
             content,
