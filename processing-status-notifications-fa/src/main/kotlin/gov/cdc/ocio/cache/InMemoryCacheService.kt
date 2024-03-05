@@ -39,7 +39,6 @@ class InMemoryCacheService {
         } catch (e: BadStateException) {
             throw e
         }
-
     }
 
     /**
