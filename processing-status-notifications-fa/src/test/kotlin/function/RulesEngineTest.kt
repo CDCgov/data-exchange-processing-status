@@ -45,7 +45,7 @@ class RulesEngineTest {
     @Test(description = "Test for email notification for valid destinationId/eventType")
     fun testHL7ReportWithDestination1EventTypeSuccess() {
         println("Test Case 1: Valid Scenerio Email \n Subscription for success status - Valid Params")
-        val queryParameters: Map<String, String>  =  mapOf("email" to "abc@def.com",
+        val queryParameters: Map<String, String>  =  mapOf("email" to "rxv5@cdc.gov",
             "stageName" to "dex-hl7-validation",
             "statusType" to "success")
 
@@ -54,7 +54,7 @@ class RulesEngineTest {
 
         val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType2.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
-        assertTrue(status.get(0).contains("cdc.gov Microsoft ESMTP MAIL Service ready", false))
+        assertTrue(status.get(0).contains("Email sent successfully", false))
         assertEquals(status.get(1), "")
     }
 
@@ -103,7 +103,7 @@ class RulesEngineTest {
     @Test(description = "Test for email and websocket notification for valid statusType and destinationId/eventType/stageName")
     fun testHL7Report2WithDestination1EventType1Success() {
         println("Test Case 5: Valid Scenerio EMail + Websocket \n Subscription for success status - Valid params")
-        val queryParameters: Map<String, String>  =  mapOf("email" to "uei@hdk.com",
+        val queryParameters: Map<String, String>  =  mapOf("email" to "rxv5@cdc.gov",
             "stageName" to "dex-hl7-validation",
             "statusType" to "success",
             "url" to "ws://192.34.46/24/45")
@@ -113,7 +113,7 @@ class RulesEngineTest {
 
         val testMessage = File("./src/test/kotlin/function/rulesEngineMockData/sb_good_message_hl7_report1_with_eventType1.json").readText()
         val status = ReportsNotificationsSBQueueProcessor(context).withTestMessageForDispatch(testMessage)
-        assertTrue(status.get(0).contains("cdc.gov Microsoft ESMTP MAIL Service ready", false))
+        assertTrue(status.get(0).contains("Email sent successfully", false))
         assertEquals(status.get(1), "Websocket Event dispatched for ws://192.34.46/24/45")
     }
 }

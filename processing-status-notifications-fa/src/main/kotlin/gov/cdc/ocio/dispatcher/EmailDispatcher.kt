@@ -1,33 +1,47 @@
 package gov.cdc.ocio.dispatcher
 
+import gov.cdc.ocio.dispatcher.EmailUtil.sendEmail
 import gov.cdc.ocio.model.cache.NotificationSubscription
+import mu.KotlinLogging
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
-import java.io.PrintWriter
 import java.net.Socket
-import java.util.*
-import java.util.concurrent.TimeUnit
-import javax.mail.*
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeMessage
+import javax.mail.MessagingException
+import javax.mail.Session
 
+/**
+ * EMail dispatcher implements IDispatcher which will implement code to send out emails
+ * to the subscribers of teh rules (if the rule matches in rule engine evaluation phase)
+ * @property logger KLogger
+ */
 class EmailDispatcher(): IDispatcher {
+    private val logger = KotlinLogging.logger {}
     override fun dispatchEvent(subscription: NotificationSubscription): String {
 
-// Call the function to check SMTP status
-        return checkSMTPStatusWithoutCredentials(subscription)
+        // Call the function to check SMTP status
+        var response = checkSMTPStatusWithoutCredentials(subscription)
+        if (response.contains("Service ready", true)) {
+            logger.info("Email service connected")
+            sendEmail(subscription)
+            return "Email sent successfully"
+        } else {
+            return "Email server not reachable"
+        }
+
     }
 
+    /**
+     * Method to check teh status of the SMTP server
+     * @param subscription NotificationSubscription
+     * @return String
+     */
     private fun checkSMTPStatusWithoutCredentials(subscription: NotificationSubscription): String {
-        // THis is to get the status from curl statement to see if server is connected
+        // This is to get the status from curl statement to see if server is connected
         try {
-            // Replace placeholders with your SMTP server details
-            val smtpServer = "smtpgw.cdc.gov"
-            val port = 25 // Default SMTP port
+            val smtpServer = System.getenv("SmtpHostServer")
+            val port = System.getenv("SmtpHostPort").toInt()
             val socket = Socket(smtpServer, port)
             val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
-            val writer = PrintWriter(socket.getOutputStream(), true)
             // Read the server response
             val response = reader.readLine()
             println("Server response: $response")
@@ -40,66 +54,25 @@ class EmailDispatcher(): IDispatcher {
         return ""
     }
 
-    private fun checkSMTPStatusWithCredentials() {
-        val username = "your_smtp_username"
-        val password = "your_smtp_password"
-        val smtpServer = "smtpgw.cdc.gov"
-        val port = "25"
-        val props = Properties()
-        props["mail.smtp.auth"] = "true"
-        props["mail.smtp.starttls.enable"] = "true"
-        props["mail.smtp.host"] = smtpServer
-        props["mail.smtp.port"] = port
-        val session = Session.getInstance(props, object : Authenticator() {
-            override fun getPasswordAuthentication(): PasswordAuthentication {
-                return PasswordAuthentication(username, password)
-            }
-        })
-        try {
-            val transport = session.getTransport("smtp")
-            transport.connect()
-            transport.close()
-            println("SMTP server is reachable.")
-        } catch (e: MessagingException) {
-            println("Error connecting to SMTP server: ${e.message}")
-        }
-    }
+    /**
+     * Method to send email
+     * @param subscription NotificationSubscription
+     * @return String
+     */
+    private fun sendEmail(subscription: NotificationSubscription): Unit {
 
-    private fun sendEmail() {
-        // Replace with your SMTP server and account details
-        val host = "smtpgw.cdc.gov"
-        val port = "25"
-        val username = "your_email@example.com"
-        val password = "your_email_password"
-        // Set up properties for the mail session
-        val properties = Properties()
-        properties["mail.smtp.host"] = host
-        properties["mail.smtp.port"] = port
-        properties["mail.smtp.auth"] = "true"
-        properties["mail.smtp.starttls.enable"] = "true"
-        // Create a session with authentication
-        val session = Session.getInstance(properties, object : javax.mail.Authenticator() {
-            override fun getPasswordAuthentication(): javax.mail.PasswordAuthentication {
-                return javax.mail.PasswordAuthentication(username, password)
-            }
-        })
-        try {
-            // Create a MimeMessage object
-            val message = MimeMessage(session)
-            // Set the sender's address
-            message.setFrom(InternetAddress(username))
-            // Set the recipient's address
-            message.addRecipient(Message.RecipientType.TO, InternetAddress("donotreply@cdc.gov"))
-            // Set the subject and content
-            message.subject = "Test Email"
-            message.setText("This is a test email sent from a Kotlin app using javax.mail.")
-            // Send the message
-            Transport.send(message)
-            println("Email sent successfully.")
-        } catch (e: MessagingException) {
-            e.printStackTrace()
-            println("Error sending email: ${e.message}")
+        try{
+            // TODO : Change this into properties
+            val toEmalId = subscription.subscriberAddressOrUrl;
+            val props = System.getProperties()
+            props["mail.smtp.host"] = System.getenv("SmtpHostServer")
+            props["mail.smtp.port"] = System.getenv("SmtpHostPort")
+            val session = Session.getInstance(props, null)
+            sendEmail(session, toEmalId, "${System.getenv("ReplyToName")} : Notification for report", "You have signed up for this notification subscription, please check the portal")
+        } catch(_: MessagingException) {
+            logger.info("Unable to send email")
         }
+
     }
 
 }
