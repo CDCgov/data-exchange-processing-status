@@ -13,8 +13,8 @@ import java.time.Instant
 /**
  * This method is used by HTTP endpoints to subscribe for Websocket notifications
  * based on rules sent in required parameters/arguments
- *              destinationId
- *              eventType
+ *              dataStreamId
+ *              dataStreamRoute
  *              stageName
  *              statusType ("warning", "success", "error")
  *              url (websocket url)
@@ -30,21 +30,21 @@ class SubscribeWebsocketNotifications(
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
-    fun run(destinationId: String,
-        eventType: String):
+    fun run(dataStreamId: String,
+        dataStreamRoute: String):
             HttpResponseMessage {
         // reading query parameters from http request for email subscription
         val url = request.queryParameters["url"]
         val stageName = request.queryParameters["stageName"]
         val statusType = request.queryParameters["statusType"]
 
-        logger.debug("DestinationId: $destinationId")
-        logger.debug("EventType: $eventType")
+        logger.debug("dataStreamId: $dataStreamId")
+        logger.debug("dataStreamRoute: $dataStreamRoute")
         logger.debug("Subscription Websocket Url: $url")
         logger.debug("StageName: $stageName")
         logger.debug("StatusType: $statusType")
 
-        val subscriptionResult = subscribeForEmail(destinationId, eventType, url, stageName, statusType)
+        val subscriptionResult = subscribeForEmail(dataStreamId, dataStreamRoute, url, stageName, statusType)
         return if (subscriptionResult.subscription_id != null) {
             subscriptionResult.message = "Subscription successfull"
             request.createResponseBuilder(HttpStatus.OK).body(subscriptionResult).build()
@@ -54,8 +54,8 @@ class SubscribeWebsocketNotifications(
     }
 
     private fun subscribeForEmail(
-        destinationId: String,
-        eventType: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
         url: String?,
         stageName: String?,
         statusType: String?
@@ -63,8 +63,8 @@ class SubscribeWebsocketNotifications(
         // TODO: Add logic to subscribe and return subscription id appropriately
 
         val result = SubscriptionResult()
-        if (destinationId.isBlank()
-            || eventType.isBlank()
+        if (dataStreamId.isBlank()
+            || dataStreamRoute.isBlank()
             || url.isNullOrBlank()
             || stageName.isNullOrBlank()
             || statusType.isNullOrBlank()) {
@@ -78,7 +78,7 @@ class SubscribeWebsocketNotifications(
             result.status = false
             result.message = "Not valid status"
         } else {
-            result.subscription_id = cacheService.updateNotificationsPreferences(destinationId, eventType, stageName, statusType, url, SubscriptionType.WEBSOCKET)
+            result.subscription_id = cacheService.updateNotificationsPreferences(dataStreamId, dataStreamRoute, stageName, statusType, url, SubscriptionType.WEBSOCKET)
             result.timestamp = Instant.now().epochSecond
             result.status = true
             result.message = "Subscription for Websocket setup"

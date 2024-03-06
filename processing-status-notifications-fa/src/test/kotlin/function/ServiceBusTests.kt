@@ -21,28 +21,28 @@ class ServiceBusTests {
     }
 
     @Test(description = "Tests for missing destination id in report json")
-    fun testServiceBusMessageMissingDestinationId() {
-        val testMessage = File("./src/test/kotlin/function/serviceMockData/sb_missing_destination_id.json").readText()
+    fun testServiceBusMessageMissingdataStreamId() {
+        val testMessage = File("./src/test/kotlin/function/serviceMockData/sb_missing_data_stream_id.json").readText()
 
         var exceptionThrown = false
         try {
             ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
         } catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage == "Missing required field destination_id"
+            exceptionThrown = ex.localizedMessage == "Missing required field data_stream_id"
         }
         assertTrue(exceptionThrown)
     }
 
 
-    @Test(description = "Tests for missing eventType in report json")
-    fun testServiceBusMessageMissingEventType() {
-        val testMessage = File("./src/test/kotlin/function/serviceMockData/sb_missing_event_type.json").readText()
+    @Test(description = "Tests for missing dataStreamRoute in report json")
+    fun testServiceBusMessageMissingdataStreamRoute() {
+        val testMessage = File("./src/test/kotlin/function/serviceMockData/sb_missing_data_stream_route.json").readText()
 
         var exceptionThrown = false
         try {
             ReportsNotificationsSBQueueProcessor(context).withMessage(testMessage)
         } catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage == "Missing required field event_type"
+            exceptionThrown = ex.localizedMessage == "Missing required field data_stream_route"
         }
         assertTrue(exceptionThrown)
     }

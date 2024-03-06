@@ -1,7 +1,7 @@
 {
   "upload_id": "4f99cfde-7c83-44e5-bd49-206ca4df7e16",
-  "destination_id": "dex-testing",
-  "event_type": "test-event1",
+  "data_stream_id": "dex-testing",
+  "data_stream_route": "test-event1",
   "stage_name": "metadata-validation",
   "content_type": "json",
   "content": {
@@ -12,7 +12,7 @@
     "metadata": {
       "filename": "10MB-test-file",
       "filetype": "text/plain",
-      "meta_destination_id": "ndlp",
+      "meta_data_stream_id": "ndlp",
       "meta_ext_event": "routineImmunization",
       "meta_ext_source": "IZGW",
       "meta_ext_sourceversion": "V2022-12-31",

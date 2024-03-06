@@ -16,8 +16,8 @@ public class FunctionJavaWrappers {
     /**
      * Subscribe for email notifications using Rest endpoint
      * @param request HttpRequest
-     * @param destinationId destinationId of the report
-     * @param eventType eventType of the report
+     * @param dataStreamId dataStreamId of the report
+     * @param dataStreamRoute dataStreamRoute of the report
      * @return HttpResponse
      */
     @FunctionName("SubscribeEmail")
@@ -25,20 +25,20 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.POST},
-                    route = "subscribe/email/{destinationId}/{eventType}",
+                    route = "subscribe/email/{dataStreamId}/{dataStreamRoute}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("destinationId") String destinationId,
-            @BindingName("eventType")String eventType
+            @BindingName("dataStreamId") String dataStreamId,
+            @BindingName("dataStreamRoute")String dataStreamRoute
     ) {
-        return new SubscribeEmailNotifications(request).run(destinationId, eventType);
+        return new SubscribeEmailNotifications(request).run(dataStreamId, dataStreamRoute);
     }
 
     /**
      * Subscribes for websocket notifications using Rest endpoint
      * @param request HttpRequest
-     * @param destinationId destinationId of the report
-     * @param eventType eventType of the report
+     * @param dataStreamId dataStreamId of the report
+     * @param dataStreamRoute dataStreamRoute of the report
      * @return HttpResponse
      */
 
@@ -47,13 +47,13 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.POST},
-                    route = "subscribe/websocket/{destinationId}/{eventType}",
+                    route = "subscribe/websocket/{dataStreamId}/{dataStreamRoute}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("destinationId") String destinationId,
-            @BindingName("eventType") String eventType
+            @BindingName("dataStreamId") String dataStreamId,
+            @BindingName("dataStreamRoute") String dataStreamRoute
     ) {
-        return new SubscribeWebsocketNotifications(request).run(destinationId, eventType);
+        return new SubscribeWebsocketNotifications(request).run(dataStreamId, dataStreamRoute);
     }
 
     /**

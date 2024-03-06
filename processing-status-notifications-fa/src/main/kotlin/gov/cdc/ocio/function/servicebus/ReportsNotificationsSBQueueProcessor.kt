@@ -54,11 +54,11 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
     @Throws(BadRequestException::class,InvalidSchemaDefException::class)
     private fun sendNotificationForReportStatus(reportNotification: ReportNotificationSBMessage): String {
 
-        val destinationId = reportNotification.destinationId
-            ?: throw BadRequestException("Missing required field destination_id")
+        val dataStreamId = reportNotification.dataStreamId
+            ?: throw BadRequestException("Missing required field data_stream_id")
 
-        val eventType = reportNotification.eventType
-            ?: throw BadRequestException("Missing required field event_type")
+        val dataStreamRoute = reportNotification.dataStreamRoute
+            ?: throw BadRequestException("Missing required field data_stream_route")
 
         val stageName = reportNotification.stageName
             ?: throw BadRequestException("Missing required field stage_name")
@@ -75,7 +75,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
 
             status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
             logger.debug("Report parsed for status $status")
-            RuleEngine.evaluateAllRules(SubscriptionRule(destinationId, eventType, stageName, status).getStringHash())
+            RuleEngine.evaluateAllRules(SubscriptionRule(dataStreamId, dataStreamRoute, stageName, status).getStringHash())
             return status.lowercase()
         } catch (ex: BadStateException) {
             // assume a bad request
@@ -115,11 +115,11 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
     @Throws(BadRequestException::class,InvalidSchemaDefException::class)
     private fun dispatchEventForReport(reportNotification: ReportNotificationSBMessage): List<String> {
 
-        val destinationId = reportNotification.destinationId
-            ?: throw BadRequestException("Missing required field destination_id")
+        val dataStreamId = reportNotification.dataStreamId
+            ?: throw BadRequestException("Missing required field data_stream_id")
 
-        val eventType = reportNotification.eventType
-            ?: throw BadRequestException("Missing required field event_type")
+        val dataStreamRoute = reportNotification.dataStreamRoute
+            ?: throw BadRequestException("Missing required field data_stream_route")
 
         val stageName = reportNotification.stageName
             ?: throw BadRequestException("Missing required field stage_name")
@@ -135,7 +135,7 @@ class ReportsNotificationsSBQueueProcessor(private val context: ExecutionContext
             val schemaDef = SchemaDefinition.fromJsonString(content)
 
             status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
-            return RuleEngine.evaluateAllRules(SubscriptionRule(destinationId, eventType, stageName, status).getStringHash())
+            return RuleEngine.evaluateAllRules(SubscriptionRule(dataStreamId, dataStreamRoute, stageName, status).getStringHash())
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)

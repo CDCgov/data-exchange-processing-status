@@ -1,7 +1,7 @@
 {
   "upload_id": "12345678",
   "stage_name": "dex-stage1",
-  "destination_id": "dex-testing",
+  "data_stream_id": "dex-testing",
   "content_type": "json",
   "content": ""
 }

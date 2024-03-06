@@ -8,6 +8,7 @@ import java.io.InputStreamReader
 import java.net.Socket
 import javax.mail.MessagingException
 import javax.mail.Session
+import kotlin.math.log
 
 /**
  * EMail dispatcher implements IDispatcher which will implement code to send out emails
@@ -19,13 +20,13 @@ class EmailDispatcher(): IDispatcher {
     override fun dispatchEvent(subscription: NotificationSubscription): String {
 
         // Call the function to check SMTP status
-        var response = checkSMTPStatusWithoutCredentials(subscription)
-        if (response.contains("Service ready", true)) {
-            logger.info("Email service connected")
+        return if(checkSMTPStatusWithoutCredentials(subscription)) {
             sendEmail(subscription)
-            return "Email sent successfully"
+            logger.info { "Email sent successfully" }
+            "Email sent successfully"
         } else {
-            return "Email server not reachable"
+            logger.info { "Error occurred while sending email" }
+            "Email server not reachable"
         }
 
     }
@@ -35,7 +36,7 @@ class EmailDispatcher(): IDispatcher {
      * @param subscription NotificationSubscription
      * @return String
      */
-    private fun checkSMTPStatusWithoutCredentials(subscription: NotificationSubscription): String {
+    private fun checkSMTPStatusWithoutCredentials(subscription: NotificationSubscription): Boolean {
         // This is to get the status from curl statement to see if server is connected
         try {
             val smtpServer = System.getenv("SmtpHostServer")
@@ -47,11 +48,11 @@ class EmailDispatcher(): IDispatcher {
             println("Server response: $response")
             // Close the socket
             socket.close()
-            return response
+            return response !=null
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        return ""
+        return false
     }
 
     /**

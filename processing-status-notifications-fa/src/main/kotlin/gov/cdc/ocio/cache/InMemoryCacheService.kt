@@ -11,12 +11,12 @@ import gov.cdc.ocio.model.http.SubscriptionType
 class InMemoryCacheService {
 
     /**
-     * This method creates a hash of the rule keys (destinationId, stageName, eventType, statusType)
+     * This method creates a hash of the rule keys (dataStreamId, stageName, dataStreamRoute, statusType)
      * to use as a key for SubscriptionRuleCache and creates a new or existing subscription (if exist)
      * and creates a new entry in subscriberCache for the user with the susbscriptionRuleKey
      *
-     * @param destinationId String
-     * @param eventType String
+     * @param dataStreamId String
+     * @param dataStreamRoute String
      * @param stageName String
      * @param statusType String
      * @param emailOrUrl String
@@ -24,15 +24,15 @@ class InMemoryCacheService {
      * @return String
      */
     fun updateNotificationsPreferences(
-        destinationId: String,
-        eventType: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
         stageName: String,
         statusType: String,
         emailOrUrl: String,
         subscriptionType: SubscriptionType
     ): String {
         try {
-            val subscriptionRule = SubscriptionRule(destinationId, eventType, stageName, statusType)
+            val subscriptionRule = SubscriptionRule(dataStreamId, dataStreamRoute, stageName, statusType)
             val subscriptionId =
                 InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
             return subscriptionId

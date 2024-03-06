@@ -40,26 +40,26 @@ class FunctionWrapperTest {
     @Test
     fun testSubscribeEmailSuccess() {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response = FunctionJavaWrappers().subscribeEmail(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeEmail(request, "destination-1", "dataStreamRoute-1")
         assert(response.status == HttpStatus.OK)
     }
 
     @Test
     fun testSubscribeEmailMissingQueryParameters() {
-        val response = FunctionJavaWrappers().subscribeEmail(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeEmail(request, "destination-1", "dataStreamRoute-1")
         assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     @Test
     fun testSubscribeWebsocketMissingUrl() {
-        val response = FunctionJavaWrappers().subscribeWebsocket(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeWebsocket(request, "destination-1", "dataStreamRoute-1")
         assert(response.status == HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     @Test
     fun testSubscribeWebsocketSuccess() {
         Mockito.`when`(request.queryParameters).thenReturn(queryParameters)
-        val response = FunctionJavaWrappers().subscribeWebsocket(request, "destination-1", "eventType-1")
+        val response = FunctionJavaWrappers().subscribeWebsocket(request, "destination-1", "dataStreamRoute-1")
         assert(response.status == HttpStatus.OK)
     }
 

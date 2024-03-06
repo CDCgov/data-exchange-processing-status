@@ -11,8 +11,8 @@ import java.util.*
  * Create a report service bus message.
  *
  * @property uploadId String?
- * @property destinationId String?
- * @property eventType String?
+ * @property dataStreamId String?
+ * @property dataStreamRoute String?
  * @property stageName String?
  * @property contentType String?
  * @property content String?
@@ -22,11 +22,11 @@ class ReportNotificationSBMessage {
     @SerializedName("upload_id")
     val uploadId: String? = null
 
-    @SerializedName("destination_id")
-    val destinationId: String? = null
+    @SerializedName("data_stream_id")
+    val dataStreamId: String? = null
 
-    @SerializedName("event_type")
-    val eventType: String? = null
+    @SerializedName("data_stream_route")
+    val dataStreamRoute: String? = null
 
     @SerializedName("stage_name")
     val stageName: String? = null

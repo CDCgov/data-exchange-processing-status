@@ -13,8 +13,8 @@ import java.time.Instant
 /**
  * This method is used by HTTP endpoints to subscribe for Email notifications
  * based on rules sent in required parameters/arguments
- *              destinationId
- *              eventType
+ *              dataStreamId
+ *              dataStreamRoute
  *              stageName
  *              statusType ("warning", "success", "error")
  *              email (email id of subscriber)
@@ -28,23 +28,23 @@ class SubscribeEmailNotifications(
     private val request: HttpRequestMessage<Optional<String>>) {
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    fun run(destinationId: String,
-        eventType: String):
+    fun run(dataStreamId: String,
+        dataStreamRoute: String):
             HttpResponseMessage {
         // reading query parameters from http request for email subscription
         val email = request.queryParameters["email"]
         val stageName = request.queryParameters["stageName"]
         val statusType = request.queryParameters["statusType"]
 
-        logger.debug("DestinationId: $destinationId")
-        logger.debug("EventType: $eventType")
+        logger.debug("dataStreamId: $dataStreamId")
+        logger.debug("dataStreamRoute: $dataStreamRoute")
         logger.debug("Subscription Email Id: $email")
         logger.debug("StageName: $stageName")
         logger.debug("StatusType: $statusType")
 
         var subscriptionResult = SubscriptionResult()
         if (!(email == null || stageName == null || statusType == null)) {
-            subscriptionResult = subscribeForEmail(destinationId, eventType, email, stageName, statusType)
+            subscriptionResult = subscribeForEmail(dataStreamId, dataStreamRoute, email, stageName, statusType)
             if (subscriptionResult.subscription_id != null) {
                 return request.createResponseBuilder(HttpStatus.OK).body(subscriptionResult).build()
             }
@@ -55,15 +55,15 @@ class SubscribeEmailNotifications(
     }
 
     private fun subscribeForEmail(
-        destinationId: String,
-        eventType: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
         email: String?,
         stageName: String?,
         statusType: String?
     ): SubscriptionResult {
         val result = SubscriptionResult()
-        if (destinationId.isBlank()
-            || eventType.isBlank()
+        if (dataStreamId.isBlank()
+            || dataStreamRoute.isBlank()
             || email.isNullOrBlank()
             || stageName.isNullOrBlank()
             || statusType.isNullOrBlank()) {
@@ -76,7 +76,7 @@ class SubscribeEmailNotifications(
             result.status = false
             result.message = "Not valid email address"
         } else {
-            result.subscription_id = cacheService.updateNotificationsPreferences(destinationId, eventType, stageName, statusType, email, SubscriptionType.EMAIL)
+            result.subscription_id = cacheService.updateNotificationsPreferences(dataStreamId, dataStreamRoute, stageName, statusType, email, SubscriptionType.EMAIL)
             result.timestamp = Instant.now().epochSecond
             result.status = true
             result.message = "Subscription for Email setup"
