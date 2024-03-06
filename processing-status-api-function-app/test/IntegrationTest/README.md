@@ -10,12 +10,12 @@ The Integration Test exists to:
 - **Processing StatusAPI:** Automates the process of sending the reports directly to Processing Status API.
 
 - **Querying CosmosDB:** Automates the process of querying the CosmosDB by the reportId.
-- 
+
 ## How It works
 
 1. **The 'ReportFactory' class**: It employs the Abstract Factory design pattern to simulate creation of reports sent from Upload, Routing and HL7v2 services to Processing Status API.This component is still being developed and will undergo changes.
-2. **Reports Submitted via Azure Service Bus**: Reports are sent to the Processing Status API through the service bus.
-3. **Reports Submitted Directly to the API**: Reports are submitted directly to the Processing Status API through HTTP endpoints.
+2. **Reports Sent via Azure Service Bus**: Reports are sent to the Processing Status API through the service bus.
+3. **Reports Sent Directly to the API**: Reports are sent directly to the Processing Status API through HTTP endpoints.
 4. **CosmoDB Querying**: Utilizing Cosmos Client library from lib-dex-commons to query the  container for each report. To validate the correctness of report processing and persistence to Cosmos DB.
 
 The integration test suite for the Processing Status API use two primary methods of sending report:
