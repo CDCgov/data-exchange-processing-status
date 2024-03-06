@@ -139,6 +139,8 @@ class GetReportCountsFunction(
         val options = CosmosQueryRequestOptions()
         if (stageCountsByUploadId.size == 1)
             options.partitionKey = PartitionKey(stageCountsByUploadId.keys.first())
+        else
+            options.maxDegreeOfParallelism = -1 // let SDK decide optimal number of concurrent operations
 
         val hl7DebatchCountsItems = reportsContainer.queryItems(
             hl7DebatchCountsQuery, options,
