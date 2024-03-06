@@ -123,7 +123,7 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-cosmos</artifactId>
-            <version>4.24.0</version> <!-- Use the appropriate version -->
+            <version>4.56.0</version>
         </dependency>
     </dependencies>
 
