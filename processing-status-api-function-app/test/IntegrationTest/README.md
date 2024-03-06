@@ -4,11 +4,8 @@
 The Integration Test exists to:
 
 - **Create Reports :** Simulates the process of creating reports sent by the Upload, Routing and HL7V2 Validation services to Processing Status API.
-
 - **Azure Service Bus:** Automates the process of sending the reports to Processing Status API through Service Bus.
-
 - **Processing StatusAPI:** Automates the process of sending the reports directly to Processing Status API.
-
 - **Querying CosmosDB:** Automates the process of querying the CosmosDB by the reportId.
 
 ## How It works
@@ -19,9 +16,8 @@ The Integration Test exists to:
 4. **CosmoDB Querying**: Utilizing Cosmos Client library from lib-dex-commons to query the  container for each report. To validate the correctness of report processing and persistence to Cosmos DB.
 
 The integration test suite for the Processing Status API use two primary methods of sending report:
-![Diagrams-private - Sending Reports to Processing Status .png](..%2F..%2F..%2F..%2F..%2FDownloads%2FDiagrams-private%20-%20Sending%20Reports%20to%20Processing%20Status%20.png)
-![Diagrams-private - SendingReportWithServiceBus.png](..%2F..%2F..%2F..%2F..%2FDownloads%2FDiagrams-private%20-%20SendingReportWithServiceBus.png)
-
+![SendingReportsThroughServiceBus.jpeg](..%2F..%2F..%2F..%2F..%2FDownloads%2FSendingReportsThroughServiceBus.jpeg)
+![SendingReportsToProcessingStatusAPI.png](..%2F..%2F..%2F..%2F..%2FDownloads%2FSendingReportsToProcessingStatusAPI.png)
 
 ## Required Configuration Parameters
 - **COSMOS_DB_KEY**: Access key of the Cosmos DB instance.
@@ -37,6 +33,7 @@ To build and run the Integration test, follow these steps:
 1. Clone this repository to your local machine:
 ```
 git clone https://github.com/CDCgov/data-exchange-processing-status.git
-cd 
+configure evnrionment variables
+cd test/IntegrationTest
 mvn clean install
 mvn integration-test
