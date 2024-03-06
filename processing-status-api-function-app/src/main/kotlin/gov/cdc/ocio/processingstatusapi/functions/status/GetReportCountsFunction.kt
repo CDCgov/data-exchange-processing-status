@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.functions.status
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.PartitionKey
 import com.google.gson.GsonBuilder
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
@@ -134,8 +135,13 @@ class GetReportCountsFunction(
             + "where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) "
             + "group by r.uploadId, r.stageName"
         )
+
+        val options = CosmosQueryRequestOptions()
+        if (stageCountsByUploadId.size == 1)
+            options.partitionKey = PartitionKey(stageCountsByUploadId.keys.first())
+
         val hl7DebatchCountsItems = reportsContainer.queryItems(
-            hl7DebatchCountsQuery, CosmosQueryRequestOptions(),
+            hl7DebatchCountsQuery, options,
             HL7DebatchCounts::class.java
         )
 
@@ -151,7 +157,7 @@ class GetReportCountsFunction(
         )
 
         val hl7ValidationCountsItems = reportsContainer.queryItems(
-            hl7ValidationCountsQuery, CosmosQueryRequestOptions(),
+            hl7ValidationCountsQuery, options,
             HL7ValidationCounts::class.java
         )
 
