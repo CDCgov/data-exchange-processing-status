@@ -18,8 +18,12 @@ object EmailUtil {
     fun sendEmail(session: Session?, toEmail: String?, subject: String?, body: String?) {
         try {
             val msg = MimeMessage(session)
-            val replyToEmail = System.getenv("ReplyToEmail")
-            val replyToName = System.getenv("ReplyToName")
+            // TODO: Uncomment this later
+//            val replyToEmail = System.getenv("ReplyToEmail")
+//            val replyToName = System.getenv("ReplyToName")
+
+            val replyToEmail = "donotreply@cdc.gov"
+            val replyToName = "DoNOtReply (DEX Team)"
             //set message headers
             msg.addHeader("Content-type", "text/HTML; charset=UTF-8")
             msg.addHeader("format", "flowed")

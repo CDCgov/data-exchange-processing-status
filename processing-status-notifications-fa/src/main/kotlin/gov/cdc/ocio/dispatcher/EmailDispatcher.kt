@@ -39,8 +39,13 @@ class EmailDispatcher(): IDispatcher {
     private fun checkSMTPStatusWithoutCredentials(subscription: NotificationSubscription): Boolean {
         // This is to get the status from curl statement to see if server is connected
         try {
-            val smtpServer = System.getenv("SmtpHostServer")
-            val port = System.getenv("SmtpHostPort").toInt()
+            // TODO : Uncomment this later
+//            val smtpServer = System.getenv("SmtpHostServer")
+//            val port = System.getenv("SmtpHostPort").toInt()
+
+            val smtpServer = "smtpgw.cdc.gov"
+            val port = 25
+
             val socket = Socket(smtpServer, port)
             val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
             // Read the server response
@@ -66,8 +71,8 @@ class EmailDispatcher(): IDispatcher {
             // TODO : Change this into properties
             val toEmalId = subscription.subscriberAddressOrUrl;
             val props = System.getProperties()
-            props["mail.smtp.host"] = System.getenv("SmtpHostServer")
-            props["mail.smtp.port"] = System.getenv("SmtpHostPort")
+            props["mail.smtp.host"] = "smtpgw.cdc.gov"
+            props["mail.smtp.port"] = 25
             val session = Session.getInstance(props, null)
             sendEmail(session, toEmalId, "${System.getenv("ReplyToName")} : Notification for report", "You have signed up for this notification subscription, please check the portal")
         } catch(_: MessagingException) {
