@@ -16,8 +16,9 @@ The Integration Test exists to:
 4. **CosmoDB Querying**: Utilizing Cosmos Client library from lib-dex-commons to query the  container for each report. To validate the correctness of report processing and persistence to Cosmos DB.
 
 The integration test suite for the Processing Status API use two primary methods of sending report:
-![SendingReportsThroughServiceBus.jpeg](..%2F..%2F..%2F..%2F..%2FDownloads%2FSendingReportsThroughServiceBus.jpeg)
-![SendingReportsToProcessingStatusAPI.png](..%2F..%2F..%2F..%2F..%2FDownloads%2FSendingReportsToProcessingStatusAPI.png)
+![SendingReportsThroughServiceBus](https://github.com/CDCgov/data-exchange-processing-status/assets/137535421/7da1c249-91e3-4734-821b-6490cbac9173)
+
+![SendingReportsToProcessingStatusAPI](https://github.com/CDCgov/data-exchange-processing-status/assets/137535421/bc2776af-551b-44c2-8978-3999e680a039)
 
 ## Required Configuration Parameters
 - **COSMOS_DB_KEY**: Access key of the Cosmos DB instance.
