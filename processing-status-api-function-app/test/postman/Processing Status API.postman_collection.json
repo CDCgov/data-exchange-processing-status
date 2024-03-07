@@ -414,7 +414,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -483,7 +483,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -548,7 +548,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -604,7 +604,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -660,7 +660,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -716,7 +716,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -772,7 +772,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}

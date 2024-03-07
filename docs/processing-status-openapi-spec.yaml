@@ -975,7 +975,7 @@ components:
     CreateReport:
       type: object
       properties:
-        stage_report_id:
+        report_id:
           type: string
           format: uuid
         stage_name:
@@ -983,7 +983,7 @@ components:
     AmmendReport:
       type: object
       properties:
-        stage_report_id:
+        report_id:
           type: string
           format: uuid
         stage_name:
