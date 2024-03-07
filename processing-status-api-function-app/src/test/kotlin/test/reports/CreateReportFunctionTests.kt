@@ -46,6 +46,10 @@ class CreateReportFunctionTests {
             val status = invocation.arguments[0] as HttpStatus
             HttpResponseMessageMock.HttpResponseMessageBuilderMock().status(status)
         }.`when`(request).createResponseBuilder(any())
+
+        mockkStatic(System::class)
+        every { System.getenv("ServiceBusConnectionString") } returns "Endpoint=sb://abc.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=mockKey"
+        every { System.getenv("ServiceBusReportsQueueName") } returns "ServiceBusReportsQueueName"
     }
 
     @Test
