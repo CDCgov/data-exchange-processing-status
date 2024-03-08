@@ -310,7 +310,7 @@ class GetReportCountsFunction(
 
             if (reportItems.count() > 0) {
                 val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
-                var earliestTimestamp: Date? = null
+                val earliestTimestampByUploadId = mutableMapOf<String, Date>()
                 reportItems.forEach {
                     val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
                     list.add(StageCounts().apply {
@@ -319,10 +319,15 @@ class GetReportCountsFunction(
                         this.counts = it.counts
                         this.stageName = it.stageName
                         it.timestamp?.let { timestamp ->
-                            if (earliestTimestamp == null)
-                                earliestTimestamp = timestamp
-                            else if (timestamp.before(earliestTimestamp))
-                                earliestTimestamp = timestamp
+                            val uploadId = it.uploadId
+                            uploadId?.let {
+                                var earliestTimestamp = earliestTimestampByUploadId[uploadId]
+                                if (earliestTimestamp == null)
+                                    earliestTimestamp = timestamp
+                                else if (timestamp.before(earliestTimestamp))
+                                    earliestTimestamp = timestamp
+                                earliestTimestampByUploadId[uploadId] = earliestTimestamp
+                            }
                         }
                     })
                     stageCountsByUploadId[it.uploadId!!] = list
@@ -331,11 +336,12 @@ class GetReportCountsFunction(
 
                 val reportCountsList = mutableListOf<ReportCounts>()
                 revisedStageCountsByUploadId.forEach { upload ->
+                    val uploadId = upload.key
                     reportCountsList.add(ReportCounts().apply {
-                        this.uploadId = upload.key
+                        this.uploadId = uploadId
                         this.dataStreamId = dataStreamId
                         this.dataStreamRoute = dataStreamRoute
-                        this.timestamp = earliestTimestamp
+                        this.timestamp = earliestTimestampByUploadId[uploadId]
                         this.stages = upload.value
                     })
                 }
