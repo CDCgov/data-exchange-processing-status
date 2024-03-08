@@ -15,6 +15,7 @@ import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Validation
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
+import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import mu.KotlinLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -219,6 +220,9 @@ class GetReportCountsFunction(
         val dataStreamId = request.queryParameters["data_stream_id"]
         val dataStreamRoute = request.queryParameters["data_stream_route"]
 
+        val pageSize = request.queryParameters["page_size"]
+        val pageNumber = request.queryParameters["page_number"]
+
         val dateStart = request.queryParameters["date_start"]
         val dateEnd = request.queryParameters["date_end"]
 
@@ -238,14 +242,28 @@ class GetReportCountsFunction(
                 .build()
         }
 
-        val uploadIdsSqlQuery = StringBuilder()
-        uploadIdsSqlQuery.append(
-            "select "
-            + "distinct value r.uploadId "
-            + "from $reportsContainerName r "
-            + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute'"
-        )
+        val pageUtils = PageUtils.Builder()
+            .maxPageSize(500)
+            .defaultPageSize(100)
+            .build()
 
+        val pageSizeAsInt = try {
+            pageUtils.getPageSize(pageSize)
+        } catch (ex: BadRequestException) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(ex.localizedMessage)
+                .build()
+        }
+
+        // Get the total matching upload ids
+        val uploadIdCountSqlQuery = StringBuilder()
+        uploadIdCountSqlQuery.append(
+            "select "
+                + "value count(1) "
+                + "from (select distinct r.uploadId from $reportsContainerName r "
+                + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute')"
+            )
         if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -253,6 +271,7 @@ class GetReportCountsFunction(
                 .build()
         }
 
+        val timeRangeSqlPortion = StringBuilder()
         if (!daysInterval.isNullOrBlank()) {
             val dateStartEpochSecs = DateTime
                 .now(DateTimeZone.UTC)
@@ -260,12 +279,12 @@ class GetReportCountsFunction(
                 .withTimeAtStartOfDay()
                 .toDate()
                 .time / 1000
-            uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+            timeRangeSqlPortion.append(" and r._ts >= $dateStartEpochSecs")
         } else {
             dateStart?.run {
                 try {
                     val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-                    uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+                    timeRangeSqlPortion.append(" and r._ts >= $dateStartEpochSecs")
                 } catch (e: BadRequestException) {
                     logger.error(e.localizedMessage)
                     return request
@@ -277,7 +296,7 @@ class GetReportCountsFunction(
             dateEnd?.run {
                 try {
                     val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-                    uploadIdsSqlQuery.append(" and r._ts < $dateEndEpochSecs")
+                    timeRangeSqlPortion.append(" and r._ts < $dateEndEpochSecs")
                 } catch (e: BadRequestException) {
                     logger.error(e.localizedMessage)
                     return request
@@ -287,83 +306,115 @@ class GetReportCountsFunction(
                 }
             }
         }
+        uploadIdCountSqlQuery.append(timeRangeSqlPortion)
 
-        // Get the matching uploadIds
-        val uploadIds = reportsContainer.queryItems(
-            uploadIdsSqlQuery.toString(), CosmosQueryRequestOptions(),
-            String::class.java
+        val uploadIdCountResult = reportsContainer.queryItems(
+            uploadIdCountSqlQuery.toString(), CosmosQueryRequestOptions(),
+            Long::class.java
         )
+        val totalItems = uploadIdCountResult.first()
+        val numberOfPages: Int
+        val pageNumberAsInt: Int
+        val reportCountsList = mutableListOf<ReportCounts>()
+        if (totalItems > 0L) {
+            numberOfPages = (totalItems / pageSizeAsInt + if (totalItems % pageSizeAsInt > 0) 1 else 0).toInt()
 
-        if (uploadIds.count() > 0) {
-            val uploadIdsList = uploadIds.toList()
-            val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
-            val reportsSqlQuery = (
-                "select "
-                + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
-                + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
-                + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
-            )
-            val reportItems = reportsContainer.queryItems(
-                reportsSqlQuery, CosmosQueryRequestOptions(),
-                StageCountsForUpload::class.java
-            )
-
-            if (reportItems.count() > 0) {
-                val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
-                val earliestTimestampByUploadId = mutableMapOf<String, Date>()
-                reportItems.forEach {
-                    val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
-                    list.add(StageCounts().apply {
-                        this.schema_name = it.schema_name
-                        this.schema_version = it.schema_version
-                        this.counts = it.counts
-                        this.stageName = it.stageName
-                        it.timestamp?.let { timestamp ->
-                            val uploadId = it.uploadId
-                            uploadId?.let {
-                                var earliestTimestamp = earliestTimestampByUploadId[uploadId]
-                                if (earliestTimestamp == null)
-                                    earliestTimestamp = timestamp
-                                else if (timestamp.before(earliestTimestamp))
-                                    earliestTimestamp = timestamp
-                                earliestTimestampByUploadId[uploadId] = earliestTimestamp
-                            }
-                        }
-                    })
-                    stageCountsByUploadId[it.uploadId!!] = list
-                }
-                val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
-
-                val reportCountsList = mutableListOf<ReportCounts>()
-                revisedStageCountsByUploadId.forEach { upload ->
-                    val uploadId = upload.key
-                    reportCountsList.add(ReportCounts().apply {
-                        this.uploadId = uploadId
-                        this.dataStreamId = dataStreamId
-                        this.dataStreamRoute = dataStreamRoute
-                        this.timestamp = earliestTimestampByUploadId[uploadId]
-                        this.stages = upload.value
-                    })
-                }
-
-                val aggregateReportCounts = AggregateReportCounts().apply {
-                    this.summary = AggregateSummary().apply {
-                        this.numUploads = reportCountsList.count()
-                    }
-                    this.reportCountsList = reportCountsList
-                }
-
+            pageNumberAsInt = try {
+                PageUtils.getPageNumber(pageNumber, numberOfPages)
+            } catch (ex: BadRequestException) {
                 return request
-                    .createResponseBuilder(HttpStatus.OK)
-                    .header("Content-Type", "application/json")
-                    .body(gson.toJson(aggregateReportCounts))
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body(ex.localizedMessage)
                     .build()
             }
+            val offset = (pageNumberAsInt - 1) * pageSizeAsInt
+
+            val uploadIdsSqlQuery = StringBuilder()
+            uploadIdsSqlQuery.append(
+                "select "
+                    + "distinct value r.uploadId "
+                    + "from $reportsContainerName r "
+                    + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' "
+                    + "$timeRangeSqlPortion offset $offset limit $pageSizeAsInt"
+            )
+
+            // Get the matching uploadIds
+            val uploadIds = reportsContainer.queryItems(
+                uploadIdsSqlQuery.toString(), CosmosQueryRequestOptions(),
+                String::class.java
+            )
+
+            if (uploadIds.count() > 0) {
+                val uploadIdsList = uploadIds.toList()
+                val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
+                val reportsSqlQuery = (
+                    "select "
+                        + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
+                        + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
+                        + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
+                )
+                val reportItems = reportsContainer.queryItems(
+                    reportsSqlQuery, CosmosQueryRequestOptions(),
+                    StageCountsForUpload::class.java
+                )
+
+                if (reportItems.count() > 0) {
+                    val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
+                    val earliestTimestampByUploadId = mutableMapOf<String, Date>()
+                    reportItems.forEach {
+                        val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
+                        list.add(StageCounts().apply {
+                            this.schema_name = it.schema_name
+                            this.schema_version = it.schema_version
+                            this.counts = it.counts
+                            this.stageName = it.stageName
+                            it.timestamp?.let { timestamp ->
+                                val uploadId = it.uploadId
+                                uploadId?.let {
+                                    var earliestTimestamp = earliestTimestampByUploadId[uploadId]
+                                    if (earliestTimestamp == null)
+                                        earliestTimestamp = timestamp
+                                    else if (timestamp.before(earliestTimestamp))
+                                        earliestTimestamp = timestamp
+                                    earliestTimestampByUploadId[uploadId] = earliestTimestamp
+                                }
+                            }
+                        })
+                        stageCountsByUploadId[it.uploadId!!] = list
+                    }
+                    val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
+
+                    revisedStageCountsByUploadId.forEach { upload ->
+                        val uploadId = upload.key
+                        reportCountsList.add(ReportCounts().apply {
+                            this.uploadId = uploadId
+                            this.dataStreamId = dataStreamId
+                            this.dataStreamRoute = dataStreamRoute
+                            this.timestamp = earliestTimestampByUploadId[uploadId]
+                            this.stages = upload.value
+                        })
+                    }
+                }
+            }
+        } else {
+            numberOfPages = 0
+            pageNumberAsInt = 0
+        }
+
+        val aggregateReportCounts = AggregateReportCounts().apply {
+            this.summary = PageSummary().apply {
+                this.pageNumber = pageNumberAsInt
+                this.numberOfPages = numberOfPages
+                this.pageSize = pageSizeAsInt
+                this.totalItems = totalItems
+            }
+            this.reportCountsList = reportCountsList
         }
 
         return request
-            .createResponseBuilder(HttpStatus.BAD_REQUEST)
-            .body("No results found")
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(gson.toJson(aggregateReportCounts))
             .build()
     }
 }
