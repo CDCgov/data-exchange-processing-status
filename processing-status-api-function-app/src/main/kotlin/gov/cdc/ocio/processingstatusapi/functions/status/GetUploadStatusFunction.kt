@@ -13,6 +13,7 @@ import gov.cdc.ocio.processingstatusapi.model.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.model.reports.UploadCounts
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
+import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import mu.KotlinLogging
 import java.util.*
 
@@ -57,8 +58,14 @@ class GetUploadStatusFunction(
         val sortBy = request.queryParameters["sort_by"]
         val sortOrder = request.queryParameters["sort_order"]
 
+        val pageUtils = PageUtils.Builder()
+            .minPageSize(MIN_PAGE_SIZE)
+            .maxPageSize(MAX_PAGE_SIZE)
+            .defaultPageSize(DEFAULT_PAGE_SIZE)
+            .build()
+
         val pageSizeAsInt = try {
-            getPageSize(pageSize)
+            pageUtils.getPageSize(pageSize)
         } catch (ex: BadRequestException) {
             return request
                     .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -124,7 +131,7 @@ class GetUploadStatusFunction(
             numberOfPages =  (totalItems / pageSizeAsInt + if (totalItems % pageSizeAsInt > 0) 1 else 0).toInt()
 
             pageNumberAsInt = try {
-                getPageNumber(pageNumber, numberOfPages)
+                PageUtils.getPageNumber(pageNumber, numberOfPages)
             } catch (ex: BadRequestException) {
                 return request
                         .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -208,67 +215,9 @@ class GetUploadStatusFunction(
                 .build()
     }
 
-    /**
-     * Get page size if valid.
-     *
-     * @param pageSize String?
-     * @return Int
-     * @throws BadRequestException
-     */
-    @Throws(BadRequestException::class)
-    private fun getPageSize(pageSize: String?) = run {
-        var pageSizeAsInt = DEFAULT_PAGE_SIZE
-        pageSize?.run {
-            var issue = false
-            try {
-                pageSizeAsInt = pageSize.toInt()
-                if (pageSizeAsInt < MIN_PAGE_SIZE || pageSizeAsInt > MAX_PAGE_SIZE)
-                    issue = true
-            } catch (e: NumberFormatException) {
-                issue = true
-            }
-
-            if (issue) {
-                throw BadRequestException("\"page_size must be between $MIN_PAGE_SIZE and $MAX_PAGE_SIZE\"")
-            }
-        }
-        pageSizeAsInt
-    }
-
-    /**
-     * Get page number if valid.
-     *
-     * @param pageNumber String?
-     * @param numberOfPages Int
-     * @return Int
-     * @throws BadRequestException
-     */
-    @Throws(BadRequestException::class)
-    private fun getPageNumber(pageNumber: String?, numberOfPages: Int) = run {
-        var pageNumberAsInt = DEFAULT_PAGE_NUMBER
-        pageNumber?.run {
-            var issue = false
-            try {
-                pageNumberAsInt = pageNumber.toInt()
-                if (pageNumberAsInt < MIN_PAGE_NUMBER || pageNumberAsInt > numberOfPages)
-                    issue = true
-            } catch (e: NumberFormatException) {
-                issue = true
-            }
-
-            if (issue) {
-                throw BadRequestException("page_number must be between $MIN_PAGE_NUMBER and $numberOfPages")
-            }
-        }
-        pageNumberAsInt
-    }
-
     companion object {
         private const val MIN_PAGE_SIZE = 1
         private const val MAX_PAGE_SIZE = 10000
-        private const val DEFAULT_PAGE_NUMBER = 1
-
-        private const val MIN_PAGE_NUMBER = 1
         private const val DEFAULT_PAGE_SIZE = 100
 
         private const val DEFAULT_SORT_ORDER = "asc"
