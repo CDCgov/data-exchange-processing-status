@@ -256,14 +256,6 @@ class GetReportCountsFunction(
                 .build()
         }
 
-        // Get the total matching upload ids
-        val uploadIdCountSqlQuery = StringBuilder()
-        uploadIdCountSqlQuery.append(
-            "select "
-                + "value count(1) "
-                + "from (select distinct r.uploadId from $reportsContainerName r "
-                + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute')"
-            )
         if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
@@ -306,7 +298,15 @@ class GetReportCountsFunction(
                 }
             }
         }
-        uploadIdCountSqlQuery.append(timeRangeSqlPortion)
+
+        // Get the total matching upload ids
+        val uploadIdCountSqlQuery = StringBuilder()
+        uploadIdCountSqlQuery.append(
+            "select "
+                + "value count(1) "
+                + "from (select distinct r.uploadId from $reportsContainerName r "
+                + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' $timeRangeSqlPortion)"
+        )
 
         val uploadIdCountResult = reportsContainer.queryItems(
             uploadIdCountSqlQuery.toString(), CosmosQueryRequestOptions(),
