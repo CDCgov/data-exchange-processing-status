@@ -34,6 +34,10 @@ class CreateReportFunction(
 
     private val reportStageName = request.queryParameters["stageName"]
 
+    private var messageId = request.queryParameters["message_id"]
+
+    private val status = request.queryParameters["status"]
+
     private val requestBody = request.body.orElse("")
 
     init {
@@ -60,6 +64,8 @@ class CreateReportFunction(
                 dataStreamRoute!!,
                 reportStageName!!,
                 "json",
+                messageId,
+                status,
                 requestBody,
                 dispositionType,
                 Source.HTTP

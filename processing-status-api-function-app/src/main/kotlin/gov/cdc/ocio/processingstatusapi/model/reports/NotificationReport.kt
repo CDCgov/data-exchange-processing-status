@@ -28,6 +28,10 @@ data class NotificationReport(
 
     var content: String? = null,
 
+    var messageId: String? = null,
+
+    var status: String? = null,
+
     var report_origin: Source
 )
 
