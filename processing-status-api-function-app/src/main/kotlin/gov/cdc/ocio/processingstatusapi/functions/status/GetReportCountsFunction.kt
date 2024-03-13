@@ -130,8 +130,8 @@ class GetReportCountsFunction(
         val hl7DebatchSchemaName = HL7Debatch.schemaDefinition.schemaName
         val hl7DebatchCountsQuery = (
             "select "
-            + "r.uploadId, r.stageName, SUM(r.content.number_of_messages) as numberOfMessages, "
-            + "SUM(r.content.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
+            + "r.uploadId, r.stageName, SUM(r.content.stage.report.number_of_messages) as numberOfMessages, "
+            + "SUM(r.content.stage.report.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
             + "from $reportsContainerName r "
             + "where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) "
             + "group by r.uploadId, r.stageName"
