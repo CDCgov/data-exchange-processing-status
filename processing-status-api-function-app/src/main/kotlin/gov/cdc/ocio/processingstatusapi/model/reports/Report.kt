@@ -41,7 +41,7 @@ data class Report(
     @SerializedName("content_type")
     var contentType : String? = null,
 
-    @SerializedName("message_Id")
+    @SerializedName("message_id")
     var messageId: String? = null,
 
     @SerializedName("status")
