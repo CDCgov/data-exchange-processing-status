@@ -301,6 +301,18 @@ paths:
           schema:
             type: string
           description: Report Stage Name.
+        - name: message_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Message Identifier.
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Status.          
       responses:
         '200':
           description: Trace for the given upload dentifier
@@ -341,6 +353,18 @@ paths:
           schema:
             type: string
           description: Report Stage Name.
+        - name: message_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Message Identifier.
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Status.   
       responses:
         '200':
           description: Trace for the given upload dentifier
