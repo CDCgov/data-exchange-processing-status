@@ -464,12 +464,16 @@ class GetReportCountsFunction(
             + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and $timeRangeWhereClause"
         )
 
+        val startTime = System.currentTimeMillis()
         val countResult = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             Long::class.java
         )
+        val endTime = System.currentTimeMillis()
         val totalItems = countResult.firstOrNull() ?: 0
-        val countsJson = JSONObject().put("counts", totalItems)
+        val countsJson = JSONObject()
+            .put("counts", totalItems)
+            .put("query_time_millis", endTime - startTime)
 
         return request
             .createResponseBuilder(HttpStatus.OK)
