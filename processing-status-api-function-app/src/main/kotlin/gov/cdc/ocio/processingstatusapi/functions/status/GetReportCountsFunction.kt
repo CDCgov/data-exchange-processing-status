@@ -19,7 +19,9 @@ import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import mu.KotlinLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import org.json.JSONObject
 import java.util.*
+import java.util.AbstractMap.SimpleEntry
 
 
 /**
@@ -416,5 +418,134 @@ class GetReportCountsFunction(
             .header("Content-Type", "application/json")
             .body(gson.toJson(aggregateReportCounts))
             .build()
+    }
+
+    /**
+     * Gets the total number of HL7 reports found with an invalid structure validation for the filter criteria
+     * provided.
+     *
+     * @return HttpResponseMessage
+     */
+    fun getHL7InvalidStructureValidationCounts(): HttpResponseMessage {
+
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
+
+        val dateStart = request.queryParameters["date_start"]
+        val dateEnd = request.queryParameters["date_end"]
+
+        val daysInterval = request.queryParameters["days_interval"]
+
+        // Verify the request is complete and properly formatted
+        checkRequiredCountsQueryParams(
+            dataStreamId,
+            dataStreamRoute,
+            dateStart,
+            dateEnd,
+            daysInterval,
+            true
+        )?.let { return it }
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        val reportsSqlQuery = (
+            "select "
+            + "value count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) "
+            + "from $reportsContainerName r "
+            + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and $timeRangeWhereClause"
+        )
+
+        val countResult = reportsContainer.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalItems = countResult.firstOrNull() ?: 0
+        val countsJson = JSONObject().put("counts", totalItems)
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(countsJson.toString())
+            .build()
+    }
+
+    @Throws(NumberFormatException::class, BadRequestException::class)
+    private fun buildSqlClauseForDateRange(daysInterval: String?,
+                                           dateStart: String?,
+                                           dateEnd: String?): String {
+
+        val timeRangeSqlPortion = StringBuilder()
+        if (!daysInterval.isNullOrBlank()) {
+            val dateStartEpochSecs = DateTime
+                .now(DateTimeZone.UTC)
+                .minusDays(Integer.parseInt(daysInterval))
+                .withTimeAtStartOfDay()
+                .toDate()
+                .time / 1000
+            timeRangeSqlPortion.append("r._ts >= $dateStartEpochSecs")
+        } else {
+            dateStart?.run {
+                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
+                timeRangeSqlPortion.append("r._ts >= $dateStartEpochSecs")
+            }
+            dateEnd?.run {
+                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
+                timeRangeSqlPortion.append(" and r._ts < $dateEndEpochSecs")
+            }
+        }
+        return timeRangeSqlPortion.toString()
+    }
+
+    /**
+     * Checks that all the required query parameters are present in order to process the request.  If not,
+     * an appropriate HTTP response message is generated with the details.
+     *
+     * @return HttpResponseMessage?
+     */
+    private fun checkRequiredCountsQueryParams(dataStreamId: String?,
+                                               dataStreamRoute: String?,
+                                               dateStart: String?,
+                                               dateEnd: String?,
+                                               daysInterval: String?,
+                                               dateRangeRequired: Boolean): HttpResponseMessage? {
+
+        if (dataStreamId == null) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("destinationId or dataStreamId is required")
+                .build()
+        }
+
+        if (dataStreamRoute == null) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("eventType or dataStreamRoute is required")
+                .build()
+        }
+
+        if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("date_interval and date_start/date_end can't be used simultaneously")
+                .build()
+        }
+
+        if (dateRangeRequired && daysInterval.isNullOrBlank() && dateStart.isNullOrBlank()) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("date_interval or date_start must be provided")
+                .build()
+        }
+
+        return null
     }
 }
