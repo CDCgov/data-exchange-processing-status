@@ -428,6 +428,8 @@ class GetReportCountsFunction(
      */
     fun getHL7InvalidStructureValidationCounts(): HttpResponseMessage {
 
+        val startTime = System.currentTimeMillis()
+
         val dataStreamId = request.queryParameters["data_stream_id"]
         val dataStreamRoute = request.queryParameters["data_stream_route"]
 
@@ -464,7 +466,7 @@ class GetReportCountsFunction(
             + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and $timeRangeWhereClause"
         )
 
-        val startTime = System.currentTimeMillis()
+        val queryStartTime = System.currentTimeMillis()
         val countResult = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             Long::class.java
@@ -473,7 +475,8 @@ class GetReportCountsFunction(
         val totalItems = countResult.firstOrNull() ?: 0
         val countsJson = JSONObject()
             .put("counts", totalItems)
-            .put("query_time_millis", endTime - startTime)
+            .put("query_time_millis", endTime - queryStartTime)
+            .put("fa_total_time_millis", endTime - startTime)
 
         return request
             .createResponseBuilder(HttpStatus.OK)
