@@ -471,8 +471,8 @@ class GetReportCountsFunction(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             Long::class.java
         )
-        val endTime = System.currentTimeMillis()
         val totalItems = countResult.firstOrNull() ?: 0
+        val endTime = System.currentTimeMillis()
         val countsJson = JSONObject()
             .put("counts", totalItems)
             .put("query_time_millis", endTime - queryStartTime)
