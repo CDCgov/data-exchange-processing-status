@@ -85,7 +85,7 @@ public class FunctionJavaWrappers {
     public void serviceBusProcessor(
             @ServiceBusQueueTrigger(
                     name = "msg",
-                    queueName = "%ReportNotificationSBQueueName%",
+                    queueName = "%ServiceBusQueueName%",
                     connection = "ServiceBusConnectionString"
             ) String message,
             final ExecutionContext context
