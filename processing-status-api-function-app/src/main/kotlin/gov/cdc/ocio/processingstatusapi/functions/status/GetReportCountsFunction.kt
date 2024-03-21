@@ -461,7 +461,8 @@ class GetReportCountsFunction(
             "select "
             + "value count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) "
             + "from $reportsContainerName r "
-            + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and $timeRangeWhereClause"
+            + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' "
+            + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
         )
 
         val startTime = System.currentTimeMillis()
