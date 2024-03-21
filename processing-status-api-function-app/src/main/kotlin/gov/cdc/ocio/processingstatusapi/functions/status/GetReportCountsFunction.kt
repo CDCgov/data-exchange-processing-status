@@ -461,7 +461,7 @@ class GetReportCountsFunction(
             "select "
             + "value count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) "
             + "from $reportsContainerName r "
-            + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' "
+            + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
             + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
         )
 
@@ -482,7 +482,7 @@ class GetReportCountsFunction(
             .body(countsJson.toString())
             .build()
     }
-
+    
     @Throws(NumberFormatException::class, BadRequestException::class)
     private fun buildSqlClauseForDateRange(daysInterval: String?,
                                            dateStart: String?,
