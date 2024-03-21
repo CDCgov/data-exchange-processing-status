@@ -58,6 +58,8 @@ class ReportManager {
         dataStreamRoute: String,
         stageName: String,
         contentType: String,
+        messageId: String?,
+        status: String?,
         content: String,
         dispositionType: DispositionType,
         source: Source
@@ -71,7 +73,7 @@ class ReportManager {
             throw BadRequestException("Malformed message: ${e.localizedMessage}")
         }
 
-        return createReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, dispositionType, source)
+        return createReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, messageId, status, content, dispositionType, source)
     }
 
     /**
@@ -93,6 +95,8 @@ class ReportManager {
                              dataStreamRoute: String,
                              stageName: String,
                              contentType: String,
+                             messageId: String?,
+                             status: String?,
                              content: String,
                              dispositionType: DispositionType,
                              source: Source): String {
@@ -122,11 +126,11 @@ class ReportManager {
                 }
 
                 // Now create the new stage report
-                return createStageReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, source)
+                return createStageReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, messageId, status, content, source)
             }
             DispositionType.ADD -> {
                 logger.info("Creating report for stage name = $stageName")
-                return createStageReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, content, source)
+                return createStageReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, messageId, status, content, source)
             }
         }
     }
@@ -149,6 +153,8 @@ class ReportManager {
                                   dataStreamRoute: String,
                                   stageName: String,
                                   contentType: String,
+                                  messageId: String?,
+                                  status: String?,
                                   content: String,
                                   source: Source): String {
         val stageReportId = UUID.randomUUID().toString()
@@ -160,6 +166,8 @@ class ReportManager {
             this.dataStreamRoute = dataStreamRoute
             this.stageName = stageName
             this.contentType = contentType
+            this.messageId = messageId
+            this.status = status
 
             if (contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
@@ -195,6 +203,8 @@ class ReportManager {
                                         stageName,
                                         contentType,
                                         content,
+                                        messageId,
+                                        status,
                                         source
                                     )
                                     reportMgrConfig.serviceBusSender.sendMessage(ServiceBusMessage(message.toString()))

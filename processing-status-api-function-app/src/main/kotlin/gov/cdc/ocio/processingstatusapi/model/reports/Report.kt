@@ -14,6 +14,8 @@ import java.util.*
  * @property dataStreamRoute String?
  * @property stageName String?
  * @property contentType String?
+ * @property messageId String?
+ * @property status String?
  * @property content String?
  * @property timestamp Date
  */
@@ -38,6 +40,12 @@ data class Report(
 
     @SerializedName("content_type")
     var contentType : String? = null,
+
+    @SerializedName("message_id")
+    var messageId: String? = null,
+
+    @SerializedName("status")
+    var status : String? = null,
 
     var content: Any? = null,
 
@@ -71,6 +79,8 @@ class ReportSerializer : JsonSerializer<Report> {
         try {
             jsonObject.add("report_id", context?.serialize(src?.reportId))
             jsonObject.add("stage_name", context?.serialize(src?.stageName))
+            jsonObject.add("message_id", context?.serialize(src?.messageId))
+            jsonObject.add("status", context?.serialize(src?.status))
             jsonObject.add("timestamp", context?.serialize(src?.timestamp))
             jsonObject.add("content", context?.serialize(src?.content))
         } catch (e: Exception) {
