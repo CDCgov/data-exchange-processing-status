@@ -567,7 +567,7 @@ class GetReportCountsFunction(
             statusCounts.apply {
                 uploaded.counts = totalCompletedUploading
                 failed.counts = totalFailed
-                failed.reasons = listOf("metatdata")
+                failed.reasons = mapOf("metadata" to totalFailed)
                 uploading.counts = totalUploading
             }
         }

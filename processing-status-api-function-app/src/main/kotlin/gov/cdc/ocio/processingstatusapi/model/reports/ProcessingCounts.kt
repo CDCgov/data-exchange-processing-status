@@ -18,5 +18,5 @@ data class StatusCounts(
 
 data class CountsDetails(
     var counts: Long = 0,
-    var reasons: List<String>? = null
+    var reasons: Map<String, Long>? = null
 )
