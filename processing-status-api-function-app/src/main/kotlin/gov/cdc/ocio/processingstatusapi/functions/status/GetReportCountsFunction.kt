@@ -482,7 +482,103 @@ class GetReportCountsFunction(
             .body(countsJson.toString())
             .build()
     }
-    
+
+    /**
+     * Get summary submission counts
+     *
+     * @return HttpResponseMessage
+     */
+    fun getSubmissionCounts(): HttpResponseMessage {
+
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
+
+        val dateStart = request.queryParameters["date_start"]
+        val dateEnd = request.queryParameters["date_end"]
+
+        val daysInterval = request.queryParameters["days_interval"]
+
+        // Verify the request is complete and properly formatted
+        checkRequiredCountsQueryParams(
+            dataStreamId,
+            dataStreamRoute,
+            dateStart,
+            dateEnd,
+            daysInterval,
+            true
+        )?.let { return it }
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        // Get number completed uploading
+        val numCompletedUploadingSqlQuery = (
+            "select "
+                + "value count(1) "
+                + "from Reports r "
+                + "where r.content.schema_name = 'upload' and r.content['offset'] = r.content.size and "
+                + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val completedUploadingCountResult = reportsContainer.queryItems(
+            numCompletedUploadingSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalCompletedUploading = completedUploadingCountResult.firstOrNull() ?: 0
+
+        val numUploadingSqlQuery = (
+            "select "
+                + "value count(1) "
+                + "from Reports r "
+                + "where r.content.schema_name = 'upload' and r.content['offset'] != r.content.size and "
+                + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val uploadingCountResult = reportsContainer.queryItems(
+            numUploadingSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalUploading = uploadingCountResult.firstOrNull() ?: 0
+
+        val numFailedSqlQuery = (
+            "select "
+                + "value count(1) "
+                + "from Reports r "
+                + "where r.content.schema_name = 'dex-metadata-verify' and r.content.issues != null and "
+                + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val failedCountResult = reportsContainer.queryItems(
+            numFailedSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalFailed = failedCountResult.firstOrNull() ?: 0
+
+        val counts = ProcessingCounts().apply {
+            totalCounts = totalCompletedUploading + totalUploading + totalFailed
+            statusCounts.apply {
+                uploaded.counts = totalCompletedUploading
+                failed.counts = totalFailed
+                failed.reasons = listOf("metatdata")
+                uploading.counts = totalUploading
+            }
+        }
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(gson.toJson(counts))
+            .build()
+    }
+
     @Throws(NumberFormatException::class, BadRequestException::class)
     private fun buildSqlClauseForDateRange(daysInterval: String?,
                                            dateStart: String?,
@@ -526,14 +622,14 @@ class GetReportCountsFunction(
         if (dataStreamId == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("destinationId or dataStreamId is required")
+                .body("destination_id or data_stream_id is required")
                 .build()
         }
 
         if (dataStreamRoute == null) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("eventType or dataStreamRoute is required")
+                .body("event_type or data_stream_route is required")
                 .build()
         }
 
@@ -547,7 +643,7 @@ class GetReportCountsFunction(
         if (dateRangeRequired && daysInterval.isNullOrBlank() && dateStart.isNullOrBlank()) {
             return request
                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                .body("date_interval or date_start must be provided")
+                .body("days_interval or date_start must be provided")
                 .build()
         }
 
