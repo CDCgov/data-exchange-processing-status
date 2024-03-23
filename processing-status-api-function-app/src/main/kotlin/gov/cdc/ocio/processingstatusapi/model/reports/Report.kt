@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.model.reports
 
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
+import mu.KotlinLogging
 import java.lang.reflect.Type
 import java.util.*
 
@@ -72,6 +73,7 @@ data class Report(
  */
 class ReportSerializer : JsonSerializer<Report> {
 
+    private val logger = KotlinLogging.logger {}
     override fun serialize(src: Report?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
 
         val jsonObject = JsonObject()
@@ -84,7 +86,7 @@ class ReportSerializer : JsonSerializer<Report> {
             jsonObject.add("timestamp", context?.serialize(src?.timestamp))
             jsonObject.add("content", context?.serialize(src?.content))
         } catch (e: Exception) {
-            // do nothing
+            logger.error { "Unable to serialize the Report object" }
         }
 
         return jsonObject

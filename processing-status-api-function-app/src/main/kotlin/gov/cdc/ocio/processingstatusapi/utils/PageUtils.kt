@@ -18,11 +18,11 @@ class PageUtils(private val minPageSize: Int,
         var defaultPageSize: Int = 20
             private set
 
-        fun minPageSize(minPageSize: Int) = apply { this.minPageSize = minPageSize }
+        fun setMinPageSize(minPageSize: Int) = apply { this.minPageSize = minPageSize }
 
-        fun maxPageSize(maxPageSize: Int) = apply { this.maxPageSize = maxPageSize }
+        fun setMaxPageSize(maxPageSize: Int) = apply { this.maxPageSize = maxPageSize }
 
-        fun defaultPageSize(defaultPageSize: Int) = apply { this.defaultPageSize = defaultPageSize }
+        fun setDefaultPageSize(defaultPageSize: Int) = apply { this.defaultPageSize = defaultPageSize }
 
         fun build() = PageUtils(this)
     }

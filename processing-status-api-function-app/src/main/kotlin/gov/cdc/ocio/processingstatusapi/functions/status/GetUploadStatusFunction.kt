@@ -59,9 +59,9 @@ class GetUploadStatusFunction(
         val sortOrder = request.queryParameters["sort_order"]
 
         val pageUtils = PageUtils.Builder()
-            .minPageSize(MIN_PAGE_SIZE)
-            .maxPageSize(MAX_PAGE_SIZE)
-            .defaultPageSize(DEFAULT_PAGE_SIZE)
+            .setMinPageSize(MIN_PAGE_SIZE)
+            .setMaxPageSize(MAX_PAGE_SIZE)
+            .setDefaultPageSize(DEFAULT_PAGE_SIZE)
             .build()
 
         val pageSizeAsInt = try {

@@ -243,8 +243,8 @@ class GetReportCountsFunction(
         }
 
         val pageUtils = PageUtils.Builder()
-            .maxPageSize(500)
-            .defaultPageSize(100)
+            .setMaxPageSize(500)
+            .setDefaultPageSize(100)
             .build()
 
         val pageSizeAsInt = try {
