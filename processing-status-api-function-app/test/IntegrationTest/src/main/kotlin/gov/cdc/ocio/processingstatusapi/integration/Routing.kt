@@ -4,16 +4,6 @@ package gov.cdc.ocio.processingstatusapi.integration
 enum class RoutingReportTypes {
     fileCopy
 }
-
-data class DexRoutingFileCopy(
-    val schema_name: String,
-    val schema_version: String,
-    val file_source_blob_url: String,
-    val file_destination_blob_url: String,
-    val timestamp: String,
-    val result: String,
-    val error_description: String
-)
 class Routing(metadataVersion: MetadataVersion, private val routingReportType: RoutingReportTypes) : ReportFactory<Any>(metadataVersion) {
     override fun createReport(): Any {
         return when (routingReportType){
@@ -21,11 +11,11 @@ class Routing(metadataVersion: MetadataVersion, private val routingReportType: R
         }
     }
 
-    private fun createFileCopyReport(): DexUploadFileCopy{
-        return DexUploadFileCopy("dex-file-copy",
+    private fun createFileCopyReport(): DexFileCopy{
+        return DexFileCopy("dex-file-copy",
             "0.0.1",
-            "",
-            "",
+            "dne/edav/csv_file1_87847487844.csv",
+            "dne/csv_file1.csv",
             "",
             "success",
             "")

@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.integration
 
+import com.azure.core.amqp.AmqpTransportType
 import com.azure.messaging.servicebus.ServiceBusClientBuilder
 import com.azure.messaging.servicebus.ServiceBusMessage
 import com.azure.messaging.servicebus.ServiceBusSenderClient
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+
 
 
 data class ResponseObject(val statusCode: Int, val responseBody: String?)
@@ -26,9 +28,9 @@ class IntegrationTest {
         private val cosmosDBEndpoint =  System.getenv("COSMOS_DB_ENDPOINT")
         private val cosmosDBKey =  System.getenv("COSMOS_DB_KEY")
         private val cosmosDBPartitionKey =  System.getenv("COSMOS_DB_PARTITION_KEY")
+        private val azureServiceBusNamespace = System.getenv("SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE")
 
-
-        const val QUEUE_NAME = "processing-status-cosmos-db-queue"
+        const val QUEUE_NAME = "ocio-ede-tst-processingstatus-notify-queue"
         const val DEX_PS_API_INTEGRATION_TEST_CMD = "dex::ps-api-integration-test"
     }
 
@@ -37,30 +39,34 @@ class IntegrationTest {
         try {
             senderClient = ServiceBusClientBuilder()
                 .connectionString(serviceBusConnectionString)
-                .fullyQualifiedNamespace("ocio-ede-tst-processingstatus")
+                .fullyQualifiedNamespace(azureServiceBusNamespace)
+                .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
                 .sender()
                 .queueName(QUEUE_NAME)
                 .buildClient()
             val serviceBusMessage = ServiceBusMessage(report)
-
             senderClient.sendMessage(serviceBusMessage)
+
             logger.info("$DEX_PS_API_INTEGRATION_TEST_CMD Message was successfully sent")
         }catch (e:Exception){
             logger.error("$DEX_PS_API_INTEGRATION_TEST_CMD an error occurred while creating service bus sender client: ${e.message}")
+        }finally {
+            if (senderClient != null) {
+                senderClient.close()
+            }
         }
-
         return senderClient
 
 
     }
 
-    fun sendReportToProcessingStatusAPI(urlString:String, requestBody:String): ResponseObject {
+    fun sendReportToProcessingStatusAPI(urlString:String, requestBody:String, method:String): ResponseObject {
         var responseCode = 0
         var responseBody: String? = null
         try{
             val processingStatusAPIBaseURL = URL(urlString)
             val connectionToProcessingStatusAPI = processingStatusAPIBaseURL.openConnection() as HttpURLConnection
-            connectionToProcessingStatusAPI.requestMethod = "POST"
+            connectionToProcessingStatusAPI.requestMethod = method
 
             connectionToProcessingStatusAPI.setRequestProperty("Content-Type", "application/json")
 
@@ -68,7 +74,6 @@ class IntegrationTest {
             connectionToProcessingStatusAPI.doInput = true
 
             val requestObject = requestBody.trimIndent()
-
             val outputStream = OutputStreamWriter(connectionToProcessingStatusAPI.outputStream)
             outputStream.write(requestObject)
             outputStream.flush()
@@ -78,11 +83,9 @@ class IntegrationTest {
             responseBody = if (responseCode  == HttpURLConnection.HTTP_OK){
                 val responseStream = connectionToProcessingStatusAPI.inputStream
                 responseStream.bufferedReader().use {it.readText()}
-                //return ResponseObject(responseCode, responseBody)
             } else{
                 val errorStream = connectionToProcessingStatusAPI.errorStream
                 errorStream.bufferedReader().use {it.readText()}
-                //return ResponseObject(responseCode,responseBody)
             }
             connectionToProcessingStatusAPI.disconnect()
 
@@ -92,7 +95,27 @@ class IntegrationTest {
 
         return  ResponseObject(responseCode,responseBody)
     }
+    fun getReportFromProcessingStatusAPI(urlString:String): ResponseObject {
+        var httpResponseCode = 0
+        var responseBody: String? = null
+        try {
+            val baseUrl = URL(urlString)
+            val connectionToProcessingStatusAPI: HttpURLConnection = baseUrl.openConnection() as HttpURLConnection
+            connectionToProcessingStatusAPI.requestMethod = "GET"
+            connectionToProcessingStatusAPI.responseCode.also { httpResponseCode = it }
+            (if (httpResponseCode  == HttpURLConnection.HTTP_OK){
+                val responseStream = connectionToProcessingStatusAPI.inputStream
+                responseStream.bufferedReader().use {it.readText()}
+            } else{
+                val errorStream = connectionToProcessingStatusAPI.errorStream
+                errorStream.bufferedReader().use {it.readText()}
+            }).also { responseBody = it }
+        }catch (e:Exception){
+            logger.error("$DEX_PS_API_INTEGRATION_TEST_CMD  Error occurred while getting report from Processing Status API: ${e.message}")
 
+        }
+        return ResponseObject(httpResponseCode, responseBody)
+    }
 
     fun queryCosmosDB(uploadID: String, fieldToQuery:String): String {
         var payloadAsJson = ""
@@ -114,7 +137,6 @@ class IntegrationTest {
 
         }catch (e: Exception) {
             logger.error("$DEX_PS_API_INTEGRATION_TEST_CMD  Error occurred while querying Cosmos DB: ${e.message}")
-
         }
 
     return payloadAsJson
