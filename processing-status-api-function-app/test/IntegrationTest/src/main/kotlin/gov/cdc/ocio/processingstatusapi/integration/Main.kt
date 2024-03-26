@@ -34,7 +34,7 @@ class IntegrationTest {
         const val DEX_PS_API_INTEGRATION_TEST_CMD = "dex::ps-api-integration-test"
     }
 
-    fun serviceBusSenderClient(report: String):ServiceBusSenderClient?{
+    fun serviceBusSenderClient(reports: List<String>):ServiceBusSenderClient?{
         var senderClient: ServiceBusSenderClient? = null
         try {
             senderClient = ServiceBusClientBuilder()
@@ -44,8 +44,8 @@ class IntegrationTest {
                 .sender()
                 .queueName(QUEUE_NAME)
                 .buildClient()
-            val serviceBusMessage = ServiceBusMessage(report)
-            senderClient.sendMessage(serviceBusMessage)
+            val serviceBusMessages = reports.map {ServiceBusMessage(it)}
+            senderClient.sendMessages(serviceBusMessages)
 
             logger.info("$DEX_PS_API_INTEGRATION_TEST_CMD Message was successfully sent")
         }catch (e:Exception){

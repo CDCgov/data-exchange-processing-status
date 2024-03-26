@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import org.json.JSONObject
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.io.File
 
 import java.util.*
 import kotlin.test.assertEquals
@@ -23,7 +24,7 @@ class MainTest {
     @Test
     @DisplayName("Send various reports through Service Bus")
     fun sendReportsToServiceBusAndVerifyCounts(){
-        println (main.serviceBusSenderClient("test"))
+
 
     }
     @Test
@@ -96,7 +97,6 @@ class MainTest {
         val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
         val responseCode = responseObject.statusCode
         val responseBody = responseObject.responseBody
-        println (responseBody)
         val responseBodyAsJson = JSONObject(responseBody)
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
@@ -146,14 +146,41 @@ class MainTest {
 
     }
     @Test
-    @DisplayName("HL7v2 Receiver Debtacher Report")
-    fun postReceiverDebatcherReport(){
+    @DisplayName("HL7v2 Reports")
+    fun postHl7ValidationReports(){
+        val validationReports = File(RESOURCES_PATH)
 
-    }
-    @Test
-    @DisplayName("HL7v2 Redactor Report")
-    fun postRedactorReport(){
+        val uuid = UUID.randomUUID()
+        val reports = validationReports.listFiles()
 
+        reports?.forEach { file->
+            val jsonString = file.readText()
+
+            val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-hl7&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+            val responseObject = main.sendReportToProcessingStatusAPI(endPoint,jsonString, POST_METHOD)
+
+            val responseCode = responseObject.statusCode
+            val responseBody = responseObject.responseBody
+
+            val responseBodyAsJson = JSONObject(responseBody)
+            val stageName = responseBodyAsJson.get("stage_name")
+            val stageReportId =responseBodyAsJson.get("report_id")
+
+            assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+            assertEquals(stageName,"dex-hl7", "Incorrect stage name, should be dex-hl7")
+            assertTrue(isValidUUID(stageReportId.toString()))
+        }
+
+        //final step: use counts endpoint to verify report count
+        val countsEndpoint = "$processingStatusBaseURL/api/report/counts/$uuid"
+        val responseObject = main.getReportFromProcessingStatusAPI(countsEndpoint)
+        val responseBodyAsJson = JSONObject(responseObject.responseBody)
+
+        val stages = responseBodyAsJson.getJSONObject("stages")
+        val count = stages.get("dex-hl7")
+
+        assertEquals(200,responseObject.statusCode,"Incorrect response code ${responseObject.statusCode}. It should be 200.")
+        assertEquals(4,count,"Incorrect count $count. it should be 4")
     }
 
     @Test
@@ -226,6 +253,7 @@ class MainTest {
         val reportObject = reportsArray.getJSONObject(0)
         val reportId = reportObject.getString("report_id")
         val stageName = reportObject.getString("stage_name")
+
         //by reportId, stageName
         assertEquals(stageReportId, reportId, "reportId is incorrect, should be $stageReportId")
         assertEquals("dex-metadata-verify",stageName, "Incorrect stage_name should be dex-metadata-verify")
@@ -300,5 +328,6 @@ class MainTest {
         private const val PUT_METHOD = "PUT"
         private const val REPORT_ID = "reportId"
         private const val CONTENT = "content"
+        private const val RESOURCES_PATH = "src/test/resources"
     }
 }

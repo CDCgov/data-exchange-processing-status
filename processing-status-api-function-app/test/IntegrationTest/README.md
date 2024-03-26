@@ -28,7 +28,7 @@ The integration test suite for the Processing Status API use two primary methods
 - **COSMOS_DB_CONTAINER_NAME**: The name of the Cosmos DB container.
 - **PROCESSING_STATUS_API_BASE_URL**: The Processing Status API base URL.
 - **SERVICE_BUS_CONNECTION_STRING**: The Service Bus connection string.
-- **SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE**: The fully qualified name space for service bus
+- **SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE**: The fully qualified name space for service bus.
 
 ## Usage
 To build and run the Integration test, follow these steps:
