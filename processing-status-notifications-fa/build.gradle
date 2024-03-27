@@ -35,6 +35,7 @@ dependencies {
     implementation 'com.azure:azure-messaging-servicebus:7.13.3'
     implementation 'com.microsoft.azure:azure-servicebus:3.6.7'
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation "org.testng:testng:7.4.0"
 //    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
