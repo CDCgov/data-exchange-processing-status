@@ -6,6 +6,8 @@ import mu.KotlinLogging
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Socket
+import java.util.HashMap
+import java.util.Properties
 import javax.mail.MessagingException
 import javax.mail.Session
 import kotlin.math.log
@@ -70,7 +72,9 @@ class EmailDispatcher(): IDispatcher {
         try{
             // TODO : Change this into properties
             val toEmalId = subscription.subscriberAddressOrUrl;
-            val props = System.getProperties()
+            val props = Properties()
+            logger.info("System properties ")
+            logger.info { props }
             props["mail.smtp.host"] = "smtpgw.cdc.gov"
             props["mail.smtp.port"] = 25
             val session = Session.getInstance(props, null)

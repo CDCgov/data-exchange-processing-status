@@ -23,7 +23,7 @@ object EmailUtil {
 //            val replyToName = System.getenv("ReplyToName")
 
             val replyToEmail = "donotreply@cdc.gov"
-            val replyToName = "DoNOtReply (DEX Team)"
+            val replyToName = "DoNotReply(DEX Team)"
             //set message headers
             msg.addHeader("Content-type", "text/HTML; charset=UTF-8")
             msg.addHeader("format", "flowed")
