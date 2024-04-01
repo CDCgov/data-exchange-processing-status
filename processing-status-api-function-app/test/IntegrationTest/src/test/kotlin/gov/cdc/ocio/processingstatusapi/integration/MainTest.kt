@@ -286,12 +286,6 @@ class MainTest {
         assertEquals(stageReportId, reportId, "reportId is incorrect, should be $stageReportId")
         assertEquals("dex-metadata-verify",stageName, "Incorrect stage_name should be dex-metadata-verify")
     }
-    @Test
-    @DisplayName("Call counts endpoint to verify number of reports")
-    fun getCountsEndPoint(){
-
-    }
-
     //Errors
     @Test
     @DisplayName("The report with missing destinationID")
