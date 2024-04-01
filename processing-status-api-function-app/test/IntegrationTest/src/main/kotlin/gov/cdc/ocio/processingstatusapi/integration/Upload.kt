@@ -32,6 +32,9 @@ data class DexUploadStatus(
 
 
 class Upload(metadataVersion: MetadataVersion, private val uploadReportType: UploadReportTypes) : ReportFactory<Any>(metadataVersion) {
+    companion object {
+        const val RECEIVED_FILENAME = "text/plain"
+    }
     override fun createReport(): Any {
         return when (uploadReportType){
             UploadReportTypes.FileCopy -> createFileCopyReport()
@@ -46,28 +49,28 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
         return when (metadataVersion) {
             MetadataVersion.v1 -> DexMetadataVerify("0.0.1",
                 "dex-metadata-verify",
-                "10MB-test-file",
+                "testfile1",
                 "",
-                DexMetadataVersionOne("10MB-test-file",
-                    "text/plain",
+                DexMetadataVersionOne("testfile1",
+                    RECEIVED_FILENAME,
                     "ndlp",
                     "routineImmunization",
                     "IZGW",
-                    "V2022-12-31",
+                    "V2022-07-28",
                     "DD2",
                   ),
                 listOf("Missing required metadata field, 'meta_field1'.","Metadata field, 'meta_field2' is set to 'value3' and does not contain one of the allowed values: [ 'value1', value2' ]"))
 
             MetadataVersion.v2 -> DexMetadataVerify("0.0.1",
                 "dex-metadata-verify",
-                "10MB-test-file",
+                "testfile2",
                 "",
-                DexMetadataVersionTwo("10MB-test-file",
-                    "text/plain",
+                DexMetadataVersionTwo("testfile2",
+                    RECEIVED_FILENAME,
                     "ndlp",
                     "routineImmunization",
                     "IZGW",
-                    "V2022-12-31",
+                    "V2022-12-26",
                     "DD2",
                     "ygj6@cdc.gov",
                     "2b18d70c-8559-11ee-b9d1-0242ac120002"),
@@ -100,12 +103,12 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
                 "routineImmunization",
                 1700009141546,
                 1700009137234,
-                DexMetadataVersionOne("10MB-test-file",
+                DexMetadataVersionOne("testfile2",
                     "text/plain",
                     "ndlp",
                     "routineImmunization",
                     "IZGW",
-                    "V2022-12-31",
+                    "V2022-05-05",
                     "DD2"))
 
             MetadataVersion.v2 -> DexUploadStatus("upload",
@@ -118,7 +121,7 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
                 "routineImmunization",
                 1700009141546,
                 1700009137234,
-                DexMetadataVersionTwo("10MB-test-file",
+                DexMetadataVersionTwo("testfile",
                     "text/plain",
                     "ndlp",
                     "routineImmunization",

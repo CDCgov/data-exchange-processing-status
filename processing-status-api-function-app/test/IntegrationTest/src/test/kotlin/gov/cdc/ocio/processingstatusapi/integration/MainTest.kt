@@ -36,7 +36,7 @@ class MainTest {
             val contentAsJson = JSONObject(file.readText())
             message.put("upload_id",uuid)
             message.put("destination_id","dex-testing")
-            message.put("stage_name","dex-hl7")
+            message.put("stage_name",STAGE_NAME)
             message.put("content_type","json")
             message.put("event_type","test-event1")
             message.put("content",contentAsJson)
@@ -51,7 +51,7 @@ class MainTest {
         val responseAsJson = JSONObject(response.responseBody)
 
         val stages = responseAsJson.getJSONObject("stages")
-        val count = stages.get("dex-hl7")
+        val count = stages.get(STAGE_NAME)
 
         assertEquals(200,response.statusCode,"Incorrect response code ${response.statusCode}. It should be 200.")
         assertEquals(4,count,"Incorrect count $count. it should be 4")
@@ -186,7 +186,7 @@ class MainTest {
         reports?.forEach { file->
             val jsonString = file.readText()
 
-            val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-hl7&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+            val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=$STAGE_NAME&dataStreamId=dex-testing&dataStreamRoute=test-event1"
             val responseObject = main.sendReportToProcessingStatusAPI(endPoint,jsonString, POST_METHOD)
 
             val responseCode = responseObject.statusCode
@@ -197,7 +197,7 @@ class MainTest {
             val stageReportId =responseBodyAsJson.get("report_id")
 
             assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
-            assertEquals(stageName,"dex-hl7", "Incorrect stage name, should be dex-hl7")
+            assertEquals(stageName,STAGE_NAME, "Incorrect stage name, should be dex-hl7")
             assertTrue(isValidUUID(stageReportId.toString()))
         }
         //final step: use counts endpoint to verify report count
@@ -206,7 +206,7 @@ class MainTest {
         val responseBodyAsJson = JSONObject(responseObject.responseBody)
 
         val stages = responseBodyAsJson.getJSONObject("stages")
-        val count = stages.get("dex-hl7")
+        val count = stages.get(STAGE_NAME)
         assertEquals(200,responseObject.statusCode,"Incorrect response code ${responseObject.statusCode}. It should be 200.")
         assertEquals(4,count,"Incorrect count $count. it should be 4")
     }
@@ -351,5 +351,6 @@ class MainTest {
         private const val REPORT_ID = "reportId"
         private const val CONTENT = "content"
         private const val RESOURCES_PATH = "src/test/resources"
+        private const val STAGE_NAME = "dex-hl7"
     }
 }
