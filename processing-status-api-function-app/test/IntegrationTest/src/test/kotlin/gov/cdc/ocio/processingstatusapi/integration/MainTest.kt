@@ -24,7 +24,37 @@ class MainTest {
     @Test
     @DisplayName("Send various reports through Service Bus")
     fun sendReportsToServiceBusAndVerifyCounts(){
+        //initialize object for  batch of reports
+        val messages: MutableList<String> = mutableListOf()
+        val validationReports = File(RESOURCES_PATH)
+        val uuid = UUID.randomUUID()
 
+        val reports = validationReports.listFiles()
+
+        reports?.forEach { file ->
+            val message = JSONObject()
+            val contentAsJson = JSONObject(file.readText())
+            message.put("upload_id",uuid)
+            message.put("destination_id","dex-testing")
+            message.put("stage_name","dex-hl7")
+            message.put("content_type","json")
+            message.put("event_type","test-event1")
+            message.put("content",contentAsJson)
+            messages.add(message.toString())
+        }
+        // send the batch through service bus queue
+        main.serviceBusSenderClient(messages)
+
+        // use counts endpoint to verify number of reports
+        val counts = "$processingStatusBaseURL/api/report/counts/$uuid"
+        val response = main.getReportFromProcessingStatusAPI(counts)
+        val responseAsJson = JSONObject(response.responseBody)
+
+        val stages = responseAsJson.getJSONObject("stages")
+        val count = stages.get("dex-hl7")
+
+        assertEquals(200,response.statusCode,"Incorrect response code ${response.statusCode}. It should be 200.")
+        assertEquals(4,count,"Incorrect count $count. it should be 4")
 
     }
     @Test
@@ -170,7 +200,6 @@ class MainTest {
             assertEquals(stageName,"dex-hl7", "Incorrect stage name, should be dex-hl7")
             assertTrue(isValidUUID(stageReportId.toString()))
         }
-
         //final step: use counts endpoint to verify report count
         val countsEndpoint = "$processingStatusBaseURL/api/report/counts/$uuid"
         val responseObject = main.getReportFromProcessingStatusAPI(countsEndpoint)
@@ -178,7 +207,6 @@ class MainTest {
 
         val stages = responseBodyAsJson.getJSONObject("stages")
         val count = stages.get("dex-hl7")
-
         assertEquals(200,responseObject.statusCode,"Incorrect response code ${responseObject.statusCode}. It should be 200.")
         assertEquals(4,count,"Incorrect count $count. it should be 4")
     }
@@ -289,7 +317,7 @@ class MainTest {
         val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/stageName=dex-metadata-verify&eventType=test-event1"
         val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
         val responseCode = responseObject.statusCode
-        val responseBody = responseObject.responseBody
+        //val responseBody = responseObject.responseBody
         assertEquals(400,responseCode,"Incorrect response code for missing required uploadId")
     }
     @Test

@@ -30,11 +30,11 @@ class IntegrationTest {
         private val cosmosDBPartitionKey =  System.getenv("COSMOS_DB_PARTITION_KEY")
         private val azureServiceBusNamespace = System.getenv("SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE")
 
-        const val QUEUE_NAME = "ocio-ede-tst-processingstatus-notify-queue"
+        private val QUEUE_NAME = System.getenv("SERVICE_BUS_QUEUE_NAME")
         const val DEX_PS_API_INTEGRATION_TEST_CMD = "dex::ps-api-integration-test"
     }
 
-    fun serviceBusSenderClient(reports: List<String>):ServiceBusSenderClient?{
+    fun serviceBusSenderClient(reports: MutableList<String>):ServiceBusSenderClient?{
         var senderClient: ServiceBusSenderClient? = null
         try {
             senderClient = ServiceBusClientBuilder()
@@ -51,9 +51,7 @@ class IntegrationTest {
         }catch (e:Exception){
             logger.error("$DEX_PS_API_INTEGRATION_TEST_CMD an error occurred while creating service bus sender client: ${e.message}")
         }finally {
-            if (senderClient != null) {
-                senderClient.close()
-            }
+            senderClient?.close()
         }
         return senderClient
 

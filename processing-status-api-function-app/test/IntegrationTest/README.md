@@ -29,13 +29,14 @@ The integration test suite for the Processing Status API use two primary methods
 - **PROCESSING_STATUS_API_BASE_URL**: The Processing Status API base URL.
 - **SERVICE_BUS_CONNECTION_STRING**: The Service Bus connection string.
 - **SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE**: The fully qualified name space for service bus.
+- **SERVICE_BUS_QUEUE_NAME**: The queue name for service bus.
 
 ## Usage
 To build and run the Integration test, follow these steps:
 1. Clone this repository to your local machine:
 ```
 git clone https://github.com/CDCgov/data-exchange-processing-status.git
-configure evnrionment variables
+configure environment variables
 cd test/IntegrationTest
 mvn clean install
 mvn integration-test
