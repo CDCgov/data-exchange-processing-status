@@ -72,7 +72,7 @@ class MainTest {
         val stageName = metadataVerifyReportAsJson.get("stage_name")
         val stageReportId =metadataVerifyReportAsJson.get("report_id")
 
-        assertEquals(200,metadataVerifyResponseObject.statusCode,"Incorrect response code. It should be 200.")
+        assertEquals(200,metadataVerifyResponseObject.statusCode,"Incorrect response code for sending upload-metadata-verify-report. It should be 200.")
         assertEquals(stageName,"dex-metadata-verify", "Incorrect stage name")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -98,7 +98,7 @@ class MainTest {
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,uploadFileCopyResponseObject.statusCode,"Incorrect response code. It should be 200.")
+        assertEquals(200,uploadFileCopyResponseObject.statusCode,"Incorrect response code for sending upload-file-copy report. It should be 200.")
         assertEquals(stageName,"dex-file-copy", "Incorrect stage name, should be dex-file-copy")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -124,7 +124,7 @@ class MainTest {
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,uploadStatusResponseObject.statusCode,"Incorrect response code. It should be 200.")
+        assertEquals(200,uploadStatusResponseObject.statusCode,"Incorrect response code for sending upload-status-report. It should be 200.")
         assertEquals(stageName,"dex-upload-status", "Incorrect stage name, should be dex-upload-status")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -153,7 +153,7 @@ class MainTest {
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,fileCopyResponseObject.statusCode,"Incorrect response code. It should be 200.")
+        assertEquals(200,fileCopyResponseObject.statusCode,"Incorrect response code for routing-file-copy report. It should be 200.")
         assertEquals(stageName,"dex-routing", "Incorrect stage name, should be dex-routing")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -184,7 +184,7 @@ class MainTest {
             val stageName = validationReportAsJson.get("stage_name")
             val stageReportId =validationReportAsJson.get("report_id")
 
-            assertEquals(200,validationResponseObject.statusCode,"Incorrect response code. It should be 200.")
+            assertEquals(200,validationResponseObject.statusCode,"Incorrect response code for hl7 report. It should be 200.")
             assertEquals(stageName,STAGE_NAME, "Incorrect stage name, should be dex-hl7")
             assertTrue(isValidUUID(stageReportId.toString()))
         }
@@ -195,7 +195,7 @@ class MainTest {
 
         val stages = responseBodyAsJson.getJSONObject("stages")
         val count = stages.get(STAGE_NAME)
-        assertEquals(200,responseObject.statusCode,"Incorrect response code ${responseObject.statusCode}. It should be 200.")
+        assertEquals(200,responseObject.statusCode,"Incorrect response code ${responseObject.statusCode} for HL7v2 reports. It should be 200.")
         assertEquals(4,count,"Incorrect count $count. it should be 4")
     }
 
@@ -217,7 +217,7 @@ class MainTest {
         val responseBodyAsJson = JSONObject(responseBody)
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,responseCode,"Incorrect response code for sending upload-metadata-verify report. It should be 200.")
         assertTrue(isValidUUID(stageReportId.toString()))
 
         //step3: using stageReportId, update existing report with stageName.
@@ -229,7 +229,7 @@ class MainTest {
         val stageName = updateResponseBodyAsJson.get("stage_name")
         val updateStageReportId =updateResponseBodyAsJson.get("report_id")
 
-        assertEquals(200,updateResponseCode,"Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,updateResponseCode,"Incorrect response code for updating upload-metadata-verify report. It should be 200.")
         assertEquals(stageName,"dex-metadata-verify1", "Incorrect stage name")
         assertTrue(isValidUUID(updateStageReportId.toString()))
     }
@@ -249,14 +249,14 @@ class MainTest {
         val fileCopyReportAsJson = JSONObject(fileCopyresponseObject.responseBody)
         val stageReportId =fileCopyReportAsJson.get("report_id")
 
-        assertEquals(200,fileCopyresponseObject.statusCode,"Incorrect response code. It should be 200.")
+        assertEquals(200,fileCopyresponseObject.statusCode,"Incorrect response code for sending upload-file-copy report. It should be 200.")
         assertTrue(isValidUUID(stageReportId.toString()))
 
         //step3: GET upload file copy report from Processing Status API and verify response
         val getEndPoint = "$processingStatusBaseURL/api/report/uploadId/$uuid"
         val getResponseObject = main.getReportFromProcessingStatusAPI(getEndPoint)
 
-        assertEquals(200,getResponseObject.statusCode, "Incorrect response code. It should be 200.")
+        assertEquals(200,getResponseObject.statusCode, "Incorrect response code for getting upload-file-copy report. It should be 200.")
         //validate the report received
         //by upload id
         val getResponseBodyAsJson = JSONObject(getResponseObject.responseBody)
