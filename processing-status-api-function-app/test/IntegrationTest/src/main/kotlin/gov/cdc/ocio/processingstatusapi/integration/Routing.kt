@@ -2,12 +2,12 @@ package gov.cdc.ocio.processingstatusapi.integration
 
 
 enum class RoutingReportTypes {
-    fileCopy
+    FileCopy
 }
 class Routing(metadataVersion: MetadataVersion, private val routingReportType: RoutingReportTypes) : ReportFactory<Any>(metadataVersion) {
     override fun createReport(): Any {
         return when (routingReportType){
-            RoutingReportTypes.fileCopy -> createFileCopyReport()
+            RoutingReportTypes.FileCopy -> createFileCopyReport()
         }
     }
 

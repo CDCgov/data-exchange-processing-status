@@ -60,7 +60,7 @@ class MainTest {
     @Test
     @DisplayName("Upload Metadata Verify Report")
     fun postUploadMetadataVerifyReport(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.MetadataVerify).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.MetadataVerify).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -87,7 +87,7 @@ class MainTest {
     @Test
     @DisplayName("Upload File Copy Report")
     fun postUploadFileCopyReport(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.FileCopy).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.FileCopy).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -113,7 +113,7 @@ class MainTest {
     @Test
     @DisplayName("Upload Status Report")
     fun postUploadStatusReportReport(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.UploadStatus).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.UploadStatus).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -140,7 +140,7 @@ class MainTest {
     @Test
     @DisplayName("Routing File Copy Report")
     fun postRoutingFileCopyReport(){
-        val routingFileCopyReport = Routing(MetadataVersion.v2, RoutingReportTypes.fileCopy).createReport()
+        val routingFileCopyReport = Routing(MetadataVersion.V2, RoutingReportTypes.FileCopy).createReport()
         //convert report to json
         val reportAsJson = Gson().toJson(routingFileCopyReport)
 
@@ -203,7 +203,7 @@ class MainTest {
     @DisplayName("Update Upload Metadata Verify Report")
     fun putUploadMetadataVerifyReport(){
         //step1: create report
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.MetadataVerify).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.MetadataVerify).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -237,7 +237,7 @@ class MainTest {
     @DisplayName("Get existing File Copy Report")
     fun getUploadFileCopyReport(){
         //step1: create report
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.FileCopy).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.FileCopy).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -276,7 +276,7 @@ class MainTest {
     @Test
     @DisplayName("The report with missing destinationID")
     fun postReportWithMissingDestinationId(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.FileCopy).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.FileCopy).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -289,7 +289,7 @@ class MainTest {
     @Test
     @DisplayName("The report with missing uploadId")
     fun postReportWithMissingUploadId(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.FileCopy).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.FileCopy).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
 
@@ -301,7 +301,7 @@ class MainTest {
     @Test
     @DisplayName("The report with missing eventType")
     fun postReportWithMissingEventType(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.MetadataVerify).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.MetadataVerify).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
@@ -315,7 +315,7 @@ class MainTest {
     @Test
     @DisplayName("The report with missing stageName")
     fun postReportWithMissingStageName(){
-        val uploadReport = Upload(MetadataVersion.v2, UploadReportTypes.MetadataVerify).createReport()
+        val uploadReport = Upload(MetadataVersion.V2, UploadReportTypes.MetadataVerify).createReport()
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()

@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.integration
 
+import com.google.gson.annotations.SerializedName
+
 
 enum class UploadReportTypes {
     MetadataVerify,
@@ -8,24 +10,24 @@ enum class UploadReportTypes {
 }
 
 data class DexMetadataVerify(
-    val schema_version: String,
-    val schema_name: String,
+    @SerializedName("schema_version") val schemaVersion: String,
+    @SerializedName("schema_name") val schemaName: String,
     val filename: String,
     val timestamp: String,
     val metadata: Any,
     val issues: List<String>
 )
 data class DexUploadStatus(
-    val schema_name: String,
-    val schema_version: String,
+    @SerializedName("schema_name") val schemaName: String,
+    @SerializedName("schema_version") val schemaVersion: String,
     val tguid: String,
     val offset: Int,
     val size: Int,
     val filename: String,
-    val meta_destination_id: String,
-    val meta_ext_event: String,
-    val end_time_epoch_millis: Long,
-    val start_time_epoch_millis: Long,
+    @SerializedName("meta_destination_id") val metaDestinationId: String,
+    @SerializedName("meta_ext_event") val metaExtEvent: String,
+    @SerializedName("end_time_epoch_millis") val endTimeEpochMillis: Long,
+    @SerializedName("start_time_epoch_millis") val startTimeEpochMillis: Long,
     val metadata: Any
 )
 
@@ -47,7 +49,7 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
     private fun createMetadataVerifyReport(metadataVersion: MetadataVersion): DexMetadataVerify {
 
         return when (metadataVersion) {
-            MetadataVersion.v1 -> DexMetadataVerify("0.0.1",
+            MetadataVersion.V1 -> DexMetadataVerify("0.0.1",
                 "dex-metadata-verify",
                 "testfile1",
                 "",
@@ -61,7 +63,7 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
                   ),
                 listOf("Missing required metadata field, 'meta_field1'.","Metadata field, 'meta_field2' is set to 'value3' and does not contain one of the allowed values: [ 'value1', value2' ]"))
 
-            MetadataVersion.v2 -> DexMetadataVerify("0.0.1",
+            MetadataVersion.V2 -> DexMetadataVerify("0.0.1",
                 "dex-metadata-verify",
                 "testfile2",
                 "",
@@ -93,7 +95,7 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
     private fun createUploadStatusReport(): DexUploadStatus{
 
         return when (metadataVersion) {
-            MetadataVersion.v1 -> DexUploadStatus("upload",
+            MetadataVersion.V1 -> DexUploadStatus("upload",
                 "1.0",
                 "{{uploadId}}",
                 0,
@@ -111,7 +113,7 @@ class Upload(metadataVersion: MetadataVersion, private val uploadReportType: Upl
                     "V2022-05-05",
                     "DD2"))
 
-            MetadataVersion.v2 -> DexUploadStatus("upload",
+            MetadataVersion.V2 -> DexUploadStatus("upload",
                 "1.0",
                 "{{uploadId}}",
                 0,

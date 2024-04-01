@@ -2,8 +2,8 @@ package gov.cdc.ocio.processingstatusapi.integration
 
 
 enum class MetadataVersion {
-    v1,
-    v2
+    V1,
+    V2
 }
 
 
