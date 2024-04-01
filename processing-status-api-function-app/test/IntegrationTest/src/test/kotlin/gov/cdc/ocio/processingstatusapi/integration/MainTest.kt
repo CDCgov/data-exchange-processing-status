@@ -46,8 +46,8 @@ class MainTest {
         main.serviceBusSenderClient(messages)
 
         // use counts endpoint to verify number of reports
-        val counts = "$processingStatusBaseURL/api/report/counts/$uuid"
-        val response = main.getReportFromProcessingStatusAPI(counts)
+        val countsEndPoint = "$processingStatusBaseURL/api/report/counts/$uuid"
+        val response = main.getReportFromProcessingStatusAPI(countsEndPoint)
         val responseAsJson = JSONObject(response.responseBody)
 
         val stages = responseAsJson.getJSONObject("stages")
@@ -65,16 +65,14 @@ class MainTest {
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
 
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&destinationId=dex-testing&eventType=test-event1"
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
-        val responseBody = responseObject.responseBody
+        val endPointWithUploadMetadataVerify = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&destinationId=dex-testing&eventType=test-event1"
+        val metadataVerifyResponseObject = main.sendReportToProcessingStatusAPI(endPointWithUploadMetadataVerify,uploadReportAsJson, POST_METHOD)
 
-        val responseBodyAsJson = JSONObject(responseBody)
-        val stageName = responseBodyAsJson.get("stage_name")
-        val stageReportId =responseBodyAsJson.get("report_id")
+        val metadataVerifyReportAsJson = JSONObject(metadataVerifyResponseObject.responseBody)
+        val stageName = metadataVerifyReportAsJson.get("stage_name")
+        val stageReportId =metadataVerifyReportAsJson.get("report_id")
 
-        assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,metadataVerifyResponseObject.statusCode,"Incorrect response code. It should be 200.")
         assertEquals(stageName,"dex-metadata-verify", "Incorrect stage name")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -93,17 +91,14 @@ class MainTest {
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-file-copy&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+        val endPointWithUploadFileCopy = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-file-copy&dataStreamId=dex-testing&dataStreamRoute=test-event1"
 
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
-        val responseBody = responseObject.responseBody
-
-        val responseBodyAsJson = JSONObject(responseBody)
+        val uploadFileCopyResponseObject = main.sendReportToProcessingStatusAPI(endPointWithUploadFileCopy,uploadReportAsJson, POST_METHOD)
+        val responseBodyAsJson = JSONObject(uploadFileCopyResponseObject.responseBody)
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,responseCode,"Incorrect response code $responseCode should be 200.")
+        assertEquals(200,uploadFileCopyResponseObject.statusCode,"Incorrect response code. It should be 200.")
         assertEquals(stageName,"dex-file-copy", "Incorrect stage name, should be dex-file-copy")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -122,16 +117,14 @@ class MainTest {
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-upload-status&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+        val endPointWithUploadStatus = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-upload-status&dataStreamId=dex-testing&dataStreamRoute=test-event1"
 
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
-        val responseBody = responseObject.responseBody
-        val responseBodyAsJson = JSONObject(responseBody)
+        val uploadStatusResponseObject = main.sendReportToProcessingStatusAPI(endPointWithUploadStatus,uploadReportAsJson, POST_METHOD)
+        val responseBodyAsJson = JSONObject(uploadStatusResponseObject.responseBody)
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,uploadStatusResponseObject.statusCode,"Incorrect response code. It should be 200.")
         assertEquals(stageName,"dex-upload-status", "Incorrect stage name, should be dex-upload-status")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -152,17 +145,15 @@ class MainTest {
         val reportAsJson = Gson().toJson(routingFileCopyReport)
 
         val uuid = UUID.randomUUID()
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-routing&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+        val routingFileCopyEndPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-routing&dataStreamId=dex-testing&dataStreamRoute=test-event1"
 
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,reportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
-        val responseBody = responseObject.responseBody
+        val fileCopyResponseObject = main.sendReportToProcessingStatusAPI(routingFileCopyEndPoint,reportAsJson, POST_METHOD)
 
-        val responseBodyAsJson = JSONObject(responseBody)
+        val responseBodyAsJson = JSONObject(fileCopyResponseObject.responseBody)
         val stageName = responseBodyAsJson.get("stage_name")
         val stageReportId =responseBodyAsJson.get("report_id")
 
-        assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,fileCopyResponseObject.statusCode,"Incorrect response code. It should be 200.")
         assertEquals(stageName,"dex-routing", "Incorrect stage name, should be dex-routing")
         assertTrue(isValidUUID(stageReportId.toString()))
 
@@ -186,17 +177,14 @@ class MainTest {
         reports?.forEach { file->
             val jsonString = file.readText()
 
-            val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=$STAGE_NAME&dataStreamId=dex-testing&dataStreamRoute=test-event1"
-            val responseObject = main.sendReportToProcessingStatusAPI(endPoint,jsonString, POST_METHOD)
+            val endPointWithValidationReport = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=$STAGE_NAME&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+            val validationResponseObject = main.sendReportToProcessingStatusAPI(endPointWithValidationReport,jsonString, POST_METHOD)
 
-            val responseCode = responseObject.statusCode
-            val responseBody = responseObject.responseBody
+            val validationReportAsJson = JSONObject(validationResponseObject.responseBody)
+            val stageName = validationReportAsJson.get("stage_name")
+            val stageReportId =validationReportAsJson.get("report_id")
 
-            val responseBodyAsJson = JSONObject(responseBody)
-            val stageName = responseBodyAsJson.get("stage_name")
-            val stageReportId =responseBodyAsJson.get("report_id")
-
-            assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+            assertEquals(200,validationResponseObject.statusCode,"Incorrect response code. It should be 200.")
             assertEquals(stageName,STAGE_NAME, "Incorrect stage name, should be dex-hl7")
             assertTrue(isValidUUID(stageReportId.toString()))
         }
@@ -221,8 +209,8 @@ class MainTest {
         val uuid = UUID.randomUUID()
 
         //step2: Send the report to processing status api and verify response
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&dataStreamId=dex-testing&dataStreamRoute=test-event1"
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
+        val endPointWithVerifyMetadataReport = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+        val responseObject = main.sendReportToProcessingStatusAPI(endPointWithVerifyMetadataReport,uploadReportAsJson, POST_METHOD)
         val responseCode = responseObject.statusCode
         val responseBody = responseObject.responseBody
 
@@ -255,22 +243,20 @@ class MainTest {
         val uuid = UUID.randomUUID()
 
         //step2: Send the report to processing status api and verify response
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&dataStreamId=dex-testing&dataStreamRoute=test-event1"
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
-        val responseBody = responseObject.responseBody
+        val getUploadFileCopyEndPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&dataStreamId=dex-testing&dataStreamRoute=test-event1"
+        val fileCopyresponseObject = main.sendReportToProcessingStatusAPI(getUploadFileCopyEndPoint,uploadReportAsJson, POST_METHOD)
 
-        val responseBodyAsJson = JSONObject(responseBody)
-        val stageReportId =responseBodyAsJson.get("report_id")
+        val fileCopyReportAsJson = JSONObject(fileCopyresponseObject.responseBody)
+        val stageReportId =fileCopyReportAsJson.get("report_id")
 
-        assertEquals(200,responseCode,"Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,fileCopyresponseObject.statusCode,"Incorrect response code. It should be 200.")
         assertTrue(isValidUUID(stageReportId.toString()))
 
         //step3: GET upload file copy report from Processing Status API and verify response
         val getEndPoint = "$processingStatusBaseURL/api/report/uploadId/$uuid"
         val getResponseObject = main.getReportFromProcessingStatusAPI(getEndPoint)
 
-        assertEquals(200,getResponseObject.statusCode, "Incorrect response code $responseCode. It should be 200.")
+        assertEquals(200,getResponseObject.statusCode, "Incorrect response code. It should be 200.")
         //validate the report received
         //by upload id
         val getResponseBodyAsJson = JSONObject(getResponseObject.responseBody)
@@ -295,11 +281,10 @@ class MainTest {
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
 
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&eventType=test-event1"
+        val endPointWithMissingDestinationId = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&eventType=test-event1"
 
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
-        assertEquals(400,responseCode,"Incorrect response code for missing required destination_id")
+        val responseObject = main.sendReportToProcessingStatusAPI(endPointWithMissingDestinationId,uploadReportAsJson, POST_METHOD)
+        assertEquals(400,responseObject.statusCode,"Incorrect response code for missing required destination_id")
     }
     @Test
     @DisplayName("The report with missing uploadId")
@@ -308,11 +293,10 @@ class MainTest {
         //convert upload report to json
         val uploadReportAsJson = Gson().toJson(uploadReport)
 
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/stageName=dex-metadata-verify&eventType=test-event1"
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
+        val endPointMissingUploadId = "$processingStatusBaseURL/api/report/json/uploadId/stageName=dex-metadata-verify&eventType=test-event1"
+        val responseObject = main.sendReportToProcessingStatusAPI(endPointMissingUploadId,uploadReportAsJson, POST_METHOD)
         //val responseBody = responseObject.responseBody
-        assertEquals(400,responseCode,"Incorrect response code for missing required uploadId")
+        assertEquals(400,responseObject.statusCode,"Incorrect response code for missing required uploadId")
     }
     @Test
     @DisplayName("The report with missing eventType")
@@ -322,12 +306,11 @@ class MainTest {
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
 
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&destinationId=dex-testing"
+        val endPointMissingEventType = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?stageName=dex-metadata-verify&destinationId=dex-testing"
 
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
-        val responseCode = responseObject.statusCode
+        val responseObject = main.sendReportToProcessingStatusAPI(endPointMissingEventType,uploadReportAsJson, POST_METHOD)
 
-        assertEquals(responseCode,400,"Incorrect response code for missing required eventType.")
+        assertEquals(responseObject.statusCode,400,"Incorrect response code for missing required eventType.")
     }
     @Test
     @DisplayName("The report with missing stageName")
@@ -337,8 +320,8 @@ class MainTest {
         val uploadReportAsJson = Gson().toJson(uploadReport)
         val uuid = UUID.randomUUID()
 
-        val endPoint = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?destinationId=dex-testing&eventType=test-event1"
-        val responseObject = main.sendReportToProcessingStatusAPI(endPoint,uploadReportAsJson, POST_METHOD)
+        val endPointMissingStageName = "$processingStatusBaseURL/api/report/json/uploadId/$uuid?destinationId=dex-testing&eventType=test-event1"
+        val responseObject = main.sendReportToProcessingStatusAPI(endPointMissingStageName,uploadReportAsJson, POST_METHOD)
         val responseCode = responseObject.statusCode
         assertEquals(400,responseCode,"Incorrect response code for missing required stageName.")
     }
