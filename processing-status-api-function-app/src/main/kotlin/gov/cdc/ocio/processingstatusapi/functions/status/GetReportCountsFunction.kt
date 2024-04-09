@@ -154,8 +154,8 @@ class GetReportCountsFunction(
         val hl7ValidationCountsQuery = (
             "select "
             + "r.uploadId, r.stageName, "
-            + "count(contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) as valid, "
-            + "count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) as invalid "
+            + "count(contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as valid, "
+            + "count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as invalid "
             + "from $reportsContainerName r "
             + "where r.content.schema_name = '$hl7ValidationSchemaName' and r.uploadId in ($quotedUploadIds) "
             + "group by r.uploadId, r.stageName"
@@ -459,7 +459,7 @@ class GetReportCountsFunction(
 
         val reportsSqlQuery = (
             "select "
-            + "value count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) "
+            + "value count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) "
             + "from $reportsContainerName r "
             + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
             + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
