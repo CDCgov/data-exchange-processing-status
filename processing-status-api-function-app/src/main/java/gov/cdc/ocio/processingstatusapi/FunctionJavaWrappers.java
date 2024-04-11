@@ -224,6 +224,28 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).withQueryParams();
     }
 
+    @FunctionName("GetSubmissionCounts")
+    public HttpResponseMessage getSubmissionCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/submissions/summary",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getSubmissionCounts();
+    }
+
+    @FunctionName("GetHL7InvalidStructureValidationCounts")
+    public HttpResponseMessage getHL7InvalidStructureValidationCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/hl7/invalidStructureValidation",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getHL7InvalidStructureValidationCounts();
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(
