@@ -6,7 +6,7 @@ import java.util.*
 import com.microsoft.azure.functions.HttpResponseMessage
 import gov.cdc.ocio.cache.InMemoryCacheService
 import gov.cdc.ocio.model.http.SubscriptionResult
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import java.time.Instant
 
 /**

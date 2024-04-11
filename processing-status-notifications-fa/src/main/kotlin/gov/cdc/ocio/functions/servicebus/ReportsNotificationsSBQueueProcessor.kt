@@ -13,7 +13,7 @@ import gov.cdc.ocio.model.cache.SubscriptionRule
 import gov.cdc.ocio.model.message.ReportNotificationSBMessage
 import gov.cdc.ocio.model.message.SchemaDefinition
 import gov.cdc.ocio.rulesEngine.RuleEngine
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 
 /**
  * The service bus is another interface for subscribing for notifications through email.
