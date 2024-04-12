@@ -5,6 +5,7 @@ import com.microsoft.azure.functions.HttpMethod;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.annotation.*;
+import gov.cdc.ocio.function.HealthCheckFunction;
 import gov.cdc.ocio.function.http.SubscribeEmailNotifications;
 import gov.cdc.ocio.function.http.SubscribeWebsocketNotifications;
 import gov.cdc.ocio.function.http.UnsubscribeNotifications;
@@ -13,6 +14,22 @@ import gov.cdc.ocio.function.servicebus.ReportsNotificationsSBQueueProcessor;
 import java.util.Optional;
 
 public class FunctionJavaWrappers {
+
+    /**
+     * Health check
+     * @param request HttpRequest
+     * @return HttpResponse
+     */
+    @FunctionName("HealthCheck")
+    public HttpResponseMessage healthCheck(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "health",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
+        return new HealthCheckFunction(request).run();
+    }
+
     /**
      * Subscribe for email notifications using Rest endpoint
      * @param request HttpRequest
