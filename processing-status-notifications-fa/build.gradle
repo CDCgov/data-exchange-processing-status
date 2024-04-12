@@ -61,7 +61,7 @@ test {
 azurefunctions {
     subscription = System.getenv("AZURE_SUBSCRIPTION")
     resourceGroup = System.getenv("RESOURCE_GROUP")
-    appName = System.getenv("FUNCTION_NAME")
+    appName = 'ocio-ede-dev-pstatus-notify'
     allowTelemetry = 'false'
     runtime {
         os = 'linux'
