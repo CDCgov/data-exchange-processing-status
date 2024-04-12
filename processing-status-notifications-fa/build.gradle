@@ -8,7 +8,7 @@ buildscript {
     }
 }
 plugins {
-    id "com.microsoft.azure.azurefunctions" version "1.12.0"
+    id "com.microsoft.azure.azurefunctions" version "1.12.1"
 }
 apply plugin: "java"
 apply plugin: "kotlin"
@@ -19,8 +19,8 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     }
 }
 
-group 'gov.cdc.ocio'
-version '1.0.0-SNAPSHOT'
+group "gov.cdc.ocio"
+version "1.0.0-SNAPSHOT"
 
 dependencies {
     implementation 'com.microsoft.azure.functions:azure-functions-java-library:3.0.0'
@@ -32,19 +32,19 @@ dependencies {
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
     implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
 
-    implementation 'com.azure:azure-messaging-servicebus:7.13.3'
+    implementation 'com.azure:azure-messaging-servicebus:7.15.0'
     implementation 'com.microsoft.azure:azure-servicebus:3.6.7'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.sun.mail:javax.mail:1.6.2'
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation "org.testng:testng:7.4.0"
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     testImplementation "org.mockito:mockito-inline:3.11.2"
     testImplementation "io.mockk:mockk:1.12.0"
 }
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
 
 repositories {
     mavenCentral()
@@ -61,12 +61,11 @@ test {
 azurefunctions {
     subscription = System.getenv("AZURE_SUBSCRIPTION")
     resourceGroup = System.getenv("RESOURCE_GROUP")
-    appName = 'ocio-ede-dev-pstatus-notify'
+    appName = System.getenv("FUNCTION_NAME")
     allowTelemetry = 'false'
     runtime {
         os = 'linux'
     }
-    region = 'eastus'
     auth {
         client = System.getenv("AZURE_CLIENT_ID")
         tenant = System.getenv("AZURE_TENANT_ID")
