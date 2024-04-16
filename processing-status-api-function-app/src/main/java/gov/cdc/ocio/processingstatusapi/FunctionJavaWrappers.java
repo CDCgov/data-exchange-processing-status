@@ -242,6 +242,17 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).getHL7InvalidStructureValidationCounts();
     }
 
+    @FunctionName("GetHL7DirectIndirectMessageCounts")
+    public HttpResponseMessage getHL7DirectIndirectMessageCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/hl7/directIndirectMessageCounts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getHL7DirectIndirectMessageCounts();
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(
