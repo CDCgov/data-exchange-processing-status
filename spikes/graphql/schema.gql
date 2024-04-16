@@ -1,0 +1,20 @@
+type Report @model {
+  id: ID
+  uploadId: String
+  reportId: String
+  dataStreamId: String
+  dataStreamRoute: String
+  stageName: String
+  timestamp: Long
+  contentType: String
+  content: JsonContent
+}
+ 
+type JsonContent {
+  schema_name: String
+  schema_version: String
+}
+
+type GetMetadataReports {
+  counter: Int
+}
