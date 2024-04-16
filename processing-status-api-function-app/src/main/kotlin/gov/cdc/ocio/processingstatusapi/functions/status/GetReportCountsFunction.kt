@@ -11,6 +11,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.model.*
 import gov.cdc.ocio.processingstatusapi.model.reports.*
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Debatch
+import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Redactor
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Validation
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
@@ -21,7 +22,6 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.json.JSONObject
 import java.util.*
-import java.util.AbstractMap.SimpleEntry
 
 
 /**
@@ -578,6 +578,84 @@ class GetReportCountsFunction(
             .body(gson.toJson(counts))
             .build()
     }
+
+    /**
+     *Get direct and in-direct message counts
+     *
+     * * @return HttpResponseMessage
+     */
+    fun getHL7DirectIndirectMessageCounts(): HttpResponseMessage {
+
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
+
+        val dateStart = request.queryParameters["date_start"]
+        val dateEnd = request.queryParameters["date_end"]
+
+        val daysInterval = request.queryParameters["days_interval"]
+
+        // Verify the request is complete and properly formatted
+        checkRequiredCountsQueryParams(
+            dataStreamId,
+            dataStreamRoute,
+            dateStart,
+            dateEnd,
+            daysInterval,
+            true
+        )?.let { return it }
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        val directMessageQuery = (
+                "select value SUM(directCounts) "
+                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from Reports r "
+                        + " where r.content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
+                        + " r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
+                )
+
+        val indirectMessageQuery = (
+                "select value count(redactedCount) from ( "
+                        + "select * from Reports r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
+                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as redactedCount"
+                )
+
+        val startTime = System.currentTimeMillis()
+
+        val directCountResult = reportsContainer.queryItems(
+            directMessageQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+        val indirectCountResult = reportsContainer.queryItems(
+            indirectMessageQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+        val directTotalItems = directCountResult.firstOrNull() ?: 0
+        val inDirectTotalItems = indirectCountResult.firstOrNull() ?: 0
+
+        val endTime = System.currentTimeMillis()
+        val countsJson = JSONObject()
+            .put("direct_counts", directTotalItems)
+            .put("indirect_counts", inDirectTotalItems)
+            .put("query_time_millis", endTime - startTime)
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(countsJson.toString())
+            .build()
+    }
+
 
     @Throws(NumberFormatException::class, BadRequestException::class)
     private fun buildSqlClauseForDateRange(daysInterval: String?,
