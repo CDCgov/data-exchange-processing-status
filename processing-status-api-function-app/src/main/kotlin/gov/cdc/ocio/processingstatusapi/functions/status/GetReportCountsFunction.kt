@@ -586,27 +586,23 @@ class GetReportCountsFunction(
      */
     fun getHL7DirectIndirectMessageCounts(): HttpResponseMessage {
 
-        val dataStreamId = request.queryParameters["data_stream_id"]
-        val dataStreamRoute = request.queryParameters["data_stream_route"]
-
-        val dateStart = request.queryParameters["date_start"]
-        val dateEnd = request.queryParameters["date_end"]
-
-        val daysInterval = request.queryParameters["days_interval"]
-
+        val queryParams = prepareQueryParameters(request)
         // Verify the request is complete and properly formatted
         checkRequiredCountsQueryParams(
-            dataStreamId,
-            dataStreamRoute,
-            dateStart,
-            dateEnd,
-            daysInterval,
+            queryParams?.get("dataStreamId"),
+            queryParams?.get("dataStreamRoute"),
+            queryParams?.get("dateStart"),
+            queryParams?.get("dateEnd"),
+            queryParams?.get("daysInterval"),
             true
         )?.let { return it }
 
+
         val timeRangeWhereClause: String
         try {
-            timeRangeWhereClause = buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+            timeRangeWhereClause = buildSqlClauseForDateRange(queryParams?.get("daysInterval"),
+                queryParams?.get("dateStart"), queryParams?.get("dateEnd")
+            )
         } catch (e: Exception) {
             logger.error(e.localizedMessage)
             return request
@@ -619,13 +615,13 @@ class GetReportCountsFunction(
                 "select value SUM(directCounts) "
                         + " FROM (select value SUM(r.content.stage.report.number_of_messages) from Reports r "
                         + " where r.content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
-                        + " r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
+                        + " r.dataStreamId = '${queryParams?.get("dataStreamId")}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as directCounts"
                 )
 
         val indirectMessageQuery = (
                 "select value count(redactedCount) from ( "
                         + "select * from Reports r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as redactedCount"
+                        + "r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as redactedCount"
                 )
 
         val startTime = System.currentTimeMillis()
@@ -654,6 +650,23 @@ class GetReportCountsFunction(
             .header("Content-Type", "application/json")
             .body(countsJson.toString())
             .build()
+    }
+
+    private fun prepareQueryParameters(request: HttpRequestMessage<Optional<String>>): Map<String, String?> {
+        val queryParams = request.queryParameters
+        val dataStreamId = queryParams["data_stream_id"]
+        val dataStreamRoute = queryParams["data_stream_route"]
+        val dateStart = queryParams["date_start"]
+        val dateEnd = queryParams["date_end"]
+        val daysInterval = queryParams["days_interval"]
+
+        return mapOf(
+            "dataStreamId" to dataStreamId,
+            "dataStreamRoute" to dataStreamRoute,
+            "dateStart" to dateStart,
+            "dateEnd" to dateEnd,
+            "daysInterval" to daysInterval
+        )
     }
 
 
