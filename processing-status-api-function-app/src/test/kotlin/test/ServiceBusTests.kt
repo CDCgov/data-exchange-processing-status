@@ -22,10 +22,12 @@ class ServiceBusTests {
     @BeforeMethod
     fun setUp() {
         context = Mockito.mock(ExecutionContext::class.java)
-
         mockkObject(CosmosContainerManager)
-
         every { CosmosContainerManager.initDatabaseContainer(any(), any()) } returns null
+
+        mockkStatic(System::class)
+        every { System.getenv("ServiceBusConnectionString") } returns "Endpoint=sb://abc.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=mockKey"
+        every { System.getenv("ServiceBusReportsQueueName") } returns "ServiceBusReportsQueueName"
     }
 
     @Test
@@ -146,14 +148,12 @@ class ServiceBusTests {
     @Test
     fun testServiceBusGoodMessage_V1() {
         val testMessage = File("./src/test/kotlin/data/service_bus_good_message_V1.json").readText()
-
         ServiceBusProcessor(context).withMessage(testMessage)
     }
 
     @Test
     fun testServiceBusGoodMessage() {
         val testMessage = File("./src/test/kotlin/data/service_bus_good_message.json").readText()
-
         ServiceBusProcessor(context).withMessage(testMessage)
     }
 

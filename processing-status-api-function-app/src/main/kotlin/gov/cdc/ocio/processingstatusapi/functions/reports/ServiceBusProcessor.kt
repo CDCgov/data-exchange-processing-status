@@ -92,6 +92,8 @@ class ServiceBusProcessor(private val context: ExecutionContext) {
             dataStreamRoute,
             stageName,
             contentType,
+            createReportMessage.messageId,
+            createReportMessage.status,
             content,
             createReportMessage.dispositionType,
             Source.SERVICEBUS

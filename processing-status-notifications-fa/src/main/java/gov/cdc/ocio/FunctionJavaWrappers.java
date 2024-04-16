@@ -5,19 +5,36 @@ import com.microsoft.azure.functions.HttpMethod;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.annotation.*;
-import gov.cdc.ocio.functions.http.SubscribeEmailNotifications;
-import gov.cdc.ocio.functions.http.SubscribeWebsocketNotifications;
-import gov.cdc.ocio.functions.http.UnsubscribeNotifications;
-import gov.cdc.ocio.functions.servicebus.ReportsNotificationsSBQueueProcessor;
+import gov.cdc.ocio.function.HealthCheckFunction;
+import gov.cdc.ocio.function.http.SubscribeEmailNotifications;
+import gov.cdc.ocio.function.http.SubscribeWebsocketNotifications;
+import gov.cdc.ocio.function.http.UnsubscribeNotifications;
+import gov.cdc.ocio.function.servicebus.ReportsNotificationsSBQueueProcessor;
 
 import java.util.Optional;
 
 public class FunctionJavaWrappers {
+
+    /**
+     * Health check
+     * @param request HttpRequest
+     * @return HttpResponse
+     */
+    @FunctionName("HealthCheck")
+    public HttpResponseMessage healthCheck(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "health",
+                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
+        return new HealthCheckFunction(request).run();
+    }
+
     /**
      * Subscribe for email notifications using Rest endpoint
      * @param request HttpRequest
-     * @param destinationId destinationId of the report
-     * @param eventType eventType of the report
+     * @param dataStreamId dataStreamId of the report
+     * @param dataStreamRoute dataStreamRoute of the report
      * @return HttpResponse
      */
     @FunctionName("SubscribeEmail")
@@ -25,20 +42,20 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.POST},
-                    route = "subscribe/email/{destinationId}/{eventType}",
+                    route = "subscribe/email/{dataStreamId}/{dataStreamRoute}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("destinationId") String destinationId,
-            @BindingName("eventType")String eventType
+            @BindingName("dataStreamId") String dataStreamId,
+            @BindingName("dataStreamRoute")String dataStreamRoute
     ) {
-        return new SubscribeEmailNotifications(request).run(destinationId, eventType);
+        return new SubscribeEmailNotifications(request).run(dataStreamId, dataStreamRoute);
     }
 
     /**
      * Subscribes for websocket notifications using Rest endpoint
      * @param request HttpRequest
-     * @param destinationId destinationId of the report
-     * @param eventType eventType of the report
+     * @param dataStreamId dataStreamId of the report
+     * @param dataStreamRoute dataStreamRoute of the report
      * @return HttpResponse
      */
 
@@ -47,13 +64,13 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.POST},
-                    route = "subscribe/websocket/{destinationId}/{eventType}",
+                    route = "subscribe/websocket/{dataStreamId}/{dataStreamRoute}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("destinationId") String destinationId,
-            @BindingName("eventType") String eventType
+            @BindingName("dataStreamId") String dataStreamId,
+            @BindingName("dataStreamRoute") String dataStreamRoute
     ) {
-        return new SubscribeWebsocketNotifications(request).run(destinationId, eventType);
+        return new SubscribeWebsocketNotifications(request).run(dataStreamId, dataStreamRoute);
     }
 
     /**

@@ -2,7 +2,7 @@ package gov.cdc.ocio.model.message
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.exceptions.InvalidSchemaDefException
+import gov.cdc.ocio.exception.InvalidSchemaDefException
 
 /**
  * Schema definition for all stages.  Every stage must inherit this class.

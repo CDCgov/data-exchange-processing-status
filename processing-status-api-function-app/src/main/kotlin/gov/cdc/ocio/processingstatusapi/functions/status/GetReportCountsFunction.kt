@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.functions.status
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.PartitionKey
 import com.google.gson.GsonBuilder
 import com.microsoft.azure.functions.HttpRequestMessage
 import com.microsoft.azure.functions.HttpResponseMessage
@@ -14,10 +15,13 @@ import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Validation
 import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
+import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import mu.KotlinLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import org.json.JSONObject
 import java.util.*
+import java.util.AbstractMap.SimpleEntry
 
 
 /**
@@ -128,14 +132,21 @@ class GetReportCountsFunction(
         val hl7DebatchSchemaName = HL7Debatch.schemaDefinition.schemaName
         val hl7DebatchCountsQuery = (
             "select "
-            + "r.uploadId, r.stageName, SUM(r.content.number_of_messages) as numberOfMessages, "
-            + "SUM(r.content.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
+            + "r.uploadId, r.stageName, SUM(r.content.stage.report.number_of_messages) as numberOfMessages, "
+            + "SUM(r.content.stage.report.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
             + "from $reportsContainerName r "
             + "where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) "
             + "group by r.uploadId, r.stageName"
         )
+
+        val options = CosmosQueryRequestOptions()
+        if (stageCountsByUploadId.size == 1)
+            options.partitionKey = PartitionKey(stageCountsByUploadId.keys.first())
+        else
+            options.maxDegreeOfParallelism = -1 // let SDK decide optimal number of concurrent operations
+
         val hl7DebatchCountsItems = reportsContainer.queryItems(
-            hl7DebatchCountsQuery, CosmosQueryRequestOptions(),
+            hl7DebatchCountsQuery, options,
             HL7DebatchCounts::class.java
         )
 
@@ -143,15 +154,15 @@ class GetReportCountsFunction(
         val hl7ValidationCountsQuery = (
             "select "
             + "r.uploadId, r.stageName, "
-            + "count(contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) as valid, "
-            + "count(not contains(upper(r.content.summary.current_status), 'VALID') ? 1 : undefined) as invalid "
+            + "count(contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as valid, "
+            + "count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as invalid "
             + "from $reportsContainerName r "
             + "where r.content.schema_name = '$hl7ValidationSchemaName' and r.uploadId in ($quotedUploadIds) "
             + "group by r.uploadId, r.stageName"
         )
 
         val hl7ValidationCountsItems = reportsContainer.queryItems(
-            hl7ValidationCountsQuery, CosmosQueryRequestOptions(),
+            hl7ValidationCountsQuery, options,
             HL7ValidationCounts::class.java
         )
 
@@ -211,6 +222,9 @@ class GetReportCountsFunction(
         val dataStreamId = request.queryParameters["data_stream_id"]
         val dataStreamRoute = request.queryParameters["data_stream_route"]
 
+        val pageSize = request.queryParameters["page_size"]
+        val pageNumber = request.queryParameters["page_number"]
+
         val dateStart = request.queryParameters["date_start"]
         val dateEnd = request.queryParameters["date_end"]
 
@@ -230,13 +244,19 @@ class GetReportCountsFunction(
                 .build()
         }
 
-        val uploadIdsSqlQuery = StringBuilder()
-        uploadIdsSqlQuery.append(
-            "select "
-            + "distinct value r.uploadId "
-            + "from $reportsContainerName r "
-            + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute'"
-        )
+        val pageUtils = PageUtils.Builder()
+            .setMaxPageSize(500)
+            .setDefaultPageSize(100)
+            .build()
+
+        val pageSizeAsInt = try {
+            pageUtils.getPageSize(pageSize)
+        } catch (ex: BadRequestException) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(ex.localizedMessage)
+                .build()
+        }
 
         if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
             return request
@@ -245,6 +265,7 @@ class GetReportCountsFunction(
                 .build()
         }
 
+        val timeRangeSqlPortion = StringBuilder()
         if (!daysInterval.isNullOrBlank()) {
             val dateStartEpochSecs = DateTime
                 .now(DateTimeZone.UTC)
@@ -252,12 +273,12 @@ class GetReportCountsFunction(
                 .withTimeAtStartOfDay()
                 .toDate()
                 .time / 1000
-            uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+            timeRangeSqlPortion.append(" and r._ts >= $dateStartEpochSecs")
         } else {
             dateStart?.run {
                 try {
                     val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-                    uploadIdsSqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+                    timeRangeSqlPortion.append(" and r._ts >= $dateStartEpochSecs")
                 } catch (e: BadRequestException) {
                     logger.error(e.localizedMessage)
                     return request
@@ -269,7 +290,7 @@ class GetReportCountsFunction(
             dateEnd?.run {
                 try {
                     val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-                    uploadIdsSqlQuery.append(" and r._ts < $dateEndEpochSecs")
+                    timeRangeSqlPortion.append(" and r._ts < $dateEndEpochSecs")
                 } catch (e: BadRequestException) {
                     logger.error(e.localizedMessage)
                     return request
@@ -280,76 +301,352 @@ class GetReportCountsFunction(
             }
         }
 
-        // Get the matching uploadIds
-        val uploadIds = reportsContainer.queryItems(
-            uploadIdsSqlQuery.toString(), CosmosQueryRequestOptions(),
-            String::class.java
+        // Get the total matching upload ids
+        val uploadIdCountSqlQuery = StringBuilder()
+        uploadIdCountSqlQuery.append(
+            "select "
+                + "value count(1) "
+                + "from (select distinct r.uploadId from $reportsContainerName r "
+                + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' $timeRangeSqlPortion)"
         )
 
-        if (uploadIds.count() > 0) {
-            val uploadIdsList = uploadIds.toList()
-            val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
-            val reportsSqlQuery = (
-                "select "
-                + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
-                + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
-                + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
-            )
-            val reportItems = reportsContainer.queryItems(
-                reportsSqlQuery, CosmosQueryRequestOptions(),
-                StageCountsForUpload::class.java
-            )
+        val uploadIdCountResult = reportsContainer.queryItems(
+            uploadIdCountSqlQuery.toString(), CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalItems = uploadIdCountResult.first()
+        val numberOfPages: Int
+        val pageNumberAsInt: Int
+        val reportCountsList = mutableListOf<ReportCounts>()
+        if (totalItems > 0L) {
+            numberOfPages = (totalItems / pageSizeAsInt + if (totalItems % pageSizeAsInt > 0) 1 else 0).toInt()
 
-            if (reportItems.count() > 0) {
-                val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
-                var earliestTimestamp: Date? = null
-                reportItems.forEach {
-                    val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
-                    list.add(StageCounts().apply {
-                        this.schema_name = it.schema_name
-                        this.schema_version = it.schema_version
-                        this.counts = it.counts
-                        this.stageName = it.stageName
-                        it.timestamp?.let { timestamp ->
-                            if (earliestTimestamp == null)
-                                earliestTimestamp = timestamp
-                            else if (timestamp.before(earliestTimestamp))
-                                earliestTimestamp = timestamp
-                        }
-                    })
-                    stageCountsByUploadId[it.uploadId!!] = list
-                }
-                val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
-
-                val reportCountsList = mutableListOf<ReportCounts>()
-                revisedStageCountsByUploadId.forEach { upload ->
-                    reportCountsList.add(ReportCounts().apply {
-                        this.uploadId = upload.key
-                        this.dataStreamId = dataStreamId
-                        this.dataStreamRoute = dataStreamRoute
-                        this.timestamp = earliestTimestamp
-                        this.stages = upload.value
-                    })
-                }
-
-                val aggregateReportCounts = AggregateReportCounts().apply {
-                    this.summary = AggregateSummary().apply {
-                        this.numUploads = reportCountsList.count()
-                    }
-                    this.reportCountsList = reportCountsList
-                }
-
+            pageNumberAsInt = try {
+                PageUtils.getPageNumber(pageNumber, numberOfPages)
+            } catch (ex: BadRequestException) {
                 return request
-                    .createResponseBuilder(HttpStatus.OK)
-                    .header("Content-Type", "application/json")
-                    .body(gson.toJson(aggregateReportCounts))
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body(ex.localizedMessage)
                     .build()
+            }
+            val offset = (pageNumberAsInt - 1) * pageSizeAsInt
+
+            val uploadIdsSqlQuery = StringBuilder()
+            uploadIdsSqlQuery.append(
+                "select "
+                    + "distinct value r.uploadId "
+                    + "from $reportsContainerName r "
+                    + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' "
+                    + "$timeRangeSqlPortion offset $offset limit $pageSizeAsInt"
+            )
+
+            // Get the matching uploadIds
+            val uploadIds = reportsContainer.queryItems(
+                uploadIdsSqlQuery.toString(), CosmosQueryRequestOptions(),
+                String::class.java
+            )
+
+            if (uploadIds.count() > 0) {
+                val uploadIdsList = uploadIds.toList()
+                val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
+                val reportsSqlQuery = (
+                    "select "
+                        + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
+                        + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
+                        + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
+                )
+                val reportItems = reportsContainer.queryItems(
+                    reportsSqlQuery, CosmosQueryRequestOptions(),
+                    StageCountsForUpload::class.java
+                )
+
+                if (reportItems.count() > 0) {
+                    val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
+                    val earliestTimestampByUploadId = mutableMapOf<String, Date>()
+                    reportItems.forEach {
+                        val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
+                        list.add(StageCounts().apply {
+                            this.schema_name = it.schema_name
+                            this.schema_version = it.schema_version
+                            this.counts = it.counts
+                            this.stageName = it.stageName
+                            it.timestamp?.let { timestamp ->
+                                val uploadId = it.uploadId
+                                uploadId?.let {
+                                    var earliestTimestamp = earliestTimestampByUploadId[uploadId]
+                                    if (earliestTimestamp == null)
+                                        earliestTimestamp = timestamp
+                                    else if (timestamp.before(earliestTimestamp))
+                                        earliestTimestamp = timestamp
+                                    earliestTimestampByUploadId[uploadId] = earliestTimestamp
+                                }
+                            }
+                        })
+                        stageCountsByUploadId[it.uploadId!!] = list
+                    }
+                    val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
+
+                    revisedStageCountsByUploadId.forEach { upload ->
+                        val uploadId = upload.key
+                        reportCountsList.add(ReportCounts().apply {
+                            this.uploadId = uploadId
+                            this.dataStreamId = dataStreamId
+                            this.dataStreamRoute = dataStreamRoute
+                            this.timestamp = earliestTimestampByUploadId[uploadId]
+                            this.stages = upload.value
+                        })
+                    }
+                }
+            }
+        } else {
+            numberOfPages = 0
+            pageNumberAsInt = 0
+        }
+
+        val aggregateReportCounts = AggregateReportCounts().apply {
+            this.summary = PageSummary().apply {
+                this.pageNumber = pageNumberAsInt
+                this.numberOfPages = numberOfPages
+                this.pageSize = pageSizeAsInt
+                this.totalItems = totalItems
+            }
+            this.reportCountsList = reportCountsList
+        }
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(gson.toJson(aggregateReportCounts))
+            .build()
+    }
+
+    /**
+     * Gets the total number of HL7 reports found with an invalid structure validation for the filter criteria
+     * provided.
+     *
+     * @return HttpResponseMessage
+     */
+    fun getHL7InvalidStructureValidationCounts(): HttpResponseMessage {
+
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
+
+        val dateStart = request.queryParameters["date_start"]
+        val dateEnd = request.queryParameters["date_end"]
+
+        val daysInterval = request.queryParameters["days_interval"]
+
+        // Verify the request is complete and properly formatted
+        checkRequiredCountsQueryParams(
+            dataStreamId,
+            dataStreamRoute,
+            dateStart,
+            dateEnd,
+            daysInterval,
+            true
+        )?.let { return it }
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        val reportsSqlQuery = (
+            "select "
+            + "value count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) "
+            + "from $reportsContainerName r "
+            + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
+            + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val startTime = System.currentTimeMillis()
+        val countResult = reportsContainer.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalItems = countResult.firstOrNull() ?: 0
+        val endTime = System.currentTimeMillis()
+        val countsJson = JSONObject()
+            .put("counts", totalItems)
+            .put("query_time_millis", endTime - startTime)
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(countsJson.toString())
+            .build()
+    }
+
+    /**
+     * Get summary submission counts
+     *
+     * @return HttpResponseMessage
+     */
+    fun getSubmissionCounts(): HttpResponseMessage {
+
+        val dataStreamId = request.queryParameters["data_stream_id"]
+        val dataStreamRoute = request.queryParameters["data_stream_route"]
+
+        val dateStart = request.queryParameters["date_start"]
+        val dateEnd = request.queryParameters["date_end"]
+
+        val daysInterval = request.queryParameters["days_interval"]
+
+        // Verify the request is complete and properly formatted
+        checkRequiredCountsQueryParams(
+            dataStreamId,
+            dataStreamRoute,
+            dateStart,
+            dateEnd,
+            daysInterval,
+            true
+        )?.let { return it }
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        // Get number completed uploading
+        val numCompletedUploadingSqlQuery = (
+            "select "
+                + "value count(1) "
+                + "from Reports r "
+                + "where r.content.schema_name = 'upload' and r.content['offset'] = r.content.size and "
+                + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val completedUploadingCountResult = reportsContainer.queryItems(
+            numCompletedUploadingSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalCompletedUploading = completedUploadingCountResult.firstOrNull() ?: 0
+
+        val numUploadingSqlQuery = (
+            "select "
+                + "value count(1) "
+                + "from Reports r "
+                + "where r.content.schema_name = 'upload' and r.content['offset'] != r.content.size and "
+                + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val uploadingCountResult = reportsContainer.queryItems(
+            numUploadingSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalUploading = uploadingCountResult.firstOrNull() ?: 0
+
+        val numFailedSqlQuery = (
+            "select "
+                + "value count(1) "
+                + "from Reports r "
+                + "where r.content.schema_name = 'dex-metadata-verify' and r.content.issues != null and "
+                + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+        )
+
+        val failedCountResult = reportsContainer.queryItems(
+            numFailedSqlQuery, CosmosQueryRequestOptions(),
+            Long::class.java
+        )
+        val totalFailed = failedCountResult.firstOrNull() ?: 0
+
+        val counts = ProcessingCounts().apply {
+            totalCounts = totalCompletedUploading + totalUploading + totalFailed
+            statusCounts.apply {
+                uploaded.counts = totalCompletedUploading
+                failed.counts = totalFailed
+                failed.reasons = mapOf("metadata" to totalFailed)
+                uploading.counts = totalUploading
             }
         }
 
         return request
-            .createResponseBuilder(HttpStatus.BAD_REQUEST)
-            .body("No results found")
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(gson.toJson(counts))
             .build()
+    }
+
+    @Throws(NumberFormatException::class, BadRequestException::class)
+    private fun buildSqlClauseForDateRange(daysInterval: String?,
+                                           dateStart: String?,
+                                           dateEnd: String?): String {
+
+        val timeRangeSqlPortion = StringBuilder()
+        if (!daysInterval.isNullOrBlank()) {
+            val dateStartEpochSecs = DateTime
+                .now(DateTimeZone.UTC)
+                .minusDays(Integer.parseInt(daysInterval))
+                .withTimeAtStartOfDay()
+                .toDate()
+                .time / 1000
+            timeRangeSqlPortion.append("r._ts >= $dateStartEpochSecs")
+        } else {
+            dateStart?.run {
+                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
+                timeRangeSqlPortion.append("r._ts >= $dateStartEpochSecs")
+            }
+            dateEnd?.run {
+                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
+                timeRangeSqlPortion.append(" and r._ts < $dateEndEpochSecs")
+            }
+        }
+        return timeRangeSqlPortion.toString()
+    }
+
+    /**
+     * Checks that all the required query parameters are present in order to process the request.  If not,
+     * an appropriate HTTP response message is generated with the details.
+     *
+     * @return HttpResponseMessage?
+     */
+    private fun checkRequiredCountsQueryParams(dataStreamId: String?,
+                                               dataStreamRoute: String?,
+                                               dateStart: String?,
+                                               dateEnd: String?,
+                                               daysInterval: String?,
+                                               dateRangeRequired: Boolean): HttpResponseMessage? {
+
+        if (dataStreamId == null) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("destination_id or data_stream_id is required")
+                .build()
+        }
+
+        if (dataStreamRoute == null) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("event_type or data_stream_route is required")
+                .build()
+        }
+
+        if (!daysInterval.isNullOrBlank() && (!dateStart.isNullOrBlank() || !dateEnd.isNullOrBlank())) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("date_interval and date_start/date_end can't be used simultaneously")
+                .build()
+        }
+
+        if (dateRangeRequired && daysInterval.isNullOrBlank() && dateStart.isNullOrBlank()) {
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("days_interval or date_start must be provided")
+                .build()
+        }
+
+        return null
     }
 }

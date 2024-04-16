@@ -1,13 +1,13 @@
 package gov.cdc.ocio.model.cache
 
-class SubscriptionRule(val destinationId: String,
-                       val eventType: String,
+class SubscriptionRule(val dataStreamId: String,
+                       val dataStreamRoute: String,
                        val stageName: String,
                        val statusType: String) {
 
     override fun hashCode(): Int {
-        var result = destinationId.lowercase().hashCode()
-        result = 31 * result + eventType.lowercase().hashCode()
+        var result = dataStreamId.lowercase().hashCode()
+        result = 31 * result + dataStreamRoute.lowercase().hashCode()
         result = 31 * result + stageName.lowercase().hashCode()
         result = 31 * result + statusType.lowercase().hashCode()
         return result
@@ -23,8 +23,8 @@ class SubscriptionRule(val destinationId: String,
 
         other as SubscriptionRule
 
-        if (destinationId != other.destinationId) return false
-        if (eventType != other.eventType) return false
+        if (dataStreamId != other.dataStreamId) return false
+        if (dataStreamRoute != other.dataStreamRoute) return false
         if (stageName != other.stageName) return false
         if (statusType != other.statusType) return false
 
