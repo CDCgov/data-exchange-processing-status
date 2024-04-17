@@ -897,6 +897,12 @@ paths:
             End date of filter.  Format is YYYYMMDDTHHMMSSZ (UTC format,
             exclusive).  Defaults to today.
           example: 20231030T14103000Z
+        - name: days_interval
+          in: query
+          schema:
+            type: string
+          description: >-
+            Number of days for which the query should be executed.
       responses:
         '200':
           description: Report counts for the given criteria
