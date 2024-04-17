@@ -587,7 +587,7 @@ class GetReportCountsFunction(
     fun getHL7DirectIndirectMessageCounts(): HttpResponseMessage {
 
         val queryParams = prepareQueryParameters(request)
-        // Verify the request is complete and properly formatted
+        //Verify the request is complete
         checkRequiredCountsQueryParams(
             queryParams?.get("dataStreamId"),
             queryParams?.get("dataStreamRoute"),
