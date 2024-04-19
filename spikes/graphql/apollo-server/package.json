@@ -1,0 +1,24 @@
+{
+  "name": "apollo-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node lib/index.js",
+    "start:ts": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "apollo-datasource-cosmosdb": "^1.1.0",
+    "apollo-server": "^3.13.0",
+    "graphql": "^16.8.1"
+  }
+}

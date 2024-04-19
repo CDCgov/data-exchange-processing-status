@@ -61,9 +61,8 @@
     },
     "GetMetadataReports": {
       "source": {
-        "object": "ProcessingStatus.test2",
-        "type": "stored-procedure",
-        "parameters": {}
+        "object": "get_metadata_reports",
+        "type": "stored-procedure"
       },
       "graphql": {
         "enabled": true,

@@ -92,3 +92,58 @@ type GetMetadataReports {
 See [Data API Builder on Azure Container Instances](https://www.linkedin.com/pulse/data-api-builder-azur-container-instances-chand-abdul-salam/).  In particular, see the section, *Run Data API builder in Azure Container Instances*.
 
 Also see https://learn.microsoft.com/en-us/azure/data-api-builder/how-to-run-container
+
+
+## Apollo Server
+
+### Local setup
+
+#### Step 1: Apollo server base install
+Followed the setup instructions found [here](https://www.apollographql.com/docs/apollo-server/v2/getting-started).
+
+#### Step 2: Install Apollo datasource for Cosmos DB
+See [Apollo datasource for Cosmos DB](https://github.com/andrejpk/apollo-datasource-cosmosdb)
+
+Execute the following:
+```bash
+npm install apollo-server graphql
+npm install apollo-datasource-cosmosdb
+```
+
+[Apollo setup with typescript](https://deepak-v.medium.com/build-a-scalable-graphql-server-using-typescript-and-apollo-server-4c116ed1425e)
+
+#### Step 3: Execute stored procedures with GraphQL
+See [Execute stored procedure with GraphQL](https://stackoverflow.com/questions/73944424/execute-stored-procedure-with-graphql), which defines how a resolver might look for Apollo.
+```js
+const resolvers = {
+  Query: {
+    executeGetMetadataReports() {  
+      return cosmosdb.execute('select get_metadata_reports();');
+    }
+  }
+}
+```
+
+Possible answers for running stored proc:
+https://thomaslevesque.com/2019/07/15/using-typescript-to-write-cosmos-db-stored-procedures-with-async-await/
+
+### Unions and interfaces
+https://www.apollographql.com/docs/apollo-server/v3/schema/unions-interfaces
+
+### Apollo Sandbox
+Use [this link](https://studio.apollographql.com/sandbox/explorer) to bring up a very nice web app to submit GraphQL queries.
+
+### Postman
+**GET** `https://localhost:4000`.
+Change request body type to GraphQL and paste the following:
+```graphql
+query GetBooks {
+  books {
+    title
+    author
+  }
+}
+```
+
+### Deployment of Apollo Server
+See [Deploy Apollo Server as an Azure Function App](https://www.apollographql.com/docs/apollo-server/v3/deployment/azure-functions/)
