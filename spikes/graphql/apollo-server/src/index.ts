@@ -1,4 +1,4 @@
-import { ApolloServer } from "apollo-server";
+import { ApolloServer, gql } from "apollo-server";
 
 import { CosmosClient } from "@azure/cosmos";
 
@@ -6,7 +6,6 @@ import { CosmosDataSource } from "apollo-datasource-cosmosdb";
 
 export interface ReportDoc {
   id: string;
-  uploadId: string;
 }
 
 export class ReportDataSource extends CosmosDataSource<ReportDoc> {}
@@ -14,7 +13,19 @@ export class ReportDataSource extends CosmosDataSource<ReportDoc> {}
 // Take custom port from ENV
 const PORT = process.env.PORT || 4000;
 
-const typeDefs = `
+const typeDefs = gql`
+  type MetadataVerify {
+    schema_name: String
+    schema_version: String
+  }
+
+  type UploadStatus {
+    schema_name: String
+    schema_version: String
+  }
+
+  union Content = MetadataVerify | UploadStatus
+
   # Define the Report type
   type Report {
     id: ID
@@ -25,10 +36,13 @@ const typeDefs = `
     stageName: String
     timestamp: Float
     contentType: String
+    content: Content
   }
 
   type Query {
-    reports:Report
+    Content
+    report(id: ID!): Report
+    reports(first: Int, limit: Int): [Report]
   }
 
   type MetadataReport {
@@ -51,13 +65,35 @@ const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Rep
 
 const resolvers = {
   Query: {
-    reports: async (_: any, { id }: any, { dataSources }: any) => {
-      console.log("id:" + id);
-      return dataSources.reportAPI.findOneById("1cc09043-0ba6-4e83-97eb-7bae13b79f5f");
+    Content: {
+      __resolveType(obj: { schema_name: string; }, _contextValue: any, _info: any) {
+      // __resolveType(obj: { schema_name: string; }){
+        if(obj.schema_name == 'xyz'){
+          return 'xyz';
+        }
+        if(obj.schema_name == 'abc'){
+          return 'abc';
+        }
+        return null; // GraphQLError is thrown
+      },
+    },
+    report: async (_: any, { id }: any, { dataSources }: any) => {
+      return dataSources.reportsAPI.findOneById(id);
+    },
+    reports: async (_: any, { first, limit }: any, { dataSources }: any) => {
+      console.log("first: " + first)
+      console.log("limit: " + limit)
+      var sqlQuery = "SELECT * from c";
+      if (typeof first != "undefined") {
+        sqlQuery += " offset 0 limit " + first;
+      }
+      console.log("sqlQuery = " + sqlQuery);
+      var results = await dataSources.reportsAPI.findManyByQuery(sqlQuery);
+      return results.resources;
     },
     metadataReport: async (_: any, { id }: any, { dataSources }: any) => {  
       console.log("id:" + id);
-      var storedProcedure = dataSources.reportAPI.container.scripts.storedProcedure("get_metadata_reports");
+      var storedProcedure = dataSources.reportsAPI.container.scripts.storedProcedure("get_metadata_reports");
       var results = await storedProcedure.execute();
       return results.resource;
     },
@@ -69,7 +105,7 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   dataSources: () => ({
-    reportAPI: new ReportDataSource(cosmosContainer),
+    reportsAPI: new ReportDataSource(cosmosContainer),
   }),
 });
 

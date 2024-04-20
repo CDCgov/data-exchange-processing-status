@@ -17,7 +17,19 @@ class ReportDataSource extends apollo_datasource_cosmosdb_1.CosmosDataSource {
 }
 exports.ReportDataSource = ReportDataSource;
 const PORT = process.env.PORT || 4000;
-const typeDefs = `
+const typeDefs = (0, apollo_server_1.gql) `
+  type MetadataVerify {
+    schema_name: String
+    schema_version: String
+  }
+
+  type UploadStatus {
+    schema_name: String
+    schema_version: String
+  }
+
+  union Content = MetadataVerify | UploadStatus
+
   # Define the Report type
   type Report {
     id: ID
@@ -28,10 +40,13 @@ const typeDefs = `
     stageName: String
     timestamp: Float
     contentType: String
+    content: Content
   }
 
   type Query {
-    reports:Report
+    Content
+    report(id: ID!): Report
+    reports(first: Int, limit: Int): [Report]
   }
 
   type MetadataReport {
@@ -52,13 +67,34 @@ const cosmosClient = new cosmos_1.CosmosClient({
 const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Reports");
 const resolvers = {
     Query: {
-        reports: (_1, _a, _b) => __awaiter(void 0, [_1, _a, _b], void 0, function* (_, { id }, { dataSources }) {
-            console.log("id:" + id);
-            return dataSources.reportAPI.findOneById("1cc09043-0ba6-4e83-97eb-7bae13b79f5f");
+        Content: {
+            __resolveType(obj, _contextValue, _info) {
+                if (obj.schema_name == 'xyz') {
+                    return 'xyz';
+                }
+                if (obj.schema_name == 'abc') {
+                    return 'abc';
+                }
+                return null;
+            },
+        },
+        report: (_1, _a, _b) => __awaiter(void 0, [_1, _a, _b], void 0, function* (_, { id }, { dataSources }) {
+            return dataSources.reportsAPI.findOneById(id);
         }),
-        metadataReport: (_2, _c, _d) => __awaiter(void 0, [_2, _c, _d], void 0, function* (_, { id }, { dataSources }) {
+        reports: (_2, _c, _d) => __awaiter(void 0, [_2, _c, _d], void 0, function* (_, { first, limit }, { dataSources }) {
+            console.log("first: " + first);
+            console.log("limit: " + limit);
+            var sqlQuery = "SELECT * from c";
+            if (typeof first != "undefined") {
+                sqlQuery += " offset 0 limit " + first;
+            }
+            console.log("sqlQuery = " + sqlQuery);
+            var results = yield dataSources.reportsAPI.findManyByQuery(sqlQuery);
+            return results.resources;
+        }),
+        metadataReport: (_3, _e, _f) => __awaiter(void 0, [_3, _e, _f], void 0, function* (_, { id }, { dataSources }) {
             console.log("id:" + id);
-            var storedProcedure = dataSources.reportAPI.container.scripts.storedProcedure("get_metadata_reports");
+            var storedProcedure = dataSources.reportsAPI.container.scripts.storedProcedure("get_metadata_reports");
             var results = yield storedProcedure.execute();
             return results.resource;
         }),
@@ -68,7 +104,7 @@ const server = new apollo_server_1.ApolloServer({
     typeDefs,
     resolvers,
     dataSources: () => ({
-        reportAPI: new ReportDataSource(cosmosContainer),
+        reportsAPI: new ReportDataSource(cosmosContainer),
     }),
 });
 server.listen(PORT).then(({ url }) => {

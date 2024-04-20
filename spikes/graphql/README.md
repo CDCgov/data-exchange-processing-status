@@ -134,7 +134,7 @@ https://www.apollographql.com/docs/apollo-server/v3/schema/unions-interfaces
 Use [this link](https://studio.apollographql.com/sandbox/explorer) to bring up a very nice web app to submit GraphQL queries.
 
 ### Postman
-**GET** `https://localhost:4000`.
+**GET** `http://localhost:4000`.
 Change request body type to GraphQL and paste the following:
 ```graphql
 query GetBooks {
@@ -147,3 +147,17 @@ query GetBooks {
 
 ### Deployment of Apollo Server
 See [Deploy Apollo Server as an Azure Function App](https://www.apollographql.com/docs/apollo-server/v3/deployment/azure-functions/)
+
+### Generate code from GraphQL schema
+https://the-guild.dev/graphql/codegen
+
+### Apollo License
+Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/licensing/elastic-license).  See [Apollo License](https://www.apollographql.com/docs/resources/elastic-license-v2-faq/).
+
+### TO-DO
+- [ ] Get unions working for different report types
+- [ ] Get array of reports returned
+- [ ] Pass parameter to queries
+- [ ] Get (first:5), pagination and sorting working
+- [ ] Security example
+- [ ] Create PowerPoint deck
