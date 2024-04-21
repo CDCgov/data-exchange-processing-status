@@ -18,17 +18,40 @@ class ReportDataSource extends apollo_datasource_cosmosdb_1.CosmosDataSource {
 exports.ReportDataSource = ReportDataSource;
 const PORT = process.env.PORT || 4000;
 const typeDefs = (0, apollo_server_1.gql) `
-  type MetadataVerify {
+  interface ReportType {
     schema_name: String
     schema_version: String
   }
 
-  type UploadStatus {
+  type Tuple {
+    name: String!
+    value: String!
+  }
+
+  type MetadataVerifyReport implements ReportType {
+    schema_name: String
+    schema_version: String
+    filename: String
+    metadata: [Tuple]
+  }
+
+  type UploadStatusReport implements ReportType {
+    schema_name: String
+    schema_version: String
+    offset: Float
+    size: Float
+    # v1 fields
+    meta_destination_id: String
+    meta_ext_event: String
+    # v2 fields
+    data_stream_id: String
+    data_stream_route: String
+  }
+
+  type UnknownReport implements ReportType {
     schema_name: String
     schema_version: String
   }
-
-  union Content = MetadataVerify | UploadStatus
 
   # Define the Report type
   type Report {
@@ -40,13 +63,12 @@ const typeDefs = (0, apollo_server_1.gql) `
     stageName: String
     timestamp: Float
     contentType: String
-    content: Content
+    content: ReportType
   }
 
   type Query {
-    Content
     report(id: ID!): Report
-    reports(first: Int, limit: Int): [Report]
+    reports(first: Int, offset: Int): [Report]
   }
 
   type MetadataReport {
@@ -62,31 +84,34 @@ const typeDefs = (0, apollo_server_1.gql) `
 `;
 const cosmosClient = new cosmos_1.CosmosClient({
     endpoint: "https://pstatus-cosmos-dbaccount.documents.azure.com:443/",
-    key: "{{place here]}}",
+    key: "{{place here}}",
 });
 const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Reports");
 const resolvers = {
-    Query: {
-        Content: {
-            __resolveType(obj, _contextValue, _info) {
-                if (obj.schema_name == 'xyz') {
-                    return 'xyz';
-                }
-                if (obj.schema_name == 'abc') {
-                    return 'abc';
-                }
-                return null;
-            },
+    ReportType: {
+        __resolveType(report) {
+            switch (report.schema_name) {
+                case 'dex-metadata-verify': return 'MetadataVerifyReport';
+                case 'upload': return 'UploadStatusReport';
+                default: return 'UnknownReport';
+            }
         },
+    },
+    Query: {
         report: (_1, _a, _b) => __awaiter(void 0, [_1, _a, _b], void 0, function* (_, { id }, { dataSources }) {
             return dataSources.reportsAPI.findOneById(id);
         }),
-        reports: (_2, _c, _d) => __awaiter(void 0, [_2, _c, _d], void 0, function* (_, { first, limit }, { dataSources }) {
+        reports: (_2, _c, _d) => __awaiter(void 0, [_2, _c, _d], void 0, function* (_, { first, offset }, { dataSources }) {
             console.log("first: " + first);
-            console.log("limit: " + limit);
+            console.log("offset: " + offset);
             var sqlQuery = "SELECT * from c";
+            var offsetVal = 0;
+            if (typeof offset != "undefined") {
+                offsetVal = offset;
+            }
+            sqlQuery += " offset " + offsetVal;
             if (typeof first != "undefined") {
-                sqlQuery += " offset 0 limit " + first;
+                sqlQuery += " limit " + first;
             }
             console.log("sqlQuery = " + sqlQuery);
             var results = yield dataSources.reportsAPI.findManyByQuery(sqlQuery);

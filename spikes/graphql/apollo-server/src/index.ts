@@ -14,17 +14,40 @@ export class ReportDataSource extends CosmosDataSource<ReportDoc> {}
 const PORT = process.env.PORT || 4000;
 
 const typeDefs = gql`
-  type MetadataVerify {
+  interface ReportType {
     schema_name: String
     schema_version: String
   }
 
-  type UploadStatus {
+  type Tuple {
+    name: String!
+    value: String!
+  }
+
+  type MetadataVerifyReport implements ReportType {
+    schema_name: String
+    schema_version: String
+    filename: String
+    metadata: [Tuple]
+  }
+
+  type UploadStatusReport implements ReportType {
+    schema_name: String
+    schema_version: String
+    offset: Float
+    size: Float
+    # v1 fields
+    meta_destination_id: String
+    meta_ext_event: String
+    # v2 fields
+    data_stream_id: String
+    data_stream_route: String
+  }
+
+  type UnknownReport implements ReportType {
     schema_name: String
     schema_version: String
   }
-
-  union Content = MetadataVerify | UploadStatus
 
   # Define the Report type
   type Report {
@@ -36,13 +59,12 @@ const typeDefs = gql`
     stageName: String
     timestamp: Float
     contentType: String
-    content: Content
+    content: ReportType
   }
 
   type Query {
-    Content
     report(id: ID!): Report
-    reports(first: Int, limit: Int): [Report]
+    reports(first: Int, offset: Int): [Report]
   }
 
   type MetadataReport {
@@ -59,33 +81,35 @@ const typeDefs = gql`
 
 const cosmosClient = new CosmosClient({
   endpoint: "https://pstatus-cosmos-dbaccount.documents.azure.com:443/",
-  key: "{{place here]}}",
+  key: "{{place here}}",
 });
 const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Reports");
 
 const resolvers = {
-  Query: {
-    Content: {
-      __resolveType(obj: { schema_name: string; }, _contextValue: any, _info: any) {
-      // __resolveType(obj: { schema_name: string; }){
-        if(obj.schema_name == 'xyz'){
-          return 'xyz';
-        }
-        if(obj.schema_name == 'abc'){
-          return 'abc';
-        }
-        return null; // GraphQLError is thrown
-      },
+  ReportType: {
+    __resolveType(report: { schema_name: string; }) {
+      switch (report.schema_name) {
+        case 'dex-metadata-verify': return 'MetadataVerifyReport';
+        case 'upload': return 'UploadStatusReport';
+        default: return 'UnknownReport';
+      }
     },
+  },
+  Query: {
     report: async (_: any, { id }: any, { dataSources }: any) => {
       return dataSources.reportsAPI.findOneById(id);
     },
-    reports: async (_: any, { first, limit }: any, { dataSources }: any) => {
-      console.log("first: " + first)
-      console.log("limit: " + limit)
+    reports: async (_: any, { first, offset }: any, { dataSources }: any) => {
+      console.log("first: " + first);
+      console.log("offset: " + offset);
       var sqlQuery = "SELECT * from c";
+      var offsetVal = 0;
+      if (typeof offset != "undefined") {
+        offsetVal = offset;
+      }
+      sqlQuery += " offset " + offsetVal;
       if (typeof first != "undefined") {
-        sqlQuery += " offset 0 limit " + first;
+        sqlQuery += " limit " + first;
       }
       console.log("sqlQuery = " + sqlQuery);
       var results = await dataSources.reportsAPI.findManyByQuery(sqlQuery);
