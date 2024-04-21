@@ -162,18 +162,17 @@ https://the-guild.dev/graphql/codegen
 #### Apollo License
 Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/licensing/elastic-license).  See [Apollo License](https://www.apollographql.com/docs/resources/elastic-license-v2-faq/).
 
-#### TO-DO
+#### Apollo Server remaining activities
 - [x] Get unions working for different report types
 - [x] Get array of reports returned
 - [x] Pass parameter to queries
 - [x] Get (first:n) working
 - [ ] Get pagination working
 - [ ] Get sorting working
-- [ ] Security example
-- [ ] Create PowerPoint deck
+- [ ] Implement a security example using a JWT
 
 ### GraphQL Kotlin
-
+[GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/) is a collection of libraries, built on top of graphql-java, that simplify running GraphQL clients and servers in Kotlin.  The idea behind using graohql-kotlin over a server is to explore the pros and cons of having an embedded GraphQL server over an independent one.
 
 ## Next Steps
 - Create an Architecture Decision Record (ADR) to justify and explain the shift to include GraphQL for PS API
@@ -181,4 +180,3 @@ Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/lice
 - Test query performance
 - Add/test DateScalars so timestamps aren't shown as epoch
 - Undetermininic key/value pairs for metadata (challenging since gql strongly typed)
-- 
