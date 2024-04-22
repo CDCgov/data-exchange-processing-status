@@ -3,9 +3,9 @@
 ## Overview
 *"GraphQL is a query language for APIs and a runtime for fulfilling those queries with your existing data. GraphQL provides a complete and understandable description of the data in your API, gives clients the power to ask for exactly what they need and nothing more, makes it easier to evolve APIs over time, and enables powerful developer tools."* -[graphql.org](https://graphql.org/)
 
-There are a considerable number of queries that are needed for the PS API.  Each user of PS API has unqiue queries they'd like to have.  Currently, the PS API provides traditional REST endpoints.  As the number of users of PS API, so too will the number of unique queries needed to fulfill the needs of those users.  Rather than continue to add new queries to PS API as needs arise, GraphQL would allow users to create their own queries.  [GraphQL versus REST](https://graphapi.com/learn/graphql/vs-rest/) provides a nice comparison of the two.
+There are a considerable number of queries that are needed for the PS API.  Each user of the PS API has unqiue queries they'd like to have.  Currently, the PS API provides traditional REST endpoints.  As the number of users of PS API grows, so too will the number of unique queries needed to fulfill the needs of those users.  Rather than continue to add new queries to PS API as needs arise, GraphQL would allow users to create their own queries.  [GraphQL versus REST](https://graphapi.com/learn/graphql/vs-rest/) provides a nice comparison of the two.
 
-In addition, GraphQL provide *Subscriptions*, which are a way to get asynchronous notifications.  GraphQL subscriptions could help simply *some* of the PS API Notifications functionality.  GraphQL subscriptions are invoked in response to a mutation or change in data so this only helps with a subset of the PS API Notifications use cases.
+In addition, GraphQL provides *Subscriptions*, which are a way to get asynchronous notifications.  GraphQL subscriptions could help simplify *some* of the PS API Notifications functionality.  However, GraphQL subscriptions are invoked in response to a mutation or change in data so this only helps with a subset of the PS API Notifications use cases.
 
 There are at least two approaches that can be used to implement GraphQL for the Processing Status API.  **Approach 1** is to have an independent and dedicated GraphQL server that interacts directly with the data source, namely CosmosDB.  **Approach 2** is to use a GraphQL library that is embedded in the PS API.
 
@@ -179,12 +179,14 @@ Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/lice
 - [ ] Retrieve metadata as dynamic map 
 - [ ] Get sorting working
 - [ ] Test subscriptions to mutations
+- [ ] One or two "real world" examples of Portal needs (e.g. a where clause or two) 
 
 ### GraphQL Kotlin
 [GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/) is a collection of libraries, built on top of graphql-java, that simplify running GraphQL clients and servers in Kotlin.  The idea behind using graohql-kotlin over a server is to explore the pros and cons of having an embedded GraphQL server over an independent one.
 
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
+- Evaluate graphql-kotlin (approach 2)
 - Deploy solution to Azure
 - Test [Import a GraphQL API](https://learn.microsoft.com/en-us/azure/api-management/graphql-api?tabs=portal) into the APIM
 - Test query performance
