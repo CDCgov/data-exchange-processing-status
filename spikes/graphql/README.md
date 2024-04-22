@@ -5,6 +5,8 @@
 
 There are a considerable number of queries that are needed for the PS API.  Each user of PS API has unqiue queries they'd like to have.  Currently, the PS API provides traditional HTTP endpoints.  As the number of users of PS API, so too will the number of unique queries needed to fulfill the needs of those users.  Rather than continue to add new queries to PS API as needs arise, GraphQL would allow users to create their own queries.
 
+In addition, GraphQL provide *Subscriptions*, which are a way to get asynchronous notifications.  GraphQL subscriptions could help simply *some* of the PS API Notifications functionality.  GraphQL subscriptions are invoked in response to a mutation or change in data so this only helps with a subset of the PS API Notifications use cases.
+
 There are at least two approaches that can be used to implement GraphQL for the Processing Status API.  **Approach 1** is to have an independent and dedicated GraphQL server that interacts directly with the data source, namely CosmosDB.  **Approach 2** is to use a GraphQL library that is embedded in the PS API.
 
 ![PS API GraphQL Approaches](./resources/PSAPI_GraphQL_Approaches.png)
@@ -13,7 +15,7 @@ The advantages of each approach is as follows:
 
 | Independent GraphQL Server (Approach 1) | Embedded GraphQL Server (Approach 2) |
 | --------------------------------------- | ------------------------------------ |
-| 1. Mature rich products available       | 1. Fewer resources to manage         |
+| 1. Mature rich products available       | 1. Fewer cloud resources to manage   |
 | 2. Decouples queries from ingestion     | 2. Shared resources; e.g. security management |
 
 ### GraphQL Requirements
@@ -166,10 +168,10 @@ Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/lice
 - [x] Get unions working for different report types
 - [x] Get array of reports returned
 - [x] Pass parameter to queries
-- [x] Get (first:n) working
-- [ ] Get pagination working
+- [x] Get (first:n) and (offset:n) working for pagination
 - [ ] Get sorting working
 - [ ] Implement a security example using a JWT
+- [ ] Test subscriptions to mutations
 
 ### GraphQL Kotlin
 [GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/) is a collection of libraries, built on top of graphql-java, that simplify running GraphQL clients and servers in Kotlin.  The idea behind using graohql-kotlin over a server is to explore the pros and cons of having an embedded GraphQL server over an independent one.

@@ -68,8 +68,8 @@ const typeDefs = gql`
   }
 
   type MetadataReport {
-    counter: Float
-    hasEntityName: Float
+    count: Float
+    hasSchemaName: Float
     isMetadataVerify: Float
   }
   

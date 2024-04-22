@@ -72,8 +72,8 @@ const typeDefs = (0, apollo_server_1.gql) `
   }
 
   type MetadataReport {
-    counter: Float
-    hasEntityName: Float
+    count: Float
+    hasSchemaName: Float
     isMetadataVerify: Float
   }
   
