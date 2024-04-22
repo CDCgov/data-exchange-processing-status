@@ -147,10 +147,16 @@ Use [this link](https://studio.apollographql.com/sandbox/explorer) to bring up a
 **GET** `http://localhost:4000`.
 Change request body type to GraphQL and paste the following:
 ```graphql
-query GetBooks {
-  books {
-    title
-    author
+query GetReport {
+  report(id: "1cc09043-0ba6-4e83-97eb-7bae13b79f5f") {
+    id
+    uploadId
+    reportId
+    dataStreamId
+    dataStreamRoute
+    stageName
+    timestamp
+    contentType
   }
 }
 ```
@@ -178,9 +184,10 @@ Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/lice
 [GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/) is a collection of libraries, built on top of graphql-java, that simplify running GraphQL clients and servers in Kotlin.  The idea behind using graohql-kotlin over a server is to explore the pros and cons of having an embedded GraphQL server over an independent one.
 
 ## Next Steps
-- Evaluate other open-source GraphQL server solutions such as Hasura.  Other popular GraphQL server platforms like Prisma and Graphile don't appear to work with NoSQL DBs like Mongo or CosmosDB.
-- Create an Architecture Decision Record (ADR) to justify and explain the shift to include GraphQL for PS API
+- Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
 - Deploy solution to Azure
+- Test [Import a GraphQL API](https://learn.microsoft.com/en-us/azure/api-management/graphql-api?tabs=portal) into the APIM
 - Test query performance
-- Add/test DateScalars so timestamps aren't shown as epoch
-- Undetermininic key/value pairs for metadata (challenging since gql strongly typed)
+- Add/test DateScalars so timestamps aren't shown as an epoch long integer value
+- Verify that undetermininic key/value pairs for metadata can be implemented.  This is challenging since gql is strongly typed.
+- Create an Architecture Decision Record (ADR) to justify and explain the shift to include GraphQL for PS API
