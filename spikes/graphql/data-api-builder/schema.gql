@@ -16,9 +16,9 @@ type JsonContent {
 }
 
 type GetMetadataReports {
-  counter: Int
+  count: Int
 }
 
 type get_metadata_reports {
-  counter: Int!
+  count: Int!
 }
