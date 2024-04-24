@@ -5,6 +5,7 @@ import { CosmosDataSource } from 'apollo-datasource-cosmosdb';
 import { Container } from '@azure/cosmos';
 
 import { getVerifiedToken } from './jwt.js';
+import { User } from './users.js';
 
 export interface ReportDoc {
     id: string;
@@ -18,7 +19,8 @@ export class ReportDataSource extends CosmosDataSource<ReportDoc> {
         super(options.cosmosContainer)
         this.token = options.token.replace("Bearer ", "");
         const verifiedToken = getVerifiedToken(this.token);
-        console.log(`verified token = ${JSON.stringify(verifiedToken)}`);
+        const tokenJson = JSON.stringify(verifiedToken);
+        console.log(`verified token = ${tokenJson}`);
         if (verifiedToken == null) {
             throw new GraphQLError('You are not authorized to perform this action.', {
                 extensions: {
@@ -29,6 +31,8 @@ export class ReportDataSource extends CosmosDataSource<ReportDoc> {
                 },
             });
         }
+        const userPermissions = JSON.parse(tokenJson) as User;
+        console.log(`userId = ${userPermissions.userId}`);
     }
 }
  
