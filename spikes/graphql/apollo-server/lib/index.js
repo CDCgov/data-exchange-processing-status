@@ -1,23 +1,29 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReportDataSource = void 0;
-const apollo_server_1 = require("apollo-server");
-const cosmos_1 = require("@azure/cosmos");
-const apollo_datasource_cosmosdb_1 = require("apollo-datasource-cosmosdb");
-class ReportDataSource extends apollo_datasource_cosmosdb_1.CosmosDataSource {
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { GraphQLError } from 'graphql';
+import { CosmosClient } from '@azure/cosmos';
+import { CosmosDataSource } from 'apollo-datasource-cosmosdb';
+import jsonwebtoken from 'jsonwebtoken';
+export class ReportDataSource extends CosmosDataSource {
+    token;
+    constructor(options) {
+        super(options.cosmosContainer);
+        this.token = options.token.replace("Bearer ", "");
+        const verifiedToken = getUser(this.token);
+        console.log(`verified token = ${JSON.stringify(verifiedToken)}`);
+        if (verifiedToken == null) {
+            throw new GraphQLError('You are not authorized to perform this action.', {
+                extensions: {
+                    code: 'FORBIDDEN',
+                    http: {
+                        status: 403,
+                    }
+                },
+            });
+        }
+    }
 }
-exports.ReportDataSource = ReportDataSource;
-const PORT = process.env.PORT || 4000;
-const typeDefs = (0, apollo_server_1.gql) `
+const typeDefs = `
   interface ReportType {
     schema_name: String
     schema_version: String
@@ -82,11 +88,25 @@ const typeDefs = (0, apollo_server_1.gql) `
     metadataReport: MetadataReport
   }
 `;
-const cosmosClient = new cosmos_1.CosmosClient({
+const cosmosClient = new CosmosClient({
     endpoint: "https://pstatus-cosmos-dbaccount.documents.azure.com:443/",
     key: "{{place here}}",
 });
 const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Reports");
+const JWT_SECRET = "{{place here}}";
+const getUser = (token) => {
+    try {
+        if (token) {
+            console.log("incoming token = " + token);
+            console.log("secret = " + JWT_SECRET);
+            return jsonwebtoken.verify(token, JWT_SECRET);
+        }
+        return null;
+    }
+    catch (error) {
+        return null;
+    }
+};
 const resolvers = {
     ReportType: {
         __resolveType(report) {
@@ -98,10 +118,12 @@ const resolvers = {
         },
     },
     Query: {
-        report: (_1, _a, _b) => __awaiter(void 0, [_1, _a, _b], void 0, function* (_, { id }, { dataSources }) {
-            return dataSources.reportsAPI.findOneById(id);
-        }),
-        reports: (_2, _c, _d) => __awaiter(void 0, [_2, _c, _d], void 0, function* (_, { first, offset }, { dataSources }) {
+        report: async (_, { id }, { dataSources }) => {
+            var sqlQuery = `SELECT * from c WHERE c.id = '${id}'`;
+            var results = await dataSources.reportsAPI.findManyByQuery(sqlQuery);
+            return results.resources[0];
+        },
+        reports: async (_, { first, offset }, { dataSources }) => {
             console.log("first: " + first);
             console.log("offset: " + offset);
             var sqlQuery = "SELECT * from c";
@@ -114,24 +136,40 @@ const resolvers = {
                 sqlQuery += " limit " + first;
             }
             console.log("sqlQuery = " + sqlQuery);
-            var results = yield dataSources.reportsAPI.findManyByQuery(sqlQuery);
+            var results = await dataSources.reportsAPI.findManyByQuery(sqlQuery);
             return results.resources;
-        }),
-        metadataReport: (_3, _e, _f) => __awaiter(void 0, [_3, _e, _f], void 0, function* (_, { id }, { dataSources }) {
+        },
+        metadataReport: async (_, { id }, { dataSources }) => {
             console.log("id:" + id);
             var storedProcedure = dataSources.reportsAPI.container.scripts.storedProcedure("get_metadata_reports");
-            var results = yield storedProcedure.execute();
+            var results = await storedProcedure.execute();
             return results.resource;
-        }),
+        },
     },
 };
-const server = new apollo_server_1.ApolloServer({
+const server = new ApolloServer({
     typeDefs,
     resolvers,
-    dataSources: () => ({
-        reportsAPI: new ReportDataSource(cosmosContainer),
-    }),
+    includeStacktraceInErrorResponses: false
 });
-server.listen(PORT).then(({ url }) => {
-    console.log(`🚀  Server ready at ${url}`);
+function getTokenFromRequest(req) {
+    const token = req.headers.authorization || '';
+    console.log("req.headers.token = " + req.headers.token);
+    console.log("req.headers.authentication = " + req.headers.authentication);
+    console.log("req.headers.authorization = " + req.headers.authorization);
+    return token;
+}
+const { url } = await startStandaloneServer(server, {
+    context: async ({ req }) => {
+        const token = getTokenFromRequest(req);
+        const { cache } = server;
+        return {
+            token,
+            dataSources: {
+                reportsAPI: new ReportDataSource({ cache, token, cosmosContainer }),
+            },
+        };
+    },
+    listen: { port: 4000 }
 });
+console.log(`🚀  Server ready at ${url}`);

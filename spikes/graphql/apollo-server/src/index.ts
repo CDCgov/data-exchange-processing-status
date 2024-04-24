@@ -1,19 +1,48 @@
-import { ApolloServer, gql } from "apollo-server";
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import type { KeyValueCache } from '@apollo/utils.keyvaluecache';
+import { GraphQLError } from 'graphql';
 
-import { CosmosClient } from "@azure/cosmos";
+import { CosmosClient, Container } from '@azure/cosmos';
+import { CosmosDataSource } from 'apollo-datasource-cosmosdb';
+import { IncomingMessage } from 'http';
 
-import { CosmosDataSource } from "apollo-datasource-cosmosdb";
+import jsonwebtoken from 'jsonwebtoken';
 
 export interface ReportDoc {
   id: string;
 }
 
-export class ReportDataSource extends CosmosDataSource<ReportDoc> {}
+export class ReportDataSource extends CosmosDataSource<ReportDoc> {
+  private token: string;
 
-// Take custom port from ENV
-const PORT = process.env.PORT || 4000;
+  constructor(options: { token: string; cache: KeyValueCache; cosmosContainer: Container }) {
+    // super(options); // this sends our server's `cache` through
+    super(options.cosmosContainer)
+    this.token = options.token.replace("Bearer ", "");
+    const verifiedToken = getUser(this.token);
+    console.log(`verified token = ${JSON.stringify(verifiedToken)}`);
+    if (verifiedToken == null) {
+      throw new GraphQLError('You are not authorized to perform this action.', {
+        extensions: {
+          code: 'FORBIDDEN',
+          http: {
+            status: 403,
+          }
+        },
+      });
+    }
+  }
+}
 
-const typeDefs = gql`
+interface ContextValue {
+  token?: String;
+  dataSources: {
+    reportsAPI: ReportDataSource;
+  };
+}
+
+const typeDefs = `
   interface ReportType {
     schema_name: String
     schema_version: String
@@ -85,6 +114,21 @@ const cosmosClient = new CosmosClient({
 });
 const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Reports");
 
+const JWT_SECRET = "{{place here}}";
+
+const getUser = (token: string) => {
+  try {
+      if (token) {
+        console.log("incoming token = " + token);
+        console.log("secret = " + JWT_SECRET);
+        return jsonwebtoken.verify(token, JWT_SECRET)
+      }
+      return null
+  } catch (error) {
+      return null
+  }
+}
+
 const resolvers = {
   ReportType: {
     __resolveType(report: { schema_name: string; }) {
@@ -97,7 +141,11 @@ const resolvers = {
   },
   Query: {
     report: async (_: any, { id }: any, { dataSources }: any) => {
-      return dataSources.reportsAPI.findOneById(id);
+      var sqlQuery = `SELECT * from c WHERE c.id = '${id}'`;
+      // var results = await dataSources.reportsAPI.findOneById(id);
+      // return results.resource;
+      var results = await dataSources.reportsAPI.findManyByQuery(sqlQuery);
+      return results.resources[0];
     },
     reports: async (_: any, { first, offset }: any, { dataSources }: any) => {
       console.log("first: " + first);
@@ -124,15 +172,32 @@ const resolvers = {
   },
 };
 
-// Instance of ApolloServer
-const server = new ApolloServer({
+const server = new ApolloServer<ContextValue>({
   typeDefs,
   resolvers,
-  dataSources: () => ({
-    reportsAPI: new ReportDataSource(cosmosContainer),
-  }),
+  includeStacktraceInErrorResponses: false
 });
 
-server.listen(PORT).then(({ url }) => {
-  console.log(`🚀  Server ready at ${url}`);
+function getTokenFromRequest(req: IncomingMessage): string {
+  const token = req.headers.authorization || '';
+  console.log("req.headers.token = " + req.headers.token);
+  console.log("req.headers.authentication = " + req.headers.authentication);
+  console.log("req.headers.authorization = " + req.headers.authorization);
+  return token;
+}
+
+const { url } = await startStandaloneServer<ContextValue>(server, {
+  context: async ({ req }) => {
+    const token = getTokenFromRequest(req);
+    const { cache } = server;
+    // return { user: getUser(token.replace('Bearer', ''))}
+    return {
+      token,
+      dataSources: {
+        reportsAPI: new ReportDataSource({ cache, token, cosmosContainer }),
+      },
+    };
+  },
+  listen: { port: 4000 }
 });
+console.log(`🚀  Server ready at ${url}`);
