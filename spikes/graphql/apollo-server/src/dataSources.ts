@@ -6,7 +6,11 @@ import { Container } from '@azure/cosmos';
 
 import jsonwebtoken from 'jsonwebtoken';
 
-const JWT_SECRET = "{{place here]}}";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const JWT_SECRET = process.env.ACCESS_TOKEN_SECRET!;
 
 export interface ReportDoc {
     id: string;

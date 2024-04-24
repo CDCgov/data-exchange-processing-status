@@ -9,6 +9,10 @@ import { typeDefs } from './typeDefs.js';
 import { resolvers } from './resolvers.js';
 import { ReportDataSource } from './dataSources.js';
 
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 interface ContextValue {
   token?: String;
   dataSources: {
@@ -31,8 +35,8 @@ function getTokenFromRequest(req: IncomingMessage): string {
 }
 
 const cosmosClient = new CosmosClient({
-  endpoint: "https://pstatus-cosmos-dbaccount.documents.azure.com:443/",
-  key: "{{place here]}}",
+  endpoint: process.env.COSMOS_DB_ENDPOINT!,
+  key: process.env.COSMOS_DB_KEY!,
 });
 const cosmosContainer = cosmosClient.database("ProcessingStatus").container("Reports");
   
@@ -48,6 +52,6 @@ const { url } = await startStandaloneServer<ContextValue>(server, {
       },
     };
   },
-  listen: { port: 4000 }
+  listen: { port: parseInt(process.env.PORT!) }
 });
 console.log(`🚀  Server ready at ${url}`);
