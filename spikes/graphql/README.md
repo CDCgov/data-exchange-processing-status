@@ -105,7 +105,7 @@ type GetMetadataReports {
 See [Data API Builder on Azure Container Instances](https://www.linkedin.com/pulse/data-api-builder-azur-container-instances-chand-abdul-salam/).  In particular, see the section, *Run Data API builder in Azure Container Instances*.  Also see this article, [how to run DAB in an ACI](https://learn.microsoft.com/en-us/azure/data-api-builder/how-to-run-container).
 
 ### Apollo Server
-"Apollo Server is an open-source, spec-compliant GraphQL server that's compatible with any GraphQL client, including Apollo Client. It's the best way to build a production-ready, self-documenting GraphQL API that can use data from any source." -[apollographql.com](https://www.apollographql.com/docs/apollo-server/)
+*"Apollo Server is an open-source, spec-compliant GraphQL server that's compatible with any GraphQL client, including Apollo Client. It's the best way to build a production-ready, self-documenting GraphQL API that can use data from any source."* -[apollographql.com](https://www.apollographql.com/docs/apollo-server/)
 
 #### Local setup
 
@@ -133,6 +133,16 @@ const resolvers = {
     }
   }
 }
+```
+
+##### Step 4: Create a .env file
+```
+PORT=4000
+
+COSMOS_DB_ENDPOINT={{insert here}}
+COSMOS_DB_KEY={{insert here}}
+
+ACCESS_TOKEN_SECRET={{insert here}}
 ```
 
 For exposing stored procedures in GraphQL, see [Using TypeScript to write Cosmos DB stored procedures with async/await](https://thomaslevesque.com/2019/07/15/using-typescript-to-write-cosmos-db-stored-procedures-with-async-await/).
