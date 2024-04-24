@@ -49,7 +49,7 @@ export const typeDefs = `
 
   type Query {
     report(id: ID!): Report
-    reports(first: Int, offset: Int): [Report]
+    reports(first: Int, offset: Int, dataStreamId: String, dataStreamRoute: String): [Report]
   }
 
   type MetadataReport {

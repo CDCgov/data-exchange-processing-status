@@ -142,7 +142,7 @@ PORT=4000
 COSMOS_DB_ENDPOINT={{insert here}}
 COSMOS_DB_KEY={{insert here}}
 
-ACCESS_TOKEN_SECRET={{insert here}}
+JWT_SECRET={{insert here}}
 ```
 
 For exposing stored procedures in GraphQL, see [Using TypeScript to write Cosmos DB stored procedures with async/await](https://thomaslevesque.com/2019/07/15/using-typescript-to-write-cosmos-db-stored-procedures-with-async-await/).

@@ -1,3 +1,5 @@
+import { missingRequired, unauthorized } from './errors.js';
+
 export const resolvers = {
     ReportType: {
       __resolveType(report: { schema_name: string; }) {
@@ -11,15 +13,29 @@ export const resolvers = {
     Query: {
       report: async (_: any, { id }: any, { dataSources }: any) => {
         var sqlQuery = `SELECT * from c WHERE c.id = '${id}'`;
-        // var results = await dataSources.reportsAPI.findOneById(id);
-        // return results.resource;
         var results = await dataSources.reportsAPI.findManyByQuery(sqlQuery);
         return results.resources[0];
       },
-      reports: async (_: any, { first, offset }: any, { dataSources }: any) => {
-        console.log("first: " + first);
-        console.log("offset: " + offset);
-        var sqlQuery = "SELECT * from c";
+      reports: async (_: any, { first, offset, dataStreamId, dataStreamRoute }: any, { dataSources }: any) => {
+        if (typeof dataStreamId == 'undefined') {
+            missingRequired('dataStreamId');
+        }
+        if (typeof dataStreamRoute == 'undefined') {
+            missingRequired('dataStreamRoute');
+        }
+        // Make sure the user has permission for this data stream id/route
+        let user = dataSources.reportsAPI.user;
+        var hasPermission = false;
+        for (let ds of user.dataStreams) {
+            if (ds.name == dataStreamId && ds.route == dataStreamRoute) {
+                hasPermission = true;
+                break;
+            }
+        }
+        if (!hasPermission) {
+            unauthorized();
+        }
+        var sqlQuery = `SELECT * from c where c.dataStreamId = '${dataStreamId}' and c.dataStreamRoute = '${dataStreamRoute}'`;
         var offsetVal = 0;
         if (typeof offset != "undefined") {
           offsetVal = offset;
