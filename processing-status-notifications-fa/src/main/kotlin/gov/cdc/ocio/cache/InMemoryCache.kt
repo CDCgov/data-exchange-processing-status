@@ -1,6 +1,6 @@
 package gov.cdc.ocio.cache
 
-import gov.cdc.ocio.exceptions.BadStateException
+import gov.cdc.ocio.exception.BadStateException
 import gov.cdc.ocio.model.cache.NotificationSubscription
 import gov.cdc.ocio.model.http.SubscriptionType
 import mu.KotlinLogging

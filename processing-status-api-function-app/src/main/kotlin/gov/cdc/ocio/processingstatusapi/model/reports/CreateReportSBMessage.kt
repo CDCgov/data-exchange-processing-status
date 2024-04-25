@@ -35,6 +35,12 @@ class CreateReportSBMessage: ServiceBusMessage() {
     @SerializedName("content_type")
     val contentType: String? = null
 
+    @SerializedName("message_id")
+    var messageId: String? = null
+
+    @SerializedName("status")
+    var status : String? = null
+
     // content will vary depending on content_type so make it any.  For example, if content_type is json then the
     // content type will be a Map<*, *>.
     val content: Any? = null

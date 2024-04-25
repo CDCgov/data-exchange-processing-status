@@ -3,7 +3,7 @@ package gov.cdc.ocio.message
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import gov.cdc.ocio.exceptions.ContentException
+import gov.cdc.ocio.exception.ContentException
 import kotlin.collections.HashMap
 
 /**

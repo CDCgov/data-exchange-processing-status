@@ -414,7 +414,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -483,7 +483,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -548,7 +548,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -604,14 +604,14 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
 								}
 							],
 							"request": {
-								"method": "POST",
+								"method": "PUT",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -660,7 +660,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -716,7 +716,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -772,7 +772,7 @@
 									"script": {
 										"exec": [
 											"var jsonData = JSON.parse(responseBody);",
-											"pm.environment.set(\"reportId\", jsonData.stage_report_id);"
+											"pm.environment.set(\"reportId\", jsonData.report_id);"
 										],
 										"type": "text/javascript"
 									}
@@ -798,6 +798,7 @@
 									"path": [
 										"api",
 										"report",
+										"json",
 										"uploadId",
 										"{{uploadId}}"
 									],
@@ -837,15 +838,15 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/reportId/{{reportId}}",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/{{uploadId}}",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
-										"reportId",
-										"{{reportId}}"
+										"uploadId",
+										"{{uploadId}}"
 									]
 								}
 							},
@@ -869,15 +870,15 @@
 									}
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/uploadId/846fb6fc-350c-4e75-b36d-2aca9f60ae62",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/reportId/{{reportId}}",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
-										"uploadId",
-										"846fb6fc-350c-4e75-b36d-2aca9f60ae62"
+										"reportId",
+										"{{reportId}}"
 									]
 								}
 							},
@@ -991,19 +992,14 @@
 								}
 							},
 							"response": []
-						}
-					]
-				},
-				{
-					"name": "Error Paths",
-					"item": [
+						},
 						{
 							"name": "Get reports for \"dex-hl7-validation\" stage",
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
 							},
 							"request": {
-								"method": "POST",
+								"method": "GET",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -1034,7 +1030,12 @@
 								}
 							},
 							"response": []
-						},
+						}
+					]
+				},
+				{
+					"name": "Error Paths",
+					"item": [
 						{
 							"name": "Create report with missing schema name",
 							"request": {
@@ -1166,7 +1167,7 @@
 						{
 							"name": "Create report with missing event type",
 							"request": {
-								"method": "PUT",
+								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",

@@ -5,6 +5,7 @@ import com.microsoft.azure.functions.HttpMethod;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.annotation.*;
+import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException;
 import gov.cdc.ocio.processingstatusapi.functions.HealthCheckFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.CreateReportFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.GetReportFunction;
@@ -17,6 +18,7 @@ import gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.GetSpanFunction;
 import gov.cdc.ocio.processingstatusapi.functions.traces.GetTraceFunction;
 import gov.cdc.ocio.processingstatusapi.model.DispositionType;
+import org.owasp.encoder.Encode;
 
 import java.util.Optional;
 
@@ -115,8 +117,10 @@ public class FunctionJavaWrappers {
             final ExecutionContext context
     ) {
         try {
-            context.getLogger().info("Received message: " + message);
+            context.getLogger().info( "Received message: " + Encode.forJava(message));
             new ServiceBusProcessor(context).withMessage(message);
+        } catch (BadRequestException e){
+            context.getLogger().warning("Unable to parse the message: " + e.getLocalizedMessage());
         } catch (Exception e) {
             context.getLogger().warning("Failed to process service bus message: " + e.getLocalizedMessage());
         }
@@ -193,7 +197,7 @@ public class FunctionJavaWrappers {
             @BindingName("dataStreamId") String dataStreamId,
             @BindingName("stageName") String stageName,
             final ExecutionContext context) {
-        context.getLogger().info("getReportByStage: dataStreamId=" + dataStreamId + ", stageName=" + stageName);
+        context.getLogger().info("getReportByStage: dataStreamId=" + Encode.forJava(dataStreamId) + ", stageName=" + Encode.forJava(stageName));
         return new GetReportFunction(request).withDataStreamId(dataStreamId, stageName);
     }
 
@@ -220,6 +224,28 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).withQueryParams();
     }
 
+    @FunctionName("GetSubmissionCounts")
+    public HttpResponseMessage getSubmissionCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/submissions/summary",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getSubmissionCounts();
+    }
+
+    @FunctionName("GetHL7InvalidStructureValidationCounts")
+    public HttpResponseMessage getHL7InvalidStructureValidationCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/hl7/invalidStructureValidation",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getHL7InvalidStructureValidationCounts();
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(
@@ -230,7 +256,7 @@ public class FunctionJavaWrappers {
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId,
             final ExecutionContext context) {
-        context.getLogger().info("getStatusByUploadId: uploadId=" + uploadId);
+        context.getLogger().info("getStatusByUploadId: uploadId=" + Encode.forJava(uploadId));
         return new GetStatusFunction(request).withUploadId(uploadId);
     }
 }

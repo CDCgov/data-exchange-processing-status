@@ -1,0 +1,16 @@
+{
+  "upload_id": "4f99cfde-7c83-44e5-bd49-206ca4df7e16",
+  "data_stream_id": "dex-testing",
+  "data_stream_route": "test-event1",
+  "stage_name": "dex-file-copy",
+  "content_type": "json",
+  "content": {
+    "schema_name": "dex-file-copy",
+    "schema_version": "0.0.1",
+    "file_source_blob_url": "",
+    "file_destination_blob_url": "",
+    "timestamp": "",
+    "result": "success",
+    "error_description": ""
+  }
+}
