@@ -652,6 +652,62 @@ class GetReportCountsFunction(
             .build()
     }
 
+
+    fun getUnfinishedUploadCounts (dataStreamId: String): HttpResponseMessage {
+        val queryParams = prepareQueryParameters(request)
+
+        //Verify the request is complete
+        checkRequiredCountsQueryParams(
+            dataStreamId,
+            queryParams?.get("dataStreamRoute"),
+            queryParams?.get("dateStart"),
+            queryParams?.get("dateEnd"),
+            queryParams?.get("daysInterval"),
+            true
+        )?.let { return it }
+
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(queryParams?.get("daysInterval"),
+                queryParams?.get("dateStart"), queryParams?.get("dateEnd")
+            )
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        val unfinishedCountsQuery = (
+                "select value count(1) "
+                        + " FROM Reports r where r.content.schema_name = 'dex-metadata-verify' and r.content.schema_name = 'upload' "
+                        + " and r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause"
+                )
+
+        val startTime = System.currentTimeMillis()
+
+        val directCountResult = reportsContainer.queryItems(
+            unfinishedCountsQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+
+        val unfinishedTotalItems = directCountResult.firstOrNull() ?: 0
+
+        val endTime = System.currentTimeMillis()
+        val countsJson = JSONObject()
+            .put("unfinished_upload_counts", unfinishedTotalItems)
+            .put("query_time_millis", endTime - startTime)
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(countsJson.toString())
+            .build()
+    }
+
     private fun prepareQueryParameters(request: HttpRequestMessage<Optional<String>>): Map<String, String?> {
         val queryParams = request.queryParameters
         val dataStreamId = queryParams["data_stream_id"]
