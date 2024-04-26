@@ -269,6 +269,16 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).getUnfinishedUploadCounts(dataStreamId);
     }
 
+    @FunctionName("GetInvalidMessageCounts")
+    public HttpResponseMessage GetInvalidMessageCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/totalInvalidMessageCounts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getInvalidMessageCounts();
+    }
 
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
