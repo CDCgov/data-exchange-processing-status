@@ -185,8 +185,8 @@ Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/lice
 - [x] Get array of reports returned
 - [x] Pass parameter(s) to queries
 - [x] Get (first:n) and (offset:n) working for pagination
-- [ ] Implement a security example using a JWT
-- [ ] Retrieve metadata as dynamic map 
+- [x] Implement a security example using a JWT
+- [ ] Retrieve metadata as dynamic map
 - [ ] Get sorting working
 - [ ] Test subscriptions to mutations
 - [ ] One or two "real world" examples of Portal needs (e.g. a where clause or two) 

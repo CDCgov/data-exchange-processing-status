@@ -24,6 +24,7 @@ interface ContextValue {
 const server = new ApolloServer<ContextValue>({
   typeDefs,
   resolvers,
+  introspection: true,
   includeStacktraceInErrorResponses: false
 });
 
