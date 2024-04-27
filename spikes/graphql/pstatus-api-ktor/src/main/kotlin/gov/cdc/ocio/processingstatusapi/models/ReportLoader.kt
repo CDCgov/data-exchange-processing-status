@@ -1,7 +1,7 @@
-package gov.cdc.ocio.models
+package gov.cdc.ocio.processingstatusapi.models
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import gov.cdc.ocio.cosmos.CosmosRepository
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject

@@ -1,8 +1,8 @@
-package gov.cdc.ocio.dataloaders
+package gov.cdc.ocio.processingstatusapi.dataloaders
 
 import com.expediagroup.graphql.dataloader.KotlinDataLoader
-import gov.cdc.ocio.models.Report
-import gov.cdc.ocio.models.ReportLoader
+import gov.cdc.ocio.processingstatusapi.models.Report
+import gov.cdc.ocio.processingstatusapi.models.ReportLoader
 import kotlinx.coroutines.runBlocking
 import graphql.GraphQLContext
 import org.dataloader.DataLoader

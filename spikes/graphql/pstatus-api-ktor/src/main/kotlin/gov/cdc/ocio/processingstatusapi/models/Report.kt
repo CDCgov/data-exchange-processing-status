@@ -1,4 +1,4 @@
-package gov.cdc.ocio.models
+package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.google.gson.*

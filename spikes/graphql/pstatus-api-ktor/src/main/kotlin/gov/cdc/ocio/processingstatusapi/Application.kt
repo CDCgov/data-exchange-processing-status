@@ -1,7 +1,8 @@
-package gov.cdc.ocio
+package gov.cdc.ocio.processingstatusapi
 
-import gov.cdc.ocio.cosmos.CosmosRepository
-import gov.cdc.ocio.plugins.*
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
+import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -11,7 +12,6 @@ import org.koin.mp.KoinPlatform.getKoin
 
 val koinModule = module {
     single { CosmosRepository("Reports", "/uploadId") }
-
 }
 
 fun main(args: Array<String>) {

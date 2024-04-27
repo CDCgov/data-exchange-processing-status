@@ -1,4 +1,4 @@
-package gov.cdc.ocio.plugins
+package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.azure.messaging.servicebus.*
 import io.ktor.server.application.*

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.cosmos
+package gov.cdc.ocio.processingstatusapi.cosmos
 
 import com.azure.cosmos.ConsistencyLevel
 import com.azure.cosmos.CosmosClient
@@ -21,7 +21,6 @@ class CosmosClientManager {
                     .consistencyLevel(ConsistencyLevel.EVENTUAL)
                     .contentResponseOnWriteEnabled(true)
                     .clientTelemetryEnabled(false)
-
                     .buildClient()
             }
             return client!!

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.plugins
+package gov.cdc.ocio.processingstatusapi.plugins
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*

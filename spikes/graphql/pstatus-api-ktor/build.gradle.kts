@@ -8,11 +8,11 @@ plugins {
     id("io.ktor.plugin") version "2.3.10"
 }
 
-group = "gov.cdc.ocio"
+group = "gov.cdc.ocio.processingstatusapi"
 version = "0.0.1"
 
 application {
-    mainClass.set("gov.cdc.ocio.ApplicationKt")
+    mainClass.set("gov.cdc.ocio.processingstatusapi.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")

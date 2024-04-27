@@ -1,4 +1,4 @@
-package gov.cdc.ocio.cosmos
+package gov.cdc.ocio.processingstatusapi.cosmos
 
 import org.koin.core.component.KoinComponent
 
