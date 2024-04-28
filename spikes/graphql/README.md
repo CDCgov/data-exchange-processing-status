@@ -234,7 +234,7 @@ Given that use of stored procedures is not a viable option, approach 2 is more a
   - Gain the GraphiQL embedded interface (Apollo Studio runs in Cloud infra that would not be managed by DEX)
 
 ## Conclusion
-Approach 2 is the better choice for the reasons mentioned in the summary.
+For GraphQL in the PS API, approach 2 is the better choice over approach 1 for the reasons mentioned in the summary.  The question them becomes, **does GraphQL API provide advantages over a REST API that justifies a pivot?**  I think it does.  If we refactor the complex queries that contain multiple results, where each result is a GraphQL type it allows for much greater flexibility.  This in turn will allow PS API users to write their own GraphQL based queries and reduce the burden and complexity of creating new REST endpoints or query parameters each time a new data product is needed.
 
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
