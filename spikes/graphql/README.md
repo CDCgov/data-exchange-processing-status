@@ -205,8 +205,8 @@ After creating a shell Ktor microservice, the following steps were taken.
 - Added [Koin](https://insert-koin.io/) for dependency injection
 - Created a Ktor plugin for Azure service bus and tested receiving messages
 - Implemented a GraphQL data loader for searching and batching large requests
-- Add an *Interface* for the Report `content` field, identical to what was done for Apollo for managing different report types and the different fields within each.
-- Enabled the embedded [GraphiQL]https://github.com/graphql/graphiql() library, which provides a nice web interface for discovering HraphQL schemas and running queries.  When running locally, the GraphiQL is available [here](http://localhost:8080/graphiql).
+- Added an *Interface* for the Report `content` field, identical to what was done for Apollo for managing different report types and the different fields within each.
+- Enabled the embedded [GraphiQL](https://github.com/graphql/graphiql) library, which provides a nice web interface for discovering GraphQL schemas and running queries.  When running locally, the GraphiQL feature is available [here](http://localhost:8080/graphiql).
 
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
