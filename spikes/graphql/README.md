@@ -217,6 +217,25 @@ Below is a screenshot of GraphiQL running locally with the GraphQL Ktor plugin.
 - [ ] One or two "real world" examples of Portal needs (e.g. a where clause or two)
 - [ ] Retrieve metadata as dynamic map
 
+## Summary
+
+### Approach 1
+Approach 1 is very attractive conceptually.  With approach 1 we'd use stored procedures rather than code for complex queries and expose them to GraphQL.  Separate PS API services would provide the interface for incoming reports from partners where they would be validated and persisted, as well as the more sophisticated notifications system.
+
+Data API builder (DAB) was quickly eliminated for lack of features and Apollo became the clear front-runner.  Apollo gives us a simple open-source solution to provide queries, mutations, and subscriptions for processing status reports.
+
+However, the fact that stored procedures don't allow for cross-partition queries is a major problem.  PS API reports are logically partitioned by upload ID since some uploads can contain tens of thousands of reports and logical partitions can be no larger than 20GB in CosmosDB.  Not being able to run a stored procedure to search across upload IDs makes them unusable.  This means Approach 1 rather than being a simple clean set of code for queries referencing SPs would now be bloated with the more complex queries.
+
+### Approach 2
+Given that use of stored procedures is not a viable option, approach 2 is more attrative for the following reasons:
+  - One language for all services in Kotlin as Apollo uses Typescript
+  - Most of the existing PS API code and complex queries can be directly lifted and shifted to Ktor
+  - Gets us out of Azure function apps and into a standalone Docker container image with Ktor, which is a helpful step towards Kubernetes
+  - Gain the GraphiQL embedded interface (Apollo Studio runs in Cloud infra that would not be managed by DEX)
+
+## Conclusion
+Approach 2 is the better choice for the reasons mentioned in the summary.
+
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
 - Deploy solution to Azure
