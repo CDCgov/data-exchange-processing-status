@@ -208,6 +208,10 @@ After creating a shell Ktor microservice, the following steps were taken.
 - Added an *Interface* for the Report `content` field, identical to what was done for Apollo for managing different report types and the different fields within each.
 - Enabled the embedded [GraphiQL](https://github.com/graphql/graphiql) library, which provides a nice web interface for discovering GraphQL schemas and running queries.  When running locally, the GraphiQL feature is available [here](http://localhost:8080/graphiql).
 
+#### GraphiQL Screenshot
+Below is a screenshot of GraphiQL running locally with the GraphQL Ktor plugin.
+![GraphiQLScreenshot](./resources/PSAPI_GraphiQL_Ktor.png)
+
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
 - Evaluate graphql-kotlin (approach 2)
