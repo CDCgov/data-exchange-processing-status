@@ -212,9 +212,13 @@ After creating a shell Ktor microservice, the following steps were taken.
 Below is a screenshot of GraphiQL running locally with the GraphQL Ktor plugin.
 ![GraphiQLScreenshot](./resources/PSAPI_GraphiQL_Ktor.png)
 
+#### GraphQL for Ktor remaining activities
+- [ ] Implement a security example using a JWT
+- [ ] One or two "real world" examples of Portal needs (e.g. a where clause or two)
+- [ ] Retrieve metadata as dynamic map
+
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
-- Evaluate graphql-kotlin (approach 2)
 - Deploy solution to Azure
 - Test [Import a GraphQL API](https://learn.microsoft.com/en-us/azure/api-management/graphql-api?tabs=portal) into the APIM
 - Test query performance
