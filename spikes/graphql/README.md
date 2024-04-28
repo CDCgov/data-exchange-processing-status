@@ -189,10 +189,24 @@ Apollo is licensed under [Elastic License v2 (ELv2)](https://www.elastic.co/lice
 - [ ] Retrieve metadata as dynamic map
 - [ ] Get sorting working
 - [ ] Test subscriptions to mutations
-- [ ] One or two "real world" examples of Portal needs (e.g. a where clause or two) 
+- [x] One or two "real world" examples of Portal needs (e.g. a where clause or two) 
 
 ### GraphQL Kotlin
-[GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/) is a collection of libraries, built on top of graphql-java, that simplify running GraphQL clients and servers in Kotlin.  The idea behind using graohql-kotlin over a server is to explore the pros and cons of having an embedded GraphQL server over an independent one.
+[GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/) is a collection of libraries, built on top of graphql-java, that simplify running GraphQL clients and servers in Kotlin.  The idea behind using graphql-kotlin over a server is to explore the pros and cons of having an embedded GraphQL server over an independent one, which is described as approach 2 above.
+
+There are two ways to use graphql-kotlin.  The first way is to use one of the two frameworks that tightly integrate graphql-kotlin.  The other way is a more manual process using the core components of graphql-kotlin to build out the functionality in whatever server platform you choose.
+
+The two frameworks available are [Spring](https://spring.io/) and [Ktor](https://ktor.io/).  Spring is very mature and well supported, but is slow to boot, more complex than other microservice frameworks, and a resource hog.  Ktor is lighter weight in terms of code, faster to boot, and less resource intensive, and has been around since 2017.  The [Spring Server for GraphQL Kotlin](https://opensource.expediagroup.com/graphql-kotlin/docs/server/spring-server/spring-overview) was started in Sep 2019 and the [GraphQL Ktor Plugin](https://opensource.expediagroup.com/graphql-kotlin/docs/server/ktor-server/ktor-overview) in Aug 2020.
+
+Ktor was chosen to be used in this spike given the simplicity to get started, developer reviews and suggestions, as well as for the performance reasons mentioned above.
+
+#### GraphQL for Ktor Implementation
+After creating a shell Ktor microservice, the following steps were taken.
+- Added [Koin](https://insert-koin.io/) for dependency injection
+- Created a Ktor plugin for Azure service bus and tested receiving messages
+- Implemented a GraphQL data loader for searching and batching large requests
+- Add an *Interface* for the Report `content` field, identical to what was done for Apollo for managing different report types and the different fields within each.
+- Enabled the embedded [GraphiQL]https://github.com/graphql/graphiql() library, which provides a nice web interface for discovering HraphQL schemas and running queries.  When running locally, the GraphiQL is available [here](http://localhost:8080/graphiql).
 
 ## Next Steps
 - Evaluate other open-source GraphQL server solutions?  So far, not able to find any other platformss outside of Apollo that are mature and support NoSQL.  At the time of this writing, other popular GraphQL server platforms like Hasura, Prisma, and Graphile don't appear to work with NoSQL DBs like MongoDB or CosmosDB.
