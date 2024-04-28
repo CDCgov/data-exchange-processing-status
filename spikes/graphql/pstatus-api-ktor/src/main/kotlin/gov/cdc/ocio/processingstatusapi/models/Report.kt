@@ -57,6 +57,8 @@ data class ReportDao(
     @SerializedName("status")
     var status : String? = null,
 
+    var timestamp: Float? = null, // TODO: Date
+
     var content: Any? = null
 ) {
     val contentAsType: BaseContent?
@@ -100,31 +102,23 @@ data class Report(
 
     var id : String? = null,
 
-    @SerializedName("upload_id")
     var uploadId: String? = null,
 
-    @SerializedName("report_id")
     var reportId: String? = null,
 
-    @SerializedName("data_stream_id")
     var dataStreamId: String? = null,
 
-    @SerializedName("data_stream_route")
     var dataStreamRoute: String? = null,
 
-    @SerializedName("stage_name")
     var stageName: String? = null,
 
-    @SerializedName("content_type")
     var contentType : String? = null,
 
-    @SerializedName("message_id")
     var messageId: String? = null,
 
-    @SerializedName("status")
     var status : String? = null,
 
-    var content: BaseContent? = null
+    var content: BaseContent? = null,
 
-//    val timestamp: Date = Date()
+    var timestamp: Float? = null // TODO: Date
 )

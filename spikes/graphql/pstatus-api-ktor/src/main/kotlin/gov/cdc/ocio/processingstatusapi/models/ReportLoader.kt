@@ -52,9 +52,10 @@ class ReportLoader: KoinComponent {
             this.dataStreamId = reportDao.dataStreamId
             this.dataStreamRoute = reportDao.dataStreamRoute
             this.stageName = reportDao.stageName
-            this.contentType = reportDao.contentType
             this.messageId = reportDao.messageId
             this.status = reportDao.status
+            this.timestamp = reportDao.timestamp
+            this.contentType = reportDao.contentType
             this.content = reportDao.contentAsType
         }
     }
