@@ -16,15 +16,18 @@ class ReportLoader: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    fun getByUploadId(uploadId: String): Report? {
+    fun getByUploadId(uploadId: String): List<Report>? {
         val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
 
         val reportItems = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
-            Report::class.java
+            ReportDao::class.java
         )
 
-        return reportItems.firstOrNull()
+        val reports = mutableListOf<Report>()
+        reportItems.forEach { reports.add(daoToReport(it)) }
+
+        return reports
     }
 
     fun search(ids: List<String>): List<Report> {
@@ -32,10 +35,27 @@ class ReportLoader: KoinComponent {
 
         val reportItems = reportsContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
-            Report::class.java
+            ReportDao::class.java
         )
 
-        return reportItems.toList()
+        val reports = mutableListOf<Report>()
+        reportItems.forEach { reports.add(daoToReport(it)) }
+
+        return reports
     }
 
+    private fun daoToReport(reportDao: ReportDao): Report {
+        return Report().apply {
+            this.id = reportDao.id
+            this.uploadId = reportDao.uploadId
+            this.reportId = reportDao.reportId
+            this.dataStreamId = reportDao.dataStreamId
+            this.dataStreamRoute = reportDao.dataStreamRoute
+            this.stageName = reportDao.stageName
+            this.contentType = reportDao.contentType
+            this.messageId = reportDao.messageId
+            this.status = reportDao.status
+            this.content = reportDao.contentAsType
+        }
+    }
 }
