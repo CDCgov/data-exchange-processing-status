@@ -204,8 +204,8 @@ Ktor was chosen to be used in this spike given the simplicity to get started, de
 After creating a shell Ktor microservice, the following steps were taken.
 - Added [Koin](https://insert-koin.io/) for dependency injection
 - Created a Ktor plugin for Azure service bus and tested receiving messages
-- Implemented a GraphQL data loader for searching and batching large requests
-- Added an *Interface* for the Report `content` field, identical to what was done for Apollo for managing different report types and the different fields within each.
+- Implemented a [GraphQL data loader](https://opensource.expediagroup.com/graphql-kotlin/docs/server/data-loader/) for searching and batching large requests
+- Added an *[Interface](https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/interfaces/)* for the Report `content` field, identical to what was done for Apollo for managing different report types and the different fields within each.
 - Enabled the embedded [GraphiQL](https://github.com/graphql/graphiql) library, which provides a nice web interface for discovering GraphQL schemas and running queries.  When running locally, the GraphiQL feature is available [here](http://localhost:8080/graphiql).
 
 #### GraphiQL Screenshot
@@ -216,6 +216,9 @@ Below is a screenshot of GraphiQL running locally with the GraphQL Ktor plugin.
 - [ ] Implement a security example using a JWT
 - [ ] One or two "real world" examples of Portal needs (e.g. a where clause or two)
 - [ ] Retrieve metadata as dynamic map
+- [ ] Add [graphql extended scalars](https://github.com/graphql-java/graphql-java-extended-scalars) to extend the primitive scalars to include other types like Date
+- [ ] Add [https://github.com/sharpmind-de/ktor-env-config](https://github.com/sharpmind-de/ktor-env-config) for accessing the `application.config` from areas of the code where the `environment` context is not present.
+- [ ] Build and run [Ktor as a Docker container image](https://ktor.io/docs/docker.html).
 
 ## Summary
 
