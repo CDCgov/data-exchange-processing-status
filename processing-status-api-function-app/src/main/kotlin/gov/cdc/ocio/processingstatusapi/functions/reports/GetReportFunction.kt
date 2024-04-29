@@ -52,9 +52,21 @@ class GetReportFunction(
      * @return HttpResponseMessage
      */
     fun withUploadId(uploadId: String): HttpResponseMessage {
+        val filter = request.queryParameters["filter"]
 
         // Get the report metadata
-        val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+        var reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
+
+        if (!filter.isNullOrBlank()) {
+            if(filter == "failure"){
+                reportsSqlQuery += " and r.content.result!='success'"
+            } else {
+                return request
+                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("Invalid filter option")
+                    .build()
+            }
+        }
 
         // Locate the existing report so we can amend it
         val reportItems = reportsContainer.queryItems(

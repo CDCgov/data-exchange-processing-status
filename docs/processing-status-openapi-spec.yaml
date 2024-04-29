@@ -389,6 +389,12 @@ paths:
           schema:
             type: string
           description: Upload identifier to retrieve all the upload statuses for.
+        - name: filter
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter to fetch failed uploads.    
       responses:
         '200':
           description: Report for the given identifier
