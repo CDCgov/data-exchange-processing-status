@@ -1,0 +1,41 @@
+{
+  "schema_version": "2.0.0",
+  "summary": {
+    "current_status": "REDACTED"
+  },
+  "stage": {
+    "report": {
+      "entries": [],
+      "status": "SUCCESS"
+    },
+    "stage_name": "REDACTOR",
+    "stage_version": "1.0.0",
+    "status": "SUCCESS",
+    "configs": [
+      "elr_config.txt"
+    ],
+    "event_timestamp": "2024-03-04T15:04:38.57",
+    "eventhub_offset": 193273541168,
+    "eventhub_sequence_number": 25567,
+    "start_processing_time": "2024-03-04T15:04:38.651+00:00",
+    "end_processing_time": "2024-03-04T15:04:38.667+00:00"
+  },
+  "schema_name": "DEX HL7v2 REDACTOR",
+  "routing_metadata": {
+    "ingested_file_path": "https://ocioedemessagesatst.blob.core.windows.net/hl7ingress/dex-routing/TEST_Afumigatus_TN_5305_01.txt",
+    "ingested_file_timestamp": "2024-03-04T15:04:22+00:00",
+    "ingested_file_size": "3328",
+    "data_producer_id": "",
+    "jurisdiction": "unknown",
+    "upload_id": "$uploadId",
+    "data_stream_id": "daart",
+    "data_stream_route": "hl7",
+    "trace_id": "UNKNOWN",
+    "span_id": "UNKNOWN",
+    "supporting_metadata": {
+      "route": "daart",
+      "system_provider": "DEX-ROUTING",
+      "message_type": "ELR"
+    }
+  }
+}

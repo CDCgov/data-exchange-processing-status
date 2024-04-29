@@ -1,0 +1,45 @@
+{
+  "schema_version": "2.0.0",
+  "summary": {
+    "current_status": "REDACTED"
+  },
+  "stage": {
+    "report": {
+      "entries": [],
+      "status": "SUCCESS"
+    },
+    "stage_name": "REDACTOR",
+    "stage_version": "1.0.0",
+    "status": "SUCCESS",
+    "configs": [
+      "celr_config.txt"
+    ],
+    "event_timestamp": "2024-03-01T14:48:39.049",
+    "eventhub_offset": 188978567232,
+    "eventhub_sequence_number": 25736,
+    "start_processing_time": "2024-03-01T14:48:39.133+00:00",
+    "end_processing_time": "2024-03-01T14:48:39.149+00:00"
+  },
+  "schema_name": "DEX HL7v2 REDACTOR",
+  "routing_metadata": {
+    "ingested_file_path": "https://ocioedemessagesatst.blob.core.windows.net/hl7ingress/demo/AL_COVID19_test12.txt",
+    "ingested_file_timestamp": "2024-03-01T14:48:12+00:00",
+    "ingested_file_size": "5521",
+    "data_producer_id": "",
+    "jurisdiction": "UNKNOWN",
+    "upload_id": "mcq1-20240216-01-d849c4b7-a447-44c3-a3b1-a0d50acec6ee",
+    "data_stream_id": "celr",
+    "data_stream_route": "hl7",
+    "trace_id": "UNKNOWN",
+    "span_id": "UNKNOWN",
+    "supporting_metadata": {
+      "message_type": "CASE"
+    }
+  },
+  "message_metadata": {
+    "message_uuid": "cc39073c-6978-4bf3-85ba-c5e11dcb70b6",
+    "single_or_batch": "SINGLE",
+    "message_index": 1,
+    "message_hash": "48b31c99340261603f0641c32a70466b"
+  }
+}
