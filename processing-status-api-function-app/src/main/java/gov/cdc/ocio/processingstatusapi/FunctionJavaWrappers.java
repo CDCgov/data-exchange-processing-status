@@ -257,16 +257,15 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).getHL7DirectIndirectMessageCounts();
     }
 
-    @FunctionName("GetUnfinishedUploadCounts")
+    @FunctionName("GetBadMetadataAndUnfinishedUploadCounts")
     public HttpResponseMessage GetUnfinishedUploadCounts(
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/counts/totalUnfinishedUploads/{dataStreamId}",
+                    route = "report/counts/badMetadataAndUnfinishedUploadCounts",
                     authLevel = AuthorizationLevel.ANONYMOUS
-            ) HttpRequestMessage<Optional<String>> request,
-            @BindingName("dataStreamId") String dataStreamId) {
-        return new GetReportCountsFunction(request).getUnfinishedUploadCounts(dataStreamId);
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getBadMetadataAndUnfinishedUploadCounts();
     }
 
     @FunctionName("GetInvalidMessageCounts")

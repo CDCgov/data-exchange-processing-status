@@ -523,7 +523,7 @@ class GetReportCountsFunction(
         val numCompletedUploadingSqlQuery = (
             "select "
                 + "value count(1) "
-                + "from Reports r "
+                + "from $reportsContainerName r "
                 + "where r.content.schema_name = 'upload' and r.content['offset'] = r.content.size and "
                 + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
         )
@@ -537,7 +537,7 @@ class GetReportCountsFunction(
         val numUploadingSqlQuery = (
             "select "
                 + "value count(1) "
-                + "from Reports r "
+                + "from $reportsContainerName r "
                 + "where r.content.schema_name = 'upload' and r.content['offset'] != r.content.size and "
                 + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
         )
@@ -551,7 +551,7 @@ class GetReportCountsFunction(
         val numFailedSqlQuery = (
             "select "
                 + "value count(1) "
-                + "from Reports r "
+                + "from $reportsContainerName r "
                 + "where r.content.schema_name = 'dex-metadata-verify' and r.content.issues != null and "
                 + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
         )
@@ -580,28 +580,30 @@ class GetReportCountsFunction(
     }
 
     /**
-     *Get direct and in-direct message counts
+     * Get direct and in-direct message counts
      *
-     * * @return HttpResponseMessage
+     * @return HttpResponseMessage
      */
     fun getHL7DirectIndirectMessageCounts(): HttpResponseMessage {
 
         val queryParams = prepareQueryParameters(request)
-        //Verify the request is complete
+
+        // Verify the request is complete
         checkRequiredCountsQueryParams(
-            queryParams?.get("dataStreamId"),
-            queryParams?.get("dataStreamRoute"),
-            queryParams?.get("dateStart"),
-            queryParams?.get("dateEnd"),
-            queryParams?.get("daysInterval"),
+            queryParams["dataStreamId"],
+            queryParams["dataStreamRoute"],
+            queryParams["dateStart"],
+            queryParams["dateEnd"],
+            queryParams["daysInterval"],
             true
         )?.let { return it }
 
-
         val timeRangeWhereClause: String
         try {
-            timeRangeWhereClause = buildSqlClauseForDateRange(queryParams?.get("daysInterval"),
-                queryParams?.get("dateStart"), queryParams?.get("dateEnd")
+            timeRangeWhereClause = buildSqlClauseForDateRange(
+                queryParams["daysInterval"],
+                queryParams["dateStart"],
+                queryParams["dateEnd"]
             )
         } catch (e: Exception) {
             logger.error(e.localizedMessage)
@@ -613,14 +615,14 @@ class GetReportCountsFunction(
 
         val directMessageQuery = (
                 "select value SUM(directCounts) "
-                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from Reports r "
-                        + " where r.content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
-                        + " r.dataStreamId = '${queryParams?.get("dataStreamId")}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as directCounts"
+                        + "from (select value SUM(r.content.stage.report.number_of_messages) from $reportsContainerName r "
+                        + "where r.content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
+                        + "r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as directCounts"
                 )
 
         val indirectMessageQuery = (
                 "select value count(redactedCount) from ( "
-                        + "select * from Reports r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
+                        + "select * from $reportsContainerName r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
                         + "r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as redactedCount"
                 )
 
@@ -652,25 +654,30 @@ class GetReportCountsFunction(
             .build()
     }
 
-
-    fun getUnfinishedUploadCounts (dataStreamId: String): HttpResponseMessage {
+    /**
+     * Get the number of uploads stopped due to metadata issues and also unfinished upload counts.
+     *
+     * @return HttpResponseMessage
+     */
+    fun getBadMetadataAndUnfinishedUploadCounts(): HttpResponseMessage {
         val queryParams = prepareQueryParameters(request)
 
-        //Verify the request is complete
+        // Verify the request is complete
         checkRequiredCountsQueryParams(
-            dataStreamId,
-            queryParams?.get("dataStreamRoute"),
-            queryParams?.get("dateStart"),
-            queryParams?.get("dateEnd"),
-            queryParams?.get("daysInterval"),
+            queryParams["dataStreamId"],
+            queryParams["dataStreamRoute"],
+            queryParams["dateStart"],
+            queryParams["dateEnd"],
+            queryParams["daysInterval"],
             true
         )?.let { return it }
 
-
         val timeRangeWhereClause: String
         try {
-            timeRangeWhereClause = buildSqlClauseForDateRange(queryParams?.get("daysInterval"),
-                queryParams?.get("dateStart"), queryParams?.get("dateEnd")
+            timeRangeWhereClause = buildSqlClauseForDateRange(
+                queryParams["daysInterval"],
+                queryParams["dateStart"],
+                queryParams["dateEnd"]
             )
         } catch (e: Exception) {
             logger.error(e.localizedMessage)
@@ -680,25 +687,42 @@ class GetReportCountsFunction(
                 .build()
         }
 
-        val unfinishedCountsQuery = (
-                "select value count(1) "
-                        + " FROM Reports r where r.content.schema_name = 'dex-metadata-verify' and r.content.schema_name = 'upload' "
-                        + " and r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause"
-                )
-
         val startTime = System.currentTimeMillis()
 
-        val directCountResult = reportsContainer.queryItems(
-            unfinishedCountsQuery, CosmosQueryRequestOptions(),
+        val badMetadataCountsQuery = (
+                "select value count(1) "
+                        + "from $reportsContainerName r "
+                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+                        + "r.content.schema_name = 'dex-metadata-verify' and "
+                        + "ARRAY_LENGTH(r.content.issues) > 0 and $timeRangeWhereClause"
+                )
+
+        val unfinishedUploadsCountsQuery = (
+                "select value count(1) "
+                        + "from $reportsContainerName r "
+                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+                        + "r.content.schema_name = 'upload' and "
+                        + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
+                )
+
+        val badMetadataCountsResult = reportsContainer.queryItems(
+            badMetadataCountsQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
+        val badMetadataCount = badMetadataCountsResult.firstOrNull() ?: 0
 
-        val unfinishedTotalItems = directCountResult.firstOrNull() ?: 0
+        val unfinishedUploadsCountsResult = reportsContainer.queryItems(
+            unfinishedUploadsCountsQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+        val unfinishedUploadsCount = unfinishedUploadsCountsResult.firstOrNull() ?: 0
 
         val endTime = System.currentTimeMillis()
         val countsJson = JSONObject()
-            .put("unfinished_upload_counts", unfinishedTotalItems)
+            .put("bad_metadata_count", badMetadataCount)
+            .put("unfinished_upload_count", unfinishedUploadsCount)
             .put("query_time_millis", endTime - startTime)
 
         return request
@@ -708,24 +732,32 @@ class GetReportCountsFunction(
             .build()
     }
 
+    /**
+     * Get the number of invalid messages count using two different methods.
+     *
+     * @return HttpResponseMessage
+     */
     fun getInvalidMessageCounts() : HttpResponseMessage {
 
         val queryParams = prepareQueryParameters(request)
+
         //Verify the request is complete
         checkRequiredCountsQueryParams(
-            queryParams?.get("dataStreamId"),
-            queryParams?.get("dataStreamRoute"),
-            queryParams?.get("dateStart"),
-            queryParams?.get("dateEnd"),
-            queryParams?.get("daysInterval"),
+            queryParams["dataStreamId"],
+            queryParams["dataStreamRoute"],
+            queryParams["dateStart"],
+            queryParams["dateEnd"],
+            queryParams["daysInterval"],
             true
         )?.let { return it }
 
 
         val timeRangeWhereClause: String
         try {
-            timeRangeWhereClause = buildSqlClauseForDateRange(queryParams?.get("daysInterval"),
-                queryParams?.get("dateStart"), queryParams?.get("dateEnd")
+            timeRangeWhereClause = buildSqlClauseForDateRange(
+                queryParams["daysInterval"],
+                queryParams["dateStart"],
+                queryParams["dateEnd"]
             )
         } catch (e: Exception) {
             logger.error(e.localizedMessage)
@@ -737,7 +769,7 @@ class GetReportCountsFunction(
 
         val directInvalidMessageQuery = (
                 "select value SUM(directCounts) "
-                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from Reports r "
+                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from $reportsContainerName r "
                         + " where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
                         + " r.dataStreamId = '${queryParams?.get("dataStreamId")}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as directCounts"
                 )
@@ -752,7 +784,7 @@ class GetReportCountsFunction(
 
         val indirectInvalidMessageQuery = (
                 "select value count(invalidCounts) from ( "
-                        + "select * from Reports r where r.content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
+                        + "select * from $reportsContainerName r where r.content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
                         + "r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause) as invalidCounts"
                 )
 
@@ -773,14 +805,15 @@ class GetReportCountsFunction(
             Float::class.java
         )
 
-        val directTotalItems = directRedactedCountResult.firstOrNull() ?: 0 + directStructureCountResult.firstOrNull()!!
-        ?: 0
-        val inDirectTotalItems = indirectCountResult.firstOrNull() ?: 0
+        val directRedactedCount = directRedactedCountResult.firstOrNull() ?: 0f
+        val directStructureCount = directStructureCountResult.firstOrNull() ?: 0f
+        val directTotalItems = directRedactedCount + directStructureCount
+        val inDirectTotalItems = indirectCountResult.firstOrNull() ?: 0f
 
         val endTime = System.currentTimeMillis()
         val countsJson = JSONObject()
-            .put("direct_counts", directTotalItems)
-            .put("indirect_counts", inDirectTotalItems)
+            .put("invalid_message_direct_counts", directTotalItems)
+            .put("invalid_message_indirect_counts", inDirectTotalItems)
             .put("query_time_millis", endTime - startTime)
 
         return request
