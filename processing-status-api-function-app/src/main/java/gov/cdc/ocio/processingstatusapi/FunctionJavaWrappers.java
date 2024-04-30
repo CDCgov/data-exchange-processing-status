@@ -280,6 +280,17 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).getInvalidMessageCounts();
     }
 
+    @FunctionName("GetRollupCounts")
+    public HttpResponseMessage getRollupCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/submissions/rollup",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getRollupCounts();
+    }
+
     @FunctionName("GetStatusByUploadId")
     public HttpResponseMessage getStatusByUploadId(
             @HttpTrigger(

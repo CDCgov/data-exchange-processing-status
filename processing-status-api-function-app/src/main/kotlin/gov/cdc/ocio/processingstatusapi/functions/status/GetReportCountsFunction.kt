@@ -790,6 +790,66 @@ class GetReportCountsFunction(
             .build()
     }
 
+    /**
+     * Get a rollup of the counts for the data stream provided.
+     *
+     * @param request HttpRequestMessage<Optional<String>>
+     * @return HttpResponseMessage
+     */
+    fun getRollupCounts(): HttpResponseMessage {
+
+        val queryParams = prepareQueryParameters(request)
+
+        // Verify the request is complete
+        checkRequiredCountsQueryParams(
+            queryParams["dataStreamId"],
+            queryParams["dataStreamRoute"],
+            queryParams["dateStart"],
+            queryParams["dateEnd"],
+            queryParams["daysInterval"],
+            true
+        )?.let { return it }
+
+        val timeRangeWhereClause: String
+        try {
+            timeRangeWhereClause = buildSqlClauseForDateRange(
+                queryParams["daysInterval"],
+                queryParams["dateStart"],
+                queryParams["dateEnd"]
+            )
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body(e.localizedMessage)
+                .build()
+        }
+
+        val rollupCountsQuery = (
+                "select "
+                        + "r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName "
+                        + "from $reportsContainerName r where r.dataStreamId = '${queryParams["dataStreamId"]}' and "
+                        + "r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and $timeRangeWhereClause "
+                        + "group by r.stageName, r.content.schema_name, r.content.schema_version"
+                )
+
+        val rollupCountsResult = reportsContainer.queryItems(
+            rollupCountsQuery, CosmosQueryRequestOptions(),
+            StageCounts::class.java
+        )
+
+        val rollupCounts = mutableListOf<StageCounts>()
+        if (rollupCountsResult.count() > 0) {
+            rollupCounts.addAll(rollupCountsResult.toList())
+        }
+
+        return request
+            .createResponseBuilder(HttpStatus.OK)
+            .header("Content-Type", "application/json")
+            .body(gson.toJson(rollupCounts))
+            .build()
+    }
+
     private fun prepareQueryParameters(request: HttpRequestMessage<Optional<String>>): Map<String, String?> {
         val queryParams = request.queryParameters
         val dataStreamId = queryParams["data_stream_id"]
