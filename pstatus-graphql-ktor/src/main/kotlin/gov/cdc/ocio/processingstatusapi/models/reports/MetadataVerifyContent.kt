@@ -1,11 +1,14 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
-import gov.cdc.ocio.processingstatusapi.models.reports.BaseContent
+class MetadataVerifyContent : SchemaDefinition {
 
-class MetadataVerifyContent : BaseContent {
-    override lateinit var schema_name: String
+    override val schemaName: String = "dex-metadata-verify"
 
-    override lateinit var schema_version: String
+    override val schemaVersion: String = "0.0.1"
 
     var filename: String? = null
+
+//    var metadata : Map<String, Any>? = null
+//
+//    var issues: List<String>? = null
 }

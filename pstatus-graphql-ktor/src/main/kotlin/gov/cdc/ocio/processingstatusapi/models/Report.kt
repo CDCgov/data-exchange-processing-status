@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.processingstatusapi.models.reports.BaseContent
+import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
 
 /**
  * Report for a given stage.
@@ -38,7 +38,7 @@ data class Report(
 
     var status : String? = null,
 
-    var content: BaseContent? = null,
+    var content: SchemaDefinition? = null,
 
     var timestamp: Float? = null // TODO: Date
 )

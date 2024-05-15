@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models.dao
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.models.reports.BaseContent
+import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.models.reports.MetadataVerifyContent
 import gov.cdc.ocio.processingstatusapi.models.reports.UploadStatusContent
 import java.util.*
@@ -39,7 +39,7 @@ data class ReportDao(
 
     var content: Any? = null
 ) {
-    val contentAsType: BaseContent?
+    val contentAsType: SchemaDefinition?
         get() {
             if (content == null) return null
 

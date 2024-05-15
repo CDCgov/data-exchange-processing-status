@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingstatusapi
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
 import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule
+import graphql.scalars.ExtendedScalars
+import graphql.schema.idl.RuntimeWiring
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -34,4 +36,6 @@ fun Application.module() {
 
     // Preload the koin module so the CosmosDB client is already initialized on the first call
     getKoin().get<CosmosRepository>()
+
+    RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
 }

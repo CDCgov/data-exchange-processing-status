@@ -43,6 +43,7 @@ dependencies {
     implementation("com.google.code.gson", "gson", "2.10.1")
     implementation("io.insert-koin","koin-core","3.5.6")
     implementation("io.insert-koin", "koin-ktor", "3.5.6")
+    implementation("com.graphql-java", "graphql-java-extended-scalars", "22.0")
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
