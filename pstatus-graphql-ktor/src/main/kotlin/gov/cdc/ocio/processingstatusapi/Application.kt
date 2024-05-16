@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
-import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule
 import graphql.scalars.ExtendedScalars
 import graphql.schema.idl.RuntimeWiring
 import io.ktor.server.application.*
@@ -29,7 +28,6 @@ fun main(args: Array<String>) {
 fun Application.module() {
 //    configureRouting()
     graphQLModule()
-    serviceBusModule()
     install(Koin) {
         loadKoinModules(environment)
     }

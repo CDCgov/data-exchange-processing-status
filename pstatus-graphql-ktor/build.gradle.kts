@@ -46,7 +46,6 @@ dependencies {
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("com.expediagroup", "graphql-kotlin-ktor-server", "7.1.1")
-    implementation("com.azure", "azure-messaging-servicebus", "7.13.3")
     implementation("com.azure", "azure-cosmos", "4.55.0")
     implementation("io.github.microutils", "kotlin-logging-jvm", "3.0.5")
     implementation("com.google.code.gson", "gson", "2.10.1")
