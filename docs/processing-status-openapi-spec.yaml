@@ -312,7 +312,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Status.          
+          description: Status.
       responses:
         '200':
           description: Trace for the given upload dentifier
@@ -364,7 +364,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Status.   
+          description: Status.
       responses:
         '200':
           description: Trace for the given upload dentifier
@@ -394,7 +394,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Filter to fetch failed uploads.    
+          description: Filter to fetch failed uploads.
       responses:
         '200':
           description: Report for the given identifier
@@ -824,7 +824,61 @@ paths:
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
-          description: Authorization information is missing or invalid.                
+          description: Authorization information is missing or invalid.
+  '/report/counts/submissions/rollup':
+    get:
+      tags:
+        - DEX Status
+      summary: Provides a rollup (total count) of reports by stage name.
+      description: >-
+        Provides a rollup (total count) of reports by stage name.  Results may be filtered by a date range or days interval since today.
+      parameters:
+        - name: data_stream_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Filter by the data stream identifier to retrieve the report counts for.
+        - name: data_stream_route
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Filter by the data stream route that was provided with the upload.
+          example: routineImmunization
+        - name: date_start
+          in: query
+          schema:
+            type: string
+          description: >-
+            Start date of filter.  Format is YYYYMMDDTHHMMSSZ (UTC format,
+            inclusive).  Defaults to 3 months prior to today.
+          example: 20231020T14103000Z
+        - name: date_end
+          in: query
+          schema:
+            type: string
+          description: >-
+            End date of filter.  Format is YYYYMMDDTHHMMSSZ (UTC format,
+            exclusive).  Defaults to today.
+          example: 20231030T14103000Z
+        - name: days_interval
+          in: query
+          schema:
+            type: string
+          description: >-
+            Number of days for which the query should be executed.
+      responses:
+        '200':
+          description: Report rollup counts for the given criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageCounts'
+        '400':
+          description: Bad request.  Check required parameters.
+        '401':
+          description: Authorization information is missing or invalid.
   '/report/counts/hl7/invalidStructureValidation':
     get:
       tags:
@@ -867,7 +921,7 @@ paths:
           schema:
             type: string
           description: >-
-            Number of days for which the query should be executed.  
+            Number of days for which the query should be executed.
       responses:
         '200':
           description: Report counts for the given criteria
@@ -883,7 +937,7 @@ paths:
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
-          description: Authorization information is missing or invalid.        
+          description: Authorization information is missing or invalid.
   '/report/counts/hl7/directIndirectMessageCounts':
     get:
       tags:
@@ -938,13 +992,13 @@ paths:
                   direct_counts:
                     type: string
                   indirect_counts:
-                    type: string  
+                    type: string
                   query_time_millis:
                     type: string
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
-          description: Authorization information is missing or invalid. 
+          description: Authorization information is missing or invalid.
   '/report/counts/totalUnfinishedUploads/{dataStreamId}':
     get:
       tags:
@@ -1003,7 +1057,7 @@ paths:
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
-          description: Authorization information is missing or invalid. 
+          description: Authorization information is missing or invalid.
   '/report/counts/invalidMessage':
     get:
       tags:
@@ -1062,7 +1116,7 @@ paths:
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
-          description: Authorization information is missing or invalid.   
+          description: Authorization information is missing or invalid.
   '/health':
     get:
       tags:
@@ -1484,6 +1538,23 @@ components:
           timestamp:
             type: string
             format: date-time
+    StageCounts:
+      type: array
+      items:
+        type: object
+        properties:
+          schema_name:
+            type: string
+            example: "upload"
+          schema_version:
+            type: string
+            example: "0.0.1"
+          stageName:
+            type: string
+            example: "dex-upload"
+          counts:
+            type: integer
+            example: 14235
     Summary:
       type: object
       properties:
@@ -1627,20 +1698,20 @@ components:
                   type: string
                 reasons:
                   type: string
-            failed:    
+            failed:
               type: object
               properties:
                 counts:
                   type: string
                 reasons:
                   type: string
-            uploaded:    
+            uploaded:
               type: object
               properties:
                 counts:
                   type: string
                 reasons:
-                  type: string        
+                  type: string
     PageSummary:
       type: object
       properties:
