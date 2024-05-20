@@ -655,11 +655,16 @@ class GetReportCountsFunction(
     }
 
     /**
-     * Get the number of uploads stopped due to metadata issues and also unfinished upload counts.
+     * Get various upload stats including:
+     * - Unique upload ids
+     * - Uploads that have at least one upload status
+     * - Number of uploads that were rejected for bad metadata
+     * - Unfinished uploads or uploads in progress
+     * - List of uploads with duplicate filenames.
      *
      * @return HttpResponseMessage
      */
-    fun getBadMetadataAndUnfinishedUploadCounts(): HttpResponseMessage {
+    fun getUploadStats(): HttpResponseMessage {
         val queryParams = prepareQueryParameters(request)
 
         // Verify the request is complete
@@ -689,7 +694,24 @@ class GetReportCountsFunction(
 
         val startTime = System.currentTimeMillis()
 
-        val badMetadataCountsQuery = (
+        val numUniqueUploadsQuery = (
+                "select r.uploadId from $reportsContainerName r "
+                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+                        + "$timeRangeWhereClause group by r.uploadId"
+//                "select value count(1) from(select r.uploadId from Reports r "
+//                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+//                        + "$timeRangeWhereClause group by r.uploadId)"
+                )
+
+        val numUploadsWithStatusQuery = (
+                "select value count(1) "
+                        + "from $reportsContainerName r "
+                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+                        + "r.content.schema_name = 'upload' and "
+                        + timeRangeWhereClause
+                )
+
+       val badMetadataCountQuery = (
                 "select value count(1) "
                         + "from $reportsContainerName r "
                         + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
@@ -705,24 +727,62 @@ class GetReportCountsFunction(
                         + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
                 )
 
-        val badMetadataCountsResult = reportsContainer.queryItems(
-            badMetadataCountsQuery, CosmosQueryRequestOptions(),
+        val duplicateFilenameCountQuery = (
+                "select * from "
+                        + "(select r.content.metadata.filename, count(1) as total_count "
+                        + "from $reportsContainerName r "
+                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+                        + "r.content.schema_name = 'dex-metadata-verify' and "
+                        + "$timeRangeWhereClause "
+                        + "group by r.content.metadata.filename"
+                        + ") r where r.total_count > 1"
+                )
+
+        logger.info("***** duplicateFilenameCountQuery = $duplicateFilenameCountQuery")
+
+        val uniqueUploadIdsResult = reportsContainer.queryItems(
+            numUniqueUploadsQuery, CosmosQueryRequestOptions(),
+            UploadCounts::class.java
+        )
+
+        val uniqueUploadIdsCount = uniqueUploadIdsResult.count()
+
+        val uploadsWithStatusResult = reportsContainer.queryItems(
+            numUploadsWithStatusQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val badMetadataCount = badMetadataCountsResult.firstOrNull() ?: 0
+        val uploadsWithStatusCount = uploadsWithStatusResult.firstOrNull() ?: 0
 
-        val unfinishedUploadsCountsResult = reportsContainer.queryItems(
+        val badMetadataCountResult = reportsContainer.queryItems(
+            badMetadataCountQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+        val badMetadataCount = badMetadataCountResult.firstOrNull() ?: 0
+
+        val unfinishedUploadCountResult = reportsContainer.queryItems(
             unfinishedUploadsCountsQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val unfinishedUploadsCount = unfinishedUploadsCountsResult.firstOrNull() ?: 0
+        val unfinishedUploadsCount = unfinishedUploadCountResult.firstOrNull() ?: 0
+
+        val duplicateFilenameCountResult = reportsContainer.queryItems(
+            duplicateFilenameCountQuery, CosmosQueryRequestOptions(),
+            DuplicateFilenameCounts::class.java
+        )
+
+        val duplicateFilenames = if (duplicateFilenameCountResult.count() > 0)
+            duplicateFilenameCountResult.toList() else listOf()
 
         val endTime = System.currentTimeMillis()
         val countsJson = JSONObject()
+            .put("unique_upload_ids_count", uniqueUploadIdsCount)
+            .put("uploads_with_status_count", uploadsWithStatusCount)
             .put("bad_metadata_count", badMetadataCount)
             .put("unfinished_upload_count", unfinishedUploadsCount)
+            .put("uploads_with_duplicate_filenames", duplicateFilenames)
             .put("query_time_millis", endTime - startTime)
 
         return request
