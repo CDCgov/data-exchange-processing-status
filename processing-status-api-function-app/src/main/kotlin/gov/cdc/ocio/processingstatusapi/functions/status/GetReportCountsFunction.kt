@@ -729,16 +729,14 @@ class GetReportCountsFunction(
 
         val duplicateFilenameCountQuery = (
                 "select * from "
-                        + "(select r.content.metadata.filename, count(1) as total_count "
+                        + "(select r.content.metadata.filename, count(1) as totalCount "
                         + "from $reportsContainerName r "
                         + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
                         + "r.content.schema_name = 'dex-metadata-verify' and "
                         + "$timeRangeWhereClause "
                         + "group by r.content.metadata.filename"
-                        + ") r where r.total_count > 1"
+                        + ") r where r.totalCount > 1"
                 )
-
-        logger.info("***** duplicateFilenameCountQuery = $duplicateFilenameCountQuery")
 
         val uniqueUploadIdsResult = reportsContainer.queryItems(
             numUniqueUploadsQuery, CosmosQueryRequestOptions(),
