@@ -719,12 +719,20 @@ class GetReportCountsFunction(
                         + "ARRAY_LENGTH(r.content.issues) > 0 and $timeRangeWhereClause"
                 )
 
-        val unfinishedUploadsCountsQuery = (
+        val inProgressUploadsCountQuery = (
                 "select value count(1) "
                         + "from $reportsContainerName r "
                         + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
                         + "r.content.schema_name = 'upload' and "
                         + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
+                )
+
+        val completedUploadsCountQuery = (
+                "select value count(1) "
+                        + "from $reportsContainerName r "
+                        + "where r.dataStreamId = '${queryParams["dataStreamId"]}' and r.dataStreamRoute = '${queryParams["dataStreamRoute"]}' and "
+                        + "r.content.schema_name = 'upload' and "
+                        + "r.content['offset'] = r.content['size'] and $timeRangeWhereClause"
                 )
 
         val duplicateFilenameCountQuery = (
@@ -759,12 +767,19 @@ class GetReportCountsFunction(
 
         val badMetadataCount = badMetadataCountResult.firstOrNull() ?: 0
 
-        val unfinishedUploadCountResult = reportsContainer.queryItems(
-            unfinishedUploadsCountsQuery, CosmosQueryRequestOptions(),
+        val inProgressUploadCountResult = reportsContainer.queryItems(
+            inProgressUploadsCountQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val unfinishedUploadsCount = unfinishedUploadCountResult.firstOrNull() ?: 0
+        val inProgressUploadsCount = inProgressUploadCountResult.firstOrNull() ?: 0
+
+        val completedUploadsCountResult = reportsContainer.queryItems(
+            completedUploadsCountQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+        val completedUploadsCount = completedUploadsCountResult.firstOrNull() ?: 0
 
         val duplicateFilenameCountResult = reportsContainer.queryItems(
             duplicateFilenameCountQuery, CosmosQueryRequestOptions(),
@@ -779,7 +794,8 @@ class GetReportCountsFunction(
             .put("unique_upload_ids_count", uniqueUploadIdsCount)
             .put("uploads_with_status_count", uploadsWithStatusCount)
             .put("bad_metadata_count", badMetadataCount)
-            .put("unfinished_upload_count", unfinishedUploadsCount)
+            .put("in_progress_upload_count", inProgressUploadsCount)
+            .put("completed_upload_count", completedUploadsCount)
             .put("uploads_with_duplicate_filenames", duplicateFilenames)
             .put("query_time_millis", endTime - startTime)
 
