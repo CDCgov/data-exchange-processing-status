@@ -191,13 +191,13 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/{dataStreamId}/{stageName}",
+                    route = "report/stage/{dataStreamId}/{stageName}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("dataStreamId") String dataStreamId,
             @BindingName("stageName") String stageName,
             final ExecutionContext context) {
-        context.getLogger().info("getReportByStage: dataStreamId=" + Encode.forJava(dataStreamId) + ", stageName=" + Encode.forJava(stageName));
+        context.getLogger().info("GetReportForStage: dataStreamId=" + Encode.forJava(dataStreamId) + ", stageName=" + Encode.forJava(stageName));
         return new GetReportFunction(request).withDataStreamId(dataStreamId, stageName);
     }
 
@@ -206,7 +206,7 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/counts/{uploadId}",
+                    route = "report/counts/id/{uploadId}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId) {
@@ -257,15 +257,15 @@ public class FunctionJavaWrappers {
         return new GetReportCountsFunction(request).getHL7DirectIndirectMessageCounts();
     }
 
-    @FunctionName("GetBadMetadataAndUnfinishedUploadCounts")
-    public HttpResponseMessage GetUnfinishedUploadCounts(
+    @FunctionName("GetUploadStats")
+    public HttpResponseMessage GetUploadStats(
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/counts/badMetadataAndUnfinishedUploadCounts",
+                    route = "report/counts/uploadStats",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request) {
-        return new GetReportCountsFunction(request).getBadMetadataAndUnfinishedUploadCounts();
+        return new GetReportCountsFunction(request).getUploadStats();
     }
 
     @FunctionName("GetInvalidMessageCounts")
