@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture
 
 class ReportQueryService : Query {
 
-    @GraphQLDescription("Return a single report from the provided uploadId")
+    @GraphQLDescription("Return all the reports associated with the provided uploadId")
     @Suppress("unused")
     fun getReport(uploadId: String) = ReportLoader().getByUploadId(uploadId)
 

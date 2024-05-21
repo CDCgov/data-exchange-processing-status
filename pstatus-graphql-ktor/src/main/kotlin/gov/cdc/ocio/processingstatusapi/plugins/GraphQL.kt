@@ -5,11 +5,10 @@ import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
 import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
-import gov.cdc.ocio.processingstatusapi.queries.StatusQueryService
+import gov.cdc.ocio.processingstatusapi.queries.UploadQueryService
 import gov.cdc.ocio.processingstatusapi.subscriptions.ErrorSubscriptionService
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
-import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
@@ -52,7 +51,7 @@ fun Application.graphQLModule() {
             queries = listOf(
                 HealthQueryService(),
                 ReportQueryService(),
-                StatusQueryService()
+                UploadQueryService()
             )
             subscriptions = listOf(
                 ErrorSubscriptionService()

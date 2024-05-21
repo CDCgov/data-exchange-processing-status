@@ -59,4 +59,19 @@ data class ReportDao(
                 else -> null//content.toString()
             }
         }
+
+    val contentAsString: String?
+        get() {
+            if (content == null) return null
+
+            return when (contentType?.lowercase(Locale.getDefault())) {
+                "json" -> {
+                    if (content is LinkedHashMap<*, *>)
+                        Gson().toJson(content, MutableMap::class.java).toString()
+                    else
+                        content.toString()
+                }
+                else -> content.toString()
+            }
+        }
 }

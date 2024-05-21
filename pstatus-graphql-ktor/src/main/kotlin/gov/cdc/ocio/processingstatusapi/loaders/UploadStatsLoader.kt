@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.util.*
 
-class StatusLoader: CosmosLoader() {
+class UploadStatsLoader: CosmosLoader() {
 
     @Throws(BadRequestException::class)
     fun getUploadStats(dataStreamId: String,
