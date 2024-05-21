@@ -10,7 +10,6 @@ import io.ktor.server.netty.*
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
-import org.koin.mp.KoinPlatform.getKoin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val cosmosModule = module {
@@ -26,14 +25,10 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-//    configureRouting()
     graphQLModule()
     install(Koin) {
         loadKoinModules(environment)
     }
-
-    // Preload the koin module so the CosmosDB client is already initialized on the first call
-    getKoin().get<CosmosRepository>()
 
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
 }

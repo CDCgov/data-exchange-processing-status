@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
+import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
 import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
 import gov.cdc.ocio.processingstatusapi.queries.StatusQueryService
 import gov.cdc.ocio.processingstatusapi.subscriptions.ErrorSubscriptionService
@@ -49,6 +50,7 @@ fun Application.graphQLModule() {
         schema {
             packages = listOf("gov.cdc.ocio.processingstatusapi")
             queries = listOf(
+                HealthQueryService(),
                 ReportQueryService(),
                 StatusQueryService()
             )

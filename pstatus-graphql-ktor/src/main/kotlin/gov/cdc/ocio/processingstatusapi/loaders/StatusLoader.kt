@@ -74,48 +74,51 @@ class StatusLoader: CosmosLoader() {
                         + ") r where r.totalCount > 1"
                 )
 
-        val uniqueUploadIdsResult = reportsContainer.queryItems(
+        val uniqueUploadIdsResult = reportsContainer?.queryItems(
             numUniqueUploadsQuery, CosmosQueryRequestOptions(),
             UploadCounts::class.java
         )
 
-        val uniqueUploadIdsCount = uniqueUploadIdsResult.count()
+        val uniqueUploadIdsCount = uniqueUploadIdsResult?.count() ?: 0
 
-        val uploadsWithStatusResult = reportsContainer.queryItems(
+        val uploadsWithStatusResult = reportsContainer?.queryItems(
             numUploadsWithStatusQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val uploadsWithStatusCount = uploadsWithStatusResult.firstOrNull() ?: 0
+        val uploadsWithStatusCount = uploadsWithStatusResult?.firstOrNull() ?: 0
 
-        val badMetadataCountResult = reportsContainer.queryItems(
+        val badMetadataCountResult = reportsContainer?.queryItems(
             badMetadataCountQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val badMetadataCount = badMetadataCountResult.firstOrNull() ?: 0
+        val badMetadataCount = badMetadataCountResult?.firstOrNull() ?: 0
 
-        val inProgressUploadCountResult = reportsContainer.queryItems(
+        val inProgressUploadCountResult = reportsContainer?.queryItems(
             inProgressUploadsCountQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val inProgressUploadsCount = inProgressUploadCountResult.firstOrNull() ?: 0
+        val inProgressUploadsCount = inProgressUploadCountResult?.firstOrNull() ?: 0
 
-        val completedUploadsCountResult = reportsContainer.queryItems(
+        val completedUploadsCountResult = reportsContainer?.queryItems(
             completedUploadsCountQuery, CosmosQueryRequestOptions(),
             Float::class.java
         )
 
-        val completedUploadsCount = completedUploadsCountResult.firstOrNull() ?: 0
+        val completedUploadsCount = completedUploadsCountResult?.firstOrNull() ?: 0
 
-        val duplicateFilenameCountResult = reportsContainer.queryItems(
+        val duplicateFilenameCountResult = reportsContainer?.queryItems(
             duplicateFilenameCountQuery, CosmosQueryRequestOptions(),
             DuplicateFilenameCounts::class.java
         )
 
-        val duplicateFilenames = if (duplicateFilenameCountResult.count() > 0)
-            duplicateFilenameCountResult.toList() else listOf()
+        val duplicateFilenames =
+            if (duplicateFilenameCountResult != null && duplicateFilenameCountResult.count() > 0)
+                duplicateFilenameCountResult.toList()
+            else
+                listOf()
 
         return UploadStats().apply {
             this.uniqueUploadIdsCount = uniqueUploadIdsCount

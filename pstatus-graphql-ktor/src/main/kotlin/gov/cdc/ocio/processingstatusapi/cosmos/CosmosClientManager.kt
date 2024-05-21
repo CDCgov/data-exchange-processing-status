@@ -9,7 +9,7 @@ class CosmosClientManager {
 
         private var client: CosmosClient? = null
 
-        fun getCosmosClient(uri: String, authKey: String): CosmosClient {
+        fun getCosmosClient(uri: String, authKey: String): CosmosClient? {
             // Initialize a connection to cosmos that will persist across HTTP triggers
             if (client == null) {
                 client = CosmosClientBuilder()
@@ -20,7 +20,7 @@ class CosmosClientManager {
                     .clientTelemetryEnabled(false)
                     .buildClient()
             }
-            return client!!
+            return client
         }
     }
 }

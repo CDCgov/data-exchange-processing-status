@@ -6,16 +6,30 @@ import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 
 class ReportLoader: CosmosLoader() {
 
+    fun getAnyReport(): Report? {
+        val reportsSqlQuery = "select * from $reportsContainerName r offset 0 limit 1"
+        val reportItems = reportsContainer?.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            ReportDao::class.java
+        )
+
+        return if (reportItems == null || reportItems.count() == 0)
+            null
+        else {
+            daoToReport(reportItems.first())
+        }
+    }
+
     fun getByUploadId(uploadId: String): List<Report> {
         val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
 
-        val reportItems = reportsContainer.queryItems(
+        val reportItems = reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
 
         val reports = mutableListOf<Report>()
-        reportItems.forEach { reports.add(daoToReport(it)) }
+        reportItems?.forEach { reports.add(daoToReport(it)) }
 
         return reports
     }
@@ -23,13 +37,13 @@ class ReportLoader: CosmosLoader() {
     fun search(ids: List<String>): List<Report> {
         val reportsSqlQuery = "select * from $reportsContainerName r where r.id = '${ids.first()}'"
 
-        val reportItems = reportsContainer.queryItems(
+        val reportItems = reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
 
         val reports = mutableListOf<Report>()
-        reportItems.forEach { reports.add(daoToReport(it)) }
+        reportItems?.forEach { reports.add(daoToReport(it)) }
 
         return reports
     }
