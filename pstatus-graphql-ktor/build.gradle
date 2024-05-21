@@ -44,6 +44,8 @@ dependencies {
     implementation 'io.insert-koin:koin-core:3.5.6'
     implementation 'io.insert-koin:koin-ktor:3.5.6'
     implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
+    implementation 'joda-time:joda-time:2.12.7'
+    implementation 'org.apache.commons:commons-lang3:3.3.1'
     testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }

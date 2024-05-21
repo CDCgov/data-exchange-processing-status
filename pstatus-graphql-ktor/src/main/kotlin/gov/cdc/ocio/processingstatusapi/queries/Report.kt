@@ -4,7 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.models.Report
-import gov.cdc.ocio.processingstatusapi.models.ReportLoader
+import gov.cdc.ocio.processingstatusapi.loaders.ReportLoader
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
 

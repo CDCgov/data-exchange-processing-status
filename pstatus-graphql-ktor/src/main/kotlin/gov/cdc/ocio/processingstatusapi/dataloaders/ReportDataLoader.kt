@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusapi.dataloaders
 
 import com.expediagroup.graphql.dataloader.KotlinDataLoader
 import gov.cdc.ocio.processingstatusapi.models.Report
-import gov.cdc.ocio.processingstatusapi.models.ReportLoader
+import gov.cdc.ocio.processingstatusapi.loaders.ReportLoader
 import kotlinx.coroutines.runBlocking
 import graphql.GraphQLContext
 import org.dataloader.DataLoader

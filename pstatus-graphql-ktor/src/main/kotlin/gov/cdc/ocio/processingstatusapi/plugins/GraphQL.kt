@@ -7,6 +7,7 @@ import com.expediagroup.graphql.server.ktor.graphiQLRoute
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
+import gov.cdc.ocio.processingstatusapi.queries.StatusQueryService
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
@@ -19,7 +20,8 @@ fun Application.graphQLModule() {
             packages = listOf("gov.cdc.ocio.processingstatusapi")
             queries = listOf(
                 HelloWorldQuery(),
-                ReportQueryService()
+                ReportQueryService(),
+                StatusQueryService()
             )
         }
         engine {
