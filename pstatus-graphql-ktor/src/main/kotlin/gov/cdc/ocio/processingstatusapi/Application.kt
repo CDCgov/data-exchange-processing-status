@@ -15,7 +15,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val cosmosModule = module {
         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
+        single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
     }
     return modules(listOf(cosmosModule))
 }
