@@ -1,5 +1,8 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
+import com.azure.messaging.servicebus.ServiceBusClientBuilder
+import com.azure.messaging.servicebus.ServiceBusReceivedMessage
+import com.azure.messaging.servicebus.models.DeadLetterOptions
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
@@ -45,7 +48,12 @@ class ServiceBusProcessor {
             }
             logger.info { "After Message received = $sbMessage" }
             createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
-        } catch (e: JsonSyntaxException) {
+        }
+        catch (e:IllegalArgumentException){
+            println("Validation failed: ${e.message}")
+            throw e
+        }
+        catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadStateException("Unable to interpret the create report message")
         }
@@ -59,44 +67,63 @@ class ServiceBusProcessor {
      */
     @Throws(BadRequestException::class)
     private fun createReport(createReportMessage: CreateReportSBMessage) {
-
-        val uploadId = createReportMessage.uploadId
-            ?: throw BadRequestException("Missing required field upload_id")
-
-        val dataStreamId = createReportMessage.dataStreamId
-            ?: throw BadRequestException("Missing required field data_stream_id")
-
-        val dataStreamRoute = createReportMessage.dataStreamRoute
-            ?: throw BadRequestException("Missing required field data_stream_route")
-
-        val stageName = createReportMessage.stageName
-            ?: throw BadRequestException("Missing required field stage_name")
-
-        val contentType = createReportMessage.contentType
-            ?: throw BadRequestException("Missing required field content_type")
-
-        val content: String
         try {
-            content = createReportMessage.contentAsString
-                ?: throw BadRequestException("Missing required field content")
-        } catch (ex: BadStateException) {
-            // assume a bad request
-            throw BadRequestException(ex.localizedMessage)
+            validateReport(createReportMessage)
+            val uploadId = createReportMessage.uploadId
+            val stageName = createReportMessage.stageName
+            logger.info("Creating report for uploadId = ${uploadId} with stageName = $stageName")
+            ReportManager().createReportWithUploadId(
+                createReportMessage.uploadId!!,
+                createReportMessage.dataStreamId!!,
+                createReportMessage.dataStreamRoute!!,
+                createReportMessage.stageName!!,
+                createReportMessage.contentType!!,
+                createReportMessage.messageId!!,
+                createReportMessage.status,
+                createReportMessage.contentAsString!!, // it was Content I changed to ContentAsString
+                createReportMessage.dispositionType,
+                Source.SERVICEBUS
+            )
+        }
+        catch (e:IllegalArgumentException){
+           throw e
+        }
+        catch (e: Exception) {
+            println("Failed to process service bus message:${e.message}")
+
         }
 
-        logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
-        ReportManager().createReportWithUploadId(
-            uploadId,
-            dataStreamId,
-            dataStreamRoute,
-            stageName,
-            contentType,
-            createReportMessage.messageId,
-            createReportMessage.status,
-            content,
-            createReportMessage.dispositionType,
-            Source.SERVICEBUS
-        )
     }
+
+    // Function to validate report
+    private fun validateReport(createReportMessage: CreateReportSBMessage) {
+        val missingFields = mutableListOf<String>()
+
+        if (createReportMessage.uploadId.isNullOrBlank()) {
+            missingFields.add("uploadId")
+        }
+        if (createReportMessage.dataStreamId.isNullOrBlank()) {
+            missingFields.add("dataStreamId")
+        }
+        if (createReportMessage.dataStreamRoute.isNullOrBlank()) {
+            missingFields.add("dataStreamRoute")
+        }
+        if (createReportMessage.stageName.isNullOrBlank()) {
+            missingFields.add("stageName")
+        }
+        if (createReportMessage.contentType.isNullOrBlank()) {
+            missingFields.add("contentType")
+        }
+        if (createReportMessage.contentAsString.isNullOrBlank()) {
+            missingFields.add("content")
+        }
+
+        if (missingFields.isNotEmpty()) {
+            val reason ="Missing fields: ${missingFields.joinToString(", ")}"
+            throw IllegalArgumentException(reason)
+        }
+    }
+
+
 
 }

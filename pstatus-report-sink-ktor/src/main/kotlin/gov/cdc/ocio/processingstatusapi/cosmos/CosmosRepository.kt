@@ -6,4 +6,6 @@ class CosmosRepository(uri: String, authKey: String, reportsContainerName: Strin
 
     val reportsContainer = CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)!!
 
+
+
 }
