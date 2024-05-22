@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
+import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.core.exception.AzureException
 import com.azure.messaging.servicebus.*
@@ -19,6 +20,7 @@ internal val LOGGER = KtorSimpleLogger("pstatus-report-sink")
 
 class AzureServiceBusConfiguration(config: ApplicationConfig) {
     var connectionString: String = config.tryGetString("connection_string") ?: ""
+    var serviceBusNamespace: String = config.tryGetString("azure_servicebus_namespace") ?: ""
     var queueName: String = config.tryGetString("queue_name") ?: ""
     var topicName: String = config.tryGetString("topic_name") ?: ""
     var subscriptionName: String = config.tryGetString("subscription_name") ?: ""
@@ -30,6 +32,7 @@ val AzureServiceBus = createApplicationPlugin(
     createConfiguration = ::AzureServiceBusConfiguration) {
 
     val connectionString = pluginConfig.connectionString
+    var serviceBusNamespace= pluginConfig.serviceBusNamespace
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
@@ -38,6 +41,8 @@ val AzureServiceBus = createApplicationPlugin(
     val processorQueueClient by lazy {
         ServiceBusClientBuilder()
             .connectionString(connectionString)
+            .fullyQualifiedNamespace(serviceBusNamespace)
+            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .queueName(queueName)
             .processMessage{ context -> processMessage(context) }
@@ -49,6 +54,8 @@ val AzureServiceBus = createApplicationPlugin(
     val processorTopicClient by lazy {
         ServiceBusClientBuilder()
             .connectionString(connectionString)
+            .fullyQualifiedNamespace(serviceBusNamespace)
+            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .topicName(topicName)
             .subscriptionName(subscriptionName)
@@ -82,11 +89,15 @@ val AzureServiceBus = createApplicationPlugin(
     }
 
     fun sendMessage() {
-        val senderClient = ServiceBusClientBuilder()
-            .connectionString(connectionString)
-            .sender()
-            .queueName(queueName)
-            .buildClient()
+       val senderClient =  ServiceBusClientBuilder()
+           .connectionString(connectionString)
+           .fullyQualifiedNamespace(serviceBusNamespace)
+           .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
+           .sender()
+           .queueName(queueName)
+           .buildClient()
+       // val serviceBusMessages = reports.map {ServiceBusMessage(it)}
+      //  senderClient.sendMessages(serviceBusMessages)
         try {
             val message = ServiceBusMessage("Hello, Service Bus!")
             senderClient.sendMessage(message)
@@ -110,8 +121,8 @@ val AzureServiceBus = createApplicationPlugin(
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Server is started")
-         receiveMessages()
-       // sendMessage()
+        receiveMessages()
+       // sendMessage() //****This is not working as well****
     }
     on(MonitoringEvent(ApplicationStopped)) { application ->
         application.log.info("Server is stopped")
