@@ -30,5 +30,6 @@ fun Application.module() {
         loadKoinModules(environment)
     }
 
+    // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
 }
