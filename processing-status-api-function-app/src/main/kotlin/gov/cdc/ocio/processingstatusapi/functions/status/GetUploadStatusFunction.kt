@@ -43,10 +43,9 @@ class GetUploadStatusFunction(
      * Advanced query for dex uploads, including sorting, filtering and pagination.
      *
      * @param dataStreamId String
-     * @param stageName String
      * @return HttpResponseMessage
      */
-    fun uploadStatus(dataStreamId: String, stageName: String): HttpResponseMessage {
+    fun uploadStatus(dataStreamId: String): HttpResponseMessage {
 
         logger.info("dataStreamId = $dataStreamId")
 
@@ -199,7 +198,7 @@ class GetUploadStatusFunction(
                val uploadStatus = UploadStatus.createFromReports(uploadId = report.key, reports = report.value)
                 uploadsStatus.items.add(uploadStatus)
             } catch (e: ContentException) {
-                logger.error("Unable to convert stage report with name, \"$stageName\" to upload status: ${e.localizedMessage}")
+                logger.error("Unable to convert reports to upload status: ${e.localizedMessage}")
             }
         }
 
