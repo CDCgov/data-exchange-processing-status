@@ -183,7 +183,7 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("dataStreamId") String dataStreamId) {
-        return new GetUploadStatusFunction(request).uploadStatus(dataStreamId, "dex-upload");
+        return new GetUploadStatusFunction(request).uploadStatus(dataStreamId);
     }
 
     @FunctionName("GetReportForStage")
