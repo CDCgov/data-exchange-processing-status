@@ -6,6 +6,9 @@ import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.UploadMetada
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.UploadStage
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.SchemaDefinition
+import io.ktor.server.util.*
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 
@@ -20,7 +23,7 @@ import java.util.*
  * @property uploadId String?
  * @property timeUploadingSec Double?
  * @property issues MutableList<String>?
- * @property timestamp String?
+ * @property timestamp OffsetDateTime?
  */
 class UploadStatus {
 
@@ -42,8 +45,7 @@ class UploadStatus {
 
     var issues: MutableList<String>? = null
 
-    //var timestamp: Date? = null
-    var timestamp: String? = null
+    var timestamp: OffsetDateTime? = null
 
     companion object {
 
@@ -104,7 +106,7 @@ class UploadStatus {
                         uploadStatus.fileName = uploadStage.filename
                         uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
 //                        uploadStatus.metadata = uploadStage.metadata
-//                        uploadStatus.timestamp = report.timestamp
+                        uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                     }
                     UploadMetadataVerifyStage.schemaDefinition -> {
                         val metadataVerifyStage = Gson().fromJson(stageReportJson, UploadMetadataVerifyStage::class.java)
@@ -120,7 +122,7 @@ class UploadStatus {
                                 uploadStatus.uploadId = uploadId
                                 uploadStatus.fileName = metadataVerifyStage.filename
 //                                uploadStatus.metadata = metadataVerifyStage.metadata
-//                                uploadStatus.timestamp = report.timestamp
+                                uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                                 if (uploadStatus.issues == null)
                                     uploadStatus.issues = mutableListOf()
                                 uploadStatus.issues?.addAll(issues)
@@ -131,7 +133,7 @@ class UploadStatus {
                             uploadStatus.uploadId = uploadId
                             uploadStatus.fileName = metadataVerifyStage.filename
 //                            uploadStatus.metadata = metadataVerifyStage.metadata
-//                            uploadStatus.timestamp = report.timestamp
+                            uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                         }
                     }
                 }

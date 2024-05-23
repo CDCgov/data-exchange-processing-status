@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
+import java.time.OffsetDateTime
 
 /**
  * Report for a given stage.
@@ -15,7 +16,7 @@ import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
  * @property messageId String?
  * @property status String?
  * @property content String?
- * @property timestamp Date
+ * @property timestamp OffsetDateTime
  */
 @GraphQLDescription("Contains Report content.")
 data class Report(
@@ -40,5 +41,5 @@ data class Report(
 
     var content: SchemaDefinition? = null,
 
-    var timestamp: Float? = null // TODO: Date
+    var timestamp: OffsetDateTime? = null
 )

@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 class ReportLoader: CosmosLoader() {
 
@@ -58,7 +60,7 @@ class ReportLoader: CosmosLoader() {
             this.stageName = reportDao.stageName
             this.messageId = reportDao.messageId
             this.status = reportDao.status
-            this.timestamp = reportDao.timestamp
+            this.timestamp = reportDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
             this.contentType = reportDao.contentType
             this.content = reportDao.contentAsType
         }

@@ -3,12 +3,17 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
+import com.expediagroup.graphql.generator.hooks.SchemaGeneratorHooks
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
 import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
 import gov.cdc.ocio.processingstatusapi.queries.UploadQueryService
 import gov.cdc.ocio.processingstatusapi.subscriptions.ErrorSubscriptionService
+import graphql.scalars.ExtendedScalars
+import java.time.OffsetDateTime
+import graphql.schema.GraphQLScalarType
+import graphql.schema.GraphQLType
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -19,6 +24,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import java.time.Duration
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
 
 /**
  * Configures default exception handling using Ktor Status Pages.
@@ -35,6 +42,18 @@ fun StatusPagesConfig.defaultGraphQLStatusPages(): StatusPagesConfig {
         }
     }
     return this
+}
+
+val graphqlDateTimeClassType: GraphQLScalarType = GraphQLScalarType.newScalar()
+    .name("DateTime")
+    .coercing(ExtendedScalars.DateTime.coercing)
+    .build()
+
+class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
+    override fun willGenerateGraphQLType(type: KType): GraphQLType? = when (type.classifier as? KClass<*>) {
+        OffsetDateTime::class -> graphqlDateTimeClassType
+        else -> null
+    }
 }
 
 fun Application.graphQLModule() {
@@ -84,9 +103,10 @@ fun Application.graphQLModule() {
                 ReportQueryService(),
                 UploadQueryService()
             )
-            subscriptions = listOf(
-                ErrorSubscriptionService()
-            )
+//            subscriptions = listOf(
+//                ErrorSubscriptionService()
+//            )
+            hooks = CustomSchemaGeneratorHooks()
         }
         engine {
             dataLoaderRegistryFactory = KotlinDataLoaderRegistryFactory(

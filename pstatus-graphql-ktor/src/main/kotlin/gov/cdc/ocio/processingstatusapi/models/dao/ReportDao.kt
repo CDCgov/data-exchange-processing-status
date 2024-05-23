@@ -35,7 +35,7 @@ data class ReportDao(
     @SerializedName("status")
     var status : String? = null,
 
-    var timestamp: Float? = null, // TODO: Date
+    var timestamp: Date? = null,
 
     var content: Any? = null
 ) {
