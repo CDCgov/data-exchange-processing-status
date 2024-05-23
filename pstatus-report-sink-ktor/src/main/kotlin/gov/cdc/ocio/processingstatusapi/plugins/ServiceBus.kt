@@ -122,7 +122,7 @@ val AzureServiceBus = createApplicationPlugin(
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Server is started")
         receiveMessages()
-       // sendMessage() //****This is not working as well****
+        sendMessage() //****This is not working as well****
     }
     on(MonitoringEvent(ApplicationStopped)) { application ->
         application.log.info("Server is stopped")
