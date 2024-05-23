@@ -54,6 +54,12 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
 
+ktor {
+    docker {
+        localImageName.set("pstatus-graphql-ktor")
+    }
+}
+
 jib {
     to {
         image = 'imagehub.cdc.gov:6989/dex/pstatus/graphql-service'
