@@ -147,12 +147,13 @@ paths:
           description: Bad request.  The upload identifier provided was not found.
         '401':
           description: Authorization information is missing or invalid.
+  '/report/uploadId/{uploadId}':
     get:
       tags:
         - DEX Reports
-      summary: Retrieve a report using the provider upload identifier to lookup the report.
+      summary: Retrieves all the reports for the upload id provided.
       description: >-
-        Creates a status report for the given upload identifier.
+        Provides a collection of all the reports associated with the given upload id.
       parameters:
         - name: uploadId
           in: path
@@ -165,6 +166,7 @@ paths:
           required: false
           schema:
             type: string
+            enum: [ failure ]
           description: Filter to fetch failed uploads.
       responses:
         '200':
@@ -172,9 +174,7 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                  - $ref: '#/components/schemas/HL7Report'
-                  - $ref: '#/components/schemas/CSVReport'
+                $ref: '#/components/schemas/ReportsCollection'
         '400':
           description: Bad request.  The identifier provided was not found.
         '401':
@@ -235,8 +235,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/HL7Report'
-                  - $ref: '#/components/schemas/CSVReport'
+                  - $ref: '#/components/schemas/MetadataVerifyReport'
+                  - $ref: '#/components/schemas/UploadStatusReport'
         '400':
           description: Bad request.  The destination identifier provided was not found.
         '401':
@@ -1140,113 +1140,101 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReportCountsForUploadId'
-    HL7Report:
+    ReportsCollection:
       type: object
       properties:
-        schema_version:
+        upload_id:
           type: string
-          description: The schema version of this report.
-          example: '1.0'
-        schema_type:
+          description: Unique identifier of the upload assigned by the upload API.
+        data_stream_id:
           type: string
-          description: The schema type of this report.
-          example: 'hl7v2'
-        filename:
+          example: ndlp
+        data_stream_route:
           type: string
-          example: hl7_file.txt
-        versioning:
-          $ref: '#/components/schemas/ReportVersions'
-        validation:
-          $ref: '#/components/schemas/Validation'
-        summary:
-          $ref: '#/components/schemas/Summary'
+          example: routineImmunization
+        reports:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/MetadataVerifyReport'
+              - $ref: '#/components/schemas/UploadStatusReport'
+    MetadataVerifyReport:
+      type: object
+      properties:
+        report_id:
+          type: string
+          description: Unique report id.
+          format: uuid
+        stage_name:
+          type: string
+          example: "dex-metadata-verify"
+        content:
+          type: object
+          properties:
+            schema_version:
+              type: string
+              description: The schema version of this report.
+              example: '0.0.1'
+            filename:
+              type: string
+              example: some_upload1.csv
+            issues:
+              type: array
+              items:
+                type: string
+                example: "issue1"
+            metadata:
+              type: array
+              items:
+                $ref: '#/components/schemas/KeyValuePair'
+    UploadStatusReport:
+      type: object
+      properties:
+        report_id:
+          type: string
+          description: Unique report id.
+          format: uuid
+        stage_name:
+          type: string
+          example: "upload"
         issues:
           type: array
           items:
             type: object
             properties:
-              type:
+              percent_complete:
+                type: number
+                format: double
+                description: Percentage the upload is complete.
+                example: 0.65
+              filename:
                 type: string
-                description: TODO
-                example: "syntax|semantic|code_table"
-              severity:
+                description: Filename of the upload.
+                example: largefile.csv
+              file_size_bytes:
+                type: integer
+                description: File size in bytes.
+                example: 190840042
+              bytes_uploaded:
+                type: integer
+                description: Bytes uploaded so far.
+                example: 124046027
+              upload_id:
                 type: string
-                description: TODO
-                example: "warning|error"
-              description:
+                description: Unique identifier of the upload assigned by tus.
+                example: 8923c9ff-6afa-42b2-a67b-89cb37e047e6
+              time_uploading_sec:
+                type: number
+                format: double
+                description: Total time the upload was or has been in progress.
+                example: 34.4
+              timestamp:
                 type: string
-                description: TODO
-                example: "{state the reason for the issue or warning}"
-              recommendation:
-                type: string
-                description: TODO
-                example: "{if applicable or null}"
-    CSVReport:
-      type: object
-      properties:
-        schema_version:
-          type: string
-          description: The schema version of this report.
-          example: '1.0'
-        schema_type:
-          type: string
-          description: The schema type of this report.
-          example: 'csv'
-        filename:
-          type: string
-          example: csv_file.csv
-        versioning:
-          $ref: '#/components/schemas/ReportVersions'
-        validation:
-          $ref: '#/components/schemas/Validation'
-        summary:
-          $ref: '#/components/schemas/Summary'
-        issues:
-          type: array
-          items:
-            type: object
-            properties:
-              type:
-                type: string
-                description: TODO
-                example: "syntax|semantic|code_table"
-              severity:
-                type: string
-                description: TODO
-                example: "warning|error"
-              description:
-                type: string
-                description: TODO
-                example: "{state the reason for the issue or warning}"
-              recommendation:
-                type: string
-                description: TODO
-                example: "{if applicable or null}"
-    Validation:
-      type: object
-      properties:
-        version:
-          type: string
-          description: The schema version of this report.
-          example: 1.2
-        version_date:
-          type: string
-          format: date
-          description: TODO
-    ReportVersions:
-      type: array
-      items:
-        type: object
-        properties:
-          version:
-            type: integer
-            example: 1
-          stage:
-            type: string
-            example: "upload"
-          timestamp:
-            type: string
-            format: date-time
+                description: Last modified timestamp for the upload status
+              metadata:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KeyValuePair'
     StageCounts:
       type: array
       items:
@@ -1264,38 +1252,6 @@ components:
           counts:
             type: integer
             example: 14235
-    Summary:
-      type: object
-      properties:
-        total_issues:
-          type: integer
-          description: TODO
-          example: 2
-        warnings:
-          type: integer
-          description: TODO
-          example: 1
-        errors:
-          type: integer
-          description: TODO
-          example: 1
-        issue_types:
-          $ref: '#/components/schemas/HL7IssueTypes'
-    HL7IssueTypes:
-      type: object
-      properties:
-        syntax:
-          type: integer
-          description: TODO
-          example: 44
-        semantic:
-          type: integer
-          description: TODO
-          example: 11
-        code_table:
-          type: integer
-          description: TODO
-          example: 2
     ProcessingStatus:
       type: object
       properties:
