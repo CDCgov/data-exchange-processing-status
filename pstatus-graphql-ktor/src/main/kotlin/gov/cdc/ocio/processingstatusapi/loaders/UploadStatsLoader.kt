@@ -121,11 +121,11 @@ class UploadStatsLoader: CosmosLoader() {
                 listOf()
 
         return UploadStats().apply {
-            this.uniqueUploadIdsCount = uniqueUploadIdsCount
-            this.uploadsWithStatusCount = uploadsWithStatusCount.toInt()
-            this.badMetadataCount = badMetadataCount.toInt()
-            this.inProgressUploadsCount = inProgressUploadsCount.toInt()
-            this.completedUploadsCount = completedUploadsCount.toInt()
+            this.uniqueUploadIdsCount = uniqueUploadIdsCount.toLong()
+            this.uploadsWithStatusCount = uploadsWithStatusCount.toLong()
+            this.badMetadataCount = badMetadataCount.toLong()
+            this.inProgressUploadsCount = inProgressUploadsCount.toLong()
+            this.completedUploadsCount = completedUploadsCount.toLong()
             this.duplicateFilenames = duplicateFilenames
         }
     }

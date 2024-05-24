@@ -33,9 +33,9 @@ class UploadStatus {
 
     var fileName: String? = null
 
-    var fileSizeBytes: Int? = null
+    var fileSizeBytes: Long? = null
 
-    var bytesUploaded: Int? = null
+    var bytesUploaded: Long? = null
 
     var uploadId: String? = null
 
@@ -98,8 +98,8 @@ class UploadStatus {
 
                         if (!isFailedUpload) {
                             uploadStatus.status = statusMessage
-                            uploadStatus.fileSizeBytes = uploadStage.size.toInt()
-                            uploadStatus.bytesUploaded = uploadStage.offset.toInt()
+                            uploadStatus.fileSizeBytes = uploadStage.size
+                            uploadStatus.bytesUploaded = uploadStage.offset
                             uploadStatus.percentComplete = calculatedPercentComplete
                         }
                         uploadStatus.uploadId = uploadId

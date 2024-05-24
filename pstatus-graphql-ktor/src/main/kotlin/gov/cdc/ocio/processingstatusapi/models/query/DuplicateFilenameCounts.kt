@@ -9,5 +9,5 @@ data class DuplicateFilenameCounts(
     var filename: String? = null,
 
     @GraphQLDescription("Total number of times the duplicate filename was found, which will always be 2 or more.")
-    var totalCount: Int = 0
+    var totalCount: Long = 0
 )

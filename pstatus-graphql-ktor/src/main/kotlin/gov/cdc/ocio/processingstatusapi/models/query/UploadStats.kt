@@ -6,19 +6,19 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 data class UploadStats(
 
     @GraphQLDescription("The total number of unique upload ids found for that day.  However, this does not mean that all those are successful uploads.  This will include any uploads that fail out due to retries on client side.")
-    var uniqueUploadIdsCount: Int = 0,
+    var uniqueUploadIdsCount: Long = 0,
 
     @GraphQLDescription("Number of upload ids that made it past the metadata verify step; these are uploads that actually reported at least one status update.")
-    var uploadsWithStatusCount: Int = 0,
+    var uploadsWithStatusCount: Long = 0,
 
     @GraphQLDescription("Total number of uploads that were stopped by the upload api due to one or more issues with the metadata received.")
-    var badMetadataCount: Int = 0,
+    var badMetadataCount: Long = 0,
 
     @GraphQLDescription("Number of uploads where we have received at least one chunk of data, but not all of them.")
-    var inProgressUploadsCount: Int = 0,
+    var inProgressUploadsCount: Long = 0,
 
     @GraphQLDescription("Number of uploads that have been completed.  This means, not only did the upload start, but according to the upload status reports we have received 100% of the expected chunks.")
-    var completedUploadsCount: Int = 0,
+    var completedUploadsCount: Long = 0,
 
     @GraphQLDescription("Provides a list of all the duplicate filenames that were uploaded and how many.")
     var duplicateFilenames: List<DuplicateFilenameCounts> = listOf()

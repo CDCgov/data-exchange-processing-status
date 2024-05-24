@@ -21,9 +21,9 @@ class UploadStatusContent: SchemaDefinition {
 
     var tguid : String? = null
 
-    var offset : Int? = 0
+    var offset : Long? = 0
 
-    var size : Int? = 0
+    var size : Long? = 0
 
     var filename : String? = null
 
@@ -32,8 +32,4 @@ class UploadStatusContent: SchemaDefinition {
     var startTimeEpochMillis: Int? = 0
 
     var endTimeEpochMillis: Int? = 0
-
-//    fun getTimestamp(): Date {
-//        return Date(startTimeEpochMillis?.toLong() ?: 0)
-//    }
 }
