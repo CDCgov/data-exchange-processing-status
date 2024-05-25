@@ -53,10 +53,10 @@ data class ReportDao(
                             else -> return null
                         }
                     } else
-                        null//content.toString()
+                        null // unable to determine a JSON schema
                 }
 
-                else -> null//content.toString()
+                else -> null // unable to determine a JSON schema
             }
         }
 

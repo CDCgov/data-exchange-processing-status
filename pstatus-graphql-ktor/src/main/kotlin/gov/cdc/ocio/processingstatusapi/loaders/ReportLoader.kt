@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
-import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
 class ReportLoader: CosmosLoader() {

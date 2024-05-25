@@ -1,7 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
-import java.util.*
-
 /**
  * DEX upload report stage definition.
  *
@@ -27,7 +25,7 @@ class UploadStatusContent: SchemaDefinition {
 
     var filename : String? = null
 
-//    var metadata : Map<String, Any>? = null
+    var metadata : Map<String, Any>? = null
 
     var startTimeEpochMillis: Int? = 0
 

@@ -41,7 +41,7 @@ class UploadStatus {
 
     var timeUploadingSec: Double? = null
 
-//    var metadata: Map<String, Any>? = null
+    var metadata: Map<String, Any>? = null
 
     var issues: MutableList<String>? = null
 
@@ -105,7 +105,7 @@ class UploadStatus {
                         uploadStatus.uploadId = uploadId
                         uploadStatus.fileName = uploadStage.filename
                         uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
-//                        uploadStatus.metadata = uploadStage.metadata
+                        uploadStatus.metadata = uploadStage.metadata
                         uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                     }
                     UploadMetadataVerifyStage.schemaDefinition -> {
@@ -121,7 +121,7 @@ class UploadStatus {
                                 uploadStatus.timeUploadingSec = null
                                 uploadStatus.uploadId = uploadId
                                 uploadStatus.fileName = metadataVerifyStage.filename
-//                                uploadStatus.metadata = metadataVerifyStage.metadata
+                                uploadStatus.metadata = metadataVerifyStage.metadata
                                 uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                                 if (uploadStatus.issues == null)
                                     uploadStatus.issues = mutableListOf()
@@ -132,7 +132,7 @@ class UploadStatus {
                             uploadStatus.status = "PassedMetadata"
                             uploadStatus.uploadId = uploadId
                             uploadStatus.fileName = metadataVerifyStage.filename
-//                            uploadStatus.metadata = metadataVerifyStage.metadata
+                            uploadStatus.metadata = metadataVerifyStage.metadata
                             uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                         }
                     }
