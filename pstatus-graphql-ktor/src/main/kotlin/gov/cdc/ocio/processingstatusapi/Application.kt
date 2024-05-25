@@ -10,13 +10,12 @@ import io.ktor.server.netty.*
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
-import org.koin.mp.KoinPlatform.getKoin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val cosmosModule = module {
         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
+        single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
     }
     return modules(listOf(cosmosModule))
 }
@@ -26,14 +25,11 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-//    configureRouting()
     graphQLModule()
     install(Koin) {
         loadKoinModules(environment)
     }
 
-    // Preload the koin module so the CosmosDB client is already initialized on the first call
-    getKoin().get<CosmosRepository>()
-
+    // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
 }

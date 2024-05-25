@@ -25,7 +25,7 @@ class CosmosContainerManager {
             val logger = KotlinLogging.logger {}
             try {
                 logger.info("calling getCosmosClient...")
-                val cosmosClient = CosmosClientManager.getCosmosClient(uri, authKey)
+                val cosmosClient = CosmosClientManager.getCosmosClient(uri, authKey) ?: return null
 
                 // setup database
                 logger.info("calling createDatabaseIfNotExists...")

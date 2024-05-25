@@ -1,32 +1,36 @@
-package gov.cdc.ocio.processingstatusapi.models
+package gov.cdc.ocio.processingstatusapi.loaders
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
-import mu.KotlinLogging
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import java.time.ZoneOffset
 
-class ReportLoader: KoinComponent {
+class ReportLoader: CosmosLoader() {
 
-    private val cosmosRepository by inject<CosmosRepository>()
+    fun getAnyReport(): Report? {
+        val reportsSqlQuery = "select * from $reportsContainerName r offset 0 limit 1"
+        val reportItems = reportsContainer?.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            ReportDao::class.java
+        )
 
-    private val reportsContainerName = "Reports"
+        return if (reportItems == null || reportItems.count() == 0)
+            null
+        else {
+            daoToReport(reportItems.first())
+        }
+    }
 
-    private val reportsContainer = cosmosRepository.reportsContainer
-
-    private val logger = KotlinLogging.logger {}
-
-    fun getByUploadId(uploadId: String): List<Report>? {
+    fun getByUploadId(uploadId: String): List<Report> {
         val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
 
-        val reportItems = reportsContainer.queryItems(
+        val reportItems = reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
 
         val reports = mutableListOf<Report>()
-        reportItems.forEach { reports.add(daoToReport(it)) }
+        reportItems?.forEach { reports.add(daoToReport(it)) }
 
         return reports
     }
@@ -34,13 +38,13 @@ class ReportLoader: KoinComponent {
     fun search(ids: List<String>): List<Report> {
         val reportsSqlQuery = "select * from $reportsContainerName r where r.id = '${ids.first()}'"
 
-        val reportItems = reportsContainer.queryItems(
+        val reportItems = reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
 
         val reports = mutableListOf<Report>()
-        reportItems.forEach { reports.add(daoToReport(it)) }
+        reportItems?.forEach { reports.add(daoToReport(it)) }
 
         return reports
     }
@@ -55,7 +59,7 @@ class ReportLoader: KoinComponent {
             this.stageName = reportDao.stageName
             this.messageId = reportDao.messageId
             this.status = reportDao.status
-            this.timestamp = reportDao.timestamp
+            this.timestamp = reportDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
             this.contentType = reportDao.contentType
             this.content = reportDao.contentAsType
         }
