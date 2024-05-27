@@ -5,9 +5,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.models.query.DuplicateFilenameCounts
 import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStats
-import gov.cdc.ocio.processingstatusapi.utils.DateUtils
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
+import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.util.*
 
 class UploadStatsLoader: CosmosLoader() {
@@ -17,9 +15,9 @@ class UploadStatsLoader: CosmosLoader() {
                        dataStreamRoute: String,
                        dateStart: String?,
                        dateEnd: String?,
-                       daysInterval: String?): UploadStats {
+                       daysInterval: Int?): UploadStats {
 
-        val timeRangeWhereClause = buildSqlClauseForDateRange(
+        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
             daysInterval,
             dateStart,
             dateEnd
@@ -128,32 +126,5 @@ class UploadStatsLoader: CosmosLoader() {
             this.completedUploadsCount = completedUploadsCount.toLong()
             this.duplicateFilenames = duplicateFilenames
         }
-    }
-
-    @Throws(NumberFormatException::class, BadRequestException::class)
-    private fun buildSqlClauseForDateRange(daysInterval: String?,
-                                           dateStart: String?,
-                                           dateEnd: String?): String {
-
-        val timeRangeSqlPortion = StringBuilder()
-        if (!daysInterval.isNullOrBlank()) {
-            val dateStartEpochSecs = DateTime
-                .now(DateTimeZone.UTC)
-                .minusDays(Integer.parseInt(daysInterval))
-                .withTimeAtStartOfDay()
-                .toDate()
-                .time / 1000
-            timeRangeSqlPortion.append("r._ts >= $dateStartEpochSecs")
-        } else {
-            dateStart?.run {
-                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-                timeRangeSqlPortion.append("r._ts >= $dateStartEpochSecs")
-            }
-            dateEnd?.run {
-                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-                timeRangeSqlPortion.append(" and r._ts < $dateEndEpochSecs")
-            }
-        }
-        return timeRangeSqlPortion.toString()
     }
 }

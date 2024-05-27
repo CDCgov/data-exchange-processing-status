@@ -5,8 +5,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
-import gov.cdc.ocio.processingstatusapi.model.UploadsStatus
-import gov.cdc.ocio.processingstatusapi.models.Report
+import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
@@ -90,7 +89,7 @@ class UploadStatusLoader: CosmosLoader() {
         val pageNumberAsInt: Int
         val reports = mutableMapOf<String, List<ReportDao>>()
         if (totalItems > 0L) {
-            numberOfPages =  (totalItems / pageSize + if (totalItems % pageSize > 0) 1 else 0).toInt()
+            numberOfPages =  (totalItems / pageSize + if (totalItems % pageSize > 0) 1 else 0)
 
             pageNumberAsInt = PageUtils.getPageNumber(pageNumber, numberOfPages)
 

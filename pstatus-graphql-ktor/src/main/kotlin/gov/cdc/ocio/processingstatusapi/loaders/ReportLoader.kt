@@ -36,7 +36,9 @@ class ReportLoader: CosmosLoader() {
     }
 
     fun search(ids: List<String>): List<Report> {
-        val reportsSqlQuery = "select * from $reportsContainerName r where r.id = '${ids.first()}'"
+        val quotedIds = ids.joinToString("\",\"", "\"", "\"")
+
+        val reportsSqlQuery = "select * from $reportsContainerName r where r.id in ($quotedIds)"
 
         val reportItems = reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
