@@ -21,4 +21,8 @@ class ReportQueryService : Query {
             .loadMany(params.ids)
 }
 
-data class ReportSearchParameters(val ids: List<String>)
+@GraphQLDescription("Parameters for searching for reports")
+data class ReportSearchParameters(
+    @GraphQLDescription("Array of report IDs to search for and retrieve")
+    val ids: List<String>
+)

@@ -30,13 +30,13 @@ class UploadQueryService : Query {
     @Suppress("unused")
     fun getUploadStats(@GraphQLDescription("Data stream ID")
                        dataStreamId: String,
-                       @GraphQLDescription("Data stream Route")
+                       @GraphQLDescription("Data stream route")
                        dataStreamRoute: String,
                        @GraphQLDescription("Start date of the included data.  dateStart or daysInterval is required.")
                        dateStart: String? = null,
                        @GraphQLDescription("End date of the search.  If not specified then all data up to now is included.")
                        dateEnd: String? = null,
                        @GraphQLDescription("Number of days to include in the search before today.  If 0, then search for today only.")
-                       daysInterval: String? = null) =
+                       daysInterval: Int? = null) =
         UploadStatsLoader().getUploadStats(dataStreamId, dataStreamRoute, dateStart, dateEnd, daysInterval)
 }
