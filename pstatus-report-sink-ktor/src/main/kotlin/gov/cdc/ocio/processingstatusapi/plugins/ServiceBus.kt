@@ -50,7 +50,7 @@ val AzureServiceBus = createApplicationPlugin(
             .buildProcessorClient()
     }
 
-    // Initialize Service Bus client for topic
+// Initialize Service Bus client for topics
     val processorTopicClient by lazy {
         ServiceBusClientBuilder()
             .connectionString(connectionString)
@@ -88,41 +88,9 @@ val AzureServiceBus = createApplicationPlugin(
 
     }
 
-    fun sendMessage() {
-       val senderClient =  ServiceBusClientBuilder()
-           .connectionString(connectionString)
-           .fullyQualifiedNamespace(serviceBusNamespace)
-           .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
-           .sender()
-           .queueName(queueName)
-           .buildClient()
-       // val serviceBusMessages = reports.map {ServiceBusMessage(it)}
-      //  senderClient.sendMessages(serviceBusMessages)
-        try {
-            val message = ServiceBusMessage("Hello, Service Bus!")
-            senderClient.sendMessage(message)
-            println("Message sent to the queue.")
-
-        }
-        catch (e:AmqpException){
-            println("Non-ServiceBusException occurred : ${e.message}")
-        }
-        catch (e:TransportException){
-            println("Non-ServiceBusException occurred : ${e.message}")
-        }
-
-        catch (e:Exception){
-            println("Non-ServiceBusException occurred : ${e.message}")
-        }
-        finally {
-            senderClient.close()
-        }
-    }
-
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Server is started")
         receiveMessages()
-        sendMessage() //****This is not working as well****
     }
     on(MonitoringEvent(ApplicationStopped)) { application ->
         application.log.info("Server is stopped")
@@ -135,7 +103,6 @@ val AzureServiceBus = createApplicationPlugin(
     }
 }
 
-
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
 
@@ -146,27 +113,23 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
         message.body
     )
     try {
-        ServiceBusProcessor().withMessage(message.body.toString())
+        ServiceBusProcessor().withMessage(message)
     } catch (e: BadRequestException) {
         LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
     }
     catch (e: IllegalArgumentException) { //  TODO : Is this the only exception at this time or more generic one???
         LOGGER.warn("Message rejected: {}", e.localizedMessage)
-        //Writing to deadletter
-        //  TODO : Will this do it for queue and topic based on the context.
-        // TODO : Should this be "ValidationError" or something generic
-         context.deadLetter(DeadLetterOptions().setDeadLetterReason("ValidationError").setDeadLetterErrorDescription(e.message))
-
-         LOGGER.info("Message sent to the dead-letter queue.")
+        val deadLetterOptions = DeadLetterOptions()
+            .setDeadLetterReason("Validation failed")
+            .setDeadLetterErrorDescription(e.message)
+        context.deadLetter(deadLetterOptions)
+       LOGGER.info("Message sent to the dead-letter queue.")
     }
     catch (e: Exception) {
         LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)
     }
 
 }
-
-
-
 private fun processError(context: ServiceBusErrorContext) {
     System.out.printf(
         "Error when receiving messages from namespace: '%s'. Entity: '%s'%n",
@@ -199,8 +162,6 @@ private fun processError(context: ServiceBusErrorContext) {
         )
     }
 }
-
-
 
 fun Application.serviceBusModule() {
     install(AzureServiceBus) {

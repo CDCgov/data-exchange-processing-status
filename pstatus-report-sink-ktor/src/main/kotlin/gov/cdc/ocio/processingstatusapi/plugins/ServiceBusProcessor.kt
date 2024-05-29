@@ -12,6 +12,11 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import mu.KotlinLogging
+import java.sql.Timestamp
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 /**
@@ -36,8 +41,10 @@ class ServiceBusProcessor {
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class)
-    fun withMessage(message: String) {
-        var sbMessage = message
+    fun withMessage(message: ServiceBusReceivedMessage) {
+        var sbMessageId = message.messageId
+        var sbMessage = message.body.toString()
+        var sbMessageStatus = message.state.name
         try {
             logger.info { "Before Message received = $sbMessage" }
             if (sbMessage.contains("destination_id")) {
@@ -47,7 +54,7 @@ class ServiceBusProcessor {
                 sbMessage = sbMessage.replace("event_type", "data_stream_route")
             }
             logger.info { "After Message received = $sbMessage" }
-            createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
+            createReport(sbMessageId,sbMessageStatus,gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         }
         catch (e:IllegalArgumentException){
             println("Validation failed: ${e.message}")
@@ -66,7 +73,7 @@ class ServiceBusProcessor {
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class)
-    private fun createReport(createReportMessage: CreateReportSBMessage) {
+    private fun createReport(messageId:String, messageStatus:String,createReportMessage: CreateReportSBMessage) {
         try {
             validateReport(createReportMessage)
             val uploadId = createReportMessage.uploadId
@@ -78,8 +85,8 @@ class ServiceBusProcessor {
                 createReportMessage.dataStreamRoute!!,
                 createReportMessage.stageName!!,
                 createReportMessage.contentType!!,
-                createReportMessage.messageId!!,
-                createReportMessage.status,
+                messageId, //createReportMessage.messageId is null
+                messageStatus, //createReportMessage.status is null
                 createReportMessage.contentAsString!!, // it was Content I changed to ContentAsString
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
@@ -120,6 +127,17 @@ class ServiceBusProcessor {
 
         if (missingFields.isNotEmpty()) {
             val reason ="Missing fields: ${missingFields.joinToString(", ")}"
+
+            // Write the content of the deadletter reports to CosmosDb
+            ReportManager().createDeadLetterReport(
+                createReportMessage.uploadId!!,
+                createReportMessage.dataStreamId!!,
+                createReportMessage.dataStreamRoute!!,
+                createReportMessage.dispositionType,
+                createReportMessage.contentType!!,
+                createReportMessage.contentAsString!!,
+                missingFields)
+
             throw IllegalArgumentException(reason)
         }
     }
