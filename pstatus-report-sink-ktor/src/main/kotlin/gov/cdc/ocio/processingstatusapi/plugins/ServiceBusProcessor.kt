@@ -87,7 +87,7 @@ class ServiceBusProcessor {
                 createReportMessage.contentType!!,
                 messageId, //createReportMessage.messageId is null
                 messageStatus, //createReportMessage.status is null
-                createReportMessage.contentAsString!!, // it was Content I changed to ContentAsString
+                createReportMessage.content!!, // it was Content I changed to ContentAsString
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
@@ -121,7 +121,7 @@ class ServiceBusProcessor {
         if (createReportMessage.contentType.isNullOrBlank()) {
             missingFields.add("contentType")
         }
-        if (createReportMessage.contentAsString.isNullOrBlank()) {
+        if (isNullOrEmpty(createReportMessage.content)) {
             missingFields.add("content")
         }
 
@@ -135,13 +135,20 @@ class ServiceBusProcessor {
                 createReportMessage.dataStreamRoute!!,
                 createReportMessage.dispositionType,
                 createReportMessage.contentType!!,
-                createReportMessage.contentAsString!!,
+                createReportMessage.content!!,
                 missingFields)
 
             throw IllegalArgumentException(reason)
         }
     }
 
-
-
+    private fun isNullOrEmpty(value: Any?): Boolean {
+        return when (value) {
+            null -> true
+            is String -> value.isEmpty()
+            is Collection<*> -> value.isEmpty()
+            is Map<*, *> -> value.isEmpty()
+            else -> false // You can adjust this to your needs
+        }
+    }
 }

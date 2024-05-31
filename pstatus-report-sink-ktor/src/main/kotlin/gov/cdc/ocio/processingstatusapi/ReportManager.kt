@@ -4,6 +4,7 @@ import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
 import com.azure.messaging.servicebus.models.DeadLetterOptions
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
@@ -65,7 +66,7 @@ class ReportManager: KoinComponent {
         contentType: String,
         messageId: String?,
         status: String?,
-        content: String,
+        content: Any?,
         dispositionType: DispositionType,
         source: Source
     ): String {
@@ -102,7 +103,7 @@ class ReportManager: KoinComponent {
                              contentType: String,
                              messageId: String?,
                              status: String?,
-                             content: String,
+                             content: Any?,
                              dispositionType: DispositionType,
                              source: Source): String {
 
@@ -160,7 +161,7 @@ class ReportManager: KoinComponent {
                                   contentType: String,
                                   messageId: String?,
                                   status: String?,
-                                  content: String,
+                                  content: Any?,
                                   source: Source): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
@@ -176,7 +177,7 @@ class ReportManager: KoinComponent {
 
             if (contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = gson.fromJson(content, typeObject)
+                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap
             } else
                 this.content = content
@@ -196,21 +197,7 @@ class ReportManager: KoinComponent {
                     when (response.statusCode) {
                         HttpResponseStatus.OK.code(), HttpResponseStatus.CREATED.code() -> {
                             logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
-                            val enableReportForwarding = System.getenv("EnableReportForwarding")
-//                            if (enableReportForwarding.equals("True", ignoreCase = true)) {
-//                                // Send message to reports-notifications-queue
-//                                val message = NotificationReport(
-//                                    response.item?.reportId,
-//                                    uploadId, dataStreamId, dataStreamRoute,
-//                                    stageName,
-//                                    contentType,
-//                                    content,
-//                                    messageId,
-//                                    status,
-//                                    source
-//                                )
-//                                reportMgrConfig.serviceBusSender.sendMessage(ServiceBusMessage(message.toString()))
-//                            }
+
                             return stageReportId
                         }
 
@@ -253,7 +240,7 @@ class ReportManager: KoinComponent {
                                   dataStreamRoute: String,
                                   dispositionType: DispositionType,
                                   contentType: String,
-                                  content: String,
+                                  content: Any?,
                                   deadLetterReasons: List<String>
                                   ): String {
 
@@ -268,7 +255,7 @@ class ReportManager: KoinComponent {
             this.deadLetterReasons= deadLetterReasons
             if (contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = gson.fromJson(content, typeObject)
+                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap
             } else
                 this.content = content

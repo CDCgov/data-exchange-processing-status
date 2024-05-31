@@ -45,20 +45,5 @@ class CreateReportSBMessage: ServiceBusMessage() {
     // content type will be a Map<*, *>.
     val content: Any? = null
 
-    val contentAsString: String?
-        get() {
-            if (content == null) return null
 
-            return when (contentType?.lowercase(Locale.getDefault())) {
-                "json" -> {
-                    val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                    try {
-                        Gson().toJson(content as Map<*, *>, typeObject)
-                    } catch (e: ClassCastException) {
-                        throw BadStateException("content_type indicates json, but the content is not in JSON format")
-                    }
-                }
-                else -> content.toString()
-            }
-        }
 }
