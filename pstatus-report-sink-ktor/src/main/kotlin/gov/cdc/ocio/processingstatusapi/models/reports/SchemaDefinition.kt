@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.google.gson.reflect.TypeToken
 import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 
 /**

@@ -1,8 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import com.azure.messaging.servicebus.ServiceBusClientBuilder
+
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage
-import com.azure.messaging.servicebus.models.DeadLetterOptions
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
@@ -12,11 +11,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import mu.KotlinLogging
-import java.sql.Timestamp
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+
 import java.util.*
 
 /**
@@ -42,9 +37,9 @@ class ServiceBusProcessor {
      */
     @Throws(BadRequestException::class)
     fun withMessage(message: ServiceBusReceivedMessage) {
-        var sbMessageId = message.messageId
+        val sbMessageId = message.messageId
         var sbMessage = message.body.toString()
-        var sbMessageStatus = message.state.name
+        val sbMessageStatus = message.state.name
         try {
             logger.info { "Before Message received = $sbMessage" }
             if (sbMessage.contains("destination_id")) {

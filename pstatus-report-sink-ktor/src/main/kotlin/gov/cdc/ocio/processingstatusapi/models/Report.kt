@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models
 
-import com.google.gson.*
+
 import com.google.gson.annotations.SerializedName
 import java.util.*
 

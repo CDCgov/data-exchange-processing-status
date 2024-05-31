@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
-import com.azure.messaging.servicebus.models.DeadLetterOptions
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
@@ -23,8 +22,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.*
 import io.netty.handler.codec.http.HttpResponseStatus
-import java.sql.Timestamp
-import java.time.LocalDateTime
+
 
 /**
  * The report manager interacts directly with CosmosDB to persist and retrieve reports.

@@ -13,7 +13,6 @@ import java.util.*
  * @property dataStreamId String?
  * @property dataStreamRoute String?
  * @property dispositionType DispositionType?
- * @property dexIngestionDateTime DateTime?
  * @property timestamp Date
  * @property contentType String?
  * @property content String?
