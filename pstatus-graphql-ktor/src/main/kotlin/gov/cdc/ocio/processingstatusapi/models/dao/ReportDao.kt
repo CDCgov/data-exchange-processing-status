@@ -35,7 +35,7 @@ data class ReportDao(
     @SerializedName("status")
     var status : String? = null,
 
-    var timestamp: Float? = null, // TODO: Date
+    var timestamp: Date? = null,
 
     var content: Any? = null
 ) {
@@ -53,10 +53,25 @@ data class ReportDao(
                             else -> return null
                         }
                     } else
-                        null//content.toString()
+                        null // unable to determine a JSON schema
                 }
 
-                else -> null//content.toString()
+                else -> null // unable to determine a JSON schema
+            }
+        }
+
+    val contentAsString: String?
+        get() {
+            if (content == null) return null
+
+            return when (contentType?.lowercase(Locale.getDefault())) {
+                "json" -> {
+                    if (content is LinkedHashMap<*, *>)
+                        Gson().toJson(content, MutableMap::class.java).toString()
+                    else
+                        content.toString()
+                }
+                else -> content.toString()
             }
         }
 }
