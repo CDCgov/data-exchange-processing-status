@@ -7,3 +7,8 @@ class CosmosRepository(uri: String, authKey: String, reportsContainerName: Strin
     val reportsContainer = CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)
 
 }
+
+class CosmosDeadLetterRepository(uri: String, authKey: String, reportsContainerName: String, partitionKey: String): KoinComponent {
+    val reportsDeadLetterContainer =
+        CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)!!
+}

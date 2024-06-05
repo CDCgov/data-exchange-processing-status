@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
+import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
 import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
 import gov.cdc.ocio.processingstatusapi.queries.ReportCountsQueryService
 import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
@@ -75,7 +76,8 @@ fun Application.graphQLModule() {
         }
         engine {
             dataLoaderRegistryFactory = KotlinDataLoaderRegistryFactory(
-                ReportDataLoader
+                ReportDataLoader,
+                ReportDeadLetterDataLoader
             )
         }
     }
