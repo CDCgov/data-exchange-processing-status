@@ -1,5 +1,5 @@
 # Overview
-This project is the processing status report sink.  It listens for messages on an Azure Service bus, validates the messages, and if validated persists them to CosmosDB.
+This project is the processing status report sink.  It listens for messages on an Azure Service bus queues and topics, validates the messages, and if validated persists them to CosmosDB. If the validation fails due to missing fields or malformed data, then the message is persisted in cosmosdb under a new dead-letter container and the message is also sent to the dead-letter queue under the configured topic subscription(if the message was processed using the topic listener) 
 
 This is a microservice built using Ktor that can be built as a docker container image.
 
