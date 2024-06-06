@@ -6,10 +6,7 @@ import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
-import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
-import gov.cdc.ocio.processingstatusapi.queries.ReportCountsQueryService
-import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
-import gov.cdc.ocio.processingstatusapi.queries.UploadQueryService
+import gov.cdc.ocio.processingstatusapi.queries.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -67,6 +64,7 @@ fun Application.graphQLModule() {
                 HealthQueryService(),
                 ReportQueryService(),
                 ReportCountsQueryService(),
+                ReportDeadLetterQueryService(),
                 UploadQueryService()
             )
 //            subscriptions = listOf(

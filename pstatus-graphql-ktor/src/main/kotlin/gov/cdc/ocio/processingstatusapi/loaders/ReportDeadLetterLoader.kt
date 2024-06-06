@@ -8,7 +8,22 @@ import java.time.ZoneOffset
 class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
     fun getByUploadId(uploadId: String): List<ReportDeadLetter> {
-        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.uploadId = '$uploadId'"
+        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.id = '$uploadId'"
+
+        val reportItems = reportsDeadLetterContainer.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            ReportDao::class.java
+        )
+
+        val reports = mutableListOf<ReportDeadLetter>()
+        reportItems?.forEach { reports.add(daoToReport(it)) }
+
+        return reports
+    }
+    fun getByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String, startDate:String, endDate:String): List<ReportDeadLetter> {
+        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
+                               "and dataStreamRoute= '$dataStreamRoute' and  r.timestamp >='$startDate' " +
+                               "and r.timestamp='$endDate'"
 
         val reportItems = reportsDeadLetterContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
