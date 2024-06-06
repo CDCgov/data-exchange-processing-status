@@ -17,11 +17,9 @@ class CosmosContainerManager {
             val logger = KotlinLogging.logger {}
             logger.info("Create database $databaseName if not exists...")
             //  Create database if not exists
-            //TODO : These 2 lines are throwing exceptions
-          //  val databaseResponse = cosmosClient.createDatabaseIfNotExists(databaseName)
-         //  return cosmosClient.getDatabase(databaseResponse.properties.id)
-
-            return cosmosClient.getDatabase(databaseName)
+            //Alternate way is : - return cosmosClient.getDatabase(databaseName)
+          val databaseResponse = cosmosClient.createDatabaseIfNotExists(databaseName)
+          return cosmosClient.getDatabase(databaseResponse.properties.id)
         }
 
         fun initDatabaseContainer(uri: String, authKey: String, containerName: String, partitionKey: String): CosmosContainer? {
