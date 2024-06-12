@@ -31,7 +31,7 @@ class GetUploadStatusFunctionTests {
 
     @Test
     fun testWithUploadStatusOk() {
-        val response =  GetUploadStatusFunction(request).uploadStatus("1", "test");
+        val response =  GetUploadStatusFunction(request).uploadStatus("1")
         assert(response.status == HttpStatus.OK)
     }
 

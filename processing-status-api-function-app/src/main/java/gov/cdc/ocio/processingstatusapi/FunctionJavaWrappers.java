@@ -183,7 +183,7 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("dataStreamId") String dataStreamId) {
-        return new GetUploadStatusFunction(request).uploadStatus(dataStreamId, "dex-upload");
+        return new GetUploadStatusFunction(request).uploadStatus(dataStreamId);
     }
 
     @FunctionName("GetReportForStage")
@@ -191,13 +191,13 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/{dataStreamId}/{stageName}",
+                    route = "report/stage/{dataStreamId}/{stageName}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("dataStreamId") String dataStreamId,
             @BindingName("stageName") String stageName,
             final ExecutionContext context) {
-        context.getLogger().info("getReportByStage: dataStreamId=" + Encode.forJava(dataStreamId) + ", stageName=" + Encode.forJava(stageName));
+        context.getLogger().info("GetReportForStage: dataStreamId=" + Encode.forJava(dataStreamId) + ", stageName=" + Encode.forJava(stageName));
         return new GetReportFunction(request).withDataStreamId(dataStreamId, stageName);
     }
 
@@ -206,7 +206,7 @@ public class FunctionJavaWrappers {
             @HttpTrigger(
                     name = "req",
                     methods = {HttpMethod.GET},
-                    route = "report/counts/{uploadId}",
+                    route = "report/counts/id/{uploadId}",
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request,
             @BindingName("uploadId") String uploadId) {
@@ -244,6 +244,50 @@ public class FunctionJavaWrappers {
                     authLevel = AuthorizationLevel.ANONYMOUS
             ) HttpRequestMessage<Optional<String>> request) {
         return new GetReportCountsFunction(request).getHL7InvalidStructureValidationCounts();
+    }
+
+    @FunctionName("GetHL7DirectIndirectMessageCounts")
+    public HttpResponseMessage getHL7DirectIndirectMessageCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/hl7/directIndirectMessageCounts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getHL7DirectIndirectMessageCounts();
+    }
+
+    @FunctionName("GetUploadStats")
+    public HttpResponseMessage GetUploadStats(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/uploadStats",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getUploadStats();
+    }
+
+    @FunctionName("GetInvalidMessageCounts")
+    public HttpResponseMessage GetInvalidMessageCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/totalInvalidMessageCounts",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getInvalidMessageCounts();
+    }
+
+    @FunctionName("GetRollupCounts")
+    public HttpResponseMessage getRollupCounts(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.GET},
+                    route = "report/counts/submissions/rollup",
+                    authLevel = AuthorizationLevel.ANONYMOUS
+            ) HttpRequestMessage<Optional<String>> request) {
+        return new GetReportCountsFunction(request).getRollupCounts();
     }
 
     @FunctionName("GetStatusByUploadId")
