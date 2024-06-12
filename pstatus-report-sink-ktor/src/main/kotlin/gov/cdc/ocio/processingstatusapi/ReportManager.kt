@@ -76,8 +76,21 @@ class ReportManager: KoinComponent {
         } catch(e: Exception) {
             throw BadRequestException("Malformed message: ${e.localizedMessage}")
         }
-
-        return createReport(uploadId, dataStreamId, dataStreamRoute, stageName, contentType, messageId, status, content, dispositionType, source)
+        if (System.getProperty("isTestEnvironment") != "true") {
+            return createReport(
+                uploadId,
+                dataStreamId,
+                dataStreamRoute,
+                stageName,
+                contentType,
+                messageId,
+                status,
+                content,
+                dispositionType,
+                source
+            )
+        }
+        return uploadId // this is just as a fallback
     }
 
     /**
@@ -233,11 +246,11 @@ class ReportManager: KoinComponent {
     }
 
     @Throws(BadStateException::class)
-    fun createDeadLetterReport(uploadId: String,
-                                  dataStreamId: String,
-                                  dataStreamRoute: String,
+    fun createDeadLetterReport(uploadId: String?,
+                                  dataStreamId: String?,
+                                  dataStreamRoute: String?,
                                   dispositionType: DispositionType,
-                                  contentType: String,
+                                  contentType: String?,
                                   content: Any?,
                                   deadLetterReasons: List<String>
                                   ): String {
@@ -251,7 +264,7 @@ class ReportManager: KoinComponent {
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
-            if (contentType.lowercase() == "json") {
+            if (contentType?.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
                 val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap

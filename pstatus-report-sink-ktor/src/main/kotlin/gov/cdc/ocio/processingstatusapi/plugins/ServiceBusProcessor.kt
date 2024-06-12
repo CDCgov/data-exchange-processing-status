@@ -51,7 +51,7 @@ class ServiceBusProcessor {
             logger.info { "After Message received = $sbMessage" }
             createReport(sbMessageId,sbMessageStatus,gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         }
-        catch (e:IllegalArgumentException){
+        catch (e:BadRequestException){
             println("Validation failed: ${e.message}")
             throw e
         }
@@ -74,20 +74,22 @@ class ServiceBusProcessor {
             val uploadId = createReportMessage.uploadId
             val stageName = createReportMessage.stageName
             logger.info("Creating report for uploadId = ${uploadId} with stageName = $stageName")
-            ReportManager().createReportWithUploadId(
-                createReportMessage.uploadId!!,
-                createReportMessage.dataStreamId!!,
-                createReportMessage.dataStreamRoute!!,
-                createReportMessage.stageName!!,
-                createReportMessage.contentType!!,
-                messageId, //createReportMessage.messageId is null
-                messageStatus, //createReportMessage.status is null
-                createReportMessage.content!!, // it was Content I changed to ContentAsString
-                createReportMessage.dispositionType,
-                Source.SERVICEBUS
-            )
+
+                ReportManager().createReportWithUploadId(
+                    createReportMessage.uploadId!!,
+                    createReportMessage.dataStreamId!!,
+                    createReportMessage.dataStreamRoute!!,
+                    createReportMessage.stageName!!,
+                    createReportMessage.contentType!!,
+                    messageId, //createReportMessage.messageId is null
+                    messageStatus, //createReportMessage.status is null
+                    createReportMessage.content!!, // it was Content I changed to ContentAsString
+                    createReportMessage.dispositionType,
+                    Source.SERVICEBUS
+                )
+
         }
-        catch (e:IllegalArgumentException){
+        catch (e:BadRequestException){
            throw e
         }
         catch (e: Exception) {
@@ -122,18 +124,20 @@ class ServiceBusProcessor {
 
         if (missingFields.isNotEmpty()) {
             val reason ="Missing fields: ${missingFields.joinToString(", ")}"
-
-            // Write the content of the deadletter reports to CosmosDb
-            ReportManager().createDeadLetterReport(
-                createReportMessage.uploadId!!,
-                createReportMessage.dataStreamId!!,
-                createReportMessage.dataStreamRoute!!,
-                createReportMessage.dispositionType,
-                createReportMessage.contentType!!,
-                createReportMessage.content!!,
-                missingFields)
-
-            throw IllegalArgumentException(reason)
+            //This should not run for unit tests
+            if (System.getProperty("isTestEnvironment") != "true") {
+                // Write the content of the deadletter reports to CosmosDb
+                ReportManager().createDeadLetterReport(
+                    createReportMessage.uploadId,
+                    createReportMessage.dataStreamId,
+                    createReportMessage.dataStreamRoute,
+                    createReportMessage.dispositionType,
+                    createReportMessage.contentType,
+                    createReportMessage.content,
+                    missingFields
+                )
+            }
+            throw BadRequestException(reason)
         }
     }
 

@@ -2,17 +2,13 @@ package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
-import com.azure.core.exception.AzureException
 import com.azure.messaging.servicebus.*
 import com.azure.messaging.servicebus.models.DeadLetterOptions
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import io.ktor.util.logging.*
-import io.netty.channel.ConnectTimeoutException
 import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
@@ -116,14 +112,15 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
         ServiceBusProcessor().withMessage(message)
     } catch (e: BadRequestException) {
         LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
-    }
-    catch (e: IllegalArgumentException) { //  TODO : Is this the only exception at this time or more generic one???
-        LOGGER.warn("Message rejected: {}", e.localizedMessage)
         val deadLetterOptions = DeadLetterOptions()
             .setDeadLetterReason("Validation failed")
             .setDeadLetterErrorDescription(e.message)
         context.deadLetter(deadLetterOptions)
-       LOGGER.info("Message sent to the dead-letter queue.")
+        LOGGER.info("Message sent to the dead-letter queue.")
+    }
+    catch (e: IllegalArgumentException) { //  TODO : Is this the only exception at this time or more generic one???
+        LOGGER.warn("Message rejected: {}", e.localizedMessage)
+
     }
     catch (e: Exception) {
         LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)
