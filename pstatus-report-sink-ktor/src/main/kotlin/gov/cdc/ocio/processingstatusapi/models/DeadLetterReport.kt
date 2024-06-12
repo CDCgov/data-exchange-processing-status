@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 /**
- * Report for a given stage.
+ * Dead-LetterReport when there is missing fields or malformed data.
  *
  * @property uploadId String?
  * @property reportId String?
@@ -33,6 +33,9 @@ data class ReportDeadLetter(
 
     @SerializedName("data_stream_route")
     var dataStreamRoute: String? = null,
+
+    @SerializedName("stage_name")
+    var stageName: String? = null,
 
     @SerializedName("disposition_type")
     var dispositionType: String? = null,

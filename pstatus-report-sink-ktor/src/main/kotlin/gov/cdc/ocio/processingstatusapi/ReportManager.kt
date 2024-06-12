@@ -244,11 +244,24 @@ class ReportManager: KoinComponent {
 
         throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
     }
+    /**
+     * Creates a dead-letter report if there is a malformed data or missing required fields
+     *
+     * @param uploadId String
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param stageName String
+     * @param contentType String
+     * @param content String
+     * @return String
+     * @throws BadStateException
+     */
 
     @Throws(BadStateException::class)
     fun createDeadLetterReport(uploadId: String?,
                                   dataStreamId: String?,
                                   dataStreamRoute: String?,
+                                  stageName: String?,
                                   dispositionType: DispositionType,
                                   contentType: String?,
                                   content: Any?,
@@ -261,6 +274,7 @@ class ReportManager: KoinComponent {
             this.uploadId = uploadId
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
+            this.stageName= stageName
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
@@ -323,6 +337,10 @@ class ReportManager: KoinComponent {
         throw BadStateException("Failed to create dead-letterReport reportId = ${deadLetterReport.reportId}, uploadId = $uploadId")
     }
 
+    /**
+     * The function which calculates the interval after which the retry should occur
+     * @param attempt Int
+     */
     private fun getCalculatedRetryDuration(attempt: Int): Long {
         return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
     }

@@ -14,6 +14,11 @@ import java.util.concurrent.TimeUnit
 
 internal val LOGGER = KtorSimpleLogger("pstatus-report-sink")
 
+/**
+ * Class which initializes configuration values
+ * @param config ApplicationConfig
+ *
+ */
 class AzureServiceBusConfiguration(config: ApplicationConfig) {
     var connectionString: String = config.tryGetString("connection_string") ?: ""
     var serviceBusNamespace: String = config.tryGetString("azure_servicebus_namespace") ?: ""
@@ -60,7 +65,12 @@ val AzureServiceBus = createApplicationPlugin(
             .buildProcessorClient()
     }
 
-    // handles received messages
+    /**
+     * Function which starts receiving messages from queues and topics
+     *  @throws AmqpException
+     *  @throws TransportException
+     *  @throws Exception generic
+     */
     @Throws(InterruptedException::class)
     fun receiveMessages() {
         try {
@@ -99,6 +109,13 @@ val AzureServiceBus = createApplicationPlugin(
     }
 }
 
+/**
+ * Function which processes the message received in the queue or topics
+ *   @param context ServiceBusReceivedMessageContext
+ *   @throws BadRequestException
+ *   @throws IllegalArgumentException
+ *   @throws Exception generic
+ */
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
 
@@ -127,6 +144,11 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
     }
 
 }
+
+/**
+ * Function to handle and process the error generated during the processing of messages from queue or topics
+ *  @param context ServiceBusErrorContext
+ */
 private fun processError(context: ServiceBusErrorContext) {
     System.out.printf(
         "Error when receiving messages from namespace: '%s'. Entity: '%s'%n",
@@ -160,6 +182,9 @@ private fun processError(context: ServiceBusErrorContext) {
     }
 }
 
+/**
+ * The main application module which runs always
+ */
 fun Application.serviceBusModule() {
     install(AzureServiceBus) {
         // any additional configuration goes here

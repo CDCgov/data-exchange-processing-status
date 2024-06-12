@@ -99,7 +99,11 @@ class ServiceBusProcessor {
 
     }
 
-    // Function to validate report
+    /**
+     * Function to validate report attributes for missing required fields
+     * @param createReportMessage CreateReportSBMessage
+     * @throws BadRequestException
+     */
     private fun validateReport(createReportMessage: CreateReportSBMessage) {
         val missingFields = mutableListOf<String>()
 
@@ -131,6 +135,7 @@ class ServiceBusProcessor {
                     createReportMessage.uploadId,
                     createReportMessage.dataStreamId,
                     createReportMessage.dataStreamRoute,
+                    createReportMessage.stageName,
                     createReportMessage.dispositionType,
                     createReportMessage.contentType,
                     createReportMessage.content,
@@ -141,6 +146,9 @@ class ServiceBusProcessor {
         }
     }
 
+    /** Function to check whether the value is null or empty based on its type
+     * @param value Any
+     */
     private fun isNullOrEmpty(value: Any?): Boolean {
         return when (value) {
             null -> true
