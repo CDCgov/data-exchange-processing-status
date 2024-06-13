@@ -230,7 +230,7 @@ class ReportManager: KoinComponent {
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
-            if (contentType?.lowercase() == "json" && !isNullOrEmpty(content)) {
+            if (contentType?.lowercase() == "json" && !isNullOrEmpty(content) && !isBase64Encoded(content.toString())) {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
                 val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap
@@ -258,6 +258,11 @@ class ReportManager: KoinComponent {
             is Map<*, *> -> value.isEmpty()
             else -> false // You can adjust this to your needs
         }
+    }
+
+    private fun isBase64Encoded(value: String): Boolean {
+        val base64Pattern = "^[A-Za-z0-9+/]+={0,2}$"
+        return value.matches(base64Pattern.toRegex())
     }
 
     fun  createReportItem(uploadId: String?, reportId:String, reportType:Any) : String{
