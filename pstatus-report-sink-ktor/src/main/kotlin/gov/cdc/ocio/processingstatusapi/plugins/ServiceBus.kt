@@ -33,7 +33,7 @@ val AzureServiceBus = createApplicationPlugin(
     createConfiguration = ::AzureServiceBusConfiguration) {
 
     val connectionString = pluginConfig.connectionString
-    var serviceBusNamespace= pluginConfig.serviceBusNamespace
+    val serviceBusNamespace= pluginConfig.serviceBusNamespace
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
@@ -127,17 +127,15 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
     )
     try {
         ServiceBusProcessor().withMessage(message)
-    } catch (e: BadRequestException) {
+    }
+    //This will handle all missing required fields, invalid schema definition and malformed json all under the BadRequest exception and writes to dead-letter queue or topics depending on the context
+    catch (e: BadRequestException) {
         LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
         val deadLetterOptions = DeadLetterOptions()
             .setDeadLetterReason("Validation failed")
             .setDeadLetterErrorDescription(e.message)
         context.deadLetter(deadLetterOptions)
         LOGGER.info("Message sent to the dead-letter queue.")
-    }
-    catch (e: IllegalArgumentException) { //  TODO : Is this the only exception at this time or more generic one???
-        LOGGER.warn("Message rejected: {}", e.localizedMessage)
-
     }
     catch (e: Exception) {
         LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)

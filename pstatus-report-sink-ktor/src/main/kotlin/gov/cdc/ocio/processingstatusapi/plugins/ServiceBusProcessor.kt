@@ -8,7 +8,9 @@ import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
+import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import mu.KotlinLogging
 
@@ -49,13 +51,11 @@ class ServiceBusProcessor {
                 sbMessage = sbMessage.replace("event_type", "data_stream_route")
             }
             logger.info { "After Message received = $sbMessage" }
-            createReport(sbMessageId,sbMessageStatus,gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
-        }
-        catch (e:BadRequestException){
+            createReport(sbMessageId, sbMessageStatus, gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
+        } catch (e: BadRequestException) {
             println("Validation failed: ${e.message}")
             throw e
-        }
-        catch (e: JsonSyntaxException) {
+        } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadStateException("Unable to interpret the create report message")
         }
@@ -68,31 +68,29 @@ class ServiceBusProcessor {
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class)
-    private fun createReport(messageId:String, messageStatus:String,createReportMessage: CreateReportSBMessage) {
+    private fun createReport(messageId: String, messageStatus: String, createReportMessage: CreateReportSBMessage) {
         try {
             validateReport(createReportMessage)
             val uploadId = createReportMessage.uploadId
             val stageName = createReportMessage.stageName
             logger.info("Creating report for uploadId = ${uploadId} with stageName = $stageName")
 
-                ReportManager().createReportWithUploadId(
-                    createReportMessage.uploadId!!,
-                    createReportMessage.dataStreamId!!,
-                    createReportMessage.dataStreamRoute!!,
-                    createReportMessage.stageName!!,
-                    createReportMessage.contentType!!,
-                    messageId, //createReportMessage.messageId is null
-                    messageStatus, //createReportMessage.status is null
-                    createReportMessage.content!!, // it was Content I changed to ContentAsString
-                    createReportMessage.dispositionType,
-                    Source.SERVICEBUS
-                )
+            ReportManager().createReportWithUploadId(
+                createReportMessage.uploadId!!,
+                createReportMessage.dataStreamId!!,
+                createReportMessage.dataStreamRoute!!,
+                createReportMessage.stageName!!,
+                createReportMessage.contentType!!,
+                messageId, //createReportMessage.messageId is null
+                messageStatus, //createReportMessage.status is null
+                createReportMessage.content!!, // it was Content I changed to ContentAsString
+                createReportMessage.dispositionType,
+                Source.SERVICEBUS
+            )
 
-        }
-        catch (e:BadRequestException){
-           throw e
-        }
-        catch (e: Exception) {
+        } catch (e: BadRequestException) {
+            throw e
+        } catch (e: Exception) {
             println("Failed to process service bus message:${e.message}")
 
         }
@@ -100,37 +98,53 @@ class ServiceBusProcessor {
     }
 
     /**
-     * Function to validate report attributes for missing required fields
+     * Function to validate report attributes for missing required fields, for schema validation and malformed content message
      * @param createReportMessage CreateReportSBMessage
      * @throws BadRequestException
      */
     private fun validateReport(createReportMessage: CreateReportSBMessage) {
-        val missingFields = mutableListOf<String>()
+        val invalidData = mutableListOf<String>()
+        var reason = ""
 
         if (createReportMessage.uploadId.isNullOrBlank()) {
-            missingFields.add("uploadId")
+            invalidData.add("uploadId")
         }
         if (createReportMessage.dataStreamId.isNullOrBlank()) {
-            missingFields.add("dataStreamId")
+            invalidData.add("dataStreamId")
         }
         if (createReportMessage.dataStreamRoute.isNullOrBlank()) {
-            missingFields.add("dataStreamRoute")
+            invalidData.add("dataStreamRoute")
         }
         if (createReportMessage.stageName.isNullOrBlank()) {
-            missingFields.add("stageName")
+            invalidData.add("stageName")
         }
         if (createReportMessage.contentType.isNullOrBlank()) {
-            missingFields.add("contentType")
+            invalidData.add("contentType")
         }
         if (isNullOrEmpty(createReportMessage.content)) {
-            missingFields.add("content")
+            invalidData.add("content")
         }
+        if (invalidData.isNotEmpty()) {
+                reason = "Missing fields: ${invalidData.joinToString(", ")}"
+            } else {
+                try {
+                    SchemaDefinition.fromJsonString(createReportMessage.content)
+                } catch (e: InvalidSchemaDefException) {
+                    reason = "Invalid schema definition: ${e.localizedMessage}"
+                    invalidData.add(reason)
 
-        if (missingFields.isNotEmpty()) {
-            val reason ="Missing fields: ${missingFields.joinToString(", ")}"
+                } catch (e: Exception) {
+                    reason = "Malformed message: ${e.localizedMessage}"
+                    invalidData.add(reason)
+                    //convert content to base64 encoded string
+                    createReportMessage.content = convertToStringOrBase64(createReportMessage.content)
+                }
+            }
+
+        if (invalidData.isNotEmpty()) {
             //This should not run for unit tests
             if (System.getProperty("isTestEnvironment") != "true") {
-                // Write the content of the deadletter reports to CosmosDb
+                // Write the content of the dead-letter reports to CosmosDb
                 ReportManager().createDeadLetterReport(
                     createReportMessage.uploadId,
                     createReportMessage.dataStreamId,
@@ -139,11 +153,11 @@ class ServiceBusProcessor {
                     createReportMessage.dispositionType,
                     createReportMessage.contentType,
                     createReportMessage.content,
-                    missingFields
+                    invalidData
                 )
             }
             throw BadRequestException(reason)
-        }
+       }
     }
 
     /** Function to check whether the value is null or empty based on its type
@@ -157,5 +171,17 @@ class ServiceBusProcessor {
             is Map<*, *> -> value.isEmpty()
             else -> false // You can adjust this to your needs
         }
+    }
+
+    /**
+     * Convert the malformed content to base64 encoded string
+     * @param obj Any
+     */
+    private fun convertToStringOrBase64(obj: Any?): String {
+        val bytes = when (obj) {
+            is ByteArray -> obj
+            else -> obj.toString().toByteArray()
+        }
+        return Base64.getEncoder().encodeToString(bytes)
     }
 }

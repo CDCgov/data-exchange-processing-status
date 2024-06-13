@@ -12,6 +12,11 @@ class CosmosContainerManager {
 
     companion object {
 
+        /**
+         * Function which creates the Cosmos db if not exists , and returns the db instance with which we can get a container instance
+         * @param cosmosClient CosmosClient
+         * @param databaseName String
+        */
         @Throws(Exception::class)
         fun createDatabaseIfNotExists(cosmosClient: CosmosClient, databaseName: String): CosmosDatabase? {
             val logger = KotlinLogging.logger {}
@@ -22,6 +27,13 @@ class CosmosContainerManager {
           return cosmosClient.getDatabase(databaseResponse.properties.id)
         }
 
+        /**
+         * The function which creates the cosmos container instance
+         * @param uri String
+         * @param authKey String
+         * @param containerName String
+         * @param partitionKey String
+         */
         fun initDatabaseContainer(uri: String, authKey: String, containerName: String, partitionKey: String): CosmosContainer? {
             val logger = KotlinLogging.logger {}
             try {

@@ -39,7 +39,7 @@ class CreateReportSBMessage: ServiceBusMessage() {
 
     // content will vary depending on content_type so make it any.  For example, if content_type is json then the
     // content type will be a Map<*, *>.
-    val content: Any? = null
+    var content: Any? = null
 
 
 }

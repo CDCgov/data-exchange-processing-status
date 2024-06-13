@@ -123,14 +123,14 @@ class ReportManager: KoinComponent {
                 logger.info("Replacing report(s) with stage name = $stageName")
                 // Delete all stages matching the report ID with the same stage name
                 val sqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.uploadId = '$uploadId' and r.stageName = '$stageName'"
-                val items = cosmosRepository.reportsContainer.queryItems(
+                val items = cosmosRepository.reportsContainer?.queryItems(
                     sqlQuery, CosmosQueryRequestOptions(),
                     Report::class.java
                 )
                 if ((items?.count() ?: 0) > 0) {
                     try {
                         items?.forEach {
-                            cosmosRepository.reportsContainer.deleteItem(
+                            cosmosRepository.reportsContainer?.deleteItem(
                                 it.id,
                                 PartitionKey(it.uploadId),
                                 CosmosItemRequestOptions()
@@ -193,56 +193,7 @@ class ReportManager: KoinComponent {
             } else
                 this.content = content
         }
-
-        var attempts = 0
-        do {
-            try {
-                val response = cosmosRepository.reportsContainer.createItem(
-                    stageReport,
-                    PartitionKey(uploadId),
-                    CosmosItemRequestOptions()
-                )
-
-                logger.info("Creating report, response http status code = ${response?.statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
-                if (response != null) {
-                    when (response.statusCode) {
-                        HttpResponseStatus.OK.code(), HttpResponseStatus.CREATED.code() -> {
-                            logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
-
-                            return stageReportId
-                        }
-
-                        HttpResponseStatus.TOO_MANY_REQUESTS.code() -> {
-                            // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
-                            // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
-                            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
-                            val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                            logger.warn("Received 429 (too many requests) from cosmosdb, attempt ${attempts + 1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
-                            val waitMillis = recommendedDuration?.toLong()
-                            Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
-                        }
-
-                        else -> {
-                            // Need to retry regardless
-                            val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                            logger.warn("Received response code ${response.statusCode}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                            Thread.sleep(retryAfterDurationMillis)
-                        }
-                    }
-                } else {
-                    val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                    logger.warn("Received null response from cosmosdb, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                    Thread.sleep(retryAfterDurationMillis)
-                }
-            } catch (e: Exception) {
-                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                logger.error("CreateReport: Exception: ${e.localizedMessage}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                Thread.sleep(retryAfterDurationMillis)
-            }
-
-        } while (attempts++ < MAX_RETRY_ATTEMPTS)
-
-        throw BadStateException("Failed to create reportId = ${stageReport.reportId}, uploadId = $uploadId")
+       return createReportItem(uploadId,stageReportId,stageReport)
     }
     /**
      * Creates a dead-letter report if there is a malformed data or missing required fields
@@ -272,69 +223,21 @@ class ReportManager: KoinComponent {
         val deadLetterReport = ReportDeadLetter().apply {
             this.id = deadLetterReportId
             this.uploadId = uploadId
+            this.reportId = deadLetterReportId
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.stageName= stageName
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
-            if (contentType?.lowercase() == "json") {
+            if (contentType?.lowercase() == "json" && !isNullOrEmpty(content)) {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
                 val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap
             } else
                 this.content = content
         }
-
-        var attempts = 0
-        do {
-            try {
-                val response = cosmosDeadLetterRepository.reportsDeadLetterContainer.createItem(
-                    deadLetterReport,
-                    PartitionKey(uploadId),
-                    CosmosItemRequestOptions()
-                )
-
-                logger.info("Creating dead-letter report, response http status code = ${response?.statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
-                if (response != null) {
-                    when (response.statusCode) {
-                        HttpResponseStatus.OK.code(), HttpResponseStatus.CREATED.code() -> {
-                            logger.info("Created report with reportId = ${response.item?.reportId}, uploadId = $uploadId")
-
-                            return deadLetterReportId
-                        }
-
-                        HttpResponseStatus.TOO_MANY_REQUESTS.code() -> {
-                            // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
-                            // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
-                            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
-                            val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]
-                            logger.warn("Received 429 (too many requests) from cosmosdb, attempt ${attempts + 1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
-                            val waitMillis = recommendedDuration?.toLong()
-                            Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
-                        }
-
-                        else -> {
-                            // Need to retry regardless
-                            val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                            logger.warn("Received response code ${response.statusCode}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                            Thread.sleep(retryAfterDurationMillis)
-                        }
-                    }
-                } else {
-                    val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                    logger.warn("Received null response from cosmosdb, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                    Thread.sleep(retryAfterDurationMillis)
-                }
-            } catch (e: Exception) {
-                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                logger.error("CreateReport: Exception: ${e.localizedMessage}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                Thread.sleep(retryAfterDurationMillis)
-            }
-
-        } while (attempts++ < MAX_RETRY_ATTEMPTS)
-
-        throw BadStateException("Failed to create dead-letterReport reportId = ${deadLetterReport.reportId}, uploadId = $uploadId")
+       return  createReportItem(uploadId,deadLetterReportId,deadLetterReport)
     }
 
     /**
@@ -344,6 +247,104 @@ class ReportManager: KoinComponent {
     private fun getCalculatedRetryDuration(attempt: Int): Long {
         return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
     }
+    /** Function to check whether the value is null or empty based on its type
+     * @param value Any
+     */
+    private fun isNullOrEmpty(value: Any?): Boolean {
+        return when (value) {
+            null -> true
+            is String -> value.isEmpty()
+            is Collection<*> -> value.isEmpty()
+            is Map<*, *> -> value.isEmpty()
+            else -> false // You can adjust this to your needs
+        }
+    }
+
+    fun  createReportItem(uploadId: String?, reportId:String, reportType:Any) : String{
+
+        var responseReportId = ""
+        var reportTypeName = "Report"
+        var statusCode:Int? = null
+        var isValidResponse = false
+        var recommendedDuration:String?= null
+        var attempts = 0
+
+        do {
+            try {
+                //use when here to determing whether report type is StageReport or DeadLetterReport
+                when (reportType) {
+                    is Report -> {
+                        val response = cosmosRepository.reportsContainer?.createItem(
+                            reportType,
+                            PartitionKey(uploadId),
+                            CosmosItemRequestOptions())
+
+                        isValidResponse = response!=null
+                        responseReportId = response?.item?.reportId ?: "0"
+                        statusCode = response?.statusCode
+                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
+
+                    }
+                    is ReportDeadLetter -> {
+                         val response = cosmosDeadLetterRepository.reportsDeadLetterContainer?.createItem(
+                            reportType,
+                            PartitionKey(uploadId),
+                            CosmosItemRequestOptions())
+
+                        isValidResponse = response!=null
+                        reportTypeName ="dead-letter report"
+                        responseReportId = response?.item?.reportId ?: "0"
+                        statusCode = response?.statusCode
+                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
+                    }
+                }
+                logger.info("Creating ${reportTypeName}, response http status code = ${statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
+                  if(isValidResponse){
+
+                      when (statusCode) {
+                          HttpResponseStatus.OK.code(), HttpResponseStatus.CREATED.code() -> {
+                              logger.info("Created report with reportId = ${responseReportId}, uploadId = $uploadId")
+                              return reportId
+                          }
+
+                          HttpResponseStatus.TOO_MANY_REQUESTS.code() -> {
+                              // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
+                              // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
+                              // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
+
+                              logger.warn("Received 429 (too many requests) from cosmosdb, attempt ${attempts + 1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
+                              val waitMillis = recommendedDuration?.toLong()
+                              Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
+                          }
+
+                          else -> {
+                              // Need to retry regardless
+                              val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                              logger.warn("Received response code ${statusCode}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                              Thread.sleep(retryAfterDurationMillis)
+                          }
+                      }
+                    }
+                  else {
+                      val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                      logger.warn("Received null response from cosmosdb, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                      Thread.sleep(retryAfterDurationMillis)
+                  }
+            }
+            catch (e: Exception) {
+                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
+                logger.error("CreateReport: Exception: ${e.localizedMessage}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
+                Thread.sleep(retryAfterDurationMillis)
+            }
+
+
+
+        } while (attempts++ < MAX_RETRY_ATTEMPTS)
+        throw BadStateException("Failed to create dead-letterReport reportId = ${responseReportId}, uploadId = $uploadId")
+    }
+
+
+
 
     companion object {
         const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
