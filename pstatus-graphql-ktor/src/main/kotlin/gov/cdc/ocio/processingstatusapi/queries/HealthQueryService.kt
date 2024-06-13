@@ -38,7 +38,7 @@ class HealthQueryService : Query {
 
     private val logger = KotlinLogging.logger {}
 
-    @GraphQLDescription("Return a single report from the provided uploadId")
+    @GraphQLDescription("Performs a service health check of the processing status API and it's dependencies.")
     @Suppress("unused")
     fun getHealth(): HealthCheck {
         var cosmosDBHealthy = false
