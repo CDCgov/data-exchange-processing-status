@@ -260,12 +260,23 @@ class ReportManager: KoinComponent {
         }
     }
 
+    /**
+     * The function which checks whether the passed string is Base64 Encoded or not using Regex
+     * @param value String
+     */
     private fun isBase64Encoded(value: String): Boolean {
         val base64Pattern = "^[A-Za-z0-9+/]+={0,2}$"
         return value.matches(base64Pattern.toRegex())
     }
 
-    fun  createReportItem(uploadId: String?, reportId:String, reportType:Any) : String{
+    /**
+     * The common function which writes to cosmos container based on the report type
+     * @param uploadId String
+     * @param reportId String
+     * @reportType Any
+     */
+
+    private fun  createReportItem(uploadId: String?, reportId:String, reportType:Any) : String{
 
         var responseReportId = ""
         var reportTypeName = "Report"
