@@ -16,13 +16,13 @@ class ReportDeadLetterQueryService : Query {
 
     @GraphQLDescription("Return all the dead-letter reports associated with the provided datastreamId, datastreamroute and timestamp date range")
     @Suppress("unused")
-    fun getDeadLetterReportsByDataStream(dataStreamId: String, dataStreamRoute:String, startDate:String, endDate:String)
-              = ReportDeadLetterLoader().getByDataStreamByDateRange(dataStreamId,dataStreamRoute,startDate,endDate)
+    fun getDeadLetterReportsByDataStream(dataStreamId: String, dataStreamRoute:String, startDate:String?, endDate:String?, daysInterval :Int?)
+              = ReportDeadLetterLoader().getByDataStreamByDateRange(dataStreamId,dataStreamRoute,startDate,endDate,daysInterval)
 
     @GraphQLDescription("Return count of dead-letter reports associated with the provided datastreamId, (optional) datastreamroute and timestamp date range")
     @Suppress("unused")
-    fun getDeadLetterReportsCountByDataStream(dataStreamId: String, dataStreamRoute:String?, startDate:String, endDate:String)
-            = ReportDeadLetterLoader().getCountByDataStreamByDateRange(dataStreamId,dataStreamRoute,startDate,endDate)
+    fun getDeadLetterReportsCountByDataStream(dataStreamId: String, dataStreamRoute:String?, startDate:String?, endDate:String?, daysInterval:Int?)
+            = ReportDeadLetterLoader().getCountByDataStreamByDateRange(dataStreamId,dataStreamRoute,startDate,endDate,daysInterval)
 
     @GraphQLDescription("Return list of dead-letter reports based on ReportSearchParameters options")
     @Suppress("unused")

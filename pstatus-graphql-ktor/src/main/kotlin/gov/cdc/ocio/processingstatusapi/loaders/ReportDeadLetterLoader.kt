@@ -3,12 +3,20 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
+import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
-
+import mu.KotlinLogging
+/**
+ * Class for generating reporting queries from cosmos db container which is then wrapped in a graphQl query service
+ */
 class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
+    /**
+     * Function that returns a list of DeadLetterReports based on uploadId
+     * @param uploadId String
+     */
     fun getByUploadId(uploadId: String): List<ReportDeadLetter> {
         val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.id = '$uploadId'"
 
@@ -23,15 +31,21 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
         return reports
     }
 
-     fun getByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String, startDate:String, endDate:String): List<ReportDeadLetter> {
+    /**
+     * Function which returns list of ReportDeadLetter based on the specified parameters
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param startDate String
+     * @param endDate String
+     */
+     fun getByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String, startDate:String?, endDate:String?, daysInterval: Int?): List<ReportDeadLetter> {
          val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
          formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
-         val startDateParam: Long = formatter.parse(startDate).toInstant().toEpochMilli()
-         val endDateParam : Long = formatter.parse(endDate).toInstant().toEpochMilli()
+         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, getFormattedDateAsString(startDate), getFormattedDateAsString(endDate))
 
-     val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
-                            "and r.dataStreamRoute= '$dataStreamRoute' and  r.timestamp >=$startDateParam " +
-                            "and r.timestamp<=$endDateParam"
+        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
+                "and r.dataStreamRoute= '$dataStreamRoute' " +
+                "and  $timeRangeWhereClause"
 
      val reportItems = reportsDeadLetterContainer.queryItems(
          reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -44,15 +58,22 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
      return reports
  }
 
-    fun getCountByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String?, startDate:String, endDate:String): Int{
+    /**
+     *  Function which returns count of ReportDeadLetter items based on the specified parameters
+     * @param dataStreamId String
+     * @param dataStreamRoute String?
+     * @param startDate String
+     * @param endDate String
+     */
+    fun getCountByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String?, startDate:String?, endDate:String?, daysInterval:Int?): Int{
+        val logger = KotlinLogging.logger {}
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
-        val startDateParam: Long = formatter.parse(startDate).toInstant().toEpochMilli()
-        val endDateParam : Long = formatter.parse(endDate).toInstant().toEpochMilli()
 
-         val reportsSqlQuery = "select value count(1) from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
-                "and  r.timestamp >=$startDateParam " +
-                "and r.timestamp<=$endDateParam" + if (dataStreamRoute!=null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
+        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate)
+
+        val reportsSqlQuery = "select value count(1) from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
+                "and  $timeRangeWhereClause " + if (dataStreamRoute!=null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
 
          val reportItems = reportsDeadLetterContainer.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -61,13 +82,17 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
         var count = 0
         if (reportItems.iterator().hasNext()) {
              count = reportItems.iterator().next()
-            println("Count of records: $count")
-        } else {
-            println("Count of records: 0")
+            logger.info("Count of records: $count")
 
+        } else {
+            logger.info("Count of records: 0")
         }
        return count
     }
+
+    /**
+     *
+     */
     fun search(ids: List<String>): List<ReportDeadLetter> {
         val quotedIds = ids.joinToString("\",\"", "\"", "\"")
 
@@ -77,16 +102,17 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
-
         val reports = mutableListOf<ReportDeadLetter>()
         reportItems?.forEach { reports.add(daoToReport(it)) }
 
         return reports
     }
 
-
-
-    private fun daoToReport(reportDao: ReportDao): ReportDeadLetter {
+    /**
+     * Function which converts cosmos data object to Report obhect
+     * @param reportDao ReportDao
+     */
+     private fun daoToReport(reportDao: ReportDao): ReportDeadLetter {
         return ReportDeadLetter().apply {
             this.id = reportDao.id
             this.uploadId = reportDao.uploadId
@@ -99,5 +125,18 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
             this.contentType = reportDao.contentType
             this.content = reportDao.contentAsType
         }
+    }
+
+    /**
+     * Function which converts the inputted date to expected date format
+     * @param inputDate String
+     */
+    private fun getFormattedDateAsString(inputDate:String?):String?{
+        if(inputDate == null) return null
+        val inputDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val outputDateFormat =  SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'")
+        val date: Date = inputDateFormat.parse(inputDate)
+        val outputDateString = outputDateFormat.format(date)
+        return outputDateString
     }
 }
