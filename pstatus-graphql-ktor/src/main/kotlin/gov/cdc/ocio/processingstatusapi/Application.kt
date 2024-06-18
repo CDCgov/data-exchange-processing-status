@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi
 
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
 import graphql.scalars.ExtendedScalars
@@ -16,6 +17,8 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
         single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
+        single(createdAtStart = true) { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
+
     }
     return modules(listOf(cosmosModule))
 }
