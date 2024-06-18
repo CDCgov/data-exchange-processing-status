@@ -1,0 +1,7 @@
+{
+  "upload_id": "12345678",
+  "data_stream_route": "test-event1",
+  "stage_name": "dex-stage1",
+  "content_type": "json",
+  "content": ""
+}

@@ -16,6 +16,7 @@ class CosmosClientManager {
                     .endpoint(uri)
                     .key(authKey)
                     .consistencyLevel(ConsistencyLevel.EVENTUAL)
+                    .gatewayMode()
                     .contentResponseOnWriteEnabled(true)
                     .clientTelemetryEnabled(false)
                     .buildClient()

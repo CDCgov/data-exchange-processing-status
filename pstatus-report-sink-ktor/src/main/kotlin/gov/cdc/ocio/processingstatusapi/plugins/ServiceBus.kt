@@ -1,18 +1,30 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
+import com.azure.core.amqp.AmqpTransportType
+import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
+import com.azure.messaging.servicebus.models.DeadLetterOptions
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import io.ktor.util.logging.*
+import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
 internal val LOGGER = KtorSimpleLogger("pstatus-report-sink")
 
+/**
+ * Class which initializes configuration values
+ * @param config ApplicationConfig
+ *
+ */
 class AzureServiceBusConfiguration(config: ApplicationConfig) {
     var connectionString: String = config.tryGetString("connection_string") ?: ""
+    var serviceBusNamespace: String = config.tryGetString("azure_servicebus_namespace") ?: ""
     var queueName: String = config.tryGetString("queue_name") ?: ""
+    var topicName: String = config.tryGetString("topic_name") ?: ""
+    var subscriptionName: String = config.tryGetString("subscription_name") ?: ""
 }
 
 val AzureServiceBus = createApplicationPlugin(
@@ -21,11 +33,17 @@ val AzureServiceBus = createApplicationPlugin(
     createConfiguration = ::AzureServiceBusConfiguration) {
 
     val connectionString = pluginConfig.connectionString
+    val serviceBusNamespace= pluginConfig.serviceBusNamespace
     val queueName = pluginConfig.queueName
+    val topicName = pluginConfig.topicName
+    val subscriptionName = pluginConfig.subscriptionName
 
-    val processorClient by lazy {
+// Initialize Service Bus client for queue
+    val processorQueueClient by lazy {
         ServiceBusClientBuilder()
             .connectionString(connectionString)
+            .fullyQualifiedNamespace(serviceBusNamespace)
+            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .queueName(queueName)
             .processMessage{ context -> processMessage(context) }
@@ -33,13 +51,47 @@ val AzureServiceBus = createApplicationPlugin(
             .buildProcessorClient()
     }
 
-    // handles received messages
+// Initialize Service Bus client for topics
+    val processorTopicClient by lazy {
+        ServiceBusClientBuilder()
+            .connectionString(connectionString)
+            .fullyQualifiedNamespace(serviceBusNamespace)
+            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
+            .processor()
+            .topicName(topicName)
+            .subscriptionName(subscriptionName)
+            .processMessage{ context -> processMessage(context) }
+            .processError { context -> processError(context) }
+            .buildProcessorClient()
+    }
+
+    /**
+     * Function which starts receiving messages from queues and topics
+     *  @throws AmqpException
+     *  @throws TransportException
+     *  @throws Exception generic
+     */
     @Throws(InterruptedException::class)
     fun receiveMessages() {
-        // Create an instance of the processor through the ServiceBusClientBuilder
-        println("Starting the Azure service bus processor")
-        println("connectionString = $connectionString, queueName = $queueName")
-        processorClient.start()
+        try {
+            // Create an instance of the processor through the ServiceBusClientBuilder
+            println("Starting the Azure service bus processor")
+            println("connectionString = $connectionString, queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
+            processorQueueClient.start()
+            processorTopicClient.start()
+        }
+
+        catch (e:AmqpException){
+            println("Non-ServiceBusException occurred : ${e.message}")
+        }
+        catch (e:TransportException){
+            println("Non-ServiceBusException occurred : ${e.message}")
+        }
+
+        catch (e:Exception){
+            println("Non-ServiceBusException occurred : ${e.message}")
+        }
+
     }
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
@@ -49,15 +101,24 @@ val AzureServiceBus = createApplicationPlugin(
     on(MonitoringEvent(ApplicationStopped)) { application ->
         application.log.info("Server is stopped")
         println("Stopping and closing the processor")
-        processorClient.close()
+        processorQueueClient.close()
+        processorTopicClient.close()
         // Release resources and unsubscribe from events
         application.environment.monitor.unsubscribe(ApplicationStarted) {}
         application.environment.monitor.unsubscribe(ApplicationStopped) {}
     }
 }
 
+/**
+ * Function which processes the message received in the queue or topics
+ *   @param context ServiceBusReceivedMessageContext
+ *   @throws BadRequestException
+ *   @throws IllegalArgumentException
+ *   @throws Exception generic
+ */
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
+
     LOGGER.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
         message.messageId,
@@ -65,14 +126,27 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
         message.body
     )
     try {
-        ServiceBusProcessor().withMessage(message.body.toString())
-    } catch (e: BadRequestException) {
+        ServiceBusProcessor().withMessage(message)
+    }
+    //This will handle all missing required fields, invalid schema definition and malformed json all under the BadRequest exception and writes to dead-letter queue or topics depending on the context
+    catch (e: BadRequestException) {
         LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
-    } catch (e: Exception) {
+        val deadLetterOptions = DeadLetterOptions()
+            .setDeadLetterReason("Validation failed")
+            .setDeadLetterErrorDescription(e.message)
+        context.deadLetter(deadLetterOptions)
+        LOGGER.info("Message sent to the dead-letter queue.")
+    }
+    catch (e: Exception) {
         LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)
     }
+
 }
 
+/**
+ * Function to handle and process the error generated during the processing of messages from queue or topics
+ *  @param context ServiceBusErrorContext
+ */
 private fun processError(context: ServiceBusErrorContext) {
     System.out.printf(
         "Error when receiving messages from namespace: '%s'. Entity: '%s'%n",
@@ -106,6 +180,9 @@ private fun processError(context: ServiceBusErrorContext) {
     }
 }
 
+/**
+ * The main application module which runs always
+ */
 fun Application.serviceBusModule() {
     install(AzureServiceBus) {
         // any additional configuration goes here

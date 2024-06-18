@@ -2,23 +2,23 @@ package gov.cdc.ocio.processingstatusapi.models
 
 
 import com.google.gson.annotations.SerializedName
+import java.time.LocalDateTime
 import java.util.*
 
 /**
- * Report for a given stage.
+ * Dead-LetterReport when there is missing fields or malformed data.
  *
  * @property uploadId String?
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property stageName String?
- * @property contentType String?
- * @property messageId String?
- * @property status String?
- * @property content String?
+ * @property dispositionType DispositionType?
  * @property timestamp Date
+ * @property contentType String?
+ * @property content String?
+ * @property deadLetterReasons List<String>
  */
-data class Report(
+data class ReportDeadLetter(
 
     var id : String? = null,
 
@@ -37,16 +37,18 @@ data class Report(
     @SerializedName("stage_name")
     var stageName: String? = null,
 
+    @SerializedName("disposition_type")
+    var dispositionType: String? = null,
+
+
     @SerializedName("content_type")
     var contentType : String? = null,
 
-    @SerializedName("message_id")
-    var messageId: String? = null,
-
-    @SerializedName("status")
-    var status : String? = null,
-
     var content: Any? = null,
 
-    val timestamp: Date = Date()
+    val dexIngestDateTime: LocalDateTime = LocalDateTime.now(),
+
+    val timestamp: Date = Date(),
+
+    var deadLetterReasons:List<String>? = null
 )
