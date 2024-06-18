@@ -10,13 +10,10 @@ import com.microsoft.azure.functions.HttpStatus
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction
 import gov.cdc.ocio.processingstatusapi.model.reports.Report
-import gov.cdc.ocio.processingstatusapi.opentelemetry.OpenTelemetryConfig
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.Tracer
 import khttp.responses.Response
 import org.json.JSONObject
 import org.mockito.Mockito.doAnswer
@@ -33,8 +30,7 @@ class GetStatusFunctionTests {
 
     private lateinit var request: HttpRequestMessage<Optional<String>>
     private lateinit var context: ExecutionContext
-    private val mockOpenTelemetry = mockk<OpenTelemetry>()
-    private val mockTracer = mockk<Tracer>()
+
     private val testBytes = File("./src/test/kotlin/data/trace/get_trace.json").readText()
     private val mockResponse = mockk<Response>()
     // Convert the string to a JSONObject
@@ -56,9 +52,6 @@ class GetStatusFunctionTests {
         mockkStatic("khttp.KHttp")
         every {khttp.get(any())} returns mockResponse
         every {mockResponse.jsonObject} returns jsonObject
-        mockkObject(OpenTelemetryConfig)
-        every { OpenTelemetryConfig.initOpenTelemetry()} returns mockOpenTelemetry
-        every {mockOpenTelemetry.getTracer(GetStatusFunction::class.java.name)} returns mockTracer
         every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
 
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.
