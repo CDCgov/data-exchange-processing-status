@@ -33,6 +33,10 @@ configurations {
     agent
 }
 
+repositories{
+    mavenLocal()
+    mavenCentral()
+}
 dependencies {
     implementation "io.ktor:ktor-server-core-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-netty-jvm:$ktor_version"
@@ -50,6 +54,7 @@ dependencies {
     implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
     implementation 'joda-time:joda-time:2.12.7'
     implementation 'org.apache.commons:commons-lang3:3.3.1'
+    implementation "gov.cdc.io:pstatus-notifications:0.0.1"
     testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
@@ -70,6 +75,4 @@ jib {
     }
 }
 
-repositories {
-    mavenCentral()
-}
+
