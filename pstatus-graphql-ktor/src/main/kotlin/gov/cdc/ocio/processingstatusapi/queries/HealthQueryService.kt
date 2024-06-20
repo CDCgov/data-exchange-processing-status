@@ -3,9 +3,11 @@ package gov.cdc.ocio.processingstatusapi.queries
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.loaders.ReportLoader
+import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import kotlin.system.measureTimeMillis
 
+@Serializable
 abstract class HealthCheckSystem {
 
     @GraphQLDescription("Status of the dependency")
@@ -22,6 +24,7 @@ class CosmosDb: HealthCheckSystem() {
     override val service = "Cosmos DB"
 }
 
+@Serializable
 class HealthCheck {
 
     @GraphQLDescription("Overall status of the service")
@@ -31,7 +34,7 @@ class HealthCheck {
     var totalChecksDuration : String? = null
 
     @GraphQLDescription("Status of the service dependencies")
-    var dependencyHealthChecks = arrayListOf<HealthCheckSystem>()
+    var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
 }
 
 class HealthQueryService : Query {
