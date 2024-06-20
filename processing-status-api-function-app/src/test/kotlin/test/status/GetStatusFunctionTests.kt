@@ -62,12 +62,12 @@ class GetStatusFunctionTests {
     }
 
     @Test
-    fun testCreateSuccess() {
+    fun testWithUploadIdFailure() {
         every { items.count() > 0} returns false
 
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
         val response = GetStatusFunction(request).withUploadId("1");
-        assert(response.status == HttpStatus.OK)
+        assert(response.status == HttpStatus.BAD_REQUEST)
     }
 
 
