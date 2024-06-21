@@ -55,7 +55,7 @@ fun Route.subscribeEmailNotificationRoute() {
     post("/subscribe/email") {
         val subscription = call.receive<EmailSubscription>()
         val emailSubscription =EmailSubscription(subscription.dataStreamId, subscription.dataStreamRoute, subscription.email, subscription.stageName, subscription.statusType)
-        val result = SubscribeEmailNotifications().run(emailSubscription);
+        val result = SubscribeEmailNotifications().run(emailSubscription)
         call.respond(result)
 
     }
@@ -66,7 +66,7 @@ fun Route.subscribeEmailNotificationRoute() {
 fun Route.unsubscribeEmailNotificationRoute() {
     post("/unsubscribe/email") {
         val subscription = call.receive<UnSubscription>()
-        val result = UnSubscribeNotifications().run(subscription.subscriptionId);
+        val result = UnSubscribeNotifications().run(subscription.subscriptionId)
         call.respond(result)
     }
 }
@@ -77,7 +77,7 @@ fun Route.subscribeWebhookRoute() {
     post("/subscribe/webhook") {
         val subscription = call.receive<WebhookSubscription>()
         val webhookSubscription = WebhookSubscription(subscription.dataStreamId, subscription.dataStreamRoute, subscription.url, subscription.stageName, subscription.statusType)
-        val result = SubscribeWebhookNotifications().run(webhookSubscription);
+        val result = SubscribeWebhookNotifications().run(webhookSubscription)
         call.respond(result)
 
     }
@@ -88,7 +88,7 @@ fun Route.subscribeWebhookRoute() {
 fun Route.unsubscribeWebhookRoute() {
     post("/unsubscribe/webhook") {
         val subscription = call.receive<UnSubscription>()
-        val result = UnSubscribeNotifications().run(subscription.subscriptionId);
+        val result = UnSubscribeNotifications().run(subscription.subscriptionId)
         call.respond(result)
     }
 }

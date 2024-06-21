@@ -25,16 +25,11 @@ class SubscribeEmailNotifications(){
         logger.debug("StageName: $stageName")
         logger.debug("StatusType: $statusType")
 
-        var subscriptionResult = SubscriptionResult()
-        if (!(email == null || stageName == null || statusType == null)) {
-            subscriptionResult = subscribeForEmail(dataStreamId, dataStreamRoute, email, stageName, statusType)
-            if (subscriptionResult.subscription_id != null) {
-                return subscriptionResult
+        val subscriptionResult = subscribeForEmail(dataStreamId, dataStreamRoute, email, stageName, statusType)
+            if (subscriptionResult.subscription_id == null) {
+                subscriptionResult.message = "Invalid Request"
+                subscriptionResult.status = false
             }
-        }
-       subscriptionResult.message = "Invalid Request"
-       subscriptionResult.status = false
-
         return subscriptionResult
     }
 

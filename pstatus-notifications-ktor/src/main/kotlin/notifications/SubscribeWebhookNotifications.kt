@@ -17,7 +17,7 @@ import java.time.Instant
  *              url (websocket url)
  *
  *
- * @property request HttpRequestMessage<Optional<String>>
+
  * @property logger KLogger
  * @property cacheService InMemoryCacheService
  * @constructor
