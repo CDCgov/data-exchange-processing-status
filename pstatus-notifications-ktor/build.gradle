@@ -25,20 +25,15 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-tasks.withType(KotlinCompile).all {
+tasks.withType(KotlinCompile).configureEach {
     kotlinOptions {
         jvmTarget = "17"
     }
 
 }
 
-
-
 group "gov.cdc.ocio"
 version "0.0.1"
-mainClassName = "gov.cdc.ocio.processingstatusnotifications.ApplicationKt"
-
-
 
 dependencies {
     implementation("io.ktor:ktor-server-core:2.3.2")
