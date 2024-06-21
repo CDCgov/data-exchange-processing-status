@@ -17,13 +17,15 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-   // graphQLModule()
+
     install(ContentNegotiation) {
         json()
     }
     routing {
         subscribeEmailNotificationRoute()
         unsubscribeEmailNotificationRoute()
+        subscribeWebhookRoute()
+        unsubscribeWebhookRoute()
     }
 
 }

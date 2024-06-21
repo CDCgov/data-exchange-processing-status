@@ -1,5 +1,8 @@
-package gov.cdc.ocio.processingstatusnotifications
+package gov.cdc.ocio.processingstatusnotifications.notifications
 
+import gov.cdc.ocio.processingstatusnotifications.EmailSubscription
+import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
+import gov.cdc.ocio.processingstatusnotifications.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import mu.KotlinLogging
 import java.time.Instant
@@ -57,7 +60,9 @@ class SubscribeEmailNotifications(){
             result.status = false
             result.message = "Not valid email address"
         } else {
-            result.subscription_id = cacheService.updateNotificationsPreferences(dataStreamId, dataStreamRoute, stageName, statusType, email, SubscriptionType.EMAIL)
+            result.subscription_id = cacheService.updateNotificationsPreferences(dataStreamId, dataStreamRoute, stageName, statusType, email,
+                SubscriptionType.EMAIL
+            )
             result.timestamp = Instant.now().epochSecond
             result.status = true
             result.message = "Subscription for Email setup"

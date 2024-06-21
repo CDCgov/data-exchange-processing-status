@@ -7,6 +7,7 @@ import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
 import gov.cdc.ocio.processingstatusapi.queries.*
+import gov.cdc.ocio.processingstatusapi.mutations.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -66,6 +67,10 @@ fun Application.graphQLModule() {
                 ReportCountsQueryService(),
                 ReportDeadLetterQueryService(),
                 UploadQueryService()
+
+            )
+            mutations= listOf(
+                NotificationsMutationService()
             )
 //            subscriptions = listOf(
 //                ErrorSubscriptionService()

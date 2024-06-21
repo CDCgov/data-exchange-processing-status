@@ -1,8 +1,5 @@
-package gov.cdc.ocio.processingstatusnotifications.email
+package gov.cdc.ocio.processingstatusnotifications.notifications
 
-
-
-import java.util.*
 import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import java.time.Instant
@@ -11,14 +8,12 @@ import mu.KotlinLogging
  * This method is used by HTTP endpoints to unsubscribe for any notifications
  * by passing required parameter of subscriptionId
  *
- * @property request HttpRequestMessage<Optional<String>>
  * @property logger KLogger
  * @property cacheService InMemoryCacheService
  * @constructor
  */
-class UnsubscribeEmailNotifications(
-
-) {
+class UnSubscribeNotifications()
+ {
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
@@ -26,16 +21,16 @@ class UnsubscribeEmailNotifications(
         logger.debug { "SubscriptionId $subscriptionId" }
 
         val result = SubscriptionResult()
-        val unsubscribeSuccessfull = unsubscribeNotifications(subscriptionId)
-         if (subscriptionId.isNotBlank() && unsubscribeSuccessfull) {
+        val unsubscribeSuccessful = unsubscribeNotifications(subscriptionId)
+         if (subscriptionId.isNotBlank() && unsubscribeSuccessful) {
             result.subscription_id = subscriptionId
             result.timestamp = Instant.now().epochSecond
             result.status = false
-            result.message = "Unsubscription successful"
+            result.message = "UnSubscription successful"
 
         } else {
             result.status = false
-            result.message = "Unsubscription unsuccessful"
+            result.message = "UnSubscription unsuccessful"
 
         }
         return  result
