@@ -55,9 +55,9 @@ class HealthCheckServiceBus: HealthCheckSystem() {
  */
 class HealthCheck {
 
-    var status : String? = "DOWN"
+    var status: String = "DOWN"
 
-    var totalChecksDuration : String? = null
+    var totalChecksDuration: String? = null
 
     var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
 }
