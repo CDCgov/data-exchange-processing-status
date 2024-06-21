@@ -31,7 +31,7 @@ class HealthCheck {
     var totalChecksDuration : String? = null
 
     @GraphQLDescription("Status of the service dependencies")
-    var dependencyHealthChecks = arrayListOf<HealthCheckSystem>()
+    var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
 }
 
 class HealthQueryService : Query {

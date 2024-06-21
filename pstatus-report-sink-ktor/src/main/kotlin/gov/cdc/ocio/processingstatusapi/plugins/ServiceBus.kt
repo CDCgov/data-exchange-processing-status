@@ -19,12 +19,12 @@ internal val LOGGER = KtorSimpleLogger("pstatus-report-sink")
  * @param config ApplicationConfig
  *
  */
-class AzureServiceBusConfiguration(config: ApplicationConfig) {
-    var connectionString: String = config.tryGetString("connection_string") ?: ""
-    var serviceBusNamespace: String = config.tryGetString("azure_servicebus_namespace") ?: ""
-    var queueName: String = config.tryGetString("queue_name") ?: ""
-    var topicName: String = config.tryGetString("topic_name") ?: ""
-    var subscriptionName: String = config.tryGetString("subscription_name") ?: ""
+class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+    private val configPath = if (configurationPath != null) "$configurationPath." else ""
+    val connectionString = config.tryGetString("${configPath}connection_string") ?: ""
+    val queueName = config.tryGetString("${configPath}queue_name") ?: ""
+    val topicName = config.tryGetString("${configPath}topic_name") ?: ""
+    val subscriptionName = config.tryGetString("${configPath}subscription_name") ?: ""
 }
 
 val AzureServiceBus = createApplicationPlugin(
@@ -33,16 +33,14 @@ val AzureServiceBus = createApplicationPlugin(
     createConfiguration = ::AzureServiceBusConfiguration) {
 
     val connectionString = pluginConfig.connectionString
-    val serviceBusNamespace= pluginConfig.serviceBusNamespace
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
 
-// Initialize Service Bus client for queue
+    // Initialize Service Bus client for queue
     val processorQueueClient by lazy {
         ServiceBusClientBuilder()
             .connectionString(connectionString)
-            .fullyQualifiedNamespace(serviceBusNamespace)
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .queueName(queueName)
@@ -51,11 +49,10 @@ val AzureServiceBus = createApplicationPlugin(
             .buildProcessorClient()
     }
 
-// Initialize Service Bus client for topics
+    // Initialize Service Bus client for topics
     val processorTopicClient by lazy {
         ServiceBusClientBuilder()
             .connectionString(connectionString)
-            .fullyQualifiedNamespace(serviceBusNamespace)
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .topicName(topicName)
