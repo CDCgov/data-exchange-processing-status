@@ -2,11 +2,14 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule
+import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -24,8 +27,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
         single(createdAtStart = true) { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
     }
+    val asbConfigModule = module {
+        // Create an azure service bus config that can be dependency injected (for health checks)
+        single(createdAtStart = true) { AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus") }
+    }
 
-    return modules(listOf(cosmosModule))
+    return modules(listOf(cosmosModule, asbConfigModule))
 }
 
 /**
@@ -45,5 +52,7 @@ fun Application.module() {
     install(Koin) {
         loadKoinModules(environment)
     }
-
+    install(ContentNegotiation) {
+        jackson()
+    }
 }
