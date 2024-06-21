@@ -8,7 +8,8 @@ import mu.KotlinLogging
 import java.time.Instant
 
 /**
- * Class for subscribing for email notifications
+ * This method is used by graphL endpoints to subscribe for Webhook notifications
+ *  * based on rules sent in required parameters/arguments
  *          dataStreamId
  *          dataStreamRoute
  *          email
