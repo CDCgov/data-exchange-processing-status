@@ -79,7 +79,7 @@ class HealthQueryService: KoinComponent {
 
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
-     * 
+     *
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
