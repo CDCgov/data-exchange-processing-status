@@ -7,10 +7,23 @@ import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import mu.KotlinLogging
 import java.time.Instant
 
-class SubscribeEmailNotifications(){
+/**
+ * Class for subscribing for email notifications
+ *          dataStreamId
+ *          dataStreamRoute
+ *          email
+ *          stageName
+ *          statusType ("warning", "success", "error")
+ *
+ */
+class SubscribeEmailNotifications{
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
+    /**
+     * The function which validates and subscribes for email notifications
+     * @param subscription EmailSubscription
+     */
     fun run(subscription: EmailSubscription):
             SubscriptionResult {
         val dataStreamId = subscription.dataStreamId
@@ -33,6 +46,14 @@ class SubscribeEmailNotifications(){
         return subscriptionResult
     }
 
+    /**
+     * This function validates and updates the notification preferences of the cacheService
+     *  @param dataStreamId String
+     *  @param dataStreamRoute String
+     *  @param email String
+     *  @param stageName String
+     *  @param statusType String
+     */
     private fun subscribeForEmail(
         dataStreamId: String,
         dataStreamRoute: String,

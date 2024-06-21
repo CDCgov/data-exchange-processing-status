@@ -4,19 +4,23 @@ import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import java.time.Instant
 import mu.KotlinLogging
+
+
 /**
- * This method is used by HTTP endpoints to unsubscribe for any notifications
- * by passing required parameter of subscriptionId
- *
+
  * @property logger KLogger
  * @property cacheService InMemoryCacheService
  * @constructor
  */
-class UnSubscribeNotifications()
+class UnSubscribeNotifications
  {
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
+     /**
+      * The function which validates and Unsubscribes for webhook notifications
+      * @param subscriptionId String
+      */
     fun run(subscriptionId: String): SubscriptionResult {
         logger.debug { "SubscriptionId $subscriptionId" }
 
@@ -36,6 +40,10 @@ class UnSubscribeNotifications()
         return  result
     }
 
+     /**
+      *  Function which unsubscribes based on subscription id from the cache service
+      *  @param subscriptionId String
+      */
     private fun unsubscribeNotifications(
         subscriptionId: String,
     ): Boolean {

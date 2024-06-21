@@ -22,14 +22,15 @@ import java.time.Instant
  * @property cacheService InMemoryCacheService
  * @constructor
  */
-class SubscribeWebhookNotifications()
+class SubscribeWebhookNotifications
      {
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
-     /**
-      *
-      */
+   /**
+     * The function which validates and subscribes for webhook notifications
+    *  @param subscription WebhookSubscription
+    */
 
     fun run(subscription: WebhookSubscription):
             SubscriptionResult {
@@ -57,9 +58,14 @@ class SubscribeWebhookNotifications()
         return subscriptionResult
     }
 
-         /**
-          *
-          */
+    /**
+    * This function validates and updates the notification preferences of the cacheService
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param url String
+     * @param stageName String
+     * @param statusType String
+    */
     private fun subscribeForWebhook(
         dataStreamId: String,
         dataStreamRoute: String,
