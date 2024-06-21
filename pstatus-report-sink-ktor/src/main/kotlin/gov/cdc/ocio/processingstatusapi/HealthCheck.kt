@@ -12,7 +12,13 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 
-
+/**
+ * Abstract class used for modeling the health issues of an individual service.
+ *
+ * @property status String
+ * @property healthIssues String?
+ * @property service String
+ */
 abstract class HealthCheckSystem {
 
     var status: String = "DOWN"
@@ -22,10 +28,20 @@ abstract class HealthCheckSystem {
     open val service: String = ""
 }
 
+/**
+ * Concrete implementation of the cosmosdb service health check.
+ *
+ * @property service String
+ */
 class HealthCheckCosmosDb: HealthCheckSystem() {
     override val service = "Cosmos DB"
 }
 
+/**
+ * Concrete implementation of the Azure Service Bus health check.
+ *
+ * @property service String
+ */
 class HealthCheckServiceBus: HealthCheckSystem() {
     override val service: String = "Azure Service Bus"
 }
@@ -46,6 +62,13 @@ class HealthCheck {
     var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
 }
 
+/**
+ * Service for querying the health of the report-sink service and its dependencies.
+ *
+ * @property logger KLogger
+ * @property cosmosRepository CosmosRepository
+ * @property azureServiceBusConfiguration AzureServiceBusConfiguration
+ */
 class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
