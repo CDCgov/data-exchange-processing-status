@@ -5,14 +5,14 @@ package cache
 import gov.cdc.ocio.processingstatusnotifications.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
-import org.testng.Assert.*
+import org.testng.Assert
 import org.testng.annotations.Test
 
 class InMemoryCacheServiceTest {
 
     private var inMemoryCacheService: InMemoryCacheService = InMemoryCacheService()
 
-    @Test(description = "This test asserts true for generating two similar subscriptionIds for same set of rules for two different users")
+    @Test
     fun testAddingSameNotificationPreferencesSuccess() {
         val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
@@ -24,7 +24,7 @@ class InMemoryCacheServiceTest {
             "stageName1","warning",
             "rty@trh.com", SubscriptionType.EMAIL
         )
-        assertEquals(subscriptionId1, subscriptionId2)
+        Assert.assertEquals(subscriptionId1, subscriptionId2)
     }
 
     @Test(description = "This test asserts true for generating two unique subscriptionIds for different set of rules for same user")
@@ -39,7 +39,7 @@ class InMemoryCacheServiceTest {
             "stageName1","success",
             "abc@trh.com", SubscriptionType.EMAIL
         )
-        assertNotEquals(subscriptionId1, subscriptionId2)
+        Assert.assertNotEquals(subscriptionId1, subscriptionId2)
     }
 
     @Test(description = "This test asserts true for unsubscribing existing susbcription")
@@ -50,7 +50,7 @@ class InMemoryCacheServiceTest {
             "abc@trh.com", SubscriptionType.EMAIL
         )
 
-        assertTrue(inMemoryCacheService.unsubscribeNotifications(subscriptionId1))
+        Assert.assertTrue(inMemoryCacheService.unsubscribeNotifications(subscriptionId1))
     }
 
     @Test(description = "This test throws exception for unsubscribing susbcriptionId that doesn't exist")
@@ -66,7 +66,7 @@ class InMemoryCacheServiceTest {
         try {
             inMemoryCacheService.unsubscribeNotifications(subscriptionId1)
         } catch (e: BadStateException) {
-            assertEquals(e.message, "Subscription doesn't exist")
+            Assert.assertEquals(e.message, "Subscription doesn't exist")
         }
     }
 }

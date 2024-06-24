@@ -56,10 +56,15 @@ dependencies {
     implementation "com.expediagroup:graphql-kotlin-schema-generator:6.0.0"
     implementation "io.ktor:ktor-server-netty:2.1.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
-    testImplementation("io.ktor:ktor-server-tests:2.3.2")
-    testImplementation("io.ktor:ktor-server-tests:2.3.2")
-    testImplementation "org.testng:testng:7.4.0"
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.8.10")
+
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation 'org.testng:testng:7.7.0'
+
+    testImplementation "org.mockito:mockito-inline:3.11.2"
+    testImplementation "io.mockk:mockk:1.13.9"
+    testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
 }
 
 ktor {
@@ -77,6 +82,18 @@ jib {
         }
     }
 }
+
+test {
+    useTestNG()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    //Change this to "true" if we want to execute unit tests
+    systemProperty("isTestEnvironment", "false")
+
+    // Set the test classpath, if required
+}
+
 
 repositories{
      mavenCentral()
