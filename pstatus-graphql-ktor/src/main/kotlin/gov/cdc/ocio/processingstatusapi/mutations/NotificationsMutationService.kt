@@ -13,8 +13,6 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
-
-
 @Serializable
 data class EmailSubscription(val dataStreamId:String,
                              val dataStreamRoute:String,
@@ -39,7 +37,7 @@ data class SubscriptionResult(
  */
 
 class NotificationsMutationService : Mutation {
-
+    val notificationsRouteBaseUrl =System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
     private val client = HttpClient {
         install(ContentNegotiation) {
             json()
@@ -50,8 +48,9 @@ class NotificationsMutationService : Mutation {
     @GraphQLDescription("Subscribe Email Notifications")
     @Suppress("unused")
     fun subscribeEmail(dataStreamId:String, dataStreamRoute:String,email: String, stageName: String, statusType:String):SubscriptionResult {
+        val url = "$notificationsRouteBaseUrl/subscribe/email"
         return runBlocking {
-             client.post("http://localhost:8081/subscribe/email") {
+             client.post(url) {
                 contentType(io.ktor.http.ContentType.Application.Json)
                 setBody(EmailSubscription(dataStreamId, dataStreamRoute,email,stageName,statusType))
             }.body()
@@ -63,8 +62,9 @@ class NotificationsMutationService : Mutation {
     @GraphQLDescription("Unsubscribe Email Notifications")
     @Suppress("unused")
     fun unsubscribeEmail(subscriptionId:String):SubscriptionResult {
+        val url = "$notificationsRouteBaseUrl/unsubscribe/email"
         return runBlocking {
-            client.post("http://localhost:8081/unsubscribe/email") {
+            client.post(url) {
                 contentType(ContentType.Application.Json)
                 setBody(UnSubscription(subscriptionId))
             }.body()
@@ -75,8 +75,9 @@ class NotificationsMutationService : Mutation {
     @GraphQLDescription("Subscribe Webhook Notifications")
     @Suppress("unused")
     fun subscribeWebhook(dataStreamId:String, dataStreamRoute:String,email: String, stageName: String, statusType:String):SubscriptionResult {
+        val url = "$notificationsRouteBaseUrl/subscribe/webhook"
         return runBlocking {
-            client.post("http://localhost:8081/subscribe/webhook") {
+            client.post(url) {
                 contentType(io.ktor.http.ContentType.Application.Json)
                 setBody(EmailSubscription(dataStreamId, dataStreamRoute,email,stageName,statusType))
             }.body()
@@ -88,8 +89,9 @@ class NotificationsMutationService : Mutation {
     @GraphQLDescription("Unsubscribe Webhook Notifications")
     @Suppress("unused")
     fun unsubscribeWebhook(subscriptionId:String):SubscriptionResult {
+        val url = "$notificationsRouteBaseUrl/unsubscribe/webhook"
         return runBlocking {
-            client.post("http://localhost:8081/unsubscribe/webhook") {
+            client.post(url) {
                 contentType(ContentType.Application.Json)
                 setBody(UnSubscription(subscriptionId))
             }.body()
