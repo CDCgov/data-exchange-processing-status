@@ -13,6 +13,14 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
+/**
+ * Email Subscription data class which is serialized back and forth which is in turn subscribed in to the MemCache
+ * @param dataStreamId String
+ * @param dataStreamRoute String
+ * @param email String
+ * @param stageName String
+ * @param statusType String
+ */
 @Serializable
 data class EmailSubscription(val dataStreamId:String,
                              val dataStreamRoute:String,
@@ -20,10 +28,20 @@ data class EmailSubscription(val dataStreamId:String,
                              val stageName: String,
                              val statusType:String)
 
+/**
+ * UnSubscription data class which is serialized back and forth which is in turn used for unsubscribing  from the cache for emails and webhooks using the given subscriberId
+ * @param subscriptionId
+ */
 @Serializable
 data class UnSubscription(val subscriptionId:String)
 
-
+/**
+ * SubscriptionResult is the response class which is serialized back and forth which is in turn used for getting the response which contains the subscriberId , message and the status of subscribe/unsubscribe operations
+ * @param subscription_id
+ * @param timestamp
+ * @param status
+ * @param message
+ */
 @Serializable
 data class SubscriptionResult(
     var subscription_id: String? = null,
@@ -45,6 +63,15 @@ class NotificationsMutationService : Mutation {
 
     }
 
+    /**
+     *  SubscribeEmail function which inturn uses the http client to invoke the notifications ktor microservice route to subscribe
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param email String
+     * @param stageName String
+     * @param statusType String
+     */
+
     @GraphQLDescription("Subscribe Email Notifications")
     @Suppress("unused")
     fun subscribeEmail(dataStreamId:String, dataStreamRoute:String,email: String, stageName: String, statusType:String):SubscriptionResult {
@@ -59,6 +86,11 @@ class NotificationsMutationService : Mutation {
 
     }
 
+    /**
+     *  UnSubscribeEmail function which inturn uses the http client to invoke the notifications ktor microservice route to unsubscribe email notifications using the subscriberId
+     * @param subscriptionId String
+     */
+
     @GraphQLDescription("Unsubscribe Email Notifications")
     @Suppress("unused")
     fun unsubscribeEmail(subscriptionId:String):SubscriptionResult {
@@ -71,6 +103,15 @@ class NotificationsMutationService : Mutation {
         }
 
     }
+
+    /**
+     *  SubscribeWebhook function which inturn uses the http client to invoke the notifications ktor microservice route to subscribe webhook notifications
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param email String
+     * @param stageName String
+     * @param statusType String
+     */
 
     @GraphQLDescription("Subscribe Webhook Notifications")
     @Suppress("unused")
@@ -85,6 +126,11 @@ class NotificationsMutationService : Mutation {
         }
 
     }
+
+    /**
+     *  UnSubscribeWebhook function which inturn uses the http client to invoke the notifications ktor microservice route to unsubscribe webhook notifications
+     * @param subscriptionId String
+     */
 
     @GraphQLDescription("Unsubscribe Webhook Notifications")
     @Suppress("unused")
