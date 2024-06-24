@@ -132,11 +132,11 @@ object InMemoryCache {
      */
     fun unsubscribeSubscriber(subscriptionId: String): Boolean {
         if (subscriberCache.containsKey(subscriptionId)) {
-            val subscribers = subscriberCache[subscriptionId]?.filter { it.subscriptionId != subscriptionId }.orEmpty().toMutableList()
+            val subscribers = subscriberCache[subscriptionId]?.filter { it.subscriptionId == subscriptionId }.orEmpty().toMutableList()
 
             readWriteLock.writeLock().lock()
             try {
-                subscriberCache.replace(subscriptionId, subscribers)
+                subscriberCache.remove(subscriptionId, subscribers)
             } finally {
                 readWriteLock.writeLock().unlock()
             }
