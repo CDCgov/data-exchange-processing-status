@@ -12,7 +12,7 @@ class InMemoryCacheServiceTest {
 
     private var inMemoryCacheService: InMemoryCacheService = InMemoryCacheService()
 
-    @Test
+    @Test(description = "This test asserts true for generating two unique subscriptionIds for same user")
     fun testAddingSameNotificationPreferencesSuccess() {
         val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
