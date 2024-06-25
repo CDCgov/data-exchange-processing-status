@@ -94,11 +94,10 @@ fun Application.graphQLModule() {
 //                call.respondText("Hello, $username! Token is expired at $expiresAt ms.")
 //            }
         }
-        graphQLPostRoute(endpoint = "$graphQLPath/graphql")
-        graphQLSubscriptionsRoute(endpoint = "$graphQLPath/subscriptions")
-        graphQLSDLRoute(endpoint = "$graphQLPath/sdl")
+        graphQLPostRoute()
+        graphQLSubscriptionsRoute()
+        graphQLSDLRoute()
         graphiQLRoute(
-            endpoint = "$graphQLPath/graphiql",
             graphQLEndpoint = "$graphQLPath/graphql",
             subscriptionsEndpoint = "$graphQLPath/subscriptions") // Go to http://localhost:8080/graphiql for the GraphQL playground
     }
