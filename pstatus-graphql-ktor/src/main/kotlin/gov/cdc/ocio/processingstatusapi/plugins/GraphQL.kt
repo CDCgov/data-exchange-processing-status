@@ -30,6 +30,7 @@ fun Application.graphQLModule() {
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()
     val myRealm = environment.config.property("jwt.realm").getString()
+    val graphQLPath = environment.config.property("graphql.path").getString()
     install(Authentication) {
         jwt {
             jwt("auth-jwt") {
@@ -96,6 +97,8 @@ fun Application.graphQLModule() {
         graphQLPostRoute()
         graphQLSubscriptionsRoute()
         graphQLSDLRoute()
-        graphiQLRoute() // Go to http://localhost:8080/graphiql for the GraphQL playground
+        graphiQLRoute(
+            graphQLEndpoint = "$graphQLPath/graphql",
+            subscriptionsEndpoint = "$graphQLPath/subscriptions") // Go to http://localhost:8080/graphiql for the GraphQL playground
     }
 }
