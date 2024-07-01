@@ -1,0 +1,75 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
+    id 'io.ktor.plugin' version '2.3.11'
+}
+apply plugin: "java"
+apply plugin: "kotlin"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+group "gov.cdc.ocio"
+version "0.0.1"
+mainClassName = "gov.cdc.ocio.processingstatusapi.ApplicationKt"
+
+configurations {
+    // create a separate configuration for the agent since it should not be a normal dependency
+    agent
+}
+
+dependencies {
+    implementation "io.ktor:ktor-server-core-jvm:$ktor_version"
+    implementation "io.ktor:ktor-server-netty-jvm:$ktor_version"
+    implementation "io.ktor:ktor-server-cors:$ktor_version"
+    implementation "io.ktor:ktor-server-status-pages:$ktor_version"
+    implementation "io.ktor:ktor-server-auth:$ktor_version"
+    implementation "io.ktor:ktor-server-auth-jwt:$ktor_version"
+    implementation "ch.qos.logback:logback-classic:$logback_version"
+    implementation 'com.expediagroup:graphql-kotlin-ktor-server:7.1.1'
+    implementation 'com.azure:azure-cosmos:4.55.0'
+    implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'io.insert-koin:koin-core:3.5.6'
+    implementation 'io.insert-koin:koin-ktor:3.5.6'
+    implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
+    implementation 'joda-time:joda-time:2.12.7'
+    implementation 'org.apache.commons:commons-lang3:3.3.1'
+    testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+}
+
+ktor {
+    docker {
+        localImageName.set("pstatus-graphql-ktor")
+    }
+}
+
+jib {
+    to {
+        image = 'imagehub.cdc.gov:6989/dex/pstatus/graphql-service'
+        auth {
+            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
+            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}

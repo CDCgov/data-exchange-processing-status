@@ -1,0 +1,62 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
+    id 'io.ktor.plugin' version '2.3.11'
+}
+apply plugin: "java"
+apply plugin: "kotlin"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+group "gov.cdc.ocio"
+version "0.0.1"
+mainClassName = "gov.cdc.ocio.processingstatusapi.ApplicationKt"
+
+configurations {
+    // create a separate configuration for the agent since it should not be a normal dependency
+    agent
+}
+
+dependencies {
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("com.azure:azure-messaging-servicebus:7.13.3")
+    implementation("com.azure:azure-cosmos:4.55.0")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("io.insert-koin:koin-core:3.5.6")
+    implementation("io.insert-koin:koin-ktor:3.5.6")
+    testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+}
+
+jib {
+    to {
+        image = 'imagehub.cdc.gov:6989/dex/pstatus/report-sink-service'
+        auth {
+            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
+            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}

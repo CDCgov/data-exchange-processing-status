@@ -1,0 +1,39 @@
+{
+  "schema_name": "hl7-validation",
+  "schema_version": "1.0",
+  "message_uuid": "",
+  "entries": {
+    "structure": [
+      {
+        "line": 4,
+        "column": 56,
+        "path": "OBX[10]-5[1].2",
+        "description": "test is not a valid Number. The format should be: [+|-]digits[.digits]",
+        "category": "Format",
+        "classification": "Error"
+      }
+    ],
+    "content": [
+      {
+        "line": 5,
+        "column": 99,
+        "path": "OBR[1]-7[1].1",
+        "description": "DateTimeOrAll0s - If TS.1 (Time) is valued then TS.1 (Time) shall follow the date/time pattern 'YYYYMMDDHHMMSS[.S[S[S[S]]]][+/-ZZZZ]]'.",
+        "category": "Constraint Failure",
+        "classification": "Error"
+      }
+    ],
+    "value-set": []
+  },
+  "error-count": {
+    "structure": 1,
+    "value-set": 0,
+    "content": 1
+  },
+  "warning-count": {
+    "structure": 0,
+    "value-set": 0,
+    "content": 0
+  },
+  "status": "STRUCTURE_ERRORS"
+}

@@ -1,0 +1,52 @@
+{
+  "summary": {
+    "current_status": "REDACTED"
+  },
+  "schema_version": "0.0.1",
+  "metadata": {
+    "provenance": {
+      "event_id": "7d19d8f3-e01e-003e-78f8-64175906ba30",
+      "event_timestamp": "2024-02-21T18:59:21.6583288Z",
+      "file_uuid": "23f81337-8d92-47c9-87f7-c51b6639bff1",
+      "file_path": "https://ocioedemessagesatst.blob.core.windows.net/hl7ingress/demo/AL_COVID19_test11.txt",
+      "file_timestamp": "2024-02-21T18:59:21+00:00",
+      "file_size": 5521,
+      "single_or_batch": "SINGLE",
+      "message_hash": "48b31c99340261603f0641c32a70466b",
+      "ext_original_file_name": "demo/AL_COVID19_test11.txt",
+      "message_index": 1
+    },
+    "stage": {
+      "status": "SUCCESS",
+      "report": {
+        "entries": [],
+        "status": "SUCCESS"
+      },
+      "process_name": "REDACTOR",
+      "process_version": "1.0.0",
+      "eventhub_queued_time": "2024-02-21T18:59:22.437",
+      "eventhub_offset": 180395532056,
+      "eventhub_sequence_number": 22883,
+      "configs": [
+        "covid19_elr_config.txt"
+      ],
+      "start_processing_time": "2024-02-21T18:59:22.499+00:00",
+      "end_processing_time": "2024-02-21T18:59:22.52+00:00"
+    }
+  },
+  "message_info": {
+    "event_code": "",
+    "route": "covid19_elr",
+    "reporting_jurisdiction": "13",
+    "type": "ELR",
+    "local_record_id": "1905700000256-176"
+  },
+  "id": "8a9e9feb-c305-4184-be75-a054f7ce23ac",
+  "message_uuid": "8a9e9feb-c305-4184-be75-a054f7ce23ac",
+  "schema_name": "DEX HL7v2",
+  "routing_metadata": {
+    "upload_id": "mcq1-20240216-01-c6dbfc70-e114-4b52-95fa-05104027a8bf",
+    "destination_id": "aims-celr",
+    "destination_event": "hl7"
+  }
+}
