@@ -213,7 +213,6 @@ class ReportManager {
                             }
 
                             HttpStatus.TOO_MANY_REQUESTS.value() -> {
-                                // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
                                 // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
                                 // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
                                 val recommendedDuration = response.responseHeaders["x-ms-retry-after-ms"]

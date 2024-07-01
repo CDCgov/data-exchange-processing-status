@@ -75,11 +75,6 @@ class GetStatusFunction(
             .build()
     }
 
-    companion object {
-        val excludedSpanTags = listOf("spanMark", "span.kind", "internal.span.format", "otel.library.name")
-    }
-
-
     private fun getReport(uploadId: String): ReportDao? {
 
         // Get the reports

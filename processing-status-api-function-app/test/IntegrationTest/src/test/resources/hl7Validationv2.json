@@ -30,8 +30,6 @@
     "upload_id": "$uploadId",
     "data_stream_id": "daart",
     "data_stream_route": "hl7",
-    "trace_id": "UNKNOWN",
-    "span_id": "UNKNOWN",
     "supporting_metadata": {
       "route": "daart",
       "system_provider": "DEX-ROUTING",

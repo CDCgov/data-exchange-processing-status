@@ -11,9 +11,6 @@ The following is needed in order to build and deploy this function app:
 ## Required Application Settings
 In addition to the standard required application settings, the processing status API function app requires the following.
 
-- `JAEGER_OTEL_COLLECTOR_END_POINT` - URL of the Jaeger trace collector, listening on port 4317
-- `JAEGER_TRACE_ENDPOINT` - URL of the Jaeger web UI, listening on port 16686
-- `JAEGER_HEALTH_END_POINT` - URL of the Jaeger health end point, listening on port 14269
 - `CosmosDbEndpoint` - URL of the cosmos database
 - `CosmosDbKey` - shared key used to connect to the cosmos database
 - `ServiceBusQueueName` - service bus queue name, which should always be `processing-status-cosmos-db-queue`

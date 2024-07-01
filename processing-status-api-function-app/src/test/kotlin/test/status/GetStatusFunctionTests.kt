@@ -15,14 +15,12 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import khttp.responses.Response
-import org.json.JSONObject
 import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import utils.HttpResponseMessageMock
-import java.io.File
 import java.util.*
 
 
@@ -31,10 +29,7 @@ class GetStatusFunctionTests {
     private lateinit var request: HttpRequestMessage<Optional<String>>
     private lateinit var context: ExecutionContext
 
-    private val testBytes = File("./src/test/kotlin/data/trace/get_trace.json").readText()
     private val mockResponse = mockk<Response>()
-    // Convert the string to a JSONObject
-    private val jsonObject = JSONObject(testBytes)
     private val items = mockk<CosmosPagedIterable<Report>>()
 
     @BeforeMethod
@@ -51,7 +46,6 @@ class GetStatusFunctionTests {
         request = mock(HttpRequestMessage::class.java) as HttpRequestMessage<Optional<String>>
         mockkStatic("khttp.KHttp")
         every {khttp.get(any())} returns mockResponse
-        every {mockResponse.jsonObject} returns jsonObject
         every { mockCosmosContainer.queryItems(any<String>(), any(), Report::class.java) } returns items
 
         // Setup method invocation interception when createResponseBuilder is called to avoid null pointer on real method call.
@@ -66,10 +60,9 @@ class GetStatusFunctionTests {
         every { items.count() > 0} returns false
 
         every {mockResponse.statusCode} returns HttpStatus.OK.value()
-        val response = GetStatusFunction(request).withUploadId("1");
+        val response = GetStatusFunction(request).withUploadId("1")
         assert(response.status == HttpStatus.BAD_REQUEST)
     }
-
 
 }
 
