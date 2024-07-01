@@ -30,8 +30,6 @@
     "upload_id": "mcq1-20240216-01-d849c4b7-a447-44c3-a3b1-a0d50acec6ee",
     "data_stream_id": "celr",
     "data_stream_route": "hl7",
-    "trace_id": "UNKNOWN",
-    "span_id": "UNKNOWN",
     "supporting_metadata": {
       "message_type": "CASE"
     }
