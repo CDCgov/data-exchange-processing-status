@@ -11,9 +11,13 @@ import io.ktor.server.routing.*
  * @receiver Application
  */
 fun Application.configureRouting() {
+    val version = environment.config.propertyOrNull("ktor.version")?.getString() ?: "unknown"
     routing {
         get("/health") {
             call.respond(HealthQueryService().getHealth())
+        }
+        get("/version") {
+            call.respondText(version)
         }
     }
 }
