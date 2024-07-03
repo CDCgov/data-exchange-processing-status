@@ -20,7 +20,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
     fun getByUploadId(uploadId: String): List<ReportDeadLetter> {
         val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.id = '$uploadId'"
 
-        val reportItems = reportsDeadLetterContainer.queryItems(
+        val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
@@ -47,7 +47,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
                 "and r.dataStreamRoute= '$dataStreamRoute' " +
                 "and  $timeRangeWhereClause"
 
-     val reportItems = reportsDeadLetterContainer.queryItems(
+     val reportItems = reportsDeadLetterContainer?.queryItems(
          reportsSqlQuery, CosmosQueryRequestOptions(),
          ReportDao::class.java
      )
@@ -65,7 +65,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
      * @param startDate String
      * @param endDate String
      */
-    fun getCountByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String?, startDate:String?, endDate:String?, daysInterval:Int?): Int{
+    fun getCountByDataStreamByDateRange(dataStreamId: String, dataStreamRoute:String?, startDate:String?, endDate:String?, daysInterval:Int?): Int {
         val logger = KotlinLogging.logger {}
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
@@ -75,19 +75,13 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
         val reportsSqlQuery = "select value count(1) from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
                 "and  $timeRangeWhereClause " + if (dataStreamRoute!=null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
 
-         val reportItems = reportsDeadLetterContainer.queryItems(
+         val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             Int::class.java
         )
-        var count = 0
-        if (reportItems.iterator().hasNext()) {
-             count = reportItems.iterator().next()
-            logger.info("Count of records: $count")
-
-        } else {
-            logger.info("Count of records: 0")
-        }
-       return count
+        val count = reportItems?.count() ?: 0
+        logger.info("Count of records: $count")
+        return count
     }
 
     /**
@@ -98,7 +92,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
         val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.id in ($quotedIds)"
 
-        val reportItems = reportsDeadLetterContainer.queryItems(
+        val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )

@@ -8,5 +8,5 @@ class CosmosRepository(uri: String, authKey: String, reportsContainerName: Strin
 
 class CosmosDeadLetterRepository(uri: String, authKey: String, reportsContainerName: String, partitionKey: String) {
     val reportsDeadLetterContainer =
-        CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)!!
+        CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)
 }
