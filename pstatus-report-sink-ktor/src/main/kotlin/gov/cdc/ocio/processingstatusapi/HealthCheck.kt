@@ -66,14 +66,13 @@ class HealthCheck {
  * Service for querying the health of the report-sink service and its dependencies.
  *
  * @property logger KLogger
- * @property cosmosRepository CosmosRepository
+ * @property cosmosConfiguration CosmosConfiguration
  * @property azureServiceBusConfiguration AzureServiceBusConfiguration
  */
 class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-//    private val cosmosRepository by inject<CosmosRepository>()
     private val cosmosConfiguration by inject<CosmosConfiguration>()
 
     private val azureServiceBusConfiguration by inject<AzureServiceBusConfiguration>()
