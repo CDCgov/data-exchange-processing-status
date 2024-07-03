@@ -28,7 +28,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
         single(createdAtStart = true) { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
 
-        // Create an azure service bus config that can be dependency injected (for health checks)
+        //  Create a CosmosDB config that can be dependency injected (for health checks)
         single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
     }
     val asbConfigModule = module {
