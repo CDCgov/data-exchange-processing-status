@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.servicebus
 
+import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
@@ -29,9 +30,10 @@ class ReportsNotificationProcessor {
      * @throws BadStateException
      */
     @Throws(BadRequestException::class, InvalidSchemaDefException::class)
-    fun withMessage(message: String): String {
+    fun withMessage(message: ServiceBusReceivedMessage): String {
+        val sbMessage = message.body.toString()
         try {
-            return sendNotificationForReportStatus(gson.fromJson(message, ReportNotificationServiceBusMessage::class.java))
+            return sendNotificationForReportStatus(gson.fromJson(sbMessage, ReportNotificationServiceBusMessage::class.java))
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
             throw BadRequestException("Unable to interpret the create report message")
