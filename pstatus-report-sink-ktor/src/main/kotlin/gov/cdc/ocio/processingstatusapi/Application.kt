@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi
 
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
@@ -26,6 +27,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
         single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
         single(createdAtStart = true) { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
+
+        //  Create a CosmosDB config that can be dependency injected (for health checks)
+        single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
     }
     val asbConfigModule = module {
         // Create an azure service bus config that can be dependency injected (for health checks)

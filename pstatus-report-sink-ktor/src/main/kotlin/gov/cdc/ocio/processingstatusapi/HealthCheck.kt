@@ -1,16 +1,16 @@
 package gov.cdc.ocio.processingstatusapi
 
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.messaging.servicebus.ServiceBusClientBuilder
-import com.azure.messaging.servicebus.models.ServiceBusReceiveMode
+import com.azure.core.exception.ResourceNotFoundException
+import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.microsoft.azure.servicebus.primitives.ServiceBusException
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
-import gov.cdc.ocio.processingstatusapi.models.Report
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
+
 
 /**
  * Abstract class used for modeling the health issues of an individual service.
@@ -66,14 +66,14 @@ class HealthCheck {
  * Service for querying the health of the report-sink service and its dependencies.
  *
  * @property logger KLogger
- * @property cosmosRepository CosmosRepository
+ * @property cosmosConfiguration CosmosConfiguration
  * @property azureServiceBusConfiguration AzureServiceBusConfiguration
  */
 class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val cosmosRepository by inject<CosmosRepository>()
+    private val cosmosConfiguration by inject<CosmosConfiguration>()
 
     private val azureServiceBusConfiguration by inject<AzureServiceBusConfiguration>()
 
@@ -89,7 +89,7 @@ class HealthQueryService: KoinComponent {
         val serviceBusHealth = HealthCheckServiceBus()
         val time = measureTimeMillis {
             try {
-                cosmosDBHealthy = isCosmosDBHealthy()
+                cosmosDBHealthy = isCosmosDBHealthy(config = cosmosConfiguration)
                 cosmosDBHealth.status = "UP"
             } catch (ex: Exception) {
                 cosmosDBHealth.healthIssues = ex.message
@@ -116,15 +116,14 @@ class HealthQueryService: KoinComponent {
     /**
      * Check whether CosmosDB is healthy.
      *
+     * @param config CosmosConfiguration
      * @return Boolean
      */
-    private fun isCosmosDBHealthy(): Boolean {
-        val sqlQuery = "select * t offset 0 limit 1"
-        cosmosRepository.reportsContainer?.queryItems(
-            sqlQuery, CosmosQueryRequestOptions(),
-            Report::class.java
-        )
-        return true
+    private fun isCosmosDBHealthy(config: CosmosConfiguration): Boolean {
+        return if (CosmosClientManager.getCosmosClient(config.uri, config.authKey) == null)
+            throw Exception("Failed to establish a CosmosDB client.")
+        else
+            true
     }
 
     /**
@@ -132,22 +131,15 @@ class HealthQueryService: KoinComponent {
      *
      * @return Boolean
      */
-    @Throws(InterruptedException::class, ServiceBusException::class)
+    @Throws(ResourceNotFoundException::class, ServiceBusException::class)
     private fun isServiceBusHealthy(config: AzureServiceBusConfiguration): Boolean {
 
-        val receiverClient = ServiceBusClientBuilder()
+        val adminClient = ServiceBusAdministrationClientBuilder()
             .connectionString(config.connectionString)
-            .receiver()
-            .topicName(config.topicName)
-            .subscriptionName(config.subscriptionName)
-            .receiveMode(ServiceBusReceiveMode.PEEK_LOCK) // PEEK_LOCK mode to avoid consuming messages
             .buildClient()
 
-        // Attempt to open the connection
-        receiverClient.peekMessage()
-
-        // Close the receiver client
-        receiverClient.close()
+        // Get the properties of the topic to check the connection
+        adminClient.getTopic(config.topicName)
 
         return true
     }

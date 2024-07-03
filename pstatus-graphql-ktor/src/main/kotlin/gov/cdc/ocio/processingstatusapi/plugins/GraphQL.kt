@@ -13,6 +13,7 @@ import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.config.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -30,7 +31,7 @@ fun Application.graphQLModule() {
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()
     val myRealm = environment.config.property("jwt.realm").getString()
-    val graphQLPath = environment.config.property("graphql.path").getString()
+    val graphQLPath = environment.config.tryGetString("graphql.path")
     install(Authentication) {
         jwt {
             jwt("auth-jwt") {
@@ -97,8 +98,14 @@ fun Application.graphQLModule() {
         graphQLPostRoute()
         graphQLSubscriptionsRoute()
         graphQLSDLRoute()
-        graphiQLRoute(
-            graphQLEndpoint = "$graphQLPath/graphql",
-            subscriptionsEndpoint = "$graphQLPath/subscriptions") // Go to http://localhost:8080/graphiql for the GraphQL playground
+        // Go to http://localhost:8080/graphiql for the GraphQL playground
+        if (graphQLPath.isNullOrEmpty()) {
+            graphiQLRoute()
+        } else {
+            graphiQLRoute(
+                graphQLEndpoint = "$graphQLPath/graphql",
+                subscriptionsEndpoint = "$graphQLPath/subscriptions"
+            )
+        }
     }
 }
