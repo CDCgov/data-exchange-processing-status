@@ -5,7 +5,6 @@ package gov.cdc.ocio.processingstatusnotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.UnSubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeWebhookNotifications
-import kotlinx.serialization.Serializable
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -15,7 +14,6 @@ import io.ktor.server.routing.*
 /**
  * Email Subscription data class which is serialized back and forth
  */
-@Serializable
 data class EmailSubscription(val dataStreamId:String,
                              val dataStreamRoute:String,
                              val email: String,
@@ -24,7 +22,6 @@ data class EmailSubscription(val dataStreamId:String,
 /**
  * Webhook Subscription data class which is serialized back and forth
  */
-@Serializable
 data class WebhookSubscription(val dataStreamId:String,
                              val dataStreamRoute:String,
                              val url: String,
@@ -34,13 +31,11 @@ data class WebhookSubscription(val dataStreamId:String,
 /**
  * UnSubscription data class which is serialized back and forth when we need to unsubscribe by the subscriptionId
  */
-@Serializable
 data class UnSubscription(val subscriptionId:String)
 
 /**
  * The resultant class for subscription of email/webhooks
  */
-@Serializable
 data class SubscriptionResult(
     var subscription_id: String? = null,
     var timestamp: Long? = null,
@@ -90,5 +85,18 @@ fun Route.unsubscribeWebhookRoute() {
         val subscription = call.receive<UnSubscription>()
         val result = UnSubscribeNotifications().run(subscription.subscriptionId)
         call.respond(result)
+    }
+}
+
+fun Route.healthCheckRoute() {
+    get("/health") {
+        call.respond(HealthQueryService().getHealth())
+    }
+}
+
+fun Route.versionRoute() {
+    val version = environment?.config?.propertyOrNull("ktor.version")?.getString() ?: "unknown"
+    get("/version") {
+        call.respondText(version)
     }
 }
