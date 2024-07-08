@@ -6,12 +6,16 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.statement.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+
 
 /**
  * Email Subscription data class which is serialized back and forth which is in turn subscribed in to the MemCache
@@ -55,12 +59,21 @@ data class SubscriptionResult(
  */
 
 class NotificationsMutationService : Mutation {
-    val notificationsRouteBaseUrl =System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
+    private val notificationsRouteBaseUrl: String =System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
+    private val serviceUnavailable ="Notification service is unavailable and no connection has been established. Make sure the service is running"
     private val client = HttpClient {
         install(ContentNegotiation) {
             json()
         }
-
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.INFO
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 10000
+            connectTimeoutMillis = 10000
+            socketTimeoutMillis = 10000
+        }
     }
 
     /**
@@ -76,18 +89,26 @@ class NotificationsMutationService : Mutation {
     @Suppress("unused")
     fun subscribeEmail(dataStreamId:String, dataStreamRoute:String,email: String, stageName: String, statusType:String):SubscriptionResult {
         val url = "$notificationsRouteBaseUrl/subscribe/email"
-        return runBlocking {
-             client.post(url) {
-                contentType(io.ktor.http.ContentType.Application.Json)
-                setBody(EmailSubscription(dataStreamId, dataStreamRoute,email,stageName,statusType))
-            }.body()
 
+       return runBlocking {
+            try {
+             val response= client.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(EmailSubscription(dataStreamId, dataStreamRoute, email, stageName, statusType))
+                }
+                return@runBlocking ProcessResponse(response)
+            }
+           catch (e:Exception){
+               if(e.message!!.contains("Status:")){
+                   ProcessErrorCodes(url,e, null)
+               }
+               throw Exception(serviceUnavailable)
+           }
         }
-
     }
 
     /**
-     *  UnSubscribeEmail function which inturn uses the http client to invoke the notifications ktor microservice route to unsubscribe email notifications using the subscriberId
+     *  UnSubscribeEmail function which in turn uses the http client to invoke the notifications ktor microservice route to unsubscribe email notifications using the subscriberId
      * @param subscriptionId String
      */
 
@@ -95,17 +116,26 @@ class NotificationsMutationService : Mutation {
     @Suppress("unused")
     fun unsubscribeEmail(subscriptionId:String):SubscriptionResult {
         val url = "$notificationsRouteBaseUrl/unsubscribe/email"
-        return runBlocking {
-            client.post(url) {
-                contentType(ContentType.Application.Json)
-                setBody(UnSubscription(subscriptionId))
-            }.body()
-        }
 
+       return runBlocking {
+            try {
+                 val response =  client.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(UnSubscription(subscriptionId))
+                }
+                return@runBlocking ProcessResponse(response)
+            }
+            catch (e:Exception){
+                if(e.message!!.contains("Status:")){
+                    ProcessErrorCodes(url,e, subscriptionId)
+                }
+                throw Exception(serviceUnavailable)
+            }
+        }
     }
 
     /**
-     *  SubscribeWebhook function which inturn uses the http client to invoke the notifications ktor microservice route to subscribe webhook notifications
+     *  SubscribeWebhook function which in turn uses the http client to invoke the notifications ktor microservice route to subscribe webhook notifications
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param email String
@@ -118,17 +148,24 @@ class NotificationsMutationService : Mutation {
     fun subscribeWebhook(dataStreamId:String, dataStreamRoute:String,email: String, stageName: String, statusType:String):SubscriptionResult {
         val url = "$notificationsRouteBaseUrl/subscribe/webhook"
         return runBlocking {
-            client.post(url) {
-                contentType(io.ktor.http.ContentType.Application.Json)
+          try{
+           val response= client.post(url) {
+                contentType(ContentType.Application.Json)
                 setBody(EmailSubscription(dataStreamId, dataStreamRoute,email,stageName,statusType))
-            }.body()
-
+            }
+              return@runBlocking ProcessResponse(response)
+         }
+        catch (e:Exception){
+            if(e.message!!.contains("Status:")){
+                ProcessErrorCodes(url,e,null)
+            }
+            throw Exception(serviceUnavailable)
+          }
         }
-
     }
 
     /**
-     *  UnSubscribeWebhook function which inturn uses the http client to invoke the notifications ktor microservice route to unsubscribe webhook notifications
+     *  UnSubscribeWebhook function which in turn uses the http client to invoke the notifications ktor microservice route to unsubscribe webhook notifications
      * @param subscriptionId String
      */
 
@@ -136,12 +173,54 @@ class NotificationsMutationService : Mutation {
     @Suppress("unused")
     fun unsubscribeWebhook(subscriptionId:String):SubscriptionResult {
         val url = "$notificationsRouteBaseUrl/unsubscribe/webhook"
-        return runBlocking {
-            client.post(url) {
-                contentType(ContentType.Application.Json)
-                setBody(UnSubscription(subscriptionId))
-            }.body()
-        }
+         return runBlocking {
+            try {
+                val response = client.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(UnSubscription(subscriptionId))
+                }
+                return@runBlocking ProcessResponse(response)
+            }
+            catch (e:Exception){
+                if(e.message!!.contains("Status:")){
+                    ProcessErrorCodes(url,e, subscriptionId)
+               }
+                throw Exception(serviceUnavailable)
+            }
+          }
+      }
 
+    companion object {
+        /**
+         * Function to process the http response coming from notifications service
+         * @param response HttpResponse
+         */
+        private suspend fun ProcessResponse(response:HttpResponse):SubscriptionResult {
+            if (response.status == HttpStatusCode.OK) {
+              return  response.body()
+            } else {
+                throw Exception("Notification service is unavailable. Status:${response.status}")
+            }
+        }
+    }
+
+}
+
+@Throws(Exception::class)
+/**
+ * Function to process the http response codes and throw exception accordingly
+ * @param url String
+ * @param e Exception
+ * @param subscriptionId String?
+ */
+internal fun ProcessErrorCodes(url:String, e:Exception, subscriptionId:String?) {
+    val error = e.message!!.substringAfter("Status:").substringBefore(" ")
+    when (error) {
+        "500" -> throw Exception("Subscription with subscriptionId = ${subscriptionId} does not exist in the cache")
+        "400" -> throw Exception("Bad Request: Please check the request and retry")
+        "401" -> throw Exception("Unauthorized access to notifications service")
+        "403" -> throw Exception("Access to notifications service is forbidden")
+        "404" -> throw Exception("${url} not found")
+        else -> throw Exception(e.message)
     }
 }
