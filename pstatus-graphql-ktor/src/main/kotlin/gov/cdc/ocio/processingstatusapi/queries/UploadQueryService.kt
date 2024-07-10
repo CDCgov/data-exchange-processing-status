@@ -26,7 +26,7 @@ class UploadQueryService : Query {
         sortBy,
         sortOrder)
 
-                       @GraphQLDescription("Return various uploads statistics")
+    @GraphQLDescription("Return various uploads statistics")
     @Suppress("unused")
     fun getUploadStats(@GraphQLDescription("Data stream ID")
                        dataStreamId: String,
