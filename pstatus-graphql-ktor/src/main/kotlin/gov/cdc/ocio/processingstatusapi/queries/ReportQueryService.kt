@@ -12,7 +12,8 @@ class ReportQueryService : Query {
 
     @GraphQLDescription("Return all the reports associated with the provided uploadId")
     @Suppress("unused")
-    fun getReports(uploadId: String) = ReportLoader().getByUploadId(uploadId)
+    fun getReports(dataFetchingEnvironment: DataFetchingEnvironment,
+                   uploadId: String) = ReportLoader().getByUploadId(dataFetchingEnvironment, uploadId)
 
     @GraphQLDescription("Return list of reports based on ReportSearchParameters options")
     @Suppress("unused")

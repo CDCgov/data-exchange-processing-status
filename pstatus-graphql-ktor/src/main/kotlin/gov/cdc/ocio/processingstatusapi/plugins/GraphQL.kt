@@ -6,8 +6,8 @@ import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
+import gov.cdc.ocio.processingstatusapi.mutations.NotificationsMutationService
 import gov.cdc.ocio.processingstatusapi.queries.*
-import gov.cdc.ocio.processingstatusapi.mutations.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -19,6 +19,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import java.time.Duration
+import java.util.*
+
 
 fun Application.graphQLModule() {
     install(WebSockets) {
@@ -37,7 +39,7 @@ fun Application.graphQLModule() {
             jwt("auth-jwt") {
                 realm = myRealm
                 verifier(JWT
-                    .require(Algorithm.HMAC256(secret))
+                    .require(Algorithm.HMAC256(Base64.getDecoder().decode(secret)))
                     .withAudience(audience)
                     .withIssuer(issuer)
                     .build())
@@ -48,14 +50,14 @@ fun Application.graphQLModule() {
                         null
                     }
                 }
-                challenge { _, _ ->
-                    call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+                challenge { defaultScheme, realm ->
+                    call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired; defaultScheme = $defaultScheme, realm = $realm")
                 }
             }
         }
     }
     install(StatusPages) {
-        defaultGraphQLStatusPages()
+        customGraphQLStatusPages()
     }
 //    install(CORS) {
 //        anyHost()
@@ -85,17 +87,14 @@ fun Application.graphQLModule() {
                 ReportDeadLetterDataLoader
             )
         }
+        server {
+            contextFactory = CustomGraphQLContextFactory()
+        }
     }
     install(Routing) {
         authenticate("auth-jwt") {
-//            post("/graphql") {
-//                val principal = call.principal<JWTPrincipal>()
-//                val username = principal!!.payload.getClaim("username").asString()
-//                val expiresAt = principal.expiresAt?.time?.minus(System.currentTimeMillis())
-//                call.respondText("Hello, $username! Token is expired at $expiresAt ms.")
-//            }
+            graphQLPostRoute()
         }
-        graphQLPostRoute()
         graphQLSubscriptionsRoute()
         graphQLSDLRoute()
         // Go to http://localhost:8080/graphiql for the GraphQL playground
