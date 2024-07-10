@@ -17,15 +17,5 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.22.0
-      - name: Vet
-        run: go vet ./...
-      - name: Run Tests
-        run: go test -coverprofile=c.out -coverpkg=./... ./...
-      - name: Show coverage
-        run: go tool cover -func=c.out
-      - name: Build Check
-        run: go build -o pstatus-graphql-ktor ./cmd/main.go
+      - name: Run Gradle Test
+        run: ./gradlew test
