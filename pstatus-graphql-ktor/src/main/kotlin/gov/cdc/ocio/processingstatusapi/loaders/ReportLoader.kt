@@ -38,8 +38,11 @@ class ReportLoader: CosmosLoader() {
     fun getByUploadId(dataFetchingEnvironment: DataFetchingEnvironment, uploadId: String): List<Report> {
         // Obtain the data streams available to the user from the data fetching env.
         val authContext = dataFetchingEnvironment.graphQlContext.get<AuthenticationContext>("AuthContext")
-        val principal = authContext.principal<JWTPrincipal>()
-        val dataStreams = principal?.payload?.getClaim("dataStreams")?.asList(DataStream::class.java)
+        var dataStreams: List<DataStream>? = null
+        authContext?.run {
+            val principal = authContext.principal<JWTPrincipal>()
+            dataStreams = principal?.payload?.getClaim("dataStreams")?.asList(DataStream::class.java)
+        }
 
         val reportsSqlQuery = "select * from $reportsContainerName r where r.uploadId = '$uploadId'"
 
@@ -52,8 +55,10 @@ class ReportLoader: CosmosLoader() {
         val reports = mutableListOf<Report>()
         reportItems?.forEach { reportItem ->
             val report = daoToReport(reportItem)
-            if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
-                throw ForbiddenException("You are not allowed to access this resource.")
+            dataStreams?.run {
+                if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
+                    throw ForbiddenException("You are not allowed to access this resource.")
+            }
             reports.add(report)
         }
 

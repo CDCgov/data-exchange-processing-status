@@ -29,29 +29,38 @@ fun Application.graphQLModule() {
         contentConverter = JacksonWebsocketContentConverter()
     }
     // see https://ktor.io/docs/server-jwt.html#configure-verifier
+    // Get security settings and default to enabled if missing
+    val securityEnabled = environment.config.tryGetString("jwt.enabled")?.lowercase() != "false"
     val secret = environment.config.property("jwt.secret").getString()
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()
     val myRealm = environment.config.property("jwt.realm").getString()
     val graphQLPath = environment.config.tryGetString("graphql.path")
-    install(Authentication) {
-        jwt {
-            jwt("auth-jwt") {
-                realm = myRealm
-                verifier(JWT
-                    .require(Algorithm.HMAC256(Base64.getDecoder().decode(secret)))
-                    .withAudience(audience)
-                    .withIssuer(issuer)
-                    .build())
-                validate { credential ->
-                    if (credential.payload.getClaim("username").asString() != "") {
-                        JWTPrincipal(credential.payload)
-                    } else {
-                        null
+    if (securityEnabled) {
+        install(Authentication) {
+            jwt {
+                jwt("auth-jwt") {
+                    realm = myRealm
+                    verifier(
+                        JWT
+                            .require(Algorithm.HMAC256(Base64.getDecoder().decode(secret)))
+                            .withAudience(audience)
+                            .withIssuer(issuer)
+                            .build()
+                    )
+                    validate { credential ->
+                        if (credential.payload.getClaim("username").asString() != "") {
+                            JWTPrincipal(credential.payload)
+                        } else {
+                            null
+                        }
                     }
-                }
-                challenge { defaultScheme, realm ->
-                    call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired; defaultScheme = $defaultScheme, realm = $realm")
+                    challenge { defaultScheme, realm ->
+                        call.respond(
+                            HttpStatusCode.Unauthorized,
+                            "Token is not valid or has expired; defaultScheme = $defaultScheme, realm = $realm"
+                        )
+                    }
                 }
             }
         }
@@ -87,12 +96,18 @@ fun Application.graphQLModule() {
                 ReportDeadLetterDataLoader
             )
         }
-        server {
-            contextFactory = CustomGraphQLContextFactory()
+        if (securityEnabled) {
+            server {
+                contextFactory = CustomGraphQLContextFactory()
+            }
         }
     }
     install(Routing) {
-        authenticate("auth-jwt") {
+        if (securityEnabled) {
+            authenticate("auth-jwt") {
+                graphQLPostRoute()
+            }
+        } else {
             graphQLPostRoute()
         }
         graphQLSubscriptionsRoute()
