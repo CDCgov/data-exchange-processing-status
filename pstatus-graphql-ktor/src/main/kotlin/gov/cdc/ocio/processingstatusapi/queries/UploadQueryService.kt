@@ -9,14 +9,24 @@ class UploadQueryService : Query {
 
     @GraphQLDescription("Get the upload statuses for the given filter, sort, and pagination criteria")
     @Suppress("unused")
-    fun uploads(dataStreamId: String,
+    fun uploads(@GraphQLDescription("Data stream ID")
+                dataStreamId: String,
+                @GraphQLDescription("Data stream route")
                 dataStreamRoute: String? = null,
+                @GraphQLDescription("Start date for fetching the list of uploads")
                 dateStart: String? = null,
+                @GraphQLDescription("End date for fetching the list of uploads")
                 dateEnd: String? = null,
+                @GraphQLDescription("Page Size of the uploads results")
                 pageSize: Int = UploadStatusLoader.DEFAULT_PAGE_SIZE,
+                @GraphQLDescription("Page Number of the uploads results")
                 pageNumber: Int = 1,
+                @GraphQLDescription("Sort By")
                 sortBy: String? = null,
-                sortOrder: String?) = UploadStatusLoader().uploadStatus(
+                @GraphQLDescription("Sort Order")
+                sortOrder: String?,
+                @GraphQLDescription("Sort Order")
+                fileName: String? = null) = UploadStatusLoader().uploadStatus(
         dataStreamId,
         dataStreamRoute,
         dateStart,
@@ -24,9 +34,10 @@ class UploadQueryService : Query {
         pageSize,
         pageNumber,
         sortBy,
-        sortOrder)
+        sortOrder,
+        fileName)
 
-                       @GraphQLDescription("Return various uploads statistics")
+    @GraphQLDescription("Return various uploads statistics")
     @Suppress("unused")
     fun getUploadStats(@GraphQLDescription("Data stream ID")
                        dataStreamId: String,
