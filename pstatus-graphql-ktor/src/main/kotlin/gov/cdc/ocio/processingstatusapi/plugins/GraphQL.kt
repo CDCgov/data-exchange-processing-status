@@ -18,11 +18,19 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import mu.KotlinLogging
 import java.time.Duration
 import java.util.*
 
 
+/**
+ * Implementation of the GraphQL module for PS API.
+ *
+ * @receiver Application
+ */
 fun Application.graphQLModule() {
+    val logger = KotlinLogging.logger {}
+
     install(WebSockets) {
         // needed for subscriptions
         pingPeriod = Duration.ofSeconds(1)
@@ -52,6 +60,7 @@ fun Application.graphQLModule() {
                         if (credential.payload.getClaim("username").asString() != "") {
                             JWTPrincipal(credential.payload)
                         } else {
+                            logger.error("username missing from JWT claims, denying the token")
                             null
                         }
                     }

@@ -10,12 +10,25 @@ import java.time.OffsetDateTime
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
+/**
+ * Define a GraphQL scalar for the Long type.
+ */
 val graphqlLongClassType: GraphQLScalarType = GraphQLScalarType.newScalar()
     .name("Long")
     .coercing(ExtendedScalars.GraphQLLong.coercing)
     .build()
 
+/**
+ * Custom schema generator hooks for the PS API reports.
+ */
 class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
+
+    /**
+     * Override the graphql schema generator types to include the new scalars for Long, DateTime, Maps, etc.
+     *
+     * @param type KType
+     * @return GraphQLType?
+     */
     override fun willGenerateGraphQLType(type: KType): GraphQLType? = when (type.classifier as? KClass<*>) {
         OffsetDateTime::class -> DateTimeScalar.INSTANCE
         Long::class ->graphqlLongClassType

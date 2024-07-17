@@ -14,20 +14,6 @@ class ForbiddenException(message: String) : RuntimeException(message)
 
 class ReportLoader: CosmosLoader() {
 
-    fun getAnyReport(): Report? {
-        val reportsSqlQuery = "select * from $reportsContainerName r offset 0 limit 1"
-        val reportItems = reportsContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
-            ReportDao::class.java
-        )
-
-        return if (reportItems == null || reportItems.count() == 0)
-            null
-        else {
-            daoToReport(reportItems.first())
-        }
-    }
-
     /**
      * Get all reports associated with the provided upload id.
      *
@@ -65,6 +51,12 @@ class ReportLoader: CosmosLoader() {
         return reports
     }
 
+    /**
+     * Search for reports with the provided ids.
+     *
+     * @param ids List<String>
+     * @return List<Report>
+     */
     fun search(ids: List<String>): List<Report> {
         val quotedIds = ids.joinToString("\",\"", "\"", "\"")
 
@@ -81,6 +73,12 @@ class ReportLoader: CosmosLoader() {
         return reports
     }
 
+    /**
+     * Converts a Report DAO (as received by CosmosDB) into a Report object.
+     *
+     * @param reportDao ReportDao
+     * @return Report
+     */
     private fun daoToReport(reportDao: ReportDao): Report {
         return Report().apply {
             this.id = reportDao.id
