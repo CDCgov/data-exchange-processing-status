@@ -2,9 +2,8 @@ package gov.cdc.ocio.processingstatusapi.models.dao
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
-import gov.cdc.ocio.processingstatusapi.models.reports.MetadataVerifyContent
-import gov.cdc.ocio.processingstatusapi.models.reports.UploadStatusContent
+import gov.cdc.ocio.processingstatusapi.models.Report
+import java.time.ZoneOffset
 import java.util.*
 
 data class ReportDao(
@@ -39,26 +38,6 @@ data class ReportDao(
 
     var content: Any? = null
 ) {
-    val contentAsType: SchemaDefinition?
-        get() {
-            if (content == null) return null
-
-            return when (contentType?.lowercase(Locale.getDefault())) {
-                "json" -> {
-                    if (content is LinkedHashMap<*, *>) {
-                        val json = Gson().toJson(content, MutableMap::class.java).toString()
-                        when ((content as LinkedHashMap<*, *>)["schema_name"]) {
-                            "dex-metadata-verify" -> return Gson().fromJson(json, MetadataVerifyContent::class.java)
-                            "upload" -> return Gson().fromJson(json, UploadStatusContent::class.java)
-                            else -> return null
-                        }
-                    } else
-                        null // unable to determine a JSON schema
-                }
-
-                else -> null // unable to determine a JSON schema
-            }
-        }
 
     val contentAsString: String?
         get() {
@@ -74,4 +53,20 @@ data class ReportDao(
                 else -> content.toString()
             }
         }
+
+    /**
+     * Function which converts cosmos data object to Report object
+     */
+    fun toReport() = Report().apply {
+        this.id = this@ReportDao.id
+        this.uploadId = this@ReportDao.uploadId
+        this.reportId = this@ReportDao.reportId
+        this.dataStreamId = this@ReportDao.dataStreamId
+        this.dataStreamRoute = this@ReportDao.dataStreamRoute
+        this.messageId = this@ReportDao.messageId
+        this.status = this@ReportDao.status
+        this.timestamp = this@ReportDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+        this.contentType = this@ReportDao.contentType
+        this.content = this@ReportDao.content as? Map<*, *>
+    }
 }
