@@ -8,13 +8,20 @@ import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
-import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import mu.KotlinLogging
-
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.*
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.networknt.schema.JsonSchema
+import com.networknt.schema.JsonSchemaFactory
+import com.networknt.schema.SpecVersion
+import com.networknt.schema.ValidationMessage
+import java.awt.datatransfer.MimeTypeParseException
+import java.io.File
+import javax.activation.MimeType
 
 /**
  * The service bus is another interface for receiving reports.
@@ -39,6 +46,7 @@ class ServiceBusProcessor {
      */
     @Throws(BadRequestException::class)
     fun withMessage(message: ServiceBusReceivedMessage) {
+        validateJsonSchema(message)
         val sbMessageId = message.messageId
         var sbMessage = message.body.toString()
         val sbMessageStatus = message.state.name
@@ -70,7 +78,6 @@ class ServiceBusProcessor {
     @Throws(BadRequestException::class)
     private fun createReport(messageId: String, messageStatus: String, createReportMessage: CreateReportSBMessage) {
         try {
-            validateReport(createReportMessage)
             val uploadId = createReportMessage.uploadId
             val stageName = createReportMessage.stageName
             logger.info("Creating report for uploadId = ${uploadId} with stageName = $stageName")
@@ -96,92 +103,177 @@ class ServiceBusProcessor {
         }
 
     }
-
     /**
-     * Function to validate report attributes for missing required fields, for schema validation and malformed content message
-     * @param createReportMessage CreateReportSBMessage
+     * Function to validate report attributes for missing required fields, for schema validation and malformed content message using networknt/json-schema-validator
+     * @param message ServiceBusReceivedMessage
      * @throws BadRequestException
      */
-    private fun validateReport(createReportMessage: CreateReportSBMessage) {
+    private fun validateJsonSchema(message: ServiceBusReceivedMessage){
         val invalidData = mutableListOf<String>()
-        var reason = ""
+        var reason: String
+        //TODO : this needs to be replaced with more robust source or a URL of some sorts
+        val schemaDirectoryPath = System.getenv("SCHEMA_DIRECTORY_PATH")
+          // Convert the message body to a JSON string
+        val messageBody = String(message.body.toBytes())
+        val objectMapper: ObjectMapper = jacksonObjectMapper()
 
-        if (createReportMessage.uploadId.isNullOrBlank()) {
-            invalidData.add("uploadId")
-        }
-        if (createReportMessage.dataStreamId.isNullOrBlank()) {
-            invalidData.add("dataStreamId")
-        }
-        if (createReportMessage.dataStreamRoute.isNullOrBlank()) {
-            invalidData.add("dataStreamRoute")
-        }
-        if (createReportMessage.stageName.isNullOrBlank()) {
-            invalidData.add("stageName")
-        }
-        if (createReportMessage.contentType.isNullOrBlank()) {
-            invalidData.add("contentType")
-        }
-        if (isNullOrEmpty(createReportMessage.content)) {
-            invalidData.add("content")
-        }
-        if (invalidData.isNotEmpty()) {
-                reason = "Missing fields: ${invalidData.joinToString(", ")}"
+        // Check for the presence of `report_schema_version`
+        try {
+           val createReportMessage: CreateReportSBMessage = if (System.getProperty("isTestEnvironment") != "true") {
+                gson.fromJson(messageBody, CreateReportSBMessage::class.java)
+            } else{
+                gson.fromJson(message.body.toString(), CreateReportSBMessage::class.java)
+            }
+
+            //Convert to JSON
+            val jsonNode: JsonNode =if (System.getProperty("isTestEnvironment") != "true") {
+                objectMapper.readTree(messageBody)
+            } else{
+                 objectMapper.readTree(message.body.toString())
+            }
+           // Check for the presence of `report_schema_version`
+            val reportSchemaVersionNode = jsonNode.get("report_schema_version")
+            if (reportSchemaVersionNode == null || reportSchemaVersionNode.asText().isEmpty()) {
+                reason ="Report rejected: `report_schema_version` field is missing or empty."
+                ProcessError(reason,invalidData,createReportMessage)
             } else {
-                try {
-                    SchemaDefinition.fromJsonString(createReportMessage.content)
-                } catch (e: InvalidSchemaDefException) {
-                    reason = "Invalid schema definition: ${e.localizedMessage}"
-                    invalidData.add(reason)
 
-                } catch (e: Exception) {
-                    reason = "Malformed message: ${e.localizedMessage}"
-                    invalidData.add(reason)
-                    //convert content to base64 encoded string
-                    createReportMessage.content = convertToStringOrBase64(createReportMessage.content)
+                val reportSchemaVersion = reportSchemaVersionNode.asText()
+                val schemaFilePath = "$schemaDirectoryPath/base.$reportSchemaVersion.schema.json"
+
+                // Attempt to load the schema
+                val schemaFile = File(schemaFilePath)
+                if (!schemaFile.exists()) {
+                    reason ="Report rejected: Schema file not found for base schema version $reportSchemaVersion."
+                    ProcessError(reason,invalidData,createReportMessage)
                 }
+                //Validate report schema version schema
+                ValidateSchema(jsonNode,schemaFile,objectMapper,invalidData,createReportMessage)
+
+                // Check if the content_type is JSON
+                val contentTypeNode = jsonNode.get("content_type")
+                if (contentTypeNode == null) {
+                   reason="Report rejected: `content_type` is not JSON or is missing."
+                    ProcessError(reason,invalidData,createReportMessage)
+                }
+
+                else{
+                  if(!isJsonMimeType(contentTypeNode.asText()))
+                  {
+                      //don't need to go further down if the mimetype is other than json. i.e. xml or text etc....
+                        return
+                   }
+                }
+                    // Open the content as JSON
+                val contentNode = jsonNode.get("content")
+                if (contentNode == null) {
+                    reason="Report rejected: `content` is not JSON or is missing."
+                   ProcessError(reason,invalidData,createReportMessage)
+                }
+                // Check for `content_schema_name` and `content_schema_version`
+                val contentSchemaNameNode = contentNode.get("content_schema_name")
+                val contentSchemaVersionNode = contentNode.get("content_schema_version")
+                if (contentSchemaNameNode == null || contentSchemaNameNode.asText().isEmpty() ||
+                    contentSchemaVersionNode == null || contentSchemaVersionNode.asText().isEmpty()
+                ) {
+                    reason= "Report rejected: `content_schema_name` or `content_schema_version` is missing or empty."
+                    ProcessError(reason,invalidData,createReportMessage)
+                }
+
+                val contentSchemaName = contentSchemaNameNode.asText()
+                val contentSchemaVersion = contentSchemaVersionNode.asText()
+                //TODO  Will this be from the same source???
+                val contentSchemaFilePath = "$schemaDirectoryPath/$contentSchemaName.$contentSchemaVersion.schema.json"
+
+                // Attempt to load the schema
+                val contentSchemaFile = File(contentSchemaFilePath)
+                if (!contentSchemaFile .exists()) {
+                    reason ="Report rejected: Content schema file not found for content schema name $contentSchemaName and schema version $contentSchemaVersion."
+                    ProcessError(reason,invalidData,createReportMessage)
+                }
+                //Validate content schema
+                 ValidateSchema(contentNode,contentSchemaFile,objectMapper,invalidData, createReportMessage)
+                }
+
+            if (invalidData.isNotEmpty()) {
+                reason ="Validation of the json schema failed"
+                ProcessError(reason,invalidData,createReportMessage)
             }
 
-        if (invalidData.isNotEmpty()) {
-            //This should not run for unit tests
-            if (System.getProperty("isTestEnvironment") != "true") {
-                // Write the content of the dead-letter reports to CosmosDb
-                ReportManager().createDeadLetterReport(
-                    createReportMessage.uploadId,
-                    createReportMessage.dataStreamId,
-                    createReportMessage.dataStreamRoute,
-                    createReportMessage.stageName,
-                    createReportMessage.dispositionType,
-                    createReportMessage.contentType,
-                    createReportMessage.content,
-                    invalidData
-                )
-            }
-            throw BadRequestException(reason)
-       }
-    }
-
-    /** Function to check whether the value is null or empty based on its type
-     * @param value Any
-     */
-    private fun isNullOrEmpty(value: Any?): Boolean {
-        return when (value) {
-            null -> true
-            is String -> value.isEmpty()
-            is Collection<*> -> value.isEmpty()
-            is Map<*, *> -> value.isEmpty()
-            else -> false // You can adjust this to your needs
+        } catch (e: Exception) {
+            LOGGER.error("Report rejected: Malformed JSON or error processing the report - ${e.message}")
+            throw e
         }
     }
 
-    /**
-     * Convert the malformed content to base64 encoded string
-     * @param obj Any
-     */
-    private fun convertToStringOrBase64(obj: Any?): String {
-        val bytes = when (obj) {
-            is ByteArray -> obj
-            else -> obj.toString().toByteArray()
+    companion object {
+        /**
+         *  Function to send the invalid data reasons to the deadLetter queue
+         *  @param invalidData MutableList<String>
+         *  @param createReportMessage CreateReportSBMessage
+         */
+        @JvmStatic
+        private fun SendToDeadLetter(invalidData:MutableList<String>, createReportMessage: CreateReportSBMessage){
+            if (invalidData.isNotEmpty()) {
+                //This should not run for unit tests
+                if (System.getProperty("isTestEnvironment") != "true") {
+                    // Write the content of the dead-letter reports to CosmosDb
+                    ReportManager().createDeadLetterReport(
+                        createReportMessage.uploadId,
+                        createReportMessage.dataStreamId,
+                        createReportMessage.dataStreamRoute,
+                        createReportMessage.stageName,
+                        createReportMessage.dispositionType,
+                        createReportMessage.contentType,
+                        createReportMessage.content,
+                        invalidData
+                    )
+                }
+                throw BadRequestException(invalidData.joinToString(separator = ","))
+            }
         }
-        return Base64.getEncoder().encodeToString(bytes)
+        /**
+         *  Function to process the error by logging it and adding to the invalidData list and sending it to deadletter
+         *  @param reason String
+         *  @param invalidData MutableList<String>
+         *  @param createReportMessage CreateReportSBMessage
+         */
+        @JvmStatic
+        private fun ProcessError(reason:String, invalidData:MutableList<String>, createReportMessage: CreateReportSBMessage) {
+            LOGGER.error(reason)
+            invalidData.add(reason)
+            SendToDeadLetter(invalidData, createReportMessage)
+        }
+
+        /**
+         *  Function to validate the schema based on the schema file and the json contents passed into it
+         *  @param schemaFile String
+         *  @param objectMapper ObjectMapper
+
+         */
+        @JvmStatic
+        private fun ValidateSchema(jsonNode:JsonNode,schemaFile:File, objectMapper: ObjectMapper,invalidData:MutableList<String>,createReportMessage: CreateReportSBMessage) {
+            val schemaNode: JsonNode = objectMapper.readTree(schemaFile)
+            val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+            val schema: JsonSchema = schemaFactory.getSchema(schemaNode)
+            val schemaValidationMessages: Set<ValidationMessage> = schema.validate(jsonNode)
+
+            if (schemaValidationMessages.isEmpty()) {
+                LOGGER.info("JSON is valid against the content schema $schema.")
+            } else {
+               val reason ="JSON is invalid against the content schema $schema.Errors:"
+                schemaValidationMessages.forEach { invalidData.add(it.message) }
+                ProcessError(reason, invalidData,createReportMessage)
+            }
+        }
+        @JvmStatic
+       private fun isJsonMimeType(contentType: String): Boolean {
+            return try {
+                val mimeType = MimeType(contentType)
+                mimeType.primaryType == "application" && mimeType.subType == "json"
+            } catch (e: MimeTypeParseException) {
+                false
+            }
+        }
     }
 }
