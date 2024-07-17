@@ -7,6 +7,19 @@ import gov.cdc.ocio.processingstatusapi.loaders.UploadStatusLoader
 
 class UploadQueryService : Query {
 
+    /**
+     * Get the upload status for the given search criteria.
+     *
+     * @param dataStreamId String
+     * @param dataStreamRoute String?
+     * @param dateStart String?
+     * @param dateEnd String?
+     * @param pageSize Int
+     * @param pageNumber Int
+     * @param sortBy String?
+     * @param sortOrder String?
+     * @return UploadsStatus
+     */
     @GraphQLDescription("Get the upload statuses for the given filter, sort, and pagination criteria")
     @Suppress("unused")
     fun uploads(dataStreamId: String,
@@ -26,7 +39,17 @@ class UploadQueryService : Query {
         sortBy,
         sortOrder)
 
-                       @GraphQLDescription("Return various uploads statistics")
+    /**
+     * Provide the upload statistics for the given search criteria.
+     *
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param dateStart String?
+     * @param dateEnd String?
+     * @param daysInterval Int?
+     * @return UploadStats
+     */
+    @GraphQLDescription("Return various uploads statistics")
     @Suppress("unused")
     fun getUploadStats(@GraphQLDescription("Data stream ID")
                        dataStreamId: String,
