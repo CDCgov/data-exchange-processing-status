@@ -128,6 +128,19 @@ class ReportSchemaValidationTests {
         Assert.assertTrue(exceptionThrown)
     }
     @Test
+    fun testReportContentSchemaValidationFileNotFound() {
+        val testMessage =File("./src/test/kotlin/data/report_schema_contentSchemaVersion_validation.json").readText()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        var exceptionThrown = false
+        try {
+            ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
+        } catch(ex: BadRequestException) {
+            exceptionThrown = ex.localizedMessage.contains("Report rejected: Content schema file not found for content schema name hl7v2-debatch and schema version 2.0.0.")
+        }
+        Assert.assertTrue(exceptionThrown)
+    }
+
+    @Test
     fun testReportSchemaValidationPass() {
         val testMessage =File("./src/test/kotlin/data/report_schema_validation_pass.json").readText()
         val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
