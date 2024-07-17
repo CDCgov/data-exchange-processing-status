@@ -1,8 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import com.azure.cosmos.implementation.changefeed.common.ChangeFeedHelper
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.FeedResponse
+import com.azure.cosmos.models.PartitionKey
+import com.azure.cosmos.models.SqlParameter
+import com.azure.cosmos.models.SqlQuerySpec
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
@@ -35,7 +36,7 @@ class UploadStatusLoader: CosmosLoader() {
      * @throws BadStateException
      */
     @Throws(BadRequestException::class, ContentException::class, BadStateException::class)
-    fun uploadStatus(dataStreamId: String,
+    fun getUploadStatus(dataStreamId: String,
                      dataStreamRoute: String?,
                      dateStart: String?,
                      dateEnd: String?,
@@ -45,7 +46,6 @@ class UploadStatusLoader: CosmosLoader() {
                      sortOrder: String?,
                      fileName:String?
     ): UploadsStatus {
-
         logger.info("dataStreamId = $dataStreamId")
 
         val pageUtils = PageUtils.Builder()
@@ -56,32 +56,43 @@ class UploadStatusLoader: CosmosLoader() {
 
         val pageSizeAsInt = pageUtils.getPageSize(pageSize)
 
+        //Create SQL Query String
         val sqlQuery = StringBuilder()
-        sqlQuery.append("from $reportsContainerName t where t.dataStreamId = '$dataStreamId'")
+        sqlQuery.append(" from $reportsContainerName t")
 
-        dataStreamRoute?.run {
-            sqlQuery.append(" and t.dataStreamRoute = '$dataStreamRoute'")
+        // Create SQL parameter list with all the filter fields
+        val paramList = ArrayList<SqlParameter>()
+
+        dataStreamId.run {
+            paramList.add(SqlParameter("@dataStreamId", dataStreamId))
+            sqlQuery.append(" where t.dataStreamId = @dataStreamId")
         }
-
+        dataStreamRoute?.run {
+            paramList.add(SqlParameter("@dataStreamRoute", dataStreamRoute))
+            sqlQuery.append(" and t.dataStreamRoute = @dataStreamRoute")
+        }
         fileName?.run {
-            sqlQuery.append(" and t.content.filename = '$fileName'")
+            paramList.add(SqlParameter("@fileName", fileName))
+            sqlQuery.append(" and t.content.filename = @fileName")
         }
 
         dateStart?.run {
             val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-            sqlQuery.append(" and t._ts >= $dateStartEpochSecs")
+            paramList.add(SqlParameter("@dateStart", dateStartEpochSecs))
+            sqlQuery.append(" and t._ts >= @dateStart")
         }
         dateEnd?.run {
             val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-            sqlQuery.append(" and t._ts < $dateEndEpochSecs")
+            paramList.add(SqlParameter("@dateEnd", dateEndEpochSecs))
+            sqlQuery.append(" and t._ts < @dateEnd")
         }
         sqlQuery.append(" group by t.uploadId, t._ts")
 
-        // Check the sort field as well
+        // Check the sort field as well to add them to the group by clause
         sortBy.run {
             val sortField = when (sortBy) {
-                //"date" -> "_ts"
-                "filename" -> "content.filename"
+                //"date" -> "_ts" // "group  by _ts" is already added by default above
+                "fileName" -> "content.filename"
                 "dataStreamId" -> "destinationId"
                 "dataStreamRoute" -> "eventType"
                 "stageName" -> "stageName"
@@ -91,42 +102,52 @@ class UploadStatusLoader: CosmosLoader() {
             }
             //Add the sort by fields to grouping
             sqlQuery.append(" , t.$sortField")
-            logger.info("sqlQuery = $sqlQuery")
+            logger.info("Upload Status, sqlQuery = $sqlQuery")
         }
-
 
         // Query for getting counts in the structure of UploadCounts object.  Note the MAX aggregate which is used to
         // get the latest timestamp from t._ts.
-        //val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
-        val countQuery = "select count(1) as reportCounts $sqlQuery"
-        logger.info("upload status count query = $countQuery")
+        val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
+        logger.info("upload status, countQuery = $countQuery")
 
         var totalItems = 0
-        try {
+
+        //Create items to query the Cosmos Container
+
+        //Create QuerySpec
+        val querySpec = SqlQuerySpec(countQuery, paramList)
+
+        //Create CosmosQueryRequestOptions and set the partitionKey
+        val options = CosmosQueryRequestOptions()
+        options.setPartitionKey(PartitionKey("uploadId"))
+        options.setMaxDegreeOfParallelism(-1);
+        options.setMaxBufferedItemCount(-1);
+
+        try{
             val count = reportsContainer?.queryItems(
-                countQuery, CosmosQueryRequestOptions(),
-                UploadCounts::class.java
-            )
+                querySpec,
+                CosmosQueryRequestOptions(),
+                UploadCounts::class.java)
             totalItems = count?.count() ?: 0
             logger.info("Upload status matched count = $totalItems")
-        } catch (ex: Exception) {
+        }catch (ex: Exception) {
             // no items found or problem with query
             logger.error(ex.localizedMessage)
         }
 
+        // If there is data
         val numberOfPages: Int
         var pageNumberAsInt: Int
         var reports = mutableMapOf<String, List<ReportDao>>()
         if (totalItems > 0L) {
             numberOfPages =  (totalItems / pageSize + if (totalItems % pageSize > 0) 1 else 0)
-
             pageNumberAsInt = PageUtils.getPageNumber(pageNumber, numberOfPages)
 
-            // order by not working
+            // order by
             sortBy?.run {
                 val sortField = when (sortBy) {
                     "date" -> "_ts"
-                    "filename" -> "content.filename"
+                    "fileName" -> "content.filename"
                     "dataStreamId" -> "destinationId"
                     "dataStreamRoute" -> "eventType"
                     "stageName" -> "stageName"
@@ -157,10 +178,32 @@ class UploadStatusLoader: CosmosLoader() {
             }
             val offset = (pageNumberAsInt - 1) * pageSize
             val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
-
-            //val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
             logger.info("upload status data query = $dataSqlQuery")
 
+            val querySpecResults = SqlQuerySpec(dataSqlQuery, paramList)
+            val results = reportsContainer?.queryItems(
+                querySpecResults,
+                CosmosQueryRequestOptions(),
+                UploadCounts::class.java
+            )?.toList()
+
+            results?.forEach { report ->
+                val uploadId = report.uploadId
+                    ?: throw BadStateException("Upload ID unexpectedly null")
+                val reportsSqlQuery = "select * from $reportsContainerName t where t.uploadId = '$uploadId'"
+                logger.info("get reports for upload query = $reportsSqlQuery")
+                val reportsForUploadId = reportsContainer?.queryItems(
+                    reportsSqlQuery, CosmosQueryRequestOptions(),
+                    ReportDao::class.java
+                )?.toList()
+
+                reportsForUploadId?.let { reports[uploadId] = reportsForUploadId }
+            }
+
+
+
+
+            //Testing with ContinuationToken
 //            val options = CosmosQueryRequestOptions()
 //            // 0 maximum parallel tasks, effectively serial execution
 //            options.setMaxDegreeOfParallelism(0)
@@ -171,9 +214,7 @@ class UploadStatusLoader: CosmosLoader() {
 
 
 
-
-
-
+/*
             //OLD - Commented for Pagination
             val results = reportsContainer?.queryItems(
                 dataSqlQuery, CosmosQueryRequestOptions(),
@@ -192,6 +233,16 @@ class UploadStatusLoader: CosmosLoader() {
 
                 reportsForUploadId?.let { reports[uploadId] = reportsForUploadId }
             }
+
+ */
+
+
+
+
+
+
+
+
 
 
         } else {
@@ -217,12 +268,150 @@ class UploadStatusLoader: CosmosLoader() {
         private const val MIN_PAGE_SIZE = 1
         private const val MAX_PAGE_SIZE = 10000
         const val DEFAULT_PAGE_SIZE = 100
-
         private const val DEFAULT_SORT_ORDER = "asc"
     }
 
+
+
+
+
+
+    /*
+
     @Throws(Exception::class)
     fun queryWithPagingAndContinuationTokenAndPrintQueryCharge(options: CosmosQueryRequestOptions,
+                                                               query: String,
+                                                               pageSize: Int,
+                                                               pageNumber: Int,
+                                                               conToken: String): MutableMap<String, List<ReportDao>> {
+        logger.info("Query with paging and continuation token");
+
+        options.feedRange
+
+        //Create query request with continuation token
+        var currentPageNumber = pageNumber
+        var continuationToken: String? = null
+        var documentNumber = 0
+        var requestCharge = 0.0
+
+        val reports = mutableMapOf<String, List<ReportDao>>()
+
+        // First iteration (continuationToken = null): Receive a batch of query response pages
+        // Subsequent iterations (continuationToken != null): Receive subsequent batch of query response pages,
+        // with continuationToken indicating where the previous iteration left off
+        do {
+            logger.info("Receiving a set of query response pages.")
+            logger.info("Continuation Token: $continuationToken\n")
+
+            val feedResponseIterator: MutableIterable<FeedResponse<UploadCounts>>? =
+                reportsContainer?.queryItems(
+                    query, CosmosQueryRequestOptions(),
+                    UploadCounts::class.java
+                )?.iterableByPage(continuationToken, pageSize)
+
+            if (feedResponseIterator != null) {
+                for (page in feedResponseIterator) {
+                    logger.info(java.lang.String.format("Current page number: %d", currentPageNumber))
+//                        // Access all the documents in this result page
+//                        for (results in page.results) {
+//                            documentNumber++
+//
+//                        }
+
+
+                    // Access all the documents in this result page
+                    page.results?.forEach { report ->
+                        val uploadId = report.uploadId
+                            ?: throw BadStateException("Upload ID unexpectedly null")
+                        val reportsSqlQuery = "select * from $reportsContainerName t where t.uploadId = '$uploadId'"
+                        logger.info("get reports for upload query = $reportsSqlQuery")
+                        val reportsForUploadId = reportsContainer?.queryItems(
+                            reportsSqlQuery, CosmosQueryRequestOptions(),
+                            ReportDao::class.java
+                        )?.toList()
+
+                        reportsForUploadId?.let { reports[uploadId] = reportsForUploadId }
+                    }
+
+                    // Accumulate the request charge of this page
+                    requestCharge += page.requestCharge
+
+                    // Page count so far
+                    logger.info(java.lang.String.format("Total documents received so far: %d", documentNumber))
+
+                    // Request charge so far
+                    logger.info(java.lang.String.format("Total request charge so far: %f\n", requestCharge))
+
+                    // Along with page results, get a continuation token
+                    // which enables the client to "pick up where it left off"
+                    // in accessing query response pages.
+                    continuationToken = page.continuationToken
+
+                    currentPageNumber++
+                }
+            }
+        } while (continuationToken != null)
+
+        return reports
+
+    }
+
+
+//    @Throws(java.lang.Exception::class)
+//    private fun queryWithQuerySpec() {
+//        logger.info("Query with SqlQuerySpec")
+//
+//        val options = CosmosQueryRequestOptions()
+//        options.setPartitionKey(PartitionKey("uploadId"))
+//
+//        // Simple query with a single property equality comparison
+//        // in SQL with SQL parameterization instead of inlining the
+//        // parameter values in the query string
+//        var paramList = ArrayList<SqlParameter?>()
+//
+//        // Query using two properties within each document. WHERE Id = "" AND Address.City = ""
+//        // notice here how we are doing an equality comparison on the string value of City
+//        paramList = ArrayList()
+//        paramList.add(SqlParameter("@filename", "AndersenFamily"))
+//        paramList.add(SqlParameter("@city", "Seattle"))
+//        querySpec = SqlQuerySpec(
+//            "SELECT * FROM Families f WHERE f.id = @id AND f.Address.City = @city",
+//            paramList
+//        )
+//
+//       // executeQueryWithQuerySpecPrintSingleResult(querySpec)
+//    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Throws(Exception::class)
+    fun queryWithPagingAndContinuationTokenAndPrintQueryCharge2(options: CosmosQueryRequestOptions,
                                                                query: String,
                                                                pageSize: Int,
                                                                pageNumber: Int): MutableMap<String, List<ReportDao>> {
@@ -297,4 +486,8 @@ class UploadStatusLoader: CosmosLoader() {
         return reports
 
     }
+
+
+
+     */
 }
