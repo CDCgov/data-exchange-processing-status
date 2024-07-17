@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.PartitionKey
 import com.azure.cosmos.models.SqlParameter
 import com.azure.cosmos.models.SqlQuerySpec
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -107,7 +106,8 @@ class UploadStatusLoader: CosmosLoader() {
 
         // Query for getting counts in the structure of UploadCounts object.  Note the MAX aggregate which is used to
         // get the latest timestamp from t._ts.
-        val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
+        //val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
+        val countQuery = "select count(1) as reportCounts $sqlQuery"
         logger.info("upload status, countQuery = $countQuery")
 
         var totalItems = 0
@@ -119,14 +119,14 @@ class UploadStatusLoader: CosmosLoader() {
 
         //Create CosmosQueryRequestOptions and set the partitionKey
         val options = CosmosQueryRequestOptions()
-        options.setPartitionKey(PartitionKey("uploadId"))
-        options.setMaxDegreeOfParallelism(-1);
-        options.setMaxBufferedItemCount(-1);
+//        options.setPartitionKey(PartitionKey("uploadId"))
+        options.setMaxDegreeOfParallelism(0);
+        options.setMaxBufferedItemCount(100);
 
         try{
             val count = reportsContainer?.queryItems(
                 querySpec,
-                CosmosQueryRequestOptions(),
+                options,
                 UploadCounts::class.java)
             totalItems = count?.count() ?: 0
             logger.info("Upload status matched count = $totalItems")
@@ -183,7 +183,7 @@ class UploadStatusLoader: CosmosLoader() {
             val querySpecResults = SqlQuerySpec(dataSqlQuery, paramList)
             val results = reportsContainer?.queryItems(
                 querySpecResults,
-                CosmosQueryRequestOptions(),
+                options,
                 UploadCounts::class.java
             )?.toList()
 
@@ -193,7 +193,7 @@ class UploadStatusLoader: CosmosLoader() {
                 val reportsSqlQuery = "select * from $reportsContainerName t where t.uploadId = '$uploadId'"
                 logger.info("get reports for upload query = $reportsSqlQuery")
                 val reportsForUploadId = reportsContainer?.queryItems(
-                    reportsSqlQuery, CosmosQueryRequestOptions(),
+                    reportsSqlQuery, options,
                     ReportDao::class.java
                 )?.toList()
 
