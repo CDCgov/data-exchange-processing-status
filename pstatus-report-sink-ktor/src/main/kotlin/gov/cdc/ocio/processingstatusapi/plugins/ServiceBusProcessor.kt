@@ -252,6 +252,10 @@ class ServiceBusProcessor {
                 processError(reason, invalidData,createReportMessage)
             }
         }
+
+    /**
+     * Function to check whether the content type is json or application/json using MimeType
+     */
        private fun isJsonMimeType(contentType: String): Boolean {
             return try {
                 val mimeType = MimeType(contentType)
