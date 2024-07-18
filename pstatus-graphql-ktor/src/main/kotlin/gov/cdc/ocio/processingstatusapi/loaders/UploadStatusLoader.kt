@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.SqlParameter
 import com.azure.cosmos.models.SqlQuerySpec
+import com.azure.cosmos.util.CosmosPagedIterable
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
@@ -13,7 +14,6 @@ import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import kotlin.collections.set
-
 
 class UploadStatusLoader: CosmosLoader() {
 
@@ -187,17 +187,23 @@ class UploadStatusLoader: CosmosLoader() {
                 UploadCounts::class.java
             )?.toList()
 
-            results?.forEach { report ->
-                val uploadId = report.uploadId
-                    ?: throw BadStateException("Upload ID unexpectedly null")
-                val reportsSqlQuery = "select * from $reportsContainerName t where t.uploadId = '$uploadId'"
-                logger.info("get reports for upload query = $reportsSqlQuery")
-                val reportsForUploadId = reportsContainer?.queryItems(
-                    reportsSqlQuery, options,
-                    ReportDao::class.java
-                )?.toList()
+            //Optimizing
+            val uploadIds = results?.map { it.uploadId }?.joinToString("','", "'", "'")
+            val allReportsSqlQuery = """
+                SELECT * 
+                FROM $reportsContainerName t 
+                WHERE t.uploadId IN ($uploadIds)
+            """
 
-                reportsForUploadId?.let { reports[uploadId] = reportsForUploadId }
+            val allReports = reportsContainer?.queryItems(allReportsSqlQuery, options, ReportDao::class.java)?.toList()
+            // Map reports by uploadId for easier access
+            allReports?.groupBy { it.uploadId }?.let { groupedReports ->
+                results?.forEach { report ->
+                    val uploadId = report.uploadId
+                        ?: throw BadStateException("Upload ID unexpectedly null")
+
+                    reports[uploadId] = groupedReports[uploadId] ?: emptyList()
+                }
             }
 
 
@@ -236,15 +242,6 @@ class UploadStatusLoader: CosmosLoader() {
 
  */
 
-
-
-
-
-
-
-
-
-
         } else {
             numberOfPages = 0
             pageNumberAsInt = 0
@@ -270,10 +267,6 @@ class UploadStatusLoader: CosmosLoader() {
         const val DEFAULT_PAGE_SIZE = 100
         private const val DEFAULT_SORT_ORDER = "asc"
     }
-
-
-
-
 
 
     /*
