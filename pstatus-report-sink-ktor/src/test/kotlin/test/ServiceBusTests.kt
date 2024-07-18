@@ -39,8 +39,8 @@ class ServiceBusTests {
     }
     @Test
     fun testServiceBusMessageMissingUploadId() {
-        val testMessage =File("./src/test/kotlin/data/service_bus_missing_upload_id.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/service_bus_missing_upload_id.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             // Mock file
@@ -52,8 +52,8 @@ class ServiceBusTests {
     }
     @Test
     fun testServiceBusMessageMissingDataStreamId() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_id.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_id.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -65,8 +65,8 @@ class ServiceBusTests {
 
     @Test
     fun testServiceBusMessageMissingRoute() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_route.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_data_stream_route.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -77,8 +77,8 @@ class ServiceBusTests {
     }
     @Test
     fun testServiceBusMessageMissingStageName() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_stage_name.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_stage_name.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
 
         var exceptionThrown = false
         try {
@@ -91,8 +91,8 @@ class ServiceBusTests {
 
     @Test
     fun testServiceBusMessageMissingContentType() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_content_type.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_content_type.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -104,8 +104,8 @@ class ServiceBusTests {
 
     @Test
     fun testServiceBusMessageMissingContent() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_missing_content.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_missing_content.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -117,8 +117,8 @@ class ServiceBusTests {
 
     @Test
     fun testServiceBusMessageContentMissingSchemaName() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_content_missing_schema_name.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_content_missing_schema_name.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -130,8 +130,8 @@ class ServiceBusTests {
 
     @Test
     fun testServiceBusMessageContentMissingSchemaVersion() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_content_missing_schema_version.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_content_missing_schema_version.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -142,22 +142,22 @@ class ServiceBusTests {
     }
     @Test
     fun testServiceBusGoodMessage_V1() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_good_message_V1.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_good_message_V1.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
     }
 
     @Test
     fun testServiceBusGoodMessage() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_good_message.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_good_message.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
     }
 
     @Test
     fun testServiceBusMessageEscapeQuotedJson() {
-        val testMessage = File("./src/test/kotlin/data/service_bus_escape_quoted_json.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage = File("./src/test/kotlin/data/service_bus_escape_quoted_json.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -168,13 +168,13 @@ class ServiceBusTests {
     }
 }
 
-fun createServiceBusReceivedMessageFromString(messageBody: String): ServiceBusReceivedMessage {
+fun createServiceBusReceivedMessageFromBinary(messageBody: ByteArray): ServiceBusReceivedMessage {
     val message = mockk<ServiceBusReceivedMessage>(relaxed = true)
     val messageId ="MessageId123"
     val status ="Active"
     every{ message.messageId } returns messageId
     every{ message.state.name } returns status
-    every { message.body.toString() } returns messageBody
+    every { message.body.toBytes() } returns messageBody
     return message
 }
 

@@ -48,7 +48,8 @@ class ServiceBusProcessor {
     fun withMessage(message: ServiceBusReceivedMessage) {
         validateJsonSchema(message)
         val sbMessageId = message.messageId
-        var sbMessage = message.body.toString()
+        //var sbMessage = message.body.toString()
+        var sbMessage =String(message.body.toBytes())
         val sbMessageStatus = message.state.name
         try {
             logger.info { "Before Message received = $sbMessage" }
@@ -116,21 +117,12 @@ class ServiceBusProcessor {
           // Convert the message body to a JSON string
         val messageBody = String(message.body.toBytes())
         val objectMapper: ObjectMapper = jacksonObjectMapper()
-
         // Check for the presence of `report_schema_version`
         try {
-           val createReportMessage: CreateReportSBMessage = if (System.getProperty("isTestEnvironment") != "true") {
-                gson.fromJson(messageBody, CreateReportSBMessage::class.java)
-            } else{
-                gson.fromJson(message.body.toString(), CreateReportSBMessage::class.java)
-            }
 
+            val createReportMessage: CreateReportSBMessage = gson.fromJson(messageBody, CreateReportSBMessage::class.java)
             //Convert to JSON
-            val jsonNode: JsonNode =if (System.getProperty("isTestEnvironment") != "true") {
-                objectMapper.readTree(messageBody)
-            } else{
-                 objectMapper.readTree(message.body.toString())
-            }
+            val jsonNode: JsonNode =objectMapper.readTree(messageBody)
            // Check for the presence of `report_schema_version`
             val reportSchemaVersionNode = jsonNode.get("report_schema_version")
             if (reportSchemaVersionNode == null || reportSchemaVersionNode.asText().isEmpty()) {
@@ -140,7 +132,6 @@ class ServiceBusProcessor {
 
                 val reportSchemaVersion = reportSchemaVersionNode.asText()
                 val schemaFilePath = "$schemaDirectoryPath/base.$reportSchemaVersion.schema.json"
-
                 // Attempt to load the schema
                 val schemaFile = File(schemaFilePath)
                 if (!schemaFile.exists()) {
@@ -149,14 +140,12 @@ class ServiceBusProcessor {
                 }
                 //Validate report schema version schema
                 ValidateSchema(jsonNode,schemaFile,objectMapper,invalidData,createReportMessage)
-
                 // Check if the content_type is JSON
                 val contentTypeNode = jsonNode.get("content_type")
                 if (contentTypeNode == null) {
                    reason="Report rejected: `content_type` is not JSON or is missing."
                     ProcessError(reason,invalidData,createReportMessage)
                 }
-
                 else{
                   if(!isJsonMimeType(contentTypeNode.asText()))
                   {
@@ -164,7 +153,7 @@ class ServiceBusProcessor {
                         return
                    }
                 }
-                    // Open the content as JSON
+                // Open the content as JSON
                 val contentNode = jsonNode.get("content")
                 if (contentNode == null) {
                     reason="Report rejected: `content` is not JSON or is missing."
@@ -184,7 +173,6 @@ class ServiceBusProcessor {
                 val contentSchemaVersion = contentSchemaVersionNode.asText()
                 //TODO  Will this be from the same source???
                 val contentSchemaFilePath = "$schemaDirectoryPath/$contentSchemaName.$contentSchemaVersion.schema.json"
-
                 // Attempt to load the schema
                 val contentSchemaFile = File(contentSchemaFilePath)
                 if (!contentSchemaFile .exists()) {

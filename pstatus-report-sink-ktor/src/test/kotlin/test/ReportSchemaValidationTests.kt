@@ -1,7 +1,6 @@
 
 package test
 
-
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -27,8 +26,8 @@ class ReportSchemaValidationTests {
 
     @Test
     fun testReportSchemaValidationMissingUploadId() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_uploadId_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_uploadId_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             // Mock file
@@ -40,8 +39,8 @@ class ReportSchemaValidationTests {
     }
     @Test
     fun testReportSchemaValidationMissingDataStreamId() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_dataStreamId_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_dataStreamId_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -52,8 +51,8 @@ class ReportSchemaValidationTests {
     }
     @Test
     fun testReportSchemaValidationMissingRoute() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_dataStreamRoute_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_dataStreamRoute_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -64,8 +63,8 @@ class ReportSchemaValidationTests {
     }
     @Test
     fun testReportSchemaValidationMissingStageInfo() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_stageInfo_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_stageInfo_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
 
         var exceptionThrown = false
         try {
@@ -78,8 +77,8 @@ class ReportSchemaValidationTests {
 
     @Test
     fun testReportSchemaValidationMissingContentType() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_contentType_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_contentType_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -91,8 +90,8 @@ class ReportSchemaValidationTests {
 
     @Test
     fun testReportSchemaValidationMissingContent() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_content_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_content_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -104,8 +103,8 @@ class ReportSchemaValidationTests {
 
     @Test
     fun testReportSchemaValidationMissingSchemaName() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_schemaName_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_schemaName_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -117,8 +116,8 @@ class ReportSchemaValidationTests {
 
     @Test
     fun testReportSchemaValidationMissingSchemaVersion() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_missing_schemaVersion_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_missing_schemaVersion_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -129,8 +128,8 @@ class ReportSchemaValidationTests {
     }
     @Test
     fun testReportContentSchemaValidationFileNotFound() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_contentSchemaVersion_validation.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_contentSchemaVersion_validation.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
@@ -142,8 +141,8 @@ class ReportSchemaValidationTests {
 
     @Test
     fun testReportSchemaValidationPass() {
-        val testMessage =File("./src/test/kotlin/data/report_schema_validation_pass.json").readText()
-        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromString(testMessage)
+        val testMessage =File("./src/test/kotlin/data/report_schema_validation_pass.json").readBytes()
+        val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
     }
 
