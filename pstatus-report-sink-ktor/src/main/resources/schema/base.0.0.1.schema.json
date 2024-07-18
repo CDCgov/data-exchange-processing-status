@@ -17,13 +17,12 @@
             "type": "string"
         },
 
-
         "content_type": {
             "type": "string"
         }
     },
     "$defs": {
-       "jsonContent": {
+        "jsonContent": {
             "type": "object",
             "properties": {
                 "content_schema_name": {
