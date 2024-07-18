@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
+    "title": "Upload Status Report",
+    "type": "object",
+    "required": ["schema_name", "schema_version", "tguid", "offset", "size", "filename"],
+    "properties": {
+        "schema_name": {
+            "type": "string"
+        },
+        "schema_version": {
+            "type": "string"
+        },
+        "tguid": {
+            "$ref": "#/$defs/uuid"
+        },
+        "offset": {
+            "type": "integer"
+        },
+        "size": {
+            "type": "integer"
+        },
+        "filename": {
+            "type": "string"
+        }
+    },
+    "$defs": {
+        "uuid": {
+            "type": "string",
+            "format": "uuid"
+        }
+    }
+}
