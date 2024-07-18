@@ -255,6 +255,7 @@ class ServiceBusProcessor {
 
     /**
      * Function to check whether the content type is json or application/json using MimeType
+     * @param contentType String
      */
        private fun isJsonMimeType(contentType: String): Boolean {
             return try {
