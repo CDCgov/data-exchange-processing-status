@@ -6,6 +6,23 @@ import gov.cdc.ocio.processingstatusapi.models.Report
 import java.time.ZoneOffset
 import java.util.*
 
+/**
+ * Data access object for reports, which is the structure returned from CosmosDB queries.
+ *
+ * @property id String?
+ * @property uploadId String?
+ * @property reportId String?
+ * @property dataStreamId String?
+ * @property dataStreamRoute String?
+ * @property stageName String?
+ * @property contentType String?
+ * @property messageId String?
+ * @property status String?
+ * @property timestamp Date?
+ * @property content Any?
+ * @property contentAsString String?
+ * @constructor
+ */
 data class ReportDao(
 
     var id : String? = null,
@@ -55,7 +72,7 @@ data class ReportDao(
         }
 
     /**
-     * Function which converts cosmos data object to Report object
+     * Convenience function to convert a cosmos data object to a Report object
      */
     fun toReport() = Report().apply {
         this.id = this@ReportDao.id
