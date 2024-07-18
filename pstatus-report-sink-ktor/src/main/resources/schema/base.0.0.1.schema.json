@@ -1,0 +1,160 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
+    "title": "Base Report",
+    "type": "object",
+    "required": ["upload_id", "data_stream_id", "data_stream_route", "content_type"],
+    "if": {
+        "properties": {
+            "content_type": {
+                "const": "json"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "content": {
+                "$ref": "#/$defs/jsonContent"
+            }
+        }
+    },
+    "properties": {
+        "report_schema_version": {
+            "type": "string"
+        },
+        "upload_id": {
+            "$ref": "#/$defs/uuid",
+            "description": "Unique upload identifier associated with this report."
+        },
+        "user_id": {
+            "type": "string",
+            "description": "User or system id that uploaded the file, not the provider of this report."
+        },
+        "data_stream_id": {
+            "type": "string"
+        },
+        "data_stream_route": {
+            "type": "string"
+        },
+        "jurisdiction": {
+            "type": "string"
+        },
+        "sender_id": {
+            "type": "string"
+        },
+        "data_producer_id": {
+            "type": "string"
+        },
+        "dex_ingest_timestamp": {
+            "$ref": "#/$defs/timestamp"
+        },
+        "message_metadata": {
+            "$ref": "#/$defs/messageMetadata",
+            "description": "Metadata associated with the message this report belong to."
+        },
+        "stage_info": {
+            "$ref": "#/$defs/stageInfo",
+            "description": "Describes the stage that is providing this report."
+        },
+        "tags": {
+            "$ref": "#/$defs/keyValueMap",
+            "description": "Optional tag(s) associated with this report."
+        },
+        "data": {
+            "$ref": "#/$defs/keyValueMap",
+            "description": "Optional data associated with this report."
+        },
+        "content_type": {
+            "type": "string"
+        }
+    },
+    "$defs": {
+        "uuid": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "timestamp": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "messageMetadata": {
+            "type": "object",
+            "properties": {
+                "message_uuid": {
+                    "type": "string",
+                    "description": "Unique identifier for the message associated with this report.  Null if not applicable."
+                },
+                "message_hash": {
+                    "type": "string",
+                    "description": "MD5 hash of the message content."
+                },
+                "aggregation": {
+                    "type": "string",
+                    "enum": ["SINGLE", "BATCH"],
+                    "description": "Enumeration: [SINGLE, BATCH]."
+                },
+                "message_index": {
+                    "type": "integer",
+                    "description": "Index of the message; e.g. row if csv."
+                }
+            }
+        },
+        "stageInfo": {
+            "service": {
+                "type": "string",
+                "description": "Name of the service associated with this report."
+            },
+            "stage": {
+                "type": "string",
+                "description": "Action the stage was conducting when providing this report."
+            },
+            "version": {
+                "type": "string",
+                "description": "Version of the stage providing this report"
+            },
+            "status": {
+                "type": "string",
+                "enum": ["SUCCESS", "FAILURE"]
+            },
+            "issues": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "level": {
+                            "type": "string",
+                            "enum": [
+                                "WARNING",
+                                "ERROR"
+                            ]
+                        },
+                        "message": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "start_processing_time": {
+                "$ref": "#/$defs/timestamp"
+            },
+            "end_processing_time": {
+                "$ref": "#/$defs/timestamp"
+            }
+        },
+        "keyValueMap": {
+            "type" : "object",
+            "existingJavaType" : "java.util.Map<String, Any>"
+        },
+        "jsonContent": {
+            "type": "object",
+            "properties": {
+                "content_schema_name": {
+                    "type": "string"
+                },
+                "content_schema_version": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
