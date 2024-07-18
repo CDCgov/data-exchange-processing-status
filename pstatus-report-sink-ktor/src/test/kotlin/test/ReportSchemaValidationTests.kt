@@ -1,6 +1,7 @@
 
 package test
 
+import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -144,6 +145,16 @@ class ReportSchemaValidationTests {
         val testMessage =File("./src/test/kotlin/data/report_schema_validation_pass.json").readBytes()
         val serviceBusReceivedMessage = createServiceBusReceivedMessageFromBinary(testMessage)
         ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
+    }
+
+    private fun createServiceBusReceivedMessageFromBinary(messageBody: ByteArray): ServiceBusReceivedMessage {
+        val message = mockk<ServiceBusReceivedMessage>(relaxed = true)
+        val messageId ="MessageId123"
+        val status ="Active"
+        every{ message.messageId } returns messageId
+        every{ message.state.name } returns status
+        every { message.body.toBytes() } returns messageBody
+        return message
     }
 
 
