@@ -1,0 +1,21 @@
+name: "CI - GraphQL Service"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - pstatus-graphql-ktor/**
+
+defaults:
+  run:
+    working-directory: pstatus-graphql-ktor/
+
+jobs:
+  unit-test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gradle Test
+        run: ./gradlew test
