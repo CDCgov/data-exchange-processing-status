@@ -69,13 +69,13 @@ class ReportManager: KoinComponent {
         source: Source
     ): String {
         // Verify the content contains the minimum schema information
-        try {
+      /*  try {
             SchemaDefinition.fromJsonString(content)
         } catch(e: InvalidSchemaDefException) {
             throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
         } catch(e: Exception) {
             throw BadRequestException("Malformed message: ${e.localizedMessage}")
-        }
+        }*/
         if (System.getProperty("isTestEnvironment") != "true") {
             return createReport(
                 uploadId,
