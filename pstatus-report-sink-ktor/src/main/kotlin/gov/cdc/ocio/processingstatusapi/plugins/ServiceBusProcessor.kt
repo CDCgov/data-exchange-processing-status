@@ -196,8 +196,7 @@ class ServiceBusProcessor {
         }
     }
 
-    companion object {
-        /**
+      /**
          *  Function to send the invalid data reasons to the deadLetter queue
          *  @param invalidData MutableList<String>
          *  @param createReportMessage CreateReportSBMessage
@@ -261,5 +260,5 @@ class ServiceBusProcessor {
                 false
             }
         }
-    }
+
 }
