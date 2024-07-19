@@ -18,7 +18,7 @@ import java.util.*
  * @property content String?
  * @property timestamp Date
  */
-data class Report(
+open class Report(
 
     var id : String? = null,
 

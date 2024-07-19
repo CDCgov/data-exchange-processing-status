@@ -216,7 +216,8 @@ class ReportManager: KoinComponent {
                                   dispositionType: DispositionType,
                                   contentType: String?,
                                   content: Any?,
-                                  deadLetterReasons: List<String>
+                                  deadLetterReasons: List<String>,
+                                  validationSchemaFileNames:List<String>
                                   ): String {
 
         val deadLetterReportId = UUID.randomUUID().toString()
@@ -230,6 +231,7 @@ class ReportManager: KoinComponent {
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
+            this.validationSchemas= validationSchemaFileNames
             if (contentType?.lowercase() == "json" && !isNullOrEmpty(content) && !isBase64Encoded(content.toString())) {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
                 val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
