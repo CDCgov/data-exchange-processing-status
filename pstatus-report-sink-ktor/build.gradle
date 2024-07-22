@@ -94,7 +94,7 @@ test {
         events "passed", "skipped", "failed"
     }
     //Change this to "true" if we want to execute unit tests
-    systemProperty("isTestEnvironment", "false")
+    systemProperty("isTestEnvironment", "true")
 
     // Set the test classpath, if required
 }
