@@ -20,11 +20,14 @@ class ReportQueryService : Query {
      * @param sortOrder SortOrder?
      * @return List<Report>
      */
-    @GraphQLDescription("Return all the reports associated with the provided uploadId")
+    @GraphQLDescription("Return all the reports associated with the provided upload ID.")
     @Suppress("unused")
     fun getReports(dataFetchingEnvironment: DataFetchingEnvironment,
+                   @GraphQLDescription("Upload ID to retrieve all the reports for.")
                    uploadId: String,
+                   @GraphQLDescription("Optional field to specify the field reports should be sorted by.  Available fields for sorting are: [`timestamp`].")
                    reportsSortedBy: String?,
+                   @GraphQLDescription("Optional sort order.  When `reportsSortedBy` is provided, the available options are `Ascending` or `Descending`, which defaults to `Ascending` if not provided.")
                    sortOrder: SortOrder?) = ReportLoader()
                        .getByUploadId(
                            dataFetchingEnvironment,
