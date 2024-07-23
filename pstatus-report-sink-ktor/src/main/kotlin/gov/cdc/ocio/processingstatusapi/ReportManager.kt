@@ -254,7 +254,7 @@ class ReportManager: KoinComponent {
         val deadLetterReportId = UUID.randomUUID().toString()
         val deadLetterReport = ReportDeadLetter().apply {
             this.id = deadLetterReportId
-            this.deadLetterReason = deadLetterReason
+            this.deadLetterReasons = listOf(deadLetterReason)
         }
         return  createReportItem(null,deadLetterReportId,deadLetterReport)
     }

@@ -24,7 +24,5 @@ import com.google.gson.annotations.SerializedName
 
     var deadLetterReasons: List<String>? = null
 
-    var deadLetterReason: String? = null
-
     var validationSchemas: List<String>? = null
 }
