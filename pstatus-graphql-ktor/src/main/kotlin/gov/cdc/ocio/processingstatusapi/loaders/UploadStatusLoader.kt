@@ -1,7 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import com.azure.cosmos.CosmosContainer
-import com.azure.cosmos.models.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
@@ -11,15 +9,10 @@ import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
-import kotlin.collections.set
-
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.SqlParameter
 import com.azure.cosmos.models.SqlQuerySpec
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-
 
 class UploadStatusLoader: CosmosLoader() {
 
@@ -125,8 +118,8 @@ class UploadStatusLoader: CosmosLoader() {
 
         //Create CosmosQueryRequestOptions and set the partitionKey
         val options = CosmosQueryRequestOptions()
-        options.setMaxDegreeOfParallelism(0);
-        options.setMaxBufferedItemCount(pageSize);
+        options.setMaxDegreeOfParallelism(0)
+        options.setMaxBufferedItemCount(pageSize)
 
         try{
             val count = reportsContainer?.queryItems(
@@ -143,7 +136,7 @@ class UploadStatusLoader: CosmosLoader() {
         // If there is data
         val numberOfPages: Int
         val pageNumberAsInt: Int
-        var reports = mutableMapOf<String, List<ReportDao>>()
+        var reports = mutableMapOf<String, MutableList<ReportDao>>()
 
         if (totalItems > 0L) {
             numberOfPages =  (totalItems / pageSize + if (totalItems % pageSize > 0) 1 else 0)
@@ -182,14 +175,13 @@ class UploadStatusLoader: CosmosLoader() {
                 }
                 sqlQuery.append(" order by t.$sortField $sortOrderVal")
             }
-            val offset = (pageNumberAsInt - 1) * pageSize
+//            val offset = (pageNumberAsInt - 1) * pageSize
     //        val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
             val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
             logger.info("upload status data query = $dataSqlQuery")
 
             val querySpecResults = SqlQuerySpec(dataSqlQuery, paramList)
 
-            var continuationToken: String? = null
             var results: List<UploadCounts> = emptyList()
             //  Sync API
             val filteredUploads =
@@ -199,6 +191,7 @@ class UploadStatusLoader: CosmosLoader() {
             // Use Skip Counts to get the exact number of results to be skipped
             val skipCount = pageSize * (pageNumber - 1)
             var count = 0
+            var continuationToken: String
 
             if (filteredUploads != null) {
                 for (page in filteredUploads) {
@@ -210,14 +203,11 @@ class UploadStatusLoader: CosmosLoader() {
                     if (results.size >= pageSize) {
                         break // Stop if we've collected enough items
                     }
-                    continuationToken = page.continuationToken
-
+                   // continuationToken = page.continuationToken
                 }
             }
 
             //Optimizing
-            //Gather the list of uploadIds for which the data is to be retrieved
-            val uploadIds = results.map { it.uploadId }.toList()
              // Batch processing to improve performance
              reports = fetchReports(results, pageSize, skipCount)
 
@@ -471,28 +461,24 @@ class UploadStatusLoader: CosmosLoader() {
 
      */
 
-
-    private fun fetchReports(results: List<UploadCounts>, pageSize: Int, skipCount: Int): MutableMap<String, List<ReportDao>> {
-
+    private fun fetchReports(results: List<UploadCounts>, pageSize: Int, skipCount: Int): MutableMap<String, MutableList<ReportDao>> {
         val uploadIds = results.map { it.uploadId }
-       // val allReports:MutableList<ReportDao> = mutableListOf<ReportDao>()
-        val reportsMap = mutableMapOf<String, List<ReportDao>>()
+        val reportsMap = mutableMapOf<String, MutableList<ReportDao>>() // Use MutableList for efficient appending
 
         val options = CosmosQueryRequestOptions()
-        options.setMaxDegreeOfParallelism(0);
-        options.setMaxBufferedItemCount(-1);
+        options.setMaxDegreeOfParallelism(0)
+        options.setMaxBufferedItemCount(-1)
 
         runBlocking {
-
             val batches = uploadIds.chunked(20)
             for (batch in batches) {
                 val parameters = batch.mapIndexed { index, id -> SqlParameter("@uploadId$index", id) }
                 val paramPlaceholders = batch.indices.joinToString(", ") { "@uploadId$it" }
                 val allReportsSqlQuery = """
-                    SELECT *
-                    FROM c
-                    WHERE c._ts >= 1714604400 and c.uploadId IN ($paramPlaceholders)
-                """.trimIndent()
+                SELECT *
+                FROM c
+                WHERE c._ts >= 1714604400 AND c.uploadId IN ($paramPlaceholders)
+            """.trimIndent()
 
                 val subQuerySpec = SqlQuerySpec(allReportsSqlQuery, parameters)
                 logger.info("Processing in batches, subQuerySpec = $subQuerySpec")
@@ -502,30 +488,23 @@ class UploadStatusLoader: CosmosLoader() {
                 val pageResults = filteredReports?.iterableByPage()
 
                 var count = 0
-                if (pageResults != null) {
-                    for (page in pageResults) {
-                        if (count < skipCount) {
-                            count++
-                            continue // Skip until we reach the desired page
-                        }
-
-                        // Process the reports in this page
-                        val allReports = page.results
-                        allReports.groupBy { it.uploadId }.forEach { (uploadId, reportList) ->
-                            if (uploadId != null) {
-                                reportsMap.compute(uploadId) { _, existingList ->
-                                    (existingList ?: emptyList()) + reportList
-                                }
-                            }
-                        }
+                pageResults?.forEach { page ->
+                    if (count < skipCount) {
+                        count += page.results.size
+                        return@forEach // Skip until we reach the desired page
                     }
 
+                    // Process the reports in this page
+                    page.results.groupBy { it.uploadId }.forEach { (uploadId, reportList) ->
+                        if (uploadId != null) {
+                            reportsMap.getOrPut(uploadId, { mutableListOf() }).addAll(reportList)
+                        }
+                    }
                 }
-
             }
-
         }
         return reportsMap
-    } //End fetchReports
+    }
+
 }
 
