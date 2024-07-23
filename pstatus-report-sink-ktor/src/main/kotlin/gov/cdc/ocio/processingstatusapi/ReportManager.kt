@@ -11,11 +11,9 @@ import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
-import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -195,6 +193,7 @@ class ReportManager: KoinComponent {
         }
        return createReportItem(uploadId,stageReportId,stageReport)
     }
+
     /**
      * Creates a dead-letter report if there is a malformed data or missing required fields
      *
@@ -210,15 +209,15 @@ class ReportManager: KoinComponent {
 
     @Throws(BadStateException::class)
     fun createDeadLetterReport(uploadId: String?,
-                                  dataStreamId: String?,
-                                  dataStreamRoute: String?,
-                                  stageName: String?,
-                                  dispositionType: DispositionType,
-                                  contentType: String?,
-                                  content: Any?,
-                                  deadLetterReasons: List<String>,
-                                  validationSchemaFileNames:List<String>
-                                  ): String {
+                               dataStreamId: String?,
+                               dataStreamRoute: String?,
+                               stageName: String?,
+                               dispositionType: DispositionType,
+                               contentType: String?,
+                               content: Any?,
+                               deadLetterReasons: List<String>,
+                               validationSchemaFileNames:List<String>
+    ): String {
 
         val deadLetterReportId = UUID.randomUUID().toString()
         val deadLetterReport = ReportDeadLetter().apply {
@@ -239,7 +238,25 @@ class ReportManager: KoinComponent {
             } else
                 this.content = content
         }
-       return  createReportItem(uploadId,deadLetterReportId,deadLetterReport)
+        return  createReportItem(uploadId,deadLetterReportId,deadLetterReport)
+    }
+
+    /**
+     * Creates a dead-letter report if there is a malformed JSON. This is called if DISABLE_VALIDATION is true
+     *
+     * @param deadLetterReason String
+     * @return String
+     * @throws BadStateException
+     */
+
+    @Throws(BadStateException::class)
+    fun createDeadLetterReport(deadLetterReason: String): String {
+        val deadLetterReportId = UUID.randomUUID().toString()
+        val deadLetterReport = ReportDeadLetter().apply {
+            this.id = deadLetterReportId
+            this.deadLetterReason = deadLetterReason
+        }
+        return  createReportItem(null,deadLetterReportId,deadLetterReport)
     }
 
     /**
@@ -360,9 +377,6 @@ class ReportManager: KoinComponent {
         } while (attempts++ < MAX_RETRY_ATTEMPTS)
         throw BadStateException("Failed to create dead-letterReport reportId = ${responseReportId}, uploadId = $uploadId")
     }
-
-
-
 
     companion object {
         const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L

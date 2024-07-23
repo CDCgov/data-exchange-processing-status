@@ -2,8 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models
 
 
 import com.google.gson.annotations.SerializedName
-import java.time.LocalDateTime
-import java.util.*
+
 
 /**
  * Dead-LetterReport when there is missing fields or malformed data.
@@ -24,6 +23,8 @@ import java.util.*
     var dispositionType: String? = null
 
     var deadLetterReasons: List<String>? = null
+
+    var deadLetterReason: String? = null
 
     var validationSchemas: List<String>? = null
 }
