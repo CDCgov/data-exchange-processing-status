@@ -5,6 +5,7 @@ import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.loaders.ReportLoader
+import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
 
@@ -15,12 +16,25 @@ class ReportQueryService : Query {
      *
      * @param dataFetchingEnvironment DataFetchingEnvironment
      * @param uploadId String
+     * @param reportsSortedBy String?
+     * @param sortOrder SortOrder?
      * @return List<Report>
      */
-    @GraphQLDescription("Return all the reports associated with the provided uploadId")
+    @GraphQLDescription("Return all the reports associated with the provided upload ID.")
     @Suppress("unused")
     fun getReports(dataFetchingEnvironment: DataFetchingEnvironment,
-                   uploadId: String) = ReportLoader().getByUploadId(dataFetchingEnvironment, uploadId)
+                   @GraphQLDescription("Upload ID to retrieve all the reports for.")
+                   uploadId: String,
+                   @GraphQLDescription("Optional field to specify the field reports should be sorted by.  Available fields for sorting are: [`timestamp`].")
+                   reportsSortedBy: String?,
+                   @GraphQLDescription("Optional sort order.  When `reportsSortedBy` is provided, the available options are `Ascending` or `Descending`, which defaults to `Ascending` if not provided.")
+                   sortOrder: SortOrder?) = ReportLoader()
+                       .getByUploadId(
+                           dataFetchingEnvironment,
+                           uploadId,
+                           reportsSortedBy,
+                           sortOrder
+                       )
 
     /**
      * Searches for reports with the given search parameters.
