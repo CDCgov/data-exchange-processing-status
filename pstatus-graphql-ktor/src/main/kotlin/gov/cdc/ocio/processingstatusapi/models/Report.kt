@@ -18,7 +18,7 @@ import java.time.OffsetDateTime
  * @property timestamp OffsetDateTime
  */
 @GraphQLDescription("Contains Report content.")
-open class Report(
+data class Report(
 
     @GraphQLDescription("Identifier of the report recorded by the database")
     var id : String? = null,
