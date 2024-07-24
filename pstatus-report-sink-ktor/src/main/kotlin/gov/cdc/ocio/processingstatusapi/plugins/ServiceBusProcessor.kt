@@ -58,7 +58,17 @@ class ServiceBusProcessor {
                 sbMessage = sbMessage.replace("event_type", "data_stream_route")
             }
             logger.info { "After Message received = $sbMessage" }
-            validateJsonSchema(message)
+            val disableValidation = System.getenv("DISABLE_VALIDATION")?.toBoolean() ?: false
+
+            if(disableValidation){
+                val isValid =  isJsonValid(sbMessage)
+                if(!isValid){
+                    sendToDeadLetter("Validation failed.The message is not in JSON format.")
+                }
+            }
+            else {
+                validateJsonSchema(message)
+            }
             createReport(sbMessageId, sbMessageStatus, gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         } catch (e: BadRequestException) {
             logger.error("Validation failed: ${e.message}")
@@ -136,8 +146,8 @@ class ServiceBusProcessor {
             } else {
                 reportSchemaVersion = reportSchemaVersionNode.asText()
             }
-              val fileName ="base.$reportSchemaVersion.schema.json"
-              val schemaFilePath = javaClass.getResource( "$schemaDirectoryPath/$fileName")
+            val fileName ="base.$reportSchemaVersion.schema.json"
+            val schemaFilePath = javaClass.getResource( "$schemaDirectoryPath/$fileName")
                 ?: throw IllegalArgumentException("File not found: $fileName")
 
             // Attempt to load the schema
@@ -182,8 +192,8 @@ class ServiceBusProcessor {
 
             //TODO  Will this be from the same source???
             val contentSchemaFileName ="$contentSchemaName.$contentSchemaVersion.schema.json"
-             val contentSchemaFilePath =javaClass.getResource( "$schemaDirectoryPath/$contentSchemaFileName")
-                 ?: throw IllegalArgumentException("File not found: $contentSchemaFileName")
+            val contentSchemaFilePath =javaClass.getResource( "$schemaDirectoryPath/$contentSchemaFileName")
+                ?: throw IllegalArgumentException("File not found: $contentSchemaFileName")
 
             // Attempt to load the schema
             val contentSchemaFile = File(contentSchemaFilePath.toURI())
@@ -193,8 +203,6 @@ class ServiceBusProcessor {
             }
             //Validate content schema
             validateSchema(contentSchemaFileName,contentNode,contentSchemaFile,objectMapper,invalidData, schemaFileNames, createReportMessage)
-
-
 
         } catch (e: Exception) {
             LOGGER.error("Report rejected: Malformed JSON or error processing the report - ${e.message}")
@@ -227,6 +235,20 @@ class ServiceBusProcessor {
             throw BadRequestException(invalidData.joinToString(separator = ","))
         }
     }
+
+    /**
+     *  Function to send the invalid data reasons to the deadLetter queue
+     *  @param reason String
+     */
+    private fun sendToDeadLetter(reason:String){
+        //This should not run for unit tests
+        if (System.getProperty("isTestEnvironment") != "true") {
+            // Write the content of the dead-letter reports to CosmosDb
+            ReportManager().createDeadLetterReport(reason)
+            throw BadRequestException(reason)
+        }
+    }
+
     /**
      *  Function to process the error by logging it and adding to the invalidData list and sending it to deadletter
      *  @param reason String
@@ -274,6 +296,19 @@ class ServiceBusProcessor {
             val mimeType = MimeType(contentType)
             mimeType.primaryType == "json" || (mimeType.primaryType == "application" && mimeType.subType == "json")
         } catch (e: MimeTypeParseException) {
+            false
+        }
+    }
+
+    /**
+     *  Function to check whether the message is in JSON format or not
+     */
+    private fun isJsonValid(jsonString: String): Boolean {
+        return try {
+            val mapper = jacksonObjectMapper()
+            mapper.readTree(jsonString)
+            true
+        } catch (e: Exception) {
             false
         }
     }
