@@ -308,6 +308,19 @@ class ReportManager: KoinComponent {
             try {
                 //use when here to determing whether report type is StageReport or DeadLetterReport
                 when (reportType) {
+                    is ReportDeadLetter -> {
+                        val response = cosmosDeadLetterRepository.reportsDeadLetterContainer?.createItem(
+                            reportType,
+                            PartitionKey(uploadId),
+                            CosmosItemRequestOptions())
+
+                        isValidResponse = response!=null
+                        reportTypeName ="dead-letter report"
+                        responseReportId = response?.item?.reportId ?: "0"
+                        statusCode = response?.statusCode
+                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
+                    }
+
                     is Report -> {
                         val response = cosmosRepository.reportsContainer?.createItem(
                             reportType,
@@ -320,18 +333,7 @@ class ReportManager: KoinComponent {
                         recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
 
                     }
-                    is ReportDeadLetter -> {
-                         val response = cosmosDeadLetterRepository.reportsDeadLetterContainer?.createItem(
-                            reportType,
-                            PartitionKey(uploadId),
-                            CosmosItemRequestOptions())
 
-                        isValidResponse = response!=null
-                        reportTypeName ="dead-letter report"
-                        responseReportId = response?.item?.reportId ?: "0"
-                        statusCode = response?.statusCode
-                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
-                    }
                 }
                 logger.info("Creating ${reportTypeName}, response http status code = ${statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
                   if(isValidResponse){
