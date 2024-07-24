@@ -16,10 +16,11 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
     /**
      * Function that returns a list of DeadLetterReports based on uploadId
+     *
      * @param uploadId String
      */
     fun getByUploadId(uploadId: String): List<ReportDeadLetter> {
-        val reportsSqlQuery = "select * from r where r.id = '$uploadId'"
+        val reportsSqlQuery = "select * from r where r.uploadId = '$uploadId'"
 
         val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -34,6 +35,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
     /**
      * Function which returns list of ReportDeadLetter based on the specified parameters
+     *
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param startDate String
@@ -46,7 +48,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
         val reportsSqlQuery = "select * from r where r.dataStreamId = '$dataStreamId' " +
                 "and r.dataStreamRoute= '$dataStreamRoute' " +
-                "and  $timeRangeWhereClause"
+                "and $timeRangeWhereClause"
 
      val reportItems = reportsDeadLetterContainer?.queryItems(
          reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -75,7 +77,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate)
 
         val reportsSqlQuery = "select value count(1) from r where r.dataStreamId = '$dataStreamId' " +
-                "and  $timeRangeWhereClause " + if (dataStreamRoute!=null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
+                "and $timeRangeWhereClause " + if (dataStreamRoute!=null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
 
          val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -109,9 +111,10 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
     /**
      * Function which converts the inputted date to expected date format
+     *
      * @param inputDate String
      */
-    private fun getFormattedDateAsString(inputDate:String?):String?{
+    private fun getFormattedDateAsString(inputDate:String?): String? {
         if (inputDate == null) return null
         val inputDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val outputDateFormat =  SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'")
