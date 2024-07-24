@@ -9,7 +9,7 @@ open class CosmosDeadLetterLoader: KoinComponent {
 
     private val cosmosRepository by inject<CosmosDeadLetterRepository>()
 
-    protected val reportsDeadLetterContainerName = "ReportsDeadLetter"
+    protected val reportsDeadLetterContainerName = "Reports-DeadLetter"
 
     protected val reportsDeadLetterContainer = cosmosRepository.reportsDeadLetterContainer
 
