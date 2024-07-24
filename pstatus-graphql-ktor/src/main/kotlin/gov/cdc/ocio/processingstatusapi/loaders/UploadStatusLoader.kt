@@ -12,7 +12,6 @@ import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.SqlParameter
 import com.azure.cosmos.models.SqlQuerySpec
-import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import kotlinx.coroutines.runBlocking
 
 class UploadStatusLoader: CosmosLoader() {
@@ -213,6 +212,10 @@ class UploadStatusLoader: CosmosLoader() {
             // Batch processing to improve performance
             reports = fetchReports(results, pageSize, skipCount, paramList)
 
+
+
+
+
             //Testing with ContinuationToken
 //            val options = CosmosQueryRequestOptions()
 //            // 0 maximum parallel tasks, effectively serial execution
@@ -267,7 +270,11 @@ class UploadStatusLoader: CosmosLoader() {
         runBlocking {
             val batches = uploadIds.chunked(20)
             for (batch in batches) {
+                // Create SQL parameter list with all the filter fields
+                val pList = ArrayList<SqlParameter>()
                 val parameters = batch.mapIndexed { index, id -> SqlParameter("@uploadId$index", id) }
+                pList.addAll(parameters)
+                pList.addAll(paramList)
                 val paramPlaceholders = batch.indices.joinToString(", ") { "@uploadId$it" }
                 val allReportsSqlQuery = """
                 SELECT *
@@ -275,9 +282,7 @@ class UploadStatusLoader: CosmosLoader() {
                 WHERE c._ts >= @dateStart AND c.dataStreamId = @dataStreamId AND c.uploadId IN ($paramPlaceholders)
             """.trimIndent()
 
-                paramList.addAll(parameters)
-
-                val subQuerySpec = SqlQuerySpec(allReportsSqlQuery, paramList)
+                val subQuerySpec = SqlQuerySpec(allReportsSqlQuery, pList)
                 logger.info("Processing in batches, subQuerySpec = $subQuerySpec")
 
                 // Query and process pages asynchronously
@@ -286,11 +291,6 @@ class UploadStatusLoader: CosmosLoader() {
 
                 var count = 0
                 pageResults?.forEach { page ->
-                    if (count < skipCount) {
-                        count += page.results.size
-                        return@forEach // Skip until we reach the desired page
-                    }
-
                     // Process the reports in this page
                     page.results
                         .filter { it.uploadId != null }
