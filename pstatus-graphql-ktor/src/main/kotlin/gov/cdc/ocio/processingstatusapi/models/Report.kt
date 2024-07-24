@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.processingstatusapi.models.reports.SchemaDefinition
 import java.time.OffsetDateTime
 
 /**
@@ -19,7 +18,7 @@ import java.time.OffsetDateTime
  * @property timestamp OffsetDateTime
  */
 @GraphQLDescription("Contains Report content.")
-data class Report(
+open class Report(
 
     @GraphQLDescription("Identifier of the report recorded by the database")
     var id : String? = null,
@@ -49,7 +48,7 @@ data class Report(
     var status : String? = null,
 
     @GraphQLDescription("Content of the report.  If the report is JSON then the content will be shown as JSON.  Otherwise, the content is a base64 encoded string.")
-    var content: SchemaDefinition? = null,
+    var content : Map<*, *>? = null,
 
     @GraphQLDescription("Datestamp the report was recorded in the database")
     var timestamp: OffsetDateTime? = null
