@@ -19,7 +19,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
      * @param uploadId String
      */
     fun getByUploadId(uploadId: String): List<ReportDeadLetter> {
-        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.id = '$uploadId'"
+        val reportsSqlQuery = "select * from r where r.id = '$uploadId'"
 
         val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),
@@ -44,7 +44,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
          formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
          val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, getFormattedDateAsString(startDate), getFormattedDateAsString(endDate))
 
-        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
+        val reportsSqlQuery = "select * from r where r.dataStreamId = '$dataStreamId' " +
                 "and r.dataStreamRoute= '$dataStreamRoute' " +
                 "and  $timeRangeWhereClause"
 
@@ -74,7 +74,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
 
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate)
 
-        val reportsSqlQuery = "select value count(1) from $reportsDeadLetterContainerName r where r.dataStreamId = '$dataStreamId' " +
+        val reportsSqlQuery = "select value count(1) from r where r.dataStreamId = '$dataStreamId' " +
                 "and  $timeRangeWhereClause " + if (dataStreamRoute!=null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
 
          val reportItems = reportsDeadLetterContainer?.queryItems(
@@ -95,7 +95,7 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
     fun search(ids: List<String>): List<ReportDeadLetter> {
         val quotedIds = ids.joinToString("\",\"", "\"", "\"")
 
-        val reportsSqlQuery = "select * from $reportsDeadLetterContainerName r where r.id in ($quotedIds)"
+        val reportsSqlQuery = "select * from r where r.id in ($quotedIds)"
 
         val reportItems = reportsDeadLetterContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),

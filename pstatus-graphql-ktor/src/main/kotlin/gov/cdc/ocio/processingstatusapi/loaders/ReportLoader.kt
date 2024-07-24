@@ -41,7 +41,7 @@ class ReportLoader: CosmosLoader() {
         }
 
         val reportsSqlQuery = StringBuilder()
-        reportsSqlQuery.append("select * from $reportsContainerName r where r.uploadId = '$uploadId'")
+        reportsSqlQuery.append("select * from r where r.uploadId = '$uploadId'")
 
         when (reportsSortedBy) {
             "timestamp" -> {
@@ -87,7 +87,7 @@ class ReportLoader: CosmosLoader() {
     fun search(ids: List<String>): List<Report> {
         val quotedIds = ids.joinToString("\",\"", "\"", "\"")
 
-        val reportsSqlQuery = "select * from $reportsContainerName r where r.id in ($quotedIds)"
+        val reportsSqlQuery = "select * from r where r.id in ($quotedIds)"
 
         val reportItems = reportsContainer?.queryItems(
             reportsSqlQuery, CosmosQueryRequestOptions(),

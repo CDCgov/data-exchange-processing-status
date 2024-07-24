@@ -24,14 +24,14 @@ class UploadStatsLoader: CosmosLoader() {
         )
 
         val numUniqueUploadsQuery = (
-                "select r.uploadId from $reportsContainerName r "
+                "select r.uploadId from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "$timeRangeWhereClause group by r.uploadId"
                 )
 
         val numUploadsWithStatusQuery = (
                 "select value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "r.content.schema_name = 'upload' and "
                         + timeRangeWhereClause
@@ -39,7 +39,7 @@ class UploadStatsLoader: CosmosLoader() {
 
         val badMetadataCountQuery = (
                 "select value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "r.content.schema_name = 'dex-metadata-verify' and "
                         + "ARRAY_LENGTH(r.content.issues) > 0 and $timeRangeWhereClause"
@@ -47,7 +47,7 @@ class UploadStatsLoader: CosmosLoader() {
 
         val inProgressUploadsCountQuery = (
                 "select value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
                         + "r.content.schema_name = 'upload' and "
                         + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
@@ -55,7 +55,7 @@ class UploadStatsLoader: CosmosLoader() {
 
         val completedUploadsCountQuery = (
                 "select value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "r.content.schema_name = 'upload' and "
                         + "r.content['offset'] = r.content['size'] and $timeRangeWhereClause"
@@ -64,7 +64,7 @@ class UploadStatsLoader: CosmosLoader() {
         val duplicateFilenameCountQuery = (
                 "select * from "
                         + "(select r.content.metadata.filename, count(1) as totalCount "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
                         + "r.content.schema_name = 'dex-metadata-verify' and "
                         + "$timeRangeWhereClause "
