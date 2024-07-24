@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models.dao
 
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.Report
 import java.time.ZoneOffset
 import java.util.*
@@ -23,32 +22,24 @@ import java.util.*
  * @property contentAsString String?
  * @constructor
  */
-data class ReportDao(
+open class ReportDao(
 
     var id : String? = null,
 
-    @SerializedName("upload_id")
     var uploadId: String? = null,
 
-    @SerializedName("report_id")
     var reportId: String? = null,
 
-    @SerializedName("data_stream_id")
     var dataStreamId: String? = null,
 
-    @SerializedName("data_stream_route")
     var dataStreamRoute: String? = null,
 
-    @SerializedName("stage_name")
     var stageName: String? = null,
 
-    @SerializedName("content_type")
     var contentType : String? = null,
 
-    @SerializedName("message_id")
     var messageId: String? = null,
 
-    @SerializedName("status")
     var status : String? = null,
 
     var timestamp: Date? = null,
