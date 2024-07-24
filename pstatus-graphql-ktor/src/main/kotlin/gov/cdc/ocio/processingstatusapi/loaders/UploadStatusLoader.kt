@@ -1,5 +1,8 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
+import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.SqlParameter
+import com.azure.cosmos.models.SqlQuerySpec
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
@@ -9,9 +12,6 @@ import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.SqlParameter
-import com.azure.cosmos.models.SqlQuerySpec
 import kotlinx.coroutines.runBlocking
 
 class UploadStatusLoader: CosmosLoader() {
@@ -137,7 +137,7 @@ class UploadStatusLoader: CosmosLoader() {
                sqlQuery.plus(" order by t.$sortField $sortOrderVal")
             }
 //            val offset = (pageNumberAsInt - 1) * pageSize
-            //        val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
+//            val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
             val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
             logger.info("upload status data query = $dataSqlQuery")
 
@@ -171,7 +171,7 @@ class UploadStatusLoader: CosmosLoader() {
 
             //Optimizing
             // Batch processing to improve performance
-            reports = fetchReports(results, pageSize, skipCount, paramList)
+            reports = fetchReports(results, pageSize, pageNumber, paramList)
 
         } else {
             numberOfPages = 0
@@ -206,11 +206,15 @@ class UploadStatusLoader: CosmosLoader() {
     private fun fetchReports(
         results: List<UploadCounts>,
         pageSize: Int,
-        skipCount: Int,
+        pageNumber: Int,
         paramList: List<SqlParameter>
     ): MutableMap<String, MutableList<ReportDao>> {
+
         val uploadIds = results.map { it.uploadId }
         val reportsMap = mutableMapOf<String, MutableList<ReportDao>>() // Use MutableList for efficient appending
+
+        // Use Skip Counts to get the exact number of results to be skipped
+        val skipCount = pageSize * (pageNumber - 1)
 
         val options = CosmosQueryRequestOptions()
         options.setMaxDegreeOfParallelism(0)
@@ -218,6 +222,7 @@ class UploadStatusLoader: CosmosLoader() {
 
         runBlocking {
             val batches = uploadIds.chunked(20)
+            //var count = 0
             for (batch in batches) {
                 // Create SQL parameter list with all the filter fields
                 val pList = ArrayList<SqlParameter>()
@@ -226,28 +231,52 @@ class UploadStatusLoader: CosmosLoader() {
                 pList.addAll(paramList)
                 val paramPlaceholders = batch.indices.joinToString(", ") { "@uploadId$it" }
                 val allReportsSqlQuery = """
-                SELECT *
-                FROM c
-                WHERE c._ts >= @dateStart AND c.dataStreamId = @dataStreamId AND c.uploadId IN ($paramPlaceholders)
-            """.trimIndent()
+                    SELECT *
+                    FROM c
+                    WHERE c._ts >= @dateStart AND c.dataStreamId = @dataStreamId AND c.uploadId IN ($paramPlaceholders)
+                """.trimIndent()
 
                 val subQuerySpec = SqlQuerySpec(allReportsSqlQuery, pList)
                 logger.info("Processing in batches, subQuerySpec = $subQuerySpec")
 
                 // Query and process pages asynchronously
-                val filteredReports = reportsContainer?.queryItems(subQuerySpec, options, ReportDao::class.java)
-                val pageResults = filteredReports?.iterableByPage()
+                var continuationToken: String? = null
+                var requestCharge: Double = 0.0
 
-                var count = 0
-                pageResults?.forEach { page ->
-                    // Process the reports in this page
-                    page.results
-                        .filter { it.uploadId != null }
-                        .groupBy { it.uploadId!! }
-                        .forEach { (uploadId, reportList) ->
-                            reportsMap.getOrPut(uploadId) { mutableListOf() }.addAll(reportList)
-                        }
-                }
+                // First iteration (continuationToken = null): Receive a batch of query response pages
+                // Subsequent iterations (continuationToken != null): Receive subsequent batch of query response pages, with continuationToken indicating where the previous iteration left off
+                do {
+                    logger.info("Receiving a set of query response pages.");
+                    logger.info("Continuation Token: $continuationToken\n");
+
+                    // Query and process pages asynchronously
+                    val filteredReports = reportsContainer?.queryItems(subQuerySpec, options, ReportDao::class.java)
+                    val pageResults = filteredReports?.iterableByPage(continuationToken)
+
+                    pageResults?.forEach { page ->
+                        // Process the reports in this page
+                        page.results
+                            .filter { it.uploadId != null }
+                            .groupBy { it.uploadId!! }
+                            .forEach { (uploadId, reportList) ->
+                                reportsMap.getOrPut(uploadId) { mutableListOf() }.addAll(reportList)
+                            }
+
+
+                        // Accumulate the request charge of this page
+                        requestCharge += page.getRequestCharge();
+                        // Request charge so far
+                        logger.info(String.format("Total request charge so far: %f\n", requestCharge));
+
+                        // Along with page results, get a continuation token
+                        // which enables the client to "pick up where it left off"
+                        // in accessing query response pages.
+                        continuationToken = page.continuationToken
+                    }
+
+                } while (continuationToken != null);
+
+
             }
         }
         return reportsMap
