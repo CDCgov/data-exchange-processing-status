@@ -12,6 +12,7 @@ import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.SqlParameter
 import com.azure.cosmos.models.SqlQuerySpec
+import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import kotlinx.coroutines.runBlocking
 
 class UploadStatusLoader: CosmosLoader() {
@@ -35,14 +36,14 @@ class UploadStatusLoader: CosmosLoader() {
      */
     @Throws(BadRequestException::class, ContentException::class, BadStateException::class)
     fun getUploadStatus(dataStreamId: String,
-                     dataStreamRoute: String?,
-                     dateStart: String?,
-                     dateEnd: String?,
-                     pageSize: Int,
-                     pageNumber: Int,
-                     sortBy: String?,
-                     sortOrder: String?,
-                     fileName:String?
+                        dataStreamRoute: String?,
+                        dateStart: String?,
+                        dateEnd: String?,
+                        pageSize: Int,
+                        pageNumber: Int,
+                        sortBy: String?,
+                        sortOrder: String?,
+                        fileName:String?
     ): UploadsStatus {
         logger.info("dataStreamId = $dataStreamId")
 
@@ -118,7 +119,7 @@ class UploadStatusLoader: CosmosLoader() {
 
         //Create CosmosQueryRequestOptions and set the partitionKey
         val options = CosmosQueryRequestOptions()
-        options.setMaxDegreeOfParallelism(0)
+        options.setMaxDegreeOfParallelism(-1)
         options.setMaxBufferedItemCount(pageSize)
 
         try{
@@ -176,7 +177,7 @@ class UploadStatusLoader: CosmosLoader() {
                 sqlQuery.append(" order by t.$sortField $sortOrderVal")
             }
 //            val offset = (pageNumberAsInt - 1) * pageSize
-    //        val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
+            //        val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
             val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
             logger.info("upload status data query = $dataSqlQuery")
 
@@ -200,16 +201,17 @@ class UploadStatusLoader: CosmosLoader() {
                         continue // Skip items until we reach the desired page
                     }
                     results = page.results.toList()
+                    logger.info("Page request charge:: " + page.requestCharge)
                     if (results.size >= pageSize) {
                         break // Stop if we've collected enough items
                     }
-                   // continuationToken = page.continuationToken
+                    // continuationToken = page.continuationToken
                 }
             }
 
             //Optimizing
-             // Batch processing to improve performance
-             reports = fetchReports(results, pageSize, skipCount)
+            // Batch processing to improve performance
+            reports = fetchReports(results, pageSize, skipCount, paramList)
 
             //Testing with ContinuationToken
 //            val options = CosmosQueryRequestOptions()
@@ -249,13 +251,18 @@ class UploadStatusLoader: CosmosLoader() {
     * Fetch the associated reports for the uploads matching the current request
     *
     * */
-    private fun fetchReports(results: List<UploadCounts>, pageSize: Int, skipCount: Int): MutableMap<String, MutableList<ReportDao>> {
+    private fun fetchReports(
+        results: List<UploadCounts>,
+        pageSize: Int,
+        skipCount: Int,
+        paramList: ArrayList<SqlParameter>
+    ): MutableMap<String, MutableList<ReportDao>> {
         val uploadIds = results.map { it.uploadId }
         val reportsMap = mutableMapOf<String, MutableList<ReportDao>>() // Use MutableList for efficient appending
 
         val options = CosmosQueryRequestOptions()
         options.setMaxDegreeOfParallelism(0)
-        options.setMaxBufferedItemCount(-1)
+        options.setMaxBufferedItemCount(pageSize)
 
         runBlocking {
             val batches = uploadIds.chunked(20)
@@ -265,10 +272,12 @@ class UploadStatusLoader: CosmosLoader() {
                 val allReportsSqlQuery = """
                 SELECT *
                 FROM c
-                WHERE c._ts >= 1714604400 AND c.uploadId IN ($paramPlaceholders)
+                WHERE c._ts >= @dateStart AND c.dataStreamId = @dataStreamId AND c.uploadId IN ($paramPlaceholders)
             """.trimIndent()
 
-                val subQuerySpec = SqlQuerySpec(allReportsSqlQuery, parameters)
+                paramList.addAll(parameters)
+
+                val subQuerySpec = SqlQuerySpec(allReportsSqlQuery, paramList)
                 logger.info("Processing in batches, subQuerySpec = $subQuerySpec")
 
                 // Query and process pages asynchronously
@@ -283,11 +292,12 @@ class UploadStatusLoader: CosmosLoader() {
                     }
 
                     // Process the reports in this page
-                    page.results.groupBy { it.uploadId }.forEach { (uploadId, reportList) ->
-                        if (uploadId != null) {
-                            reportsMap.getOrPut(uploadId, { mutableListOf() }).addAll(reportList)
+                    page.results
+                        .filter { it.uploadId != null }
+                        .groupBy { it.uploadId!! }
+                        .forEach { (uploadId, reportList) ->
+                            reportsMap.getOrPut(uploadId) { mutableListOf() }.addAll(reportList)
                         }
-                    }
                 }
             }
         }
