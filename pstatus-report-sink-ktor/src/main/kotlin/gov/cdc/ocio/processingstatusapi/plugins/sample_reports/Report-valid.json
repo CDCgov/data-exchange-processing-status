@@ -3,11 +3,12 @@
 	"user_id": "test-event1",
 	"data_stream_id": "celr",
 	"data_stream_route": "hl7_out_recdeb",
-	"jurisdiction": "SMOKE",
+	"jurisdiction": "INTEGRATION",
 	"sender_id": "APHL",
 	"data_producer_id": "smoke-test-data-producer",
 	"dex_ingest_timestamp": "2024-07-10T15:40:01Z",
 	"status": "SUCCESS",
+	"stageName": "dex-upload",
 	"messageMetadata": {
 		"type": "object",
 		"properties": {
