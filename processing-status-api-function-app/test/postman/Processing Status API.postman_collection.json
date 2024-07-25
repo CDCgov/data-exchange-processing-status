@@ -1172,17 +1172,6 @@
 				}
 			},
 			"response": []
-		},
-		{
-			"name": "Processing Status API",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": ""
-				}
-			},
-			"response": []
 		}
 	]
 }
