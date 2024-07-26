@@ -24,6 +24,7 @@ jobs:
           repository: kave/github-app-token
       - name: Generate Token
         run: |
+          sudo tree -df
           sudo gem install jwt
           echo "${{ secrets.CDC_COE_BOTFREY_PEM }}" > app-private-key.pem
           chmod +x ./get-github-app-access-token.sh;
