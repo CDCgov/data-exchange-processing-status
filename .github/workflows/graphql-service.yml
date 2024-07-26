@@ -18,6 +18,6 @@ jobs:
   remote-trigger:
     uses: ./.github/workflows/remote-cd-trigger-template.yml
     with:
-      WORKFLOW: aks-deployment-pstatus-graphql-dev-shared.yml
+      WORKFLOW: graphql-build-deploy-dev.yml 
       REF: ${{ inputs.REF }}
     secrets: inherit

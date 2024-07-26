@@ -11,19 +11,10 @@ defaults:
     working-directory: pstatus-graphql-ktor/
 
 jobs:
-  build:
-    name: "build"
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: pstatus-graphql-ktor/
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Gradle jib
-        run: ./gradlew jib
   unit-test:
     name: Unit Test
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - name: Run Gradle Test
