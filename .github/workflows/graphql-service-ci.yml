@@ -20,11 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Gradle jib
-        run: ./gradle jib
+        run: ./gradlew jib
   unit-test:
     name: Unit Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run Gradle Test
-        run: ./gradle test
+        run: ./gradlew test
