@@ -9,6 +9,8 @@ buildscript {
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.24'
     id 'io.ktor.plugin' version '2.3.11'
+    id "org.jetbrains.kotlin.plugin.serialization" version "1.8.20"
+//    id ("kotlinx-serialization")
 }
 apply plugin: "java"
 apply plugin: "kotlin"
@@ -33,6 +35,10 @@ configurations {
     agent
 }
 
+repositories{
+    mavenLocal()
+    mavenCentral()
+}
 dependencies {
     implementation "io.ktor:ktor-server-core-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-netty-jvm:$ktor_version"
@@ -40,7 +46,15 @@ dependencies {
     implementation "io.ktor:ktor-server-status-pages:$ktor_version"
     implementation "io.ktor:ktor-server-auth:$ktor_version"
     implementation "io.ktor:ktor-server-auth-jwt:$ktor_version"
+    implementation "io.ktor:ktor-server-content-negotiation:$ktor_version"
+    implementation "io.ktor:ktor-serialization-jackson:$ktor_version"
     implementation "ch.qos.logback:logback-classic:$logback_version"
+    implementation("io.ktor:ktor-server-content-negotiation:2.1.0")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.0")
+    implementation("io.ktor:ktor-client-core:2.1.0")
+    implementation("io.ktor:ktor-client-cio:2.1.0")
+    implementation("io.ktor:ktor-client-content-negotiation:2.1.0")
+    implementation("io.ktor:ktor-client-serialization:2.1.0")
     implementation 'com.expediagroup:graphql-kotlin-ktor-server:7.1.1'
     implementation 'com.azure:azure-cosmos:4.55.0'
     implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
@@ -50,6 +64,12 @@ dependencies {
     implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
     implementation 'joda-time:joda-time:2.12.7'
     implementation 'org.apache.commons:commons-lang3:3.3.1'
+    implementation "com.expediagroup:graphql-kotlin-server:6.0.0"
+    implementation "com.expediagroup:graphql-kotlin-schema-generator:6.0.0"
+    implementation "io.ktor:ktor-server-netty:2.1.0"
+    implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
+    implementation "io.ktor:ktor-client-logging:2.1.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
     testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
@@ -70,6 +90,4 @@ jib {
     }
 }
 
-repositories {
-    mavenCentral()
-}
+

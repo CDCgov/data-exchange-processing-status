@@ -5,56 +5,77 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
-import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
-import gov.cdc.ocio.processingstatusapi.queries.ReportCountsQueryService
-import gov.cdc.ocio.processingstatusapi.queries.ReportQueryService
-import gov.cdc.ocio.processingstatusapi.queries.UploadQueryService
+import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
+import gov.cdc.ocio.processingstatusapi.mutations.NotificationsMutationService
+import gov.cdc.ocio.processingstatusapi.queries.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.config.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import mu.KotlinLogging
 import java.time.Duration
+import java.util.*
 
+
+/**
+ * Implementation of the GraphQL module for PS API.
+ *
+ * @receiver Application
+ */
 fun Application.graphQLModule() {
+    val logger = KotlinLogging.logger {}
+
     install(WebSockets) {
         // needed for subscriptions
         pingPeriod = Duration.ofSeconds(1)
         contentConverter = JacksonWebsocketContentConverter()
     }
     // see https://ktor.io/docs/server-jwt.html#configure-verifier
+    // Get security settings and default to enabled if missing
+    val securityEnabled = environment.config.tryGetString("jwt.enabled")?.lowercase() != "false"
     val secret = environment.config.property("jwt.secret").getString()
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()
     val myRealm = environment.config.property("jwt.realm").getString()
-    install(Authentication) {
-        jwt {
-            jwt("auth-jwt") {
-                realm = myRealm
-                verifier(JWT
-                    .require(Algorithm.HMAC256(secret))
-                    .withAudience(audience)
-                    .withIssuer(issuer)
-                    .build())
-                validate { credential ->
-                    if (credential.payload.getClaim("username").asString() != "") {
-                        JWTPrincipal(credential.payload)
-                    } else {
-                        null
+    val graphQLPath = environment.config.tryGetString("graphql.path")
+    if (securityEnabled) {
+        install(Authentication) {
+            jwt {
+                jwt("auth-jwt") {
+                    realm = myRealm
+                    verifier(
+                        JWT
+                            .require(Algorithm.HMAC256(Base64.getDecoder().decode(secret)))
+                            .withAudience(audience)
+                            .withIssuer(issuer)
+                            .build()
+                    )
+                    validate { credential ->
+                        if (credential.payload.getClaim("username").asString() != "") {
+                            JWTPrincipal(credential.payload)
+                        } else {
+                            logger.error("username missing from JWT claims, denying the token")
+                            null
+                        }
                     }
-                }
-                challenge { _, _ ->
-                    call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+                    challenge { defaultScheme, realm ->
+                        call.respond(
+                            HttpStatusCode.Unauthorized,
+                            "Token is not valid or has expired; defaultScheme = $defaultScheme, realm = $realm"
+                        )
+                    }
                 }
             }
         }
     }
     install(StatusPages) {
-        defaultGraphQLStatusPages()
+        customGraphQLStatusPages()
     }
 //    install(CORS) {
 //        anyHost()
@@ -66,7 +87,12 @@ fun Application.graphQLModule() {
                 HealthQueryService(),
                 ReportQueryService(),
                 ReportCountsQueryService(),
+                ReportDeadLetterQueryService(),
                 UploadQueryService()
+
+            )
+            mutations= listOf(
+                NotificationsMutationService()
             )
 //            subscriptions = listOf(
 //                ErrorSubscriptionService()
@@ -75,22 +101,34 @@ fun Application.graphQLModule() {
         }
         engine {
             dataLoaderRegistryFactory = KotlinDataLoaderRegistryFactory(
-                ReportDataLoader
+                ReportDataLoader,
+                ReportDeadLetterDataLoader
             )
+        }
+        if (securityEnabled) {
+            server {
+                contextFactory = CustomGraphQLContextFactory()
+            }
         }
     }
     install(Routing) {
-        authenticate("auth-jwt") {
-//            post("/graphql") {
-//                val principal = call.principal<JWTPrincipal>()
-//                val username = principal!!.payload.getClaim("username").asString()
-//                val expiresAt = principal.expiresAt?.time?.minus(System.currentTimeMillis())
-//                call.respondText("Hello, $username! Token is expired at $expiresAt ms.")
-//            }
+        if (securityEnabled) {
+            authenticate("auth-jwt") {
+                graphQLPostRoute()
+            }
+        } else {
+            graphQLPostRoute()
         }
-        graphQLPostRoute()
         graphQLSubscriptionsRoute()
         graphQLSDLRoute()
-        graphiQLRoute() // Go to http://localhost:8080/graphiql for the GraphQL playground
+        // Go to http://localhost:8080/graphiql for the GraphQL playground
+        if (graphQLPath.isNullOrEmpty()) {
+            graphiQLRoute()
+        } else {
+            graphiQLRoute(
+                graphQLEndpoint = "$graphQLPath/graphql",
+                subscriptionsEndpoint = "$graphQLPath/subscriptions"
+            )
+        }
     }
 }

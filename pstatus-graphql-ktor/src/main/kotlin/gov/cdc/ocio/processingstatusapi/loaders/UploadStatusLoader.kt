@@ -51,25 +51,25 @@ class UploadStatusLoader: CosmosLoader() {
         val pageSizeAsInt = pageUtils.getPageSize(pageSize)
 
         val sqlQuery = StringBuilder()
-        sqlQuery.append("from $reportsContainerName t where t.dataStreamId = '$dataStreamId'")
+        sqlQuery.append("from r where r.dataStreamId = '$dataStreamId'")
 
         dataStreamRoute?.run {
-            sqlQuery.append(" and t.dataStreamRoute = '$dataStreamRoute'")
+            sqlQuery.append(" and r.dataStreamRoute = '$dataStreamRoute'")
         }
 
         dateStart?.run {
             val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-            sqlQuery.append(" and t._ts >= $dateStartEpochSecs")
+            sqlQuery.append(" and r._ts >= $dateStartEpochSecs")
         }
         dateEnd?.run {
             val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-            sqlQuery.append(" and t._ts < $dateEndEpochSecs")
+            sqlQuery.append(" and r._ts < $dateEndEpochSecs")
         }
-        sqlQuery.append(" group by t.uploadId")
+        sqlQuery.append(" group by r.uploadId")
 
         // Query for getting counts in the structure of UploadCounts object.  Note the MAX aggregate which is used to
-        // get the latest timestamp from t._ts.
-        val countQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery"
+        // get the latest timestamp from r._ts.
+        val countQuery = "select count(1) as reportCounts, r.uploadId, MAX(r._ts) as latestTimestamp $sqlQuery"
         logger.info("upload status count query = $countQuery")
 
         var totalItems = 0
@@ -117,10 +117,10 @@ class UploadStatusLoader: CosmosLoader() {
 //                        }
 //                    }
 //                }
-//                sqlQuery.append(" order by t.$sortField $sortOrderVal")
+//                sqlQuery.append(" order by r.$sortField $sortOrderVal")
 //            }
             val offset = (pageNumberAsInt - 1) * pageSize
-            val dataSqlQuery = "select count(1) as reportCounts, t.uploadId, MAX(t._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
+            val dataSqlQuery = "select count(1) as reportCounts, r.uploadId, MAX(r._ts) as latestTimestamp $sqlQuery offset $offset limit $pageSizeAsInt"
             logger.info("upload status data query = $dataSqlQuery")
             val results = reportsContainer?.queryItems(
                 dataSqlQuery, CosmosQueryRequestOptions(),
@@ -130,7 +130,7 @@ class UploadStatusLoader: CosmosLoader() {
             results?.forEach { report ->
                 val uploadId = report.uploadId
                     ?: throw BadStateException("Upload ID unexpectedly null")
-                val reportsSqlQuery = "select * from $reportsContainerName t where t.uploadId = '$uploadId'"
+                val reportsSqlQuery = "select * from r where r.uploadId = '$uploadId'"
                 logger.info("get reports for upload query = $reportsSqlQuery")
                 val reportsForUploadId = reportsContainer?.queryItems(
                     reportsSqlQuery, CosmosQueryRequestOptions(),

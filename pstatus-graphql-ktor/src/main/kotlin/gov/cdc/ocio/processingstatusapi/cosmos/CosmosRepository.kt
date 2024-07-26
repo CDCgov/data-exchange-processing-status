@@ -1,9 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.cosmos
 
-import org.koin.core.component.KoinComponent
-
-class CosmosRepository(uri: String, authKey: String, reportsContainerName: String, partitionKey: String): KoinComponent {
+class CosmosRepository(uri: String, authKey: String, reportsContainerName: String, partitionKey: String) {
 
     val reportsContainer = CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)
 
+}
+
+class CosmosDeadLetterRepository(uri: String, authKey: String, reportsContainerName: String, partitionKey: String) {
+    val reportsDeadLetterContainer =
+        CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)
 }

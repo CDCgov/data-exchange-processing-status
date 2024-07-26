@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models
 
-import com.google.gson.*
+
 import com.google.gson.annotations.SerializedName
 import java.util.*
 
@@ -18,7 +18,7 @@ import java.util.*
  * @property content String?
  * @property timestamp Date
  */
-data class Report(
+open class Report(
 
     var id : String? = null,
 
@@ -49,19 +49,4 @@ data class Report(
     var content: Any? = null,
 
     val timestamp: Date = Date()
-) {
-    val contentAsString: String?
-        get() {
-            if (content == null) return null
-
-            return when (contentType?.lowercase(Locale.getDefault())) {
-                "json" -> {
-                    if (content is LinkedHashMap<*, *>)
-                        Gson().toJson(content, MutableMap::class.java).toString()
-                    else
-                        content.toString()
-                }
-                else -> content.toString()
-            }
-        }
-}
+)

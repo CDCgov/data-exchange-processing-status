@@ -19,10 +19,6 @@ class ServiceBus: HealthCheckSystem() {
     var service: String = "Azure Service Bus"
 }
 
-class Jaeger: HealthCheckSystem() {
-    var service: String = "Jaeger"
-}
-
 class HealthCheck {
 
     var status : String? = "DOWN"

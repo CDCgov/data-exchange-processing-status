@@ -28,7 +28,7 @@ class ReportCountsLoader: CosmosLoader() {
         val reportsSqlQuery = (
                 "select "
                         + "count(1) as counts, r.stageName, r.content.schema_name, r.content.schema_version "
-                        + "from $reportsContainerName r where r.uploadId = '$uploadId' "
+                        + "from r where r.uploadId = '$uploadId' "
                         + "group by r.stageName, r.content.schema_name, r.content.schema_version"
                 )
         val reportItems = reportsContainer?.queryItems(
@@ -39,7 +39,7 @@ class ReportCountsLoader: CosmosLoader() {
 
             // Order by timestamp (ascending) and grab the first one found, which will give us the earliest timestamp.
             val firstReportSqlQuery = (
-                    "select * from $reportsContainerName r where r.uploadId = '$uploadId' "
+                    "select * from r where r.uploadId = '$uploadId' "
                             + "order by r.timestamp asc offset 0 limit 1"
                     )
 
@@ -92,7 +92,7 @@ class ReportCountsLoader: CosmosLoader() {
                 "select "
                         + "r.uploadId, r.stageName, SUM(r.content.stage.report.number_of_messages) as numberOfMessages, "
                         + "SUM(r.content.stage.report.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) "
                         + "group by r.uploadId, r.stageName"
                 )
@@ -114,7 +114,7 @@ class ReportCountsLoader: CosmosLoader() {
                         + "r.uploadId, r.stageName, "
                         + "count(contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as valid, "
                         + "count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as invalid "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = '$hl7ValidationSchemaName' and r.uploadId in ($quotedUploadIds) "
                         + "group by r.uploadId, r.stageName"
                 )
@@ -202,7 +202,7 @@ class ReportCountsLoader: CosmosLoader() {
         uploadIdCountSqlQuery.append(
             "select "
                     + "value count(1) "
-                    + "from (select distinct r.uploadId from $reportsContainerName r "
+                    + "from (select distinct r.uploadId from r "
                     + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause)"
         )
 
@@ -224,7 +224,7 @@ class ReportCountsLoader: CosmosLoader() {
             uploadIdsSqlQuery.append(
                 "select "
                         + "distinct value r.uploadId "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "$timeRangeWhereClause offset $offset limit $pageSizeAsInt"
             )
@@ -241,7 +241,7 @@ class ReportCountsLoader: CosmosLoader() {
                 val reportsSqlQuery = (
                         "select "
                                 + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
-                                + "from $reportsContainerName r where r.uploadId in ($quotedUploadIds) "
+                                + "from r where r.uploadId in ($quotedUploadIds) "
                                 + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
                         )
                 val reportItems = reportsContainer?.queryItems(
@@ -328,7 +328,7 @@ class ReportCountsLoader: CosmosLoader() {
         val reportsSqlQuery = (
                 "select "
                         + "value count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
@@ -366,7 +366,7 @@ class ReportCountsLoader: CosmosLoader() {
         val numCompletedUploadingSqlQuery = (
                 "select "
                         + "value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = 'upload' and r.content['offset'] = r.content.size and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
@@ -380,7 +380,7 @@ class ReportCountsLoader: CosmosLoader() {
         val numUploadingSqlQuery = (
                 "select "
                         + "value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = 'upload' and r.content['offset'] != r.content.size and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
@@ -394,7 +394,7 @@ class ReportCountsLoader: CosmosLoader() {
         val numFailedSqlQuery = (
                 "select "
                         + "value count(1) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = 'dex-metadata-verify' and r.content.issues != null and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
@@ -435,14 +435,14 @@ class ReportCountsLoader: CosmosLoader() {
 
         val directMessageQuery = (
                 "select value SUM(directCounts) "
-                        + "from (select value SUM(r.content.stage.report.number_of_messages) from $reportsContainerName r "
+                        + "from (select value SUM(r.content.stage.report.number_of_messages) from r "
                         + "where r.content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
                 )
 
         val indirectMessageQuery = (
                 "select value count(redactedCount) from ( "
-                        + "select * from $reportsContainerName r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
+                        + "select * from r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as redactedCount"
                 )
 
@@ -488,7 +488,7 @@ class ReportCountsLoader: CosmosLoader() {
 
         val directInvalidMessageQuery = (
                 "select value SUM(directCounts) "
-                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from $reportsContainerName r "
+                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from r "
                         + " where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
                         + " r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
                 )
@@ -496,14 +496,14 @@ class ReportCountsLoader: CosmosLoader() {
         val directStructureInvalidMessageQuery = (
                 "select "
                         + "value count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) "
-                        + "from $reportsContainerName r "
+                        + "from r "
                         + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
         val indirectInvalidMessageQuery = (
                 "select value count(invalidCounts) from ("
-                        + "select * from $reportsContainerName r where r.content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
+                        + "select * from r where r.content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
                         + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as invalidCounts"
                 )
 
@@ -562,7 +562,7 @@ class ReportCountsLoader: CosmosLoader() {
         val rollupCountsQuery = (
                 "select "
                         + "r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName "
-                        + "from $reportsContainerName r where r.dataStreamId = '$dataStreamId' and "
+                        + "from r where r.dataStreamId = '$dataStreamId' and "
                         + "r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
                         + "group by r.stageName, r.content.schema_name, r.content.schema_version"
                 )

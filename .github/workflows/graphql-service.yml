@@ -1,0 +1,23 @@
+name: DEV - GraphQL Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      REF:
+        description: Branch from CDCgov/data-exchange-processing-status that you want to deploy to the dev environment.
+        default: main
+        required: true
+        type: string
+  push:
+    branches:
+        - main
+    paths:
+        - pstatus-graphql-ktor/**
+
+jobs:
+  remote-trigger:
+    uses: ./.github/workflows/remote-cd-trigger-template.yml
+    with:
+      WORKFLOW: aks-deployment-pstatus-graphql-dev-shared.yml
+      REF: ${{ inputs.REF }}
+    secrets: inherit
