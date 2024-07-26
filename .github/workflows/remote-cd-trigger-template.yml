@@ -25,8 +25,7 @@ jobs:
       - name: Generate Token
         run: |
           sudo gem install jwt
-          x=${{ secrets.CDC_COE_BOTFREY_PEM }}
-          echo $x > app-private-key.pem
+          echo "${{ secrets.CDC_COE_BOTFREY_PEM }}" > app-private-key.pem
           chmod +x ./get-github-app-access-token.sh;
           . ./get-github-app-access-token.sh;
           echo "access_token=${TOKEN}" >> "$GITHUB_ENV"
