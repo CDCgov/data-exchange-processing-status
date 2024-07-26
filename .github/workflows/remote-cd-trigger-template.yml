@@ -38,8 +38,5 @@ jobs:
                   owner: 'cdcent',
                   repo: 'data-exchange-pstatus-devops',
                   workflow_id: '${{ inputs.WORKFLOW }}',
-                  ref: 'main',
-                  # inputs: {
-                  #   REF: '${{ inputs.REF }}'
-                  # }
+                  ref: 'main'
                 })
