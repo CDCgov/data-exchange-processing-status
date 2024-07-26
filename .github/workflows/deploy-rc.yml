@@ -10,6 +10,6 @@ jobs:
   staging:
     uses: ./.github/workflows/remote-cd-trigger-template.yml
     with:
-      WORKFLOW: build-and-deploy-rc.yml
+      WORKFLOW: aks-deployment-pstatus-graphql-stg.yml
       REF: '${{ github.ref_name }}'  # Resolves to the tag that is pushed
     secrets: inherit
