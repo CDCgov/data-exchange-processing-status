@@ -3,7 +3,7 @@
     "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
     "title": "Base Report",
     "type": "object",
-    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_timestamp", "sender_id", "status", "stage_info", "content_type"],
+    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_timestamp", "sender_id",  "stage_info", "content_type"],
     "if": {
         "properties": {
             "content_type": {
