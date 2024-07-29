@@ -3,7 +3,7 @@
     "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
     "title": "Base Report",
     "type": "object",
-    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_timestamp", "sender_id", "status", "stage_info", "content_type"],
+    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_datetime", "sender_id", "status", "stage_info", "content_type"],
     "if": {
         "properties": {
             "content_type": {
@@ -45,8 +45,8 @@
         "data_producer_id": {
             "type": "string"
         },
-        "dex_ingest_timestamp": {
-            "$ref": "#/$defs/timestamp"
+        "dex_ingest_datetime": {
+            "$ref": "#/$defs/datetime"
         },
         "message_metadata": {
             "$ref": "#/$defs/messageMetadata",
@@ -73,7 +73,7 @@
             "type": "string",
             "format": "uuid"
         },
-        "timestamp": {
+        "datetime": {
             "type": "string",
             "format": "date-time"
         },
@@ -135,10 +135,10 @@
                 }
             },
             "start_processing_time": {
-                "$ref": "#/$defs/timestamp"
+                "$ref": "#/$defs/datetime"
             },
             "end_processing_time": {
-                "$ref": "#/$defs/timestamp"
+                "$ref": "#/$defs/datetime"
             }
         },
         "keyValueMap": {
