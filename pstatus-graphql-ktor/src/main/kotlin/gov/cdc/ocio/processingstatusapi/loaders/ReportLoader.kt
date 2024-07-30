@@ -2,10 +2,11 @@ package gov.cdc.ocio.processingstatusapi.loaders
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.DataStream
 import gov.cdc.ocio.processingstatusapi.models.SortOrder
+import gov.cdc.ocio.processingstatusapi.models.Report
+import gov.cdc.ocio.processingstatusapi.models.submission.UploadDetails
 import graphql.schema.DataFetchingEnvironment
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -18,8 +19,10 @@ class ForbiddenException(message: String) : RuntimeException(message)
  */
 class ReportLoader: CosmosLoader() {
 
+
     /**
-     * Get all reports associated with the provided upload id.
+     * Submission details contain all the known details for a particular upload.
+     * It provides a roll-up of all the reports associated with the upload as well as some summary information..
      *
      * @param dataFetchingEnvironment DataFetchingEnvironment
      * @param uploadId String
@@ -27,11 +30,11 @@ class ReportLoader: CosmosLoader() {
      * @param sortOrder SortOrder?
      * @return List<Report>
      */
-    fun getByUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
+    fun getSubmissionDetailsByUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
                       uploadId: String,
                       reportsSortedBy: String?,
                       sortOrder: SortOrder?
-    ): List<Report> {
+    ): UploadDetails {
         // Obtain the data streams available to the user from the data fetching env.
         val authContext = dataFetchingEnvironment.graphQlContext.get<AuthenticationContext>("AuthContext")
         var dataStreams: List<DataStream>? = null
@@ -68,14 +71,14 @@ class ReportLoader: CosmosLoader() {
         val reports = mutableListOf<Report>()
         reportItems?.forEach { reportItem ->
             val report = reportItem.toReport()
-            dataStreams?.run {
+          /*  dataStreams?.run {
                 if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
                     throw ForbiddenException("You are not allowed to access this resource.")
-            }
+            }*/
             reports.add(report)
         }
+       return getUploadDetails(reports)
 
-        return reports
     }
 
     /**
@@ -99,4 +102,40 @@ class ReportLoader: CosmosLoader() {
 
         return reports
     }
+
+    /**
+     *  Get uploadDetails
+     */
+
+    private fun getUploadDetails(reports:MutableList<Report>):UploadDetails {
+
+        // Determine rollup status
+        val rollupStatus = when {
+            reports.all { it.stageInfo?.status == "SUCCESS" } -> "DELIVERED"
+            reports.any { it.stageInfo?.status == "FAILURE" } -> "FAILED"
+            reports.isNotEmpty() -> "PROCESSING"
+            else -> null
+        }
+
+        // Find report with most recent timestamp
+        val lastReport = reports.maxByOrNull { it.timestamp!! }
+        val stageInfo = lastReport?.stageInfo
+        // Find the first report with service "upload" and action "upload-status"
+        //  val uploadStatusReport = reports.firstOrNull { it.service == "upload" && it.action == "upload-status" }
+
+          return UploadDetails(
+            status = rollupStatus,
+            lastService = stageInfo?.service,
+            lastAction =stageInfo?.stage,
+           //filename = uploadStatusReport?.references?.firstOrNull { it.type == "filename" }?.value,
+            dexIngestTimestamp = reports.firstOrNull()?.timestamp,
+              uploadId = lastReport?.uploadId,
+              dataStreamId = lastReport?.dataStreamId,
+              dataStreamRoute = lastReport?.dataStreamRoute,
+           //   senderId = lastReport?.se,
+            reports = reports
+        )
+
+    }
+
 }
