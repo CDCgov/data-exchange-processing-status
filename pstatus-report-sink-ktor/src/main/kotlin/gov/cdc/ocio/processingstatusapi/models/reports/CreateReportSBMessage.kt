@@ -42,6 +42,12 @@ class CreateReportSBMessage: ServiceBusMessage() {
     @SerializedName("data")
     val data: Map<String,String>? = null
 
+    @SerializedName("jurisdiction")
+    val jurisdiction: String? = null
+
+    @SerializedName("sender_id")
+    val senderId: String? = null
+
     @SerializedName("content_type")
     val contentType: String? = null
 

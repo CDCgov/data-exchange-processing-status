@@ -14,6 +14,7 @@ import java.util.*
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
+ * @property stageName String?
  * @property contentType String?
  * @property messageId String?
  * @property status String?
@@ -37,22 +38,29 @@ open class Report(
     var dataStreamRoute: String? = null,
 
     @SerializedName("message_metadata")
-    var  messageMetadata: MessageMetadata? = null,
+    var messageMetadata: MessageMetadata? = null,
 
     @SerializedName("stage_info")
-    var  stageInfo: StageInfo? = null,
+    var stageInfo: StageInfo? = null,
+
 
     @SerializedName("tags")
-    var  tags: Tags? = null,
+    var tags: Tags? = null,
 
     @SerializedName("data")
-    var  data: Map<String,String>? = null,
+    var data: Map<String,String>? = null,
 
     @SerializedName("content_type")
     var contentType : String? = null,
 
     @SerializedName("message_id")
     var messageId: String? = null,
+
+    @SerializedName("jurisdiction")
+    var jurisdiction: String? = null,
+
+    @SerializedName("sender_id")
+    var senderId: String? = null,
 
     @SerializedName("status")
     var status : String? = null,

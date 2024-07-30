@@ -107,6 +107,8 @@ class ServiceBusProcessor {
                 messageId, //createReportMessage.messageId is null
                 messageStatus, //createReportMessage.status is null
                 createReportMessage.content!!, // it was Content I changed to ContentAsString
+                createReportMessage.jurisdiction,
+                createReportMessage.senderId,
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
@@ -174,6 +176,9 @@ class ServiceBusProcessor {
                     return
                 }
             }
+            //Check for the status wit
+
+
             // Open the content as JSON
             val contentNode = jsonNode.get("content")
             if (contentNode == null) {
@@ -232,6 +237,8 @@ class ServiceBusProcessor {
                     createReportMessage.dispositionType,
                     createReportMessage.contentType,
                     createReportMessage.content,
+                    createReportMessage.jurisdiction,
+                    createReportMessage.senderId,
                     invalidData,
                     validationSchemaFileNames
                 )
