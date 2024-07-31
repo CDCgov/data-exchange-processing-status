@@ -31,9 +31,9 @@ class ReportLoader: CosmosLoader() {
      * @return List<Report>
      */
     fun getSubmissionDetailsByUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
-                      uploadId: String,
-                      reportsSortedBy: String?,
-                      sortOrder: SortOrder?
+                                       uploadId: String,
+                                       reportsSortedBy: String?,
+                                       sortOrder: SortOrder?
     ): UploadDetails {
         // Obtain the data streams available to the user from the data fetching env.
         val authContext = dataFetchingEnvironment.graphQlContext.get<AuthenticationContext>("AuthContext")
@@ -71,13 +71,13 @@ class ReportLoader: CosmosLoader() {
         val reports = mutableListOf<Report>()
         reportItems?.forEach { reportItem ->
             val report = reportItem.toReport()
-          /*  dataStreams?.run {
-                if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
-                    throw ForbiddenException("You are not allowed to access this resource.")
-            }*/
+              dataStreams?.run {
+                  if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
+                      throw ForbiddenException("You are not allowed to access this resource.")
+              }
             reports.add(report)
         }
-       return getUploadDetails(reports)
+        return getUploadDetails(reports)
 
     }
 
@@ -121,18 +121,19 @@ class ReportLoader: CosmosLoader() {
         val lastReport = reports.maxByOrNull { it.timestamp!! }
         val stageInfo = lastReport?.stageInfo
         // Find the first report with service "upload" and action "upload-status"
-        //  val uploadStatusReport = reports.firstOrNull { it.service == "upload" && it.action == "upload-status" }
+        val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.stage == "upload-status" }
 
-          return UploadDetails(
+        return UploadDetails(
             status = rollupStatus,
             lastService = stageInfo?.service,
             lastAction =stageInfo?.stage,
-           //filename = uploadStatusReport?.references?.firstOrNull { it.type == "filename" }?.value,
+          //  filename = uploadStatusReport?.references?.firstOrNull { it.type == "filename" }?.value,
+            uploadId = lastReport?.uploadId,
             dexIngestTimestamp = reports.firstOrNull()?.timestamp,
-              uploadId = lastReport?.uploadId,
-              dataStreamId = lastReport?.dataStreamId,
-              dataStreamRoute = lastReport?.dataStreamRoute,
-           //   senderId = lastReport?.se,
+            dataStreamId = lastReport?.dataStreamId,
+            dataStreamRoute = lastReport?.dataStreamRoute,
+            jurisdiction = lastReport?.jurisdiction,
+            senderId = lastReport?.senderId,
             reports = reports
         )
 

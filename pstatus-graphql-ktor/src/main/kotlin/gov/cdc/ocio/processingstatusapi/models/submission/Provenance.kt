@@ -27,5 +27,8 @@ data class Provenance(
     @GraphQLDescription("Message Index")
     var messageIndex: Int? = null,
 
+    @GraphQLDescription("Filename value")
+    var fileName: String? = null,
+
 
 )

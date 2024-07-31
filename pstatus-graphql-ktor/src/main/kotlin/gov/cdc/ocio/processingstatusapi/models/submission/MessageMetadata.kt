@@ -10,11 +10,11 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 @GraphQLDescription("MessageMetadata")
 data class MessageMetadata(
 
-   /* @GraphQLDescription("DispositionType")
-    var dispositionType: String?,*/
+    @GraphQLDescription("DispositionType")
+    var dispositionType: String?= null,
 
    @GraphQLDescription("Provenance")
-    var provenance: Provenance
+    var provenance: Provenance? = null
 
 
 )

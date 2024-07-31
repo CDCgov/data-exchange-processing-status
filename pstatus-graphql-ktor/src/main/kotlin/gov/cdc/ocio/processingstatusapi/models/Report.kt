@@ -15,7 +15,6 @@ import java.time.OffsetDateTime
  * @property dataStreamRoute String?
  * @property contentType String?
  * @property messageId String?
- * @property status String?
  * @property content String?
  * @property timestamp OffsetDateTime
  */
@@ -54,6 +53,12 @@ data class Report(
 
     @GraphQLDescription("Message id this report belongs to; set to null if not applicable")
     var messageId: String? = null,
+
+    @GraphQLDescription("Jurisdiction report belongs to; set to null if not applicable")
+    var jurisdiction: String? = null,
+
+    @GraphQLDescription("SenderId this report belongs to; set to null if not applicable")
+    var senderId: String? = null,
 
     @GraphQLDescription("Content of the report.  If the report is JSON then the content will be shown as JSON.  Otherwise, the content is a base64 encoded string.")
     var content : Map<*, *>? = null,
