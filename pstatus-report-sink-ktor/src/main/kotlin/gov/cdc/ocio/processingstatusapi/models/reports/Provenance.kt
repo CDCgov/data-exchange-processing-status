@@ -9,11 +9,9 @@ import com.google.gson.annotations.SerializedName
  * @property messageHash String?
  * @property singleOrBatch String?
  * @property messageIndex Int?
+ * @property originalFileName String?
  */
 class Provenance {
-
-    @SerializedName("event_id")
-    var messageId : String? = null
 
     @SerializedName("file_uuid")
     var messageUUID : String? = null
@@ -27,7 +25,8 @@ class Provenance {
     @SerializedName("message_index")
     var messageIndex: Int? = null
 
-
+    @SerializedName("ext_original_file_name")
+    var originalFileName: String? = null
 
 
 }
