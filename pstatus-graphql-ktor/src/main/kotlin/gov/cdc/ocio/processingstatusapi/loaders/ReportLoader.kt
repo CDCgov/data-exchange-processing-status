@@ -119,6 +119,7 @@ class ReportLoader: CosmosLoader() {
 
         // Find report with most recent timestamp
         val lastReport = reports.maxByOrNull { it.timestamp!! }
+        val firstReport = reports.firstOrNull()
         val stageInfo = lastReport?.stageInfo
         // Find the first report with service "upload" and action "upload-status"
         val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.stage == "upload-status" }
@@ -127,13 +128,13 @@ class ReportLoader: CosmosLoader() {
             status = rollupStatus,
             lastService = stageInfo?.service,
             lastAction =stageInfo?.stage,
-          //  filename = uploadStatusReport?.references?.firstOrNull { it.type == "filename" }?.value,
+            filename = uploadStatusReport?.messageMetadata?.provenance?.fileName,
             uploadId = lastReport?.uploadId,
-            dexIngestTimestamp = reports.firstOrNull()?.timestamp,
-            dataStreamId = lastReport?.dataStreamId,
-            dataStreamRoute = lastReport?.dataStreamRoute,
-            jurisdiction = lastReport?.jurisdiction,
-            senderId = lastReport?.senderId,
+            dexIngestTimestamp = firstReport?.timestamp,
+            dataStreamId = firstReport?.dataStreamId,
+            dataStreamRoute = firstReport?.dataStreamRoute,
+            jurisdiction = firstReport?.jurisdiction,
+            senderId = firstReport?.senderId,
             reports = reports
         )
 
