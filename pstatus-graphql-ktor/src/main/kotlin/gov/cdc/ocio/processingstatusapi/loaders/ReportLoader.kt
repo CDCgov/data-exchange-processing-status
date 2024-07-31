@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.DataStream
 import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import gov.cdc.ocio.processingstatusapi.models.Report
+import gov.cdc.ocio.processingstatusapi.models.submission.Status
 import gov.cdc.ocio.processingstatusapi.models.submission.UploadDetails
 import graphql.schema.DataFetchingEnvironment
 import io.ktor.server.auth.*
@@ -113,8 +114,8 @@ class ReportLoader: CosmosLoader() {
 
         // Determine rollup status
         val rollupStatus = when {
-            reports.all { it.stageInfo?.status == "SUCCESS" } -> "DELIVERED"
-            reports.any { it.stageInfo?.status == "FAILURE" } -> "FAILED"
+            reports.all { it.stageInfo?.status == Status.SUCCESS } -> "DELIVERED"
+            reports.any { it.stageInfo?.status == Status.FAILURE } -> "FAILED"
             reports.isNotEmpty() -> "PROCESSING"
             else -> null
         }

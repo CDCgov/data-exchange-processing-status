@@ -3,6 +3,16 @@ package gov.cdc.ocio.processingstatusapi.models.submission
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import java.time.OffsetDateTime
 
+enum class Status {
+
+    @GraphQLDescription("Success")
+    SUCCESS,
+
+    @GraphQLDescription("Failure")
+    FAILURE
+}
+
+
 /**
  * Message stageInfo within a Report.
  **
@@ -26,7 +36,7 @@ data class StageInfo(
     var version: String? = null,
 
     @GraphQLDescription("Status- SUCCESS OR FAILURE")
-    var status: String? = null,
+    var status: Status? = null,
 
     @GraphQLDescription("Issues array")
     var issues: List<Issue>? = null,

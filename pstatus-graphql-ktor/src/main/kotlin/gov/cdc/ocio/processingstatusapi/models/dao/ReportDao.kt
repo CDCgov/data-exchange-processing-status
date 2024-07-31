@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
-import gov.cdc.ocio.processingstatusapi.models.submission.Tags
 import java.time.ZoneOffset
 import java.util.*
 
@@ -43,7 +42,7 @@ open class ReportDao(
 
     var  stageInfo: StageInfo? = null,
 
-    var  tags: Tags? = null,
+    var  tags: Map<String,String>? = null,
 
     var  data: Map<String,String>? = null,
 

@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.models
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
-import gov.cdc.ocio.processingstatusapi.models.submission.Tags
 import java.time.OffsetDateTime
 
 /**
@@ -49,7 +48,7 @@ data class Report(
     var stageInfo: StageInfo? = null,
 
     @GraphQLDescription("tags")
-    var tags: Tags? = null,
+    var tags: Map<String,String>? = null,
 
     @GraphQLDescription("data")
     var data: Map<String,String>? = null,
