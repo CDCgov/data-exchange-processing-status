@@ -28,7 +28,7 @@ class ReportLoader: CosmosLoader() {
      * @param uploadId String
      * @param reportsSortedBy String?
      * @param sortOrder SortOrder?
-     * @return List<Report>
+     * @return UploadDetails
      */
     fun getSubmissionDetailsByUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
                                        uploadId: String,
@@ -71,10 +71,10 @@ class ReportLoader: CosmosLoader() {
         val reports = mutableListOf<Report>()
         reportItems?.forEach { reportItem ->
             val report = reportItem.toReport()
-              dataStreams?.run {
-                  if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
-                      throw ForbiddenException("You are not allowed to access this resource.")
-              }
+            dataStreams?.run {
+                if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
+                    throw ForbiddenException("You are not allowed to access this resource.")
+            }
             reports.add(report)
         }
         return getUploadDetails(reports)
@@ -105,6 +105,8 @@ class ReportLoader: CosmosLoader() {
 
     /**
      *  Get uploadDetails
+     *  @param reports MutableList<Report>
+     *  @return UploadDetails
      */
 
     private fun getUploadDetails(reports:MutableList<Report>):UploadDetails {

@@ -3,12 +3,12 @@ package gov.cdc.ocio.processingstatusapi.models.submission
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 
 /**
- * Issue within a report.
+ * Properties within a issue.
  *
  * @property level String?
  * @property message Int?
  */
-@GraphQLDescription("Contains Report issues.")
+@GraphQLDescription("Contains issue properties.")
 data class Properties(
 
     @GraphQLDescription("Issue level")

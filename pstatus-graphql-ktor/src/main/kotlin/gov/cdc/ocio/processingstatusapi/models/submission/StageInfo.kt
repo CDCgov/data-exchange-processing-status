@@ -31,10 +31,10 @@ data class StageInfo(
     @GraphQLDescription("Issues array")
     var issues: List<Issue>? = null,
 
-    @GraphQLDescription("Issues array")
+    @GraphQLDescription("Start processing time")
     var startProcessingTime: OffsetDateTime? = null,
 
-    @GraphQLDescription("Issues array")
+    @GraphQLDescription("End processing time")
     var endProcessingTime: OffsetDateTime? = null
 
 )

@@ -17,6 +17,9 @@ import java.util.*
  * @property dataStreamId String?
  * @property dataStreamRoute String?
  * @property messageMetadata MessageMetadata?
+ * @property stageInfo StageInfo?
+ * @property tags Tags?
+ * @property data Map<String,String>?
  * @property contentType String?
  * @property messageId String?
  * @property timestamp Date?

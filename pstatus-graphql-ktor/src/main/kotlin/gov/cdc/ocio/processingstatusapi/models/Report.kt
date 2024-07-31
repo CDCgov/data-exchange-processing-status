@@ -13,8 +13,14 @@ import java.time.OffsetDateTime
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
+ * @property messageMetadata MessageMetadata?
+ * @property stageInfo StageInfo?
+ * @property tags Tags?
+ * @property data Map<String,String>?
  * @property contentType String?
  * @property messageId String?
+ * @property jurisdiction String?
+ * @property senderId String?
  * @property content String?
  * @property timestamp OffsetDateTime
  */
@@ -36,17 +42,17 @@ data class Report(
     @GraphQLDescription("Data stream route")
     var dataStreamRoute: String? = null,
 
-     @GraphQLDescription("Message Metadata")
-     var  messageMetadata: MessageMetadata? = null,
+    @GraphQLDescription("Message metadata")
+    var messageMetadata: MessageMetadata? = null,
 
-     @GraphQLDescription("stage_info")
-        var  stageInfo: StageInfo? = null,
+    @GraphQLDescription("Stage info")
+    var stageInfo: StageInfo? = null,
 
-     @GraphQLDescription("tags")
-   var  tags: Tags? = null,
+    @GraphQLDescription("tags")
+    var tags: Tags? = null,
 
-      @GraphQLDescription("data")
-      var  data: Map<String,String>? = null,
+    @GraphQLDescription("data")
+    var data: Map<String,String>? = null,
 
     @GraphQLDescription("Indicates the content type of the content; e.g. JSON, XML")
     var contentType : String? = null,
