@@ -37,7 +37,7 @@ class CreateReportSBMessage: ServiceBusMessage() {
     val stageInfo: StageInfo? = null
 
     @SerializedName("tags")
-    val tags: Tags? = null
+    val tags: Map<String,String>? = null
 
     @SerializedName("data")
     val data: Map<String,String>? = null

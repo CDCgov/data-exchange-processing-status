@@ -4,7 +4,6 @@ package gov.cdc.ocio.processingstatusapi.models
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
-import gov.cdc.ocio.processingstatusapi.models.reports.Tags
 import java.util.*
 
 /**
@@ -43,9 +42,8 @@ open class Report(
     @SerializedName("stage_info")
     var stageInfo: StageInfo? = null,
 
-
     @SerializedName("tags")
-    var tags: Tags? = null,
+    var tags: Map<String,String>? = null,
 
     @SerializedName("data")
     var data: Map<String,String>? = null,

@@ -18,7 +18,6 @@ import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
-import gov.cdc.ocio.processingstatusapi.models.reports.Tags
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -49,10 +48,15 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param stageName String
+     * @param messageMetadata MessageMetadata?
+     * @param stageInfo StageInfo?
+     * @param tags Map<String,String>??
+     * @property data Map<String,String>?
      * @param contentType String
      * @param content String
      * @param dispositionType DispositionType
+     * @param jurisdiction String?
+     * @param senderId String?
      * @return String - stage report identifier
      * @throws BadStateException
      * @throws BadRequestException
@@ -64,7 +68,7 @@ class ReportManager: KoinComponent {
         dataStreamRoute: String,
         messageMetadata: MessageMetadata?,
         stageInfo: StageInfo?,
-        tags: Tags?,
+        tags: Map<String,String>?,
         data:Map<String,String>?,
         contentType: String,
         messageId: String?,
@@ -124,7 +128,7 @@ class ReportManager: KoinComponent {
                              dataStreamRoute: String,
                              messageMetadata: MessageMetadata?,
                              stageInfo: StageInfo?,
-                             tags: Tags?,
+                             tags: Map<String,String>?,
                              data:Map<String,String>?,
                              contentType: String,
                              messageId: String?,
@@ -175,9 +179,14 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param stageName String
-     * @param contentType String
-     * @param content String
+     * @param messageMetadata MessageMetadata?
+     * @param stageInfo StageInfo?
+     * @param tags Map<String,String>??
+     * @property data Map<String,String>?
+     * @param contentType String?
+     * @param content String?
+     * @param jurisdiction String?
+     * @param senderId String?
      * @return String
      * @throws BadStateException
      */
@@ -187,7 +196,7 @@ class ReportManager: KoinComponent {
                                   dataStreamRoute: String,
                                   messageMetadata: MessageMetadata?,
                                   stageInfo: StageInfo?,
-                                  tags: Tags?,
+                                  tags: Map<String,String>?,
                                   data:Map<String,String>?,
                                   contentType: String,
                                   messageId: String?,
@@ -231,9 +240,14 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param stageName String
+     * @param messageMetadata MessageMetadata?
+     * @param stageInfo StageInfo?
+     * @param tags Map<String,String>??
+     * @param data Map<String,String>?
      * @param contentType String
      * @param content String
+     * @param jurisdiction String?
+     * @param senderId String?
      * @return String
      * @throws BadStateException
      */
@@ -244,7 +258,7 @@ class ReportManager: KoinComponent {
                                dataStreamRoute: String?,
                                messageMetadata: MessageMetadata?,
                                stageInfo: StageInfo?,
-                               tags: Tags?,
+                               tags: Map<String,String>?,
                                data:Map<String,String>?,
                                dispositionType: DispositionType,
                                contentType: String?,

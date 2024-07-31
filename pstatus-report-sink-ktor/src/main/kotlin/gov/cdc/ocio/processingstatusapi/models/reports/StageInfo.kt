@@ -3,6 +3,17 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 import com.google.gson.annotations.SerializedName
 import java.util.*
 
+/*
+   Status of whether the report is a SUCCESS OR FAILURE
+ */
+enum class Status {
+
+    @SerializedName("SUCCESS")
+    SUCCESS,
+
+    @SerializedName("FAILURE")
+    FAILURE
+}
 
 /**
  * Get StageInfo from the report message.
@@ -26,7 +37,7 @@ class StageInfo {
     var version: String? = null
 
     @SerializedName("status")
-    var status: String? = null
+    var status: Status? = null
 
     @SerializedName("issues")
     var issues: List<Issue>? = null
