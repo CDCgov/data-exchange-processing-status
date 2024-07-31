@@ -509,21 +509,21 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/dex-testing/dex-upload",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/stage/dex-testing/dex-upload?data_stream_route=test-event1",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
+										"stage",
 										"dex-testing",
 										"dex-upload"
 									],
 									"query": [
 										{
-											"key": "dataStreamRoute",
-											"value": "routineImmunization",
-											"disabled": true
+											"key": "data_stream_route",
+											"value": "test-event1"
 										}
 									]
 								}
@@ -543,20 +543,22 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/dex-testing/stage2?dataStreamRoute=test-event1",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/stage/dex-testing/stage2",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
+										"stage",
 										"dex-testing",
 										"stage2"
 									],
 									"query": [
 										{
-											"key": "dataStreamRoute",
-											"value": "test-event1"
+											"key": "data_stream_route",
+											"value": "test-event1",
+											"disabled": true
 										}
 									]
 								}
@@ -576,20 +578,22 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/dex-testing/dex-hl7-validation?dataStreamRoute=test-event1",
+									"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/stage/dex-testing/dex-hl7-validation",
 									"host": [
 										"{{PROCESSING_STATUS_BASE_URL}}"
 									],
 									"path": [
 										"api",
 										"report",
+										"stage",
 										"dex-testing",
 										"dex-hl7-validation"
 									],
 									"query": [
 										{
-											"key": "dataStreamRoute",
-											"value": "test-event1"
+											"key": "data_stream_route",
+											"value": "test-event1",
+											"disabled": true
 										}
 									]
 								}
@@ -950,7 +954,8 @@
 								"exec": [
 									""
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -965,7 +970,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts/{{uploadId}}",
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts/id/{{uploadId}}",
 							"host": [
 								"{{PROCESSING_STATUS_BASE_URL}}"
 							],
@@ -973,6 +978,7 @@
 								"api",
 								"report",
 								"counts",
+								"id",
 								"{{uploadId}}"
 							]
 						}
@@ -1004,7 +1010,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts/75ab40c4-b595-4700-b967-7ea00d013f54",
+							"raw": "{{PROCESSING_STATUS_BASE_URL}}/api/report/counts/id/75ab40c4-b595-4700-b967-7ea00d013f54",
 							"host": [
 								"{{PROCESSING_STATUS_BASE_URL}}"
 							],
@@ -1012,6 +1018,7 @@
 								"api",
 								"report",
 								"counts",
+								"id",
 								"75ab40c4-b595-4700-b967-7ea00d013f54"
 							]
 						}
@@ -1169,17 +1176,6 @@
 						"api",
 						"health"
 					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Processing Status API",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": ""
 				}
 			},
 			"response": []
