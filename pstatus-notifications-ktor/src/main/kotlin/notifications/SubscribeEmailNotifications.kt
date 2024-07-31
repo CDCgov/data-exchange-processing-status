@@ -1,0 +1,90 @@
+package gov.cdc.ocio.processingstatusnotifications.notifications
+
+import gov.cdc.ocio.processingstatusnotifications.EmailSubscription
+import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
+import gov.cdc.ocio.processingstatusnotifications.SubscriptionType
+import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
+import mu.KotlinLogging
+import java.time.Instant
+
+/**
+ * This method is used by graphL endpoints to subscribe for Webhook notifications
+ *  * based on rules sent in required parameters/arguments
+ *          dataStreamId
+ *          dataStreamRoute
+ *          email
+ *          stageName
+ *          statusType ("warning", "success", "error")
+ *
+ */
+class SubscribeEmailNotifications{
+    private val logger = KotlinLogging.logger {}
+    private val cacheService: InMemoryCacheService = InMemoryCacheService()
+
+    /**
+     * The function which validates and subscribes for email notifications
+     * @param subscription EmailSubscription
+     */
+    fun run(subscription: EmailSubscription):
+            SubscriptionResult {
+        val dataStreamId = subscription.dataStreamId
+        val dataStreamRoute = subscription.dataStreamRoute
+        val email = subscription.email
+        val stageName = subscription.stageName
+        val statusType = subscription.statusType
+
+        logger.debug("dataStreamId: $dataStreamId")
+        logger.debug("dataStreamRoute: $dataStreamRoute")
+        logger.debug("Subscription Email Id: $email")
+        logger.debug("StageName: $stageName")
+        logger.debug("StatusType: $statusType")
+
+        val subscriptionResult = subscribeForEmail(dataStreamId, dataStreamRoute, email, stageName, statusType)
+            if (subscriptionResult.subscription_id == null) {
+                subscriptionResult.message = "Invalid Request"
+                subscriptionResult.status = false
+            }
+        return subscriptionResult
+    }
+
+    /**
+     * This function validates and updates the notification preferences of the cacheService
+     *  @param dataStreamId String
+     *  @param dataStreamRoute String
+     *  @param email String
+     *  @param stageName String
+     *  @param statusType String
+     */
+    private fun subscribeForEmail(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        email: String?,
+        stageName: String?,
+        statusType: String?
+    ): SubscriptionResult {
+        val result = SubscriptionResult()
+        if (dataStreamId.isBlank()
+            || dataStreamRoute.isBlank()
+            || email.isNullOrBlank()
+            || stageName.isNullOrBlank()
+            || statusType.isNullOrBlank()) {
+            result.status = false
+            result.message = "Required fields not sent in request"
+        } else if (!email.contains('@') || email.split(".").size > 2 || !email.matches(Regex("([a-zA-Z0-9_%-]+@[a-zA-Z0-9-]+\\.[a-zA-Z]{2,})\$"))) {
+            result.status = false
+            result.message = "Not valid email address"
+        } else if (!(statusType == "success" || statusType == "warning" || statusType == "error")) {
+            result.status = false
+            result.message = "Not valid email address"
+        } else {
+            result.subscription_id = cacheService.updateNotificationsPreferences(dataStreamId, dataStreamRoute, stageName, statusType, email,
+                SubscriptionType.EMAIL
+            )
+            result.timestamp = Instant.now().epochSecond
+            result.status = true
+            result.message = "Subscription for Email setup"
+        }
+
+        return result
+    }
+}

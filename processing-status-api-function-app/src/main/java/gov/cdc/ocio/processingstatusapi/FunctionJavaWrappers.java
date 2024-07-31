@@ -13,10 +13,6 @@ import gov.cdc.ocio.processingstatusapi.functions.status.GetReportCountsFunction
 import gov.cdc.ocio.processingstatusapi.functions.status.GetUploadStatusFunction;
 import gov.cdc.ocio.processingstatusapi.functions.reports.ServiceBusProcessor;
 import gov.cdc.ocio.processingstatusapi.functions.status.GetStatusFunction;
-import gov.cdc.ocio.processingstatusapi.functions.traces.AddSpanToTraceFunction;
-import gov.cdc.ocio.processingstatusapi.functions.traces.CreateTraceFunction;
-import gov.cdc.ocio.processingstatusapi.functions.traces.GetSpanFunction;
-import gov.cdc.ocio.processingstatusapi.functions.traces.GetTraceFunction;
 import gov.cdc.ocio.processingstatusapi.model.DispositionType;
 import org.owasp.encoder.Encode;
 
@@ -33,72 +29,6 @@ public class FunctionJavaWrappers {
                     route = "health",
                     authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
         return new HealthCheckFunction(request).run();
-    }
-
-    @FunctionName("CreateTrace")
-    public HttpResponseMessage createTrace(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.POST},
-                    route = "trace",
-                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
-        return new CreateTraceFunction(request).create();
-    }
-
-    @FunctionName("TraceStartSpan")
-    public HttpResponseMessage traceStartSpan(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.PUT},
-                    route = "trace/startSpan/{traceId}/{parentSpanId}",
-                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("traceId") String traceId,
-            @BindingName("parentSpanId") String parentSpanId) {
-        return new AddSpanToTraceFunction(request).startSpan(traceId, parentSpanId);
-    }
-
-    @FunctionName("TraceStopSpan")
-    public HttpResponseMessage traceStopSpan(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.PUT},
-                    route = "trace/stopSpan/{traceId}/{spanId}",
-                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("traceId") String traceId,
-            @BindingName("spanId") String spanId) {
-        return new AddSpanToTraceFunction(request).stopSpan(traceId, spanId);
-    }
-
-    @FunctionName("GetTraceByTraceId")
-    public HttpResponseMessage getTraceByTraceId(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.GET},
-                    route = "trace/traceId/{traceId}",
-                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("traceId") String traceId) {
-        return new GetTraceFunction(request).withTraceId(traceId);
-    }
-
-    @FunctionName("GetTraceByUploadId")
-    public HttpResponseMessage getTraceByUploadId(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.GET},
-                    route = "trace/uploadId/{uploadId}",
-                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
-            @BindingName("uploadId") String uploadId) {
-        return new GetTraceFunction(request).withUploadId(uploadId);
-    }
-
-    @FunctionName("GetTraceSpan")
-    public HttpResponseMessage getTraceSpanByUploadIdStageName(
-            @HttpTrigger(
-                    name = "req",
-                    methods = {HttpMethod.GET},
-                    route = "trace/span",
-                    authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request) {
-        return new GetSpanFunction(request).withQueryParams();
     }
 
     /***

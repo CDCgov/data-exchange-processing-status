@@ -13,7 +13,6 @@ import gov.cdc.ocio.processingstatusapi.model.reports.*
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Debatch
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Redactor
 import gov.cdc.ocio.processingstatusapi.model.reports.stagereports.HL7Validation
-import gov.cdc.ocio.processingstatusapi.model.traces.*
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.JsonUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils

@@ -32,16 +32,6 @@ async def send_single_message(sender, message):
     message = ServiceBusMessage(message)
     await sender.send_messages(message)
 
-def send_start_trace(trace_id, parent_span_id, stage_name):
-    url = f'{pstatus_base_url}/api/trace/startSpan/{trace_id}/{parent_span_id}?stageName={stage_name}'
-    r = requests.put(url)
-    json_response = r.json()
-    return json_response['span_id']
-
-def send_stop_trace(trace_id, span_id):
-    url = f'{pstatus_base_url}/api/trace/stopSpan/{trace_id}/{span_id}'
-    requests.put(url)
-
 async def run():
     # Generate a unqiue upload ID
     upload_id = str(uuid.uuid4())
@@ -56,16 +46,6 @@ async def run():
         # Get a Queue Sender object to send messages to the queue
         sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
         async with sender:
-            # Create the trace for this upload
-            url = f'{pstatus_base_url}/api/trace?uploadId={upload_id}&destinationId=dex-testing&eventType=test-event1'
-            response = requests.post(url)
-            response_json = response.json()
-            trace_id = response_json["trace_id"]
-            parent_span_id = response_json["span_id"]
-
-            # Send the start trace
-            span_id = send_start_trace(trace_id, parent_span_id, "dex-upload")
-
             # Send upload messages
             print("Sending simulated UPLOAD reports...")
             num_chunks = 1
@@ -76,22 +56,13 @@ async def run():
                 #print(f"Sending: {message}")
                 await send_single_message(sender, message)
                 time.sleep(1)
-            # Send the stop trace
-            send_stop_trace(trace_id, span_id)
-
-            # Send the start trace
-            span_id = send_start_trace(trace_id, parent_span_id, "dex-routing")
 
             # Send routing message
             print("Sending simulated ROUTING report...")
             message = reports.create_routing(upload_id)
             #print(f"Sending: {message}")
             await send_single_message(sender, message)
-            # Send the stop trace
-            send_stop_trace(trace_id, span_id)
 
-            # Send the start trace
-            span_id = send_start_trace(trace_id, parent_span_id, "dex-hl7-validation")
             # Send hl7 validation messages
             print("Sending simulated HL7-VALIDATION reports...")
             batch_message = await sender.create_message_batch()
@@ -101,9 +72,6 @@ async def run():
                 message = reports.create_hl7_validation(upload_id, line)
                 #print(f"Sending: {message}")
                 batch_message.add_message(ServiceBusMessage(message))
-            # Send the stop trace
-            await sender.send_messages(batch_message)
-            send_stop_trace(trace_id, span_id)
 
 asyncio.run(run())
 print("Done sending messages")

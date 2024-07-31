@@ -67,10 +67,9 @@ open class SchemaDefinition(@SerializedName("schema_name") var schemaName: Strin
     companion object {
 
         @Throws(InvalidSchemaDefException::class)
-        fun fromJsonString(jsonContent: String?): SchemaDefinition {
+        fun fromJsonString(jsonContent: Any?): SchemaDefinition {
             if (jsonContent == null) throw InvalidSchemaDefException("Missing schema definition")
-
-            val schemaDefinition = Gson().fromJson(jsonContent, SchemaDefinition::class.java)
+           val schemaDefinition= Gson().fromJson(Gson().toJson(jsonContent, MutableMap::class.java).toString(), SchemaDefinition::class.java)
             if (schemaDefinition?.schemaName.isNullOrEmpty())
                 throw InvalidSchemaDefException("Invalid schema_name provided")
 

@@ -2,10 +2,20 @@ package gov.cdc.ocio.processingstatusapi.queries
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
-import gov.cdc.ocio.processingstatusapi.loaders.ReportLoader
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
+import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 
+/**
+ * Abstract class used for modeling the health issues of an individual service.
+ *
+ * @property status String
+ * @property healthIssues String?
+ * @property service String
+ */
 abstract class HealthCheckSystem {
 
     @GraphQLDescription("Status of the dependency")
@@ -18,10 +28,22 @@ abstract class HealthCheckSystem {
     open val service: String = ""
 }
 
+/**
+ * Concrete implementation of the cosmosdb service health check.
+ *
+ * @property service String
+ */
 class CosmosDb: HealthCheckSystem() {
     override val service = "Cosmos DB"
 }
 
+/**
+ * Run health checks for the service.
+ *
+ * @property status String?
+ * @property totalChecksDuration String?
+ * @property dependencyHealthChecks MutableList<HealthCheckSystem>
+ */
 class HealthCheck {
 
     @GraphQLDescription("Overall status of the service")
@@ -31,21 +53,36 @@ class HealthCheck {
     var totalChecksDuration : String? = null
 
     @GraphQLDescription("Status of the service dependencies")
-    var dependencyHealthChecks = arrayListOf<HealthCheckSystem>()
+    var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
 }
 
+/**
+ * GraphQL query service for getting health status.
+ */
 class HealthQueryService : Query {
+    fun getHealth() = HealthCheckService().getHealth()
+}
+
+/**
+ * Health checks for the service and any dependencies.
+ *
+ * @property logger KLogger
+ * @property cosmosConfiguration CosmosConfiguration
+ */
+class HealthCheckService : KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    @GraphQLDescription("Return a single report from the provided uploadId")
+    private val cosmosConfiguration by inject<CosmosConfiguration>()
+
+    @GraphQLDescription("Performs a service health check of the processing status API and it's dependencies.")
     @Suppress("unused")
     fun getHealth(): HealthCheck {
         var cosmosDBHealthy = false
         val cosmosDBHealth = CosmosDb()
         val time = measureTimeMillis {
             try {
-                cosmosDBHealthy = isCosmosDBHealthy()
+                cosmosDBHealthy = isCosmosDBHealthy(config = cosmosConfiguration)
                 cosmosDBHealth.status = "UP"
             } catch (ex: Exception) {
                 cosmosDBHealth.healthIssues = ex.message
@@ -63,10 +100,14 @@ class HealthQueryService : Query {
     /**
      * Check whether CosmosDB is healthy.
      *
+     * @param config CosmosConfiguration
      * @return Boolean
      */
-    private fun isCosmosDBHealthy(): Boolean {
-        return ReportLoader().getAnyReport() != null
+    private fun isCosmosDBHealthy(config: CosmosConfiguration): Boolean {
+        return if (CosmosClientManager.getCosmosClient(config.uri, config.authKey) == null)
+            throw Exception("Failed to establish a CosmosDB client.")
+        else
+            true
     }
 
     /**
