@@ -25,8 +25,8 @@ data class ReportDeadLetterDao(
         this.reportId = this@ReportDeadLetterDao.reportId
         this.dataStreamId = this@ReportDeadLetterDao.dataStreamId
         this.dataStreamRoute = this@ReportDeadLetterDao.dataStreamRoute
-        this.messageId = this@ReportDeadLetterDao.messageId
-        this.status = this@ReportDeadLetterDao.status
+       // this.messageId = this@ReportDeadLetterDao.messageId
+       // this.status = this@ReportDeadLetterDao.status
         this.timestamp = this@ReportDeadLetterDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
         this.contentType = this@ReportDeadLetterDao.contentType
         this.content = this@ReportDeadLetterDao.content as? Map<*, *>

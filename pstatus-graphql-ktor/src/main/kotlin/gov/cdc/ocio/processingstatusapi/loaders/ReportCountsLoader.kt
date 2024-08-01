@@ -12,7 +12,6 @@ import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Validatio
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 
 class ReportCountsLoader: CosmosLoader() {
 
@@ -55,7 +54,7 @@ class ReportCountsLoader: CosmosLoader() {
                 this.uploadId = uploadId
                 this.dataStreamId = firstReport?.dataStreamId
                 this.dataStreamRoute = firstReport?.dataStreamRoute
-                this.timestamp = firstReport?.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+               // this.timestamp = firstReport?.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                 val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
                 val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
                 val revisedStageCounts = revisedStageCountsByUploadId[uploadId]
