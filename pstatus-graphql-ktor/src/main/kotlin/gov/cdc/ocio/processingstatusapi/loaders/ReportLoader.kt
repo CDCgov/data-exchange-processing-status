@@ -125,13 +125,13 @@ class ReportLoader: CosmosLoader() {
         val firstReport = reports.firstOrNull()
         val stageInfo = lastReport?.stageInfo
         // Find the first report with service "upload" and action "upload-status"
-        val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.stage == "upload-status" }
+        val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.action == "upload-status" }
 
         return UploadDetails(
             status = rollupStatus.toString(),
             lastService = stageInfo?.service,
-            lastAction =stageInfo?.stage,
-            filename = uploadStatusReport?.messageMetadata?.provenance?.fileName,
+            lastAction =stageInfo?.action,
+           // filename = uploadStatusReport?.stageInfo?.provenance?.fileName,
             uploadId = lastReport?.uploadId,
             dexIngestTimestamp = firstReport?.timestamp,
             dataStreamId = firstReport?.dataStreamId,

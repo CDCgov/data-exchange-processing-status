@@ -15,7 +15,7 @@ enum class Status {
     FAILURE
 }
 /**
- * Status of Report-SUCCESS OR FAILURE
+ * Rollup status of Report-DELIVERED, FAILED OR PROCESSING
  */
 enum class RollupStatus {
 
@@ -34,7 +34,7 @@ enum class RollupStatus {
  * Message stageInfo within a Report.
  **
  * @property service String?
- * @property stage String?
+ * @property action String?
  * @property version String?
  * @property status String?
  * @property startProcessingTime Date?
@@ -47,7 +47,7 @@ data class StageInfo(
     var service : String? = null,
 
     @GraphQLDescription("Stage name a.k.a action")
-    var stage: String? = null,
+    var action: String? = null,
 
     @GraphQLDescription("Version")
     var version: String? = null,
