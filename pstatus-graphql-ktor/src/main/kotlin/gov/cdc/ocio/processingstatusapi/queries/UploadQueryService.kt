@@ -63,12 +63,7 @@ class UploadQueryService : Query {
                 @GraphQLDescription(
                     "*File Name* Search by the provided File Name:\n"
                 )
-                fileName: String? = null,
-
-                @GraphQLDescription(
-                    "*Submission Date* is a Date Time value. Search by the provided date when the upload was submitted :\n"
-                )
-                submissionDate:String? =null) =
+                fileName: String? = null) =
         UploadStatusLoader().getUploadStatus(dataStreamId,
                                         dataStreamRoute,
                                         dateStart,
@@ -77,8 +72,7 @@ class UploadQueryService : Query {
                                         pageNumber,
                                         sortBy,
                                         sortOrder,
-                                        fileName,
-                                        submissionDate)
+                                        fileName)
 
     @GraphQLDescription("Return various uploads statistics")
     @Suppress("unused")

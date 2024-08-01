@@ -38,8 +38,7 @@ class UploadStatusLoader: CosmosLoader() {
                         pageNumber: Int,
                         sortBy: String?,
                         sortOrder: String?,
-                        fileName:String?,
-                        submissionDate:String?
+                        fileName:String?
     ): UploadsStatus {
 
         logger.info("dataStreamId = $dataStreamId")
@@ -61,11 +60,6 @@ class UploadStatusLoader: CosmosLoader() {
 
         fileName?.run {
             sqlQuery.append(" and r.content.filename = '$fileName'")
-        }
-
-        submissionDate?.run {
-            val dateSubmittedEpochSecs = DateUtils.getEpochFromDateString(submissionDate, "_ts")
-            sqlQuery.append(" and r._ts = $dateSubmittedEpochSecs")
         }
 
         dateStart?.run {
