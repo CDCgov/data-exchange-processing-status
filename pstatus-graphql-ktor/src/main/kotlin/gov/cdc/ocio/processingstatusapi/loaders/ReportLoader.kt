@@ -126,12 +126,15 @@ class ReportLoader: CosmosLoader() {
         val stageInfo = lastReport?.stageInfo
         // Find the first report with service "upload" and action "upload-status"
         val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.action == "upload-status" }
+        // Retrieve the value associated with "outerKey2" and cast it to LinkedHashMap
+        val retrievedInnerMap: LinkedHashMap<*, *>? = uploadStatusReport?.content?.get("report") as? LinkedHashMap<*, *>?
+        val fileName = retrievedInnerMap?.get("received_filename")
 
         return UploadDetails(
             status = rollupStatus.toString(),
             lastService = stageInfo?.service,
             lastAction =stageInfo?.action,
-           // filename = uploadStatusReport?.stageInfo?.provenance?.fileName,
+            filename = fileName?.toString(),
             uploadId = lastReport?.uploadId,
             dexIngestTimestamp = firstReport?.timestamp,
             dataStreamId = firstReport?.dataStreamId,
