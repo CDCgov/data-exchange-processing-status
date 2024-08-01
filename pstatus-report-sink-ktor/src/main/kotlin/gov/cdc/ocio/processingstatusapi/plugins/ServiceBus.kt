@@ -128,11 +128,6 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
     //This will handle all missing required fields, invalid schema definition and malformed json all under the BadRequest exception and writes to dead-letter queue or topics depending on the context
     catch (e: BadRequestException) {
         LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
-        val deadLetterOptions = DeadLetterOptions()
-            .setDeadLetterReason("Validation failed")
-            .setDeadLetterErrorDescription(e.message)
-        context.deadLetter(deadLetterOptions)
-        LOGGER.info("Message sent to the dead-letter queue.")
     }
     catch (e: Exception) {
         LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)

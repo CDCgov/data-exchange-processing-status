@@ -1,0 +1,53 @@
+{
+	"upload_id": "fe85fdb7-2f07-4ad1-b73a-646cc2e25bbc",
+	"user_id": "test-event1",
+	"data_stream_id": "celr",
+	"data_stream_route": "hl7_out_recdeb",
+	"jurisdiction": "SMOKE",
+	"sender_id": "APHL",
+	"status": "SUCCESS",
+	"data_producer_id": "smoke-test-data-producer",
+	"dex_ingest_datetime": "2024-07-10T15:40:01Z",
+	"messageMetadata": {
+		"type": "object",
+		"properties": {
+			"message_uuid": {
+				"type": "UUID",
+				"description": "Unique identifier for the message associated with this report.  Null if not applicable."
+			},
+			"message_hash": {
+				"type": "string",
+				"description": "MD5 hash of the message content."
+			},
+			"aggregation": {
+				"type": "string",
+				"enum": ["SINGLE", "BATCH"],
+				"description": "Enumeration: [SINGLE, BATCH]."
+			},
+			"message_index": {
+				"type": "integer",
+				"description": "Index of the message; e.g. row if csv."
+			}
+
+		}
+	},
+	"stage_info": {
+		"service": "HL7v2 Pipeline",
+		"stage": "RECEIVER",
+		"version": "0.0.49-SNAPSHOT",
+		"status": "SUCCESS",
+		"issues": null,
+		"start_processing_time": "2024-07-10T15:40:10.162+00:00",
+		"end_processing_time": "2024-07-10T15:40:10.228+00:00"
+	},
+	"tags": {
+		"$ref": "test-ref",
+		"description": "Optional tag(s) associated with this report."
+	},
+	"data": {
+		"$ref": "keyValueMap",
+		"description": "Optional data associated with this report."
+	},
+	"report_schema_version": "1.0.0",
+	"content_type": "application/json"
+}
