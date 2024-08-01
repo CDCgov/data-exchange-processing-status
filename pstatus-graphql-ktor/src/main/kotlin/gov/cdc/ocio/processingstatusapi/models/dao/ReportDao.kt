@@ -17,12 +17,14 @@ import java.util.*
  * @property dataStreamRoute String?
  * @property messageMetadata MessageMetadata?
  * @property stageInfo StageInfo?
- * @property tags Tags?
+ * @property tags Map<String,String??
  * @property data Map<String,String>?
  * @property contentType String?
  * @property messageId String?
  * @property timestamp Date?
  * @property content Any?
+ * @property jurisdiction String?
+ * @property senderId String?
  * @property contentAsString String?
  * @constructor
  */

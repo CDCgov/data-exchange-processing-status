@@ -8,9 +8,9 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
  *
  * @property properties Properties?
  */
-@GraphQLDescription("Contains Report issues.")
+@GraphQLDescription("Contains Report issue items.")
 data class Items(
 
-    @GraphQLDescription("properties of issues")
+    @GraphQLDescription("Properties that define the level of the issue and the actual issue message")
     var properties : Properties? = null
  )

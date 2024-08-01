@@ -3,11 +3,24 @@ package gov.cdc.ocio.processingstatusapi.models.submission
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 
 /**
+ * Aggregation of Report metadata-SINGLE OR BATCH
+ */
+enum class Aggregation {
+
+    @GraphQLDescription("Single")
+    SINGLE,
+
+    @GraphQLDescription("Batch")
+    BATCH
+}
+
+
+/**
  * Provenance within a MessageMetadata.
  **
  * @property messageUUID String?
  * @property messageHash String?
- * @property singleOrBatch String?
+ * @property aggregation String?
  * @property messageIndex Int?`
  */
 @GraphQLDescription("Contains Report metadata provenance.")
@@ -22,7 +35,7 @@ data class Provenance(
     var messageHash: String? = null,
 
     @GraphQLDescription("Single or Batch message")
-    var singleOrBatch: String? = null,
+    var aggregation: Aggregation? = null,
 
     @GraphQLDescription("Message Index")
     var messageIndex: Int? = null,
@@ -31,4 +44,4 @@ data class Provenance(
     var fileName: String? = null,
 
 
-)
+    )

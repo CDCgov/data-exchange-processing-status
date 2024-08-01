@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.DataStream
 import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import gov.cdc.ocio.processingstatusapi.models.Report
+import gov.cdc.ocio.processingstatusapi.models.submission.RollupStatus
 import gov.cdc.ocio.processingstatusapi.models.submission.Status
 import gov.cdc.ocio.processingstatusapi.models.submission.UploadDetails
 import graphql.schema.DataFetchingEnvironment
@@ -97,7 +98,6 @@ class ReportLoader: CosmosLoader() {
             reportsSqlQuery, CosmosQueryRequestOptions(),
             ReportDao::class.java
         )
-
         val reports = mutableListOf<Report>()
         reportItems?.forEach { reports.add(it.toReport()) }
 
@@ -114,9 +114,9 @@ class ReportLoader: CosmosLoader() {
 
         // Determine rollup status
         val rollupStatus = when {
-            reports.all { it.stageInfo?.status == Status.SUCCESS } -> "DELIVERED"
-            reports.any { it.stageInfo?.status == Status.FAILURE } -> "FAILED"
-            reports.isNotEmpty() -> "PROCESSING"
+            reports.all { it.stageInfo?.status == Status.SUCCESS } -> RollupStatus.DELIVERED
+            reports.any { it.stageInfo?.status == Status.FAILURE } -> RollupStatus.FAILED
+            reports.isNotEmpty() -> RollupStatus.PROCESSING
             else -> null
         }
 
@@ -128,7 +128,7 @@ class ReportLoader: CosmosLoader() {
         val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.stage == "upload-status" }
 
         return UploadDetails(
-            status = rollupStatus,
+            status = rollupStatus.toString(),
             lastService = stageInfo?.service,
             lastAction =stageInfo?.stage,
             filename = uploadStatusReport?.messageMetadata?.provenance?.fileName,
@@ -140,7 +140,5 @@ class ReportLoader: CosmosLoader() {
             senderId = firstReport?.senderId,
             reports = reports
         )
-
     }
-
 }

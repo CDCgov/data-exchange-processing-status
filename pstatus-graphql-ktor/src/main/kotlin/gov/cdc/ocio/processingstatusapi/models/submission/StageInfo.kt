@@ -3,6 +3,9 @@ package gov.cdc.ocio.processingstatusapi.models.submission
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import java.time.OffsetDateTime
 
+/**
+ * Status of Report-SUCCESS OR FAILURE
+ */
 enum class Status {
 
     @GraphQLDescription("Success")
@@ -10,6 +13,20 @@ enum class Status {
 
     @GraphQLDescription("Failure")
     FAILURE
+}
+/**
+ * Status of Report-SUCCESS OR FAILURE
+ */
+enum class RollupStatus {
+
+    @GraphQLDescription("Delivered")
+    DELIVERED,
+
+    @GraphQLDescription("Failed")
+    FAILED,
+
+    @GraphQLDescription("Processing")
+    PROCESSING
 }
 
 
@@ -23,7 +40,7 @@ enum class Status {
  * @property startProcessingTime Date?
  * @property endProcessingTime Date?
  */
-@GraphQLDescription("StageInfo.")
+@GraphQLDescription("Contains information about report service, action, version and whether it was a success or failure and the processing start and end times ")
 data class StageInfo(
 
     @GraphQLDescription("Service")

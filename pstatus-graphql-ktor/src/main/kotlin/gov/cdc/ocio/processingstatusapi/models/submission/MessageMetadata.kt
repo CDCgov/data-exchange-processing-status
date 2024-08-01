@@ -7,7 +7,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
  * @property provenance  Provenance
 
  */
-@GraphQLDescription("MessageMetadata")
+@GraphQLDescription("Report metadata containing the disposition type, message identifier, index, aggregation of whether Single or Batch and the filename")
 data class MessageMetadata(
 
     @GraphQLDescription("DispositionType")
