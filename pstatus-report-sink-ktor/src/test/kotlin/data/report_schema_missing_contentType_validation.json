@@ -10,7 +10,7 @@
 	"message_metadata": null,
 	"stage_info": {
 		"service": "HL7v2 Pipeline",
-		"stage": "RECEIVER",
+		"action": "RECEIVER",
 		"version": "0.0.49-SNAPSHOT",
 		"status": "SUCCESS",
 		"issues": null,
