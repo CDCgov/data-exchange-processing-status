@@ -6,7 +6,7 @@
 	"jurisdiction": "SMOKE",
 	"sender_id": "APHL",
 	"data_producer_id": "smoke-test-data-producer",
-	"dex_ingest_timestamp": "2024-07-10T15:40:01Z",
+	"dex_ingest_datetime": "2024-07-10T15:40:01Z",
 	"status": "SUCCESS",
 	"messageMetadata": {
 		"type": "object",
