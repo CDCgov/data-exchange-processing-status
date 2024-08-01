@@ -89,7 +89,7 @@ class ServiceBusProcessor {
     private fun createReport(messageId: String, messageStatus: String, createReportMessage: CreateReportSBMessage) {
         try {
             val uploadId = createReportMessage.uploadId
-            var stageName = createReportMessage.stageInfo?.stage
+            var stageName = createReportMessage.stageInfo?.action
             if (stageName.isNullOrEmpty()) {
                 stageName = ""
             }

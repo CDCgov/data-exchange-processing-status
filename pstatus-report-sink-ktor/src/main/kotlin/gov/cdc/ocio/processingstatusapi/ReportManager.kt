@@ -116,7 +116,10 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param stageName String
+     * @param messageMetadata: MessageMetadata?,
+     * @param stageInfo: StageInfo?,
+     * @param tags: Map<String,String>?,
+     * @param data:Map<String,String>?,
      * @param contentType String
      * @param content String
      * @param dispositionType DispositionType - indicates whether to add or replace any existing reports for the
@@ -141,7 +144,7 @@ class ReportManager: KoinComponent {
 
         when (dispositionType) {
             DispositionType.REPLACE -> {
-                logger.info("Replacing report(s) with stage name = ${stageInfo?.stage}")
+                logger.info("Replacing report(s) with stage name = ${stageInfo?.action}")
                 // Delete all stages matching the report ID with the same stage name
                 val sqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.uploadId = '$uploadId' and r.stageName = '$stageInfo?.stage'"
                 val items = cosmosRepository.reportsContainer?.queryItems(
