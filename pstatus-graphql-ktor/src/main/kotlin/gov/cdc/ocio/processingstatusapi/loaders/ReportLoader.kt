@@ -136,7 +136,7 @@ class ReportLoader: CosmosLoader() {
             lastAction =stageInfo?.action,
             filename = fileName?.toString(),
             uploadId = lastReport?.uploadId,
-            dexIngestTimestamp = firstReport?.timestamp,
+            dexIngestDateTime = firstReport?.timestamp,
             dataStreamId = firstReport?.dataStreamId,
             dataStreamRoute = firstReport?.dataStreamRoute,
             jurisdiction = firstReport?.jurisdiction,

@@ -12,7 +12,7 @@ import java.time.OffsetDateTime
  * @property lastAction String?
  * @property filename String?
  * @property uploadId String?
- * @property dexIngestTimestamp  OffsetDateTime?
+ * @property dexIngestDateTime  OffsetDateTime?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
  * @property jurisdiction String?
@@ -38,7 +38,7 @@ data class UploadDetails(
     var uploadId: String? = null,
 
     @GraphQLDescription("Datestamp the report was recorded in the database")
-    var dexIngestTimestamp: OffsetDateTime? = null,
+    var dexIngestDateTime: OffsetDateTime? = null,
 
     @GraphQLDescription("DataStreamId in the report")
     var dataStreamId : String? = null,
