@@ -1,5 +1,4 @@
-name: DEV - GraphQL Service
-
+name: DEV - Notifications Service
 on:
   workflow_dispatch:
     inputs:
@@ -12,12 +11,12 @@ on:
     branches:
         - develop
     paths:
-        - pstatus-graphql-ktor/**
+        - pstatus-notifications-ktor/**
 
 jobs:
   remote-trigger:
     uses: ./.github/workflows/remote-cd-trigger-template.yml
     with:
-      WORKFLOW: graphql-build-pushImage-dev.yml 
+      WORKFLOW: notifications-build-pushimage-dev.yml 
       REF: ${{ inputs.REF }}
     secrets: inherit
