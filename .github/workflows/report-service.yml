@@ -1,4 +1,4 @@
-name: DEV - GraphQL Service
+name: DEV - Report Service
 
 on:
   workflow_dispatch:
@@ -12,12 +12,12 @@ on:
     branches:
         - develop
     paths:
-        - pstatus-graphql-ktor/**
+        - pstatus-report-sink-ktor/**
 
 jobs:
   remote-trigger:
     uses: ./.github/workflows/remote-cd-trigger-template.yml
     with:
-      WORKFLOW: graphql-build-pushImage-dev.yml 
+      WORKFLOW: reportsink-build-pushImage-dev.yml 
       REF: ${{ inputs.REF }}
     secrets: inherit

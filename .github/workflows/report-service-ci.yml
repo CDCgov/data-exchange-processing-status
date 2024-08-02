@@ -1,0 +1,21 @@
+name: "CI - Report Service"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - pstatus-report-sink-ktor/**
+
+defaults:
+  run:
+    working-directory: pstatus-report-sink-ktor/
+
+jobs:
+  unit-test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gradle Test
+        run: ./gradlew test
