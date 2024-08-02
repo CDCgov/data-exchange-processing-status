@@ -17,6 +17,6 @@ jobs:
   remote-trigger:
     uses: ./.github/workflows/remote-cd-trigger-template.yml
     with:
-      WORKFLOW: notifications-build-pushimage-dev.yml 
+      WORKFLOW: notifications-build-pushImage-dev.yml 
       REF: ${{ inputs.REF }}
     secrets: inherit
