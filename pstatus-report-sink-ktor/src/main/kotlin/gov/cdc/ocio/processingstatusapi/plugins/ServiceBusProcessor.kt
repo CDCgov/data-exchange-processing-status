@@ -89,7 +89,7 @@ class ServiceBusProcessor {
     private fun createReport(messageId: String, messageStatus: String, createReportMessage: CreateReportSBMessage) {
         try {
             val uploadId = createReportMessage.uploadId
-            var stageName = createReportMessage.stageName
+            var stageName = createReportMessage.stageInfo?.stage
             if (stageName.isNullOrEmpty()) {
                 stageName = ""
             }
@@ -99,11 +99,16 @@ class ServiceBusProcessor {
                 uploadId!!,
                 createReportMessage.dataStreamId!!,
                 createReportMessage.dataStreamRoute!!,
-                stageName,
+                createReportMessage.messageMetadata,
+                createReportMessage.stageInfo,
+                createReportMessage.tags,
+                createReportMessage.data,
                 createReportMessage.contentType!!,
                 messageId, //createReportMessage.messageId is null
                 messageStatus, //createReportMessage.status is null
                 createReportMessage.content!!, // it was Content I changed to ContentAsString
+                createReportMessage.jurisdiction,
+                createReportMessage.senderId,
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
@@ -171,6 +176,9 @@ class ServiceBusProcessor {
                     return
                 }
             }
+            //Check for the status wit
+
+
             // Open the content as JSON
             val contentNode = jsonNode.get("content")
             if (contentNode == null) {
@@ -189,8 +197,6 @@ class ServiceBusProcessor {
             //ContentSchema validation
             val contentSchemaName = contentSchemaNameNode.asText()
             val contentSchemaVersion = contentSchemaVersionNode.asText()
-
-            //TODO  Will this be from the same source???
             val contentSchemaFileName ="$contentSchemaName.$contentSchemaVersion.schema.json"
             val contentSchemaFilePath =javaClass.getResource( "$schemaDirectoryPath/$contentSchemaFileName")
                 ?: throw IllegalArgumentException("File not found: $contentSchemaFileName")
@@ -224,10 +230,15 @@ class ServiceBusProcessor {
                     createReportMessage.uploadId,
                     createReportMessage.dataStreamId,
                     createReportMessage.dataStreamRoute,
-                    createReportMessage.stageName,
+                    createReportMessage.messageMetadata,
+                    createReportMessage.stageInfo,
+                    createReportMessage.tags,
+                    createReportMessage.data,
                     createReportMessage.dispositionType,
                     createReportMessage.contentType,
                     createReportMessage.content,
+                    createReportMessage.jurisdiction,
+                    createReportMessage.senderId,
                     invalidData,
                     validationSchemaFileNames
                 )
