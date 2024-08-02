@@ -19,7 +19,7 @@ enum class Status {
  * Get StageInfo from the report message.
  *
  * @property service String?
- * @property stage String?
+ * @property action String?
  * @property version String?
  * @property status String?
  * @property startProcessingTime Date?
@@ -30,8 +30,8 @@ class StageInfo {
     @SerializedName("service")
     var service : String? = null
 
-    @SerializedName("stage")
-    var stage: String? = null
+    @SerializedName("action")
+    var action: String? = null
 
     @SerializedName("version")
     var version: String? = null

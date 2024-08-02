@@ -4,7 +4,7 @@
     "title": "Base Report",
     "type": "object",
 
-    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_timestamp", "sender_id", "stage_info", "content_type"],
+    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_datetime", "sender_id", "stage_info", "content_type"],
 
     "if": {
         "properties": {
@@ -106,7 +106,7 @@
                 "type": "string",
                 "description": "Name of the service associated with this report."
             },
-            "stage": {
+            "action": {
                 "type": "string",
                 "description": "Action the stage was conducting when providing this report."
             },
@@ -120,19 +120,16 @@
             },
             "issues": {
                 "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "level": {
-                            "type": "string",
-                            "enum": [
-                                "WARNING",
-                                "ERROR"
-                            ]
-                        },
-                        "message": {
-                            "type": "string"
-                        }
+                "properties": {
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "WARNING",
+                            "ERROR"
+                        ]
+                    },
+                    "message": {
+                        "type": "string"
                     }
                 }
             },

@@ -1,17 +1,29 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.google.gson.annotations.SerializedName
+
+
 /**
- * Get Items from the issues array in report message.
+ * Issue leve; of Report-ERROR OR WARNING
+ */
+enum class Level {
+    @SerializedName("ERROR")
+    ERROR,
+    @SerializedName("WARNING")
+    WARNING
+}
+/**
+ * Get issues array in report message.
  *
- * @property items Items?
+ * @property level String?
+ * @property message String?
 
  */
 class Issue {
 
-    @SerializedName("items")
-    var items : Items? = null
+    @SerializedName("level")
+    var level : Level? = null
 
-
-
+    @SerializedName("message")
+    var message: String? = null
 }
