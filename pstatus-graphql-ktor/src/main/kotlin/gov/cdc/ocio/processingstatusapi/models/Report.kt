@@ -1,6 +1,8 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
+import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
+import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.OffsetDateTime
 
 /**
@@ -10,10 +12,14 @@ import java.time.OffsetDateTime
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property stageName String?
+ * @property messageMetadata MessageMetadata?
+ * @property stageInfo StageInfo?
+ * @property tags Tags?
+ * @property data Map<String,String>?
  * @property contentType String?
  * @property messageId String?
- * @property status String?
+ * @property jurisdiction String?
+ * @property senderId String?
  * @property content String?
  * @property timestamp OffsetDateTime
  */
@@ -35,8 +41,17 @@ data class Report(
     @GraphQLDescription("Data stream route")
     var dataStreamRoute: String? = null,
 
-    @GraphQLDescription("Stage name this report is associated with")
-    var stageName: String? = null,
+    @GraphQLDescription("Message metadata")
+    var messageMetadata: MessageMetadata? = null,
+
+    @GraphQLDescription("Stage info")
+    var stageInfo: StageInfo? = null,
+
+    @GraphQLDescription("tags")
+    var tags: Map<String,String>? = null,
+
+    @GraphQLDescription("data")
+    var data: Map<String,String>? = null,
 
     @GraphQLDescription("Indicates the content type of the content; e.g. JSON, XML")
     var contentType : String? = null,
@@ -44,8 +59,11 @@ data class Report(
     @GraphQLDescription("Message id this report belongs to; set to null if not applicable")
     var messageId: String? = null,
 
-    @GraphQLDescription("Status this report is indicating, such as success or failure")
-    var status : String? = null,
+    @GraphQLDescription("Jurisdiction report belongs to; set to null if not applicable")
+    var jurisdiction: String? = null,
+
+    @GraphQLDescription("SenderId this report belongs to; set to null if not applicable")
+    var senderId: String? = null,
 
     @GraphQLDescription("Content of the report.  If the report is JSON then the content will be shown as JSON.  Otherwise, the content is a base64 encoded string.")
     var content : Map<*, *>? = null,

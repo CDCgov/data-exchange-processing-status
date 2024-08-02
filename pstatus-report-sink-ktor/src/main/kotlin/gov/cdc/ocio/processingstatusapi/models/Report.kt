@@ -2,6 +2,8 @@ package gov.cdc.ocio.processingstatusapi.models
 
 
 import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
+import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
 import java.util.*
 
 /**
@@ -34,14 +36,29 @@ open class Report(
     @SerializedName("data_stream_route")
     var dataStreamRoute: String? = null,
 
-    @SerializedName("stage_name")
-    var stageName: String? = null,
+    @SerializedName("message_metadata")
+    var messageMetadata: MessageMetadata? = null,
+
+    @SerializedName("stage_info")
+    var stageInfo: StageInfo? = null,
+
+    @SerializedName("tags")
+    var tags: Map<String,String>? = null,
+
+    @SerializedName("data")
+    var data: Map<String,String>? = null,
 
     @SerializedName("content_type")
     var contentType : String? = null,
 
     @SerializedName("message_id")
     var messageId: String? = null,
+
+    @SerializedName("jurisdiction")
+    var jurisdiction: String? = null,
+
+    @SerializedName("sender_id")
+    var senderId: String? = null,
 
     @SerializedName("status")
     var status : String? = null,
