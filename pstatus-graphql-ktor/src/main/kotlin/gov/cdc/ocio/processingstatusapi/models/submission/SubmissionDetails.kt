@@ -5,7 +5,7 @@ import gov.cdc.ocio.processingstatusapi.models.Report
 import java.time.OffsetDateTime
 
 /**
- * Report for a given stage.
+ * Submission details for a given upload.
  *
  * @property status String?
  * @property lastService String?
@@ -20,10 +20,10 @@ import java.time.OffsetDateTime
  * @property reports List<Report>
  */
 @GraphQLDescription("Contains upload details")
-data class UploadDetails(
+data class SubmissionDetails(
 
     @GraphQLDescription("Rollup status [DELIVERED, FAILED, PROCESSING]")
-    var status : String? = null,
+    var status: String? = null,
 
     @GraphQLDescription("Find report with most recent timestamp for the upload ID and report the service.")
     var lastService: String? = null,
@@ -41,19 +41,17 @@ data class UploadDetails(
     var dexIngestDateTime: OffsetDateTime? = null,
 
     @GraphQLDescription("DataStreamId in the report")
-    var dataStreamId : String? = null,
+    var dataStreamId: String? = null,
 
     @GraphQLDescription("DataStreamRoute in the report")
     var dataStreamRoute: String? = null,
 
     @GraphQLDescription("Jurisdiction stated in the report")
-    var jurisdiction : String? = null,
+    var jurisdiction: String? = null,
 
     @GraphQLDescription("SenderId mentioned in the report")
-    var senderId : String? = null,
+    var senderId: String? = null,
 
     @GraphQLDescription("Array of the raw reports provided for this upload ID.")
-    var reports : List<Report>? = null,
-
-
-    )
+    var reports: List<Report>? = null
+)

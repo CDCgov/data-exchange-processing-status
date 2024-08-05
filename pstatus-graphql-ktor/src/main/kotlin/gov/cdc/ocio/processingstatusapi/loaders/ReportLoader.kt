@@ -8,7 +8,7 @@ import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.submission.RollupStatus
 import gov.cdc.ocio.processingstatusapi.models.submission.Status
-import gov.cdc.ocio.processingstatusapi.models.submission.UploadDetails
+import gov.cdc.ocio.processingstatusapi.models.submission.SubmissionDetails
 import graphql.schema.DataFetchingEnvironment
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -21,6 +21,20 @@ class ForbiddenException(message: String) : RuntimeException(message)
  */
 class ReportLoader: CosmosLoader() {
 
+    /**
+     * Get all reports associated with the provided upload id.
+     *
+     * @param dataFetchingEnvironment DataFetchingEnvironment
+     * @param uploadId String
+     * @param reportsSortedBy String?
+     * @param sortOrder SortOrder?
+     * @return List<Report>
+     */
+    fun getByUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
+                      uploadId: String,
+                      reportsSortedBy: String?,
+                      sortOrder: SortOrder?
+    ) = getReportsForUploadId(dataFetchingEnvironment, uploadId, reportsSortedBy, sortOrder)
 
     /**
      * Submission details contain all the known details for a particular upload.
@@ -36,7 +50,49 @@ class ReportLoader: CosmosLoader() {
                                        uploadId: String,
                                        reportsSortedBy: String?,
                                        sortOrder: SortOrder?
-    ): UploadDetails {
+    ): SubmissionDetails {
+
+        val reports = getReportsForUploadId(dataFetchingEnvironment, uploadId, reportsSortedBy, sortOrder)
+
+        return getUploadDetails(reports)
+    }
+
+    /**
+     * Search for reports with the provided ids.
+     *
+     * @param ids List<String>
+     * @return List<Report>
+     */
+    fun search(ids: List<String>): List<Report> {
+        val quotedIds = ids.joinToString("\",\"", "\"", "\"")
+
+        val reportsSqlQuery = "select * from r where r.id in ($quotedIds)"
+
+        val reportItems = reportsContainer?.queryItems(
+            reportsSqlQuery, CosmosQueryRequestOptions(),
+            ReportDao::class.java
+        )
+        val reports = mutableListOf<Report>()
+        reportItems?.forEach { reports.add(it.toReport()) }
+
+        return reports
+    }
+
+    /**
+     * Get all reports associated with the provided upload id.
+     *
+     * @param dataFetchingEnvironment DataFetchingEnvironment
+     * @param uploadId String
+     * @param reportsSortedBy String?
+     * @param sortOrder SortOrder?
+     * @return List<Report>
+     */
+    private fun getReportsForUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
+                                      uploadId: String,
+                                      reportsSortedBy: String?,
+                                      sortOrder: SortOrder?
+    ): List<Report> {
+
         // Obtain the data streams available to the user from the data fetching env.
         val authContext = dataFetchingEnvironment.graphQlContext.get<AuthenticationContext>("AuthContext")
         var dataStreams: List<DataStream>? = null
@@ -79,27 +135,6 @@ class ReportLoader: CosmosLoader() {
             }
             reports.add(report)
         }
-        return getUploadDetails(reports)
-
-    }
-
-    /**
-     * Search for reports with the provided ids.
-     *
-     * @param ids List<String>
-     * @return List<Report>
-     */
-    fun search(ids: List<String>): List<Report> {
-        val quotedIds = ids.joinToString("\",\"", "\"", "\"")
-
-        val reportsSqlQuery = "select * from r where r.id in ($quotedIds)"
-
-        val reportItems = reportsContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
-            ReportDao::class.java
-        )
-        val reports = mutableListOf<Report>()
-        reportItems?.forEach { reports.add(it.toReport()) }
 
         return reports
     }
@@ -110,7 +145,7 @@ class ReportLoader: CosmosLoader() {
      *  @return UploadDetails
      */
 
-    private fun getUploadDetails(reports:MutableList<Report>):UploadDetails {
+    private fun getUploadDetails(reports: List<Report>): SubmissionDetails {
 
         // Determine rollup status
         val rollupStatus = when {
@@ -130,7 +165,7 @@ class ReportLoader: CosmosLoader() {
         val retrievedInnerMap: LinkedHashMap<*, *>? = uploadStatusReport?.content?.get("report") as? LinkedHashMap<*, *>?
         val fileName = retrievedInnerMap?.get("received_filename")
 
-        return UploadDetails(
+        return SubmissionDetails(
             status = rollupStatus.toString(),
             lastService = stageInfo?.service,
             lastAction =stageInfo?.action,
