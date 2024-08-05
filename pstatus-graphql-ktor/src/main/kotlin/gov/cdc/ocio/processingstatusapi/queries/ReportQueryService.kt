@@ -24,7 +24,7 @@ class ReportQueryService : Query {
      */
     @GraphQLDescription("Return all the reports associated with the provided upload ID.")
     @Suppress("unused")
-    fun uploadDetails(dataFetchingEnvironment: DataFetchingEnvironment,
+    fun getReports(dataFetchingEnvironment: DataFetchingEnvironment,
                    @GraphQLDescription("Upload ID to retrieve all the reports for.")
                    uploadId: String,
                    @GraphQLDescription("Optional field to specify the field reports should be sorted by.  Available fields for sorting are: [`timestamp`].")
