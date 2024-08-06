@@ -24,5 +24,11 @@ data class PageSummary(
     var pageSize: Int = 0,
 
     @GraphQLDescription("Total number of items that can be provided")
-    var totalItems: Int = 0
+    var totalItems: Int = 0,
+
+    @GraphQLDescription("List of the senderIds")
+    var senderIds: List<String> = listOf(),
+
+    @GraphQLDescription("List of the jurisdictions")
+    var jurisdictions: List<String> = listOf()
 )
