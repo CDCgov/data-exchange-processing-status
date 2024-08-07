@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models.query
 
+import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.google.gson.Gson
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.UploadMetadataVerifyStage
