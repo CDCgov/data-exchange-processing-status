@@ -46,7 +46,7 @@ class ServiceBusProcessor {
     @Throws(BadRequestException::class)
     fun withMessage(message: ServiceBusReceivedMessage) {
         val sbMessageId = message.messageId
-        var sbMessage =String(message.body.toBytes())
+        var sbMessage = String(message.body.toBytes())
         val sbMessageStatus = message.state.name
 
         try {
@@ -64,8 +64,7 @@ class ServiceBusProcessor {
                 val isValid = isJsonValid(sbMessage)
                 if (!isValid)
                     sendToDeadLetter("Validation failed.  The message is not in JSON format.")
-            }
-            else
+            } else
                 validateJsonSchema(message)
 
             createReport(sbMessageId, sbMessageStatus, gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
@@ -119,11 +118,13 @@ class ServiceBusProcessor {
     }
 
     /**
-     * Function to validate report attributes for missing required fields, for schema validation and malformed content message using networknt/json-schema-validator
+     * Function to validate report attributes for missing required fields, for schema validation and malformed content
+     * message using networknt/json-schema-validator.
+     *
      * @param message ServiceBusReceivedMessage
      * @throws BadRequestException
      */
-    private fun validateJsonSchema(message: ServiceBusReceivedMessage){
+    private fun validateJsonSchema(message: ServiceBusReceivedMessage) {
         val invalidData = mutableListOf<String>()
         val schemaFileNames = mutableListOf<String>()
         var reason: String
@@ -132,13 +133,15 @@ class ServiceBusProcessor {
         // Convert the message body to a JSON string
         val messageBody = String(message.body.toBytes())
         val objectMapper: ObjectMapper = jacksonObjectMapper()
-        var reportSchemaVersion = "0.0.1" // for backward compatibility - this schema will load if report_schema_version is not found
+        var reportSchemaVersion =
+            "0.0.1" // for backward compatibility - this schema will load if report_schema_version is not found
 
         // Check for the presence of `report_schema_version`
+        val createReportMessage: CreateReportSBMessage
         try {
-            val createReportMessage: CreateReportSBMessage = gson.fromJson(messageBody, CreateReportSBMessage::class.java)
+            createReportMessage = gson.fromJson(messageBody, CreateReportSBMessage::class.java)
             // Convert to JSON
-            val jsonNode: JsonNode =objectMapper.readTree(messageBody)
+            val jsonNode: JsonNode = objectMapper.readTree(messageBody)
             // Check for the presence of `report_schema_version`
             val reportSchemaVersionNode = jsonNode.get("report_schema_version")
             if (reportSchemaVersionNode == null || reportSchemaVersionNode.asText().isEmpty()) {
@@ -146,25 +149,32 @@ class ServiceBusProcessor {
             } else {
                 reportSchemaVersion = reportSchemaVersionNode.asText()
             }
-            val fileName ="base.$reportSchemaVersion.schema.json"
-            val schemaFilePath = javaClass.getResource( "$schemaDirectoryPath/$fileName")
+            val fileName = "base.$reportSchemaVersion.schema.json"
+            val schemaFilePath = javaClass.getResource("$schemaDirectoryPath/$fileName")
                 ?: throw IllegalArgumentException("File not found: $fileName")
 
             // Attempt to load the schema
             val schemaFile = File(schemaFilePath.toURI())
             if (!schemaFile.exists()) {
-                reason ="Report rejected: Schema file not found for base schema version $reportSchemaVersion."
-                processError(fileName,reason,invalidData,schemaFileNames,createReportMessage)
+                reason = "Report rejected: Schema file not found for base schema version $reportSchemaVersion."
+                processError(fileName, reason, invalidData, schemaFileNames, createReportMessage)
             }
             // Validate report schema version schema
-            validateSchema(fileName,jsonNode,schemaFile,objectMapper,invalidData,schemaFileNames,createReportMessage)
+            validateSchema(
+                fileName,
+                jsonNode,
+                schemaFile,
+                objectMapper,
+                invalidData,
+                schemaFileNames,
+                createReportMessage
+            )
             // Check if the content_type is JSON
             val contentTypeNode = jsonNode.get("content_type")
             if (contentTypeNode == null) {
-                reason="Report rejected: `content_type` is not JSON or is missing."
-                processError(fileName,reason,invalidData,schemaFileNames,createReportMessage)
-            }
-            else {
+                reason = "Report rejected: `content_type` is not JSON or is missing."
+                processError(fileName, reason, invalidData, schemaFileNames, createReportMessage)
+            } else {
                 if (!isJsonMimeType(contentTypeNode.asText())) {
                     // Don't need to go further down if the mimetype is other than json. i.e. xml or text etc.
                     return
@@ -174,8 +184,8 @@ class ServiceBusProcessor {
             // Open the content as JSON
             val contentNode = jsonNode.get("content")
             if (contentNode == null) {
-                reason="Report rejected: `content` is not JSON or is missing."
-                processError(fileName,reason,invalidData, schemaFileNames,createReportMessage)
+                reason = "Report rejected: `content` is not JSON or is missing."
+                processError(fileName, reason, invalidData, schemaFileNames, createReportMessage)
             }
             // Check for `content_schema_name` and `content_schema_version`
             val contentSchemaNameNode = contentNode.get("content_schema_name")
@@ -183,25 +193,33 @@ class ServiceBusProcessor {
             if (contentSchemaNameNode == null || contentSchemaNameNode.asText().isEmpty() ||
                 contentSchemaVersionNode == null || contentSchemaVersionNode.asText().isEmpty()
             ) {
-                reason= "Report rejected: `content_schema_name` or `content_schema_version` is missing or empty."
-                processError(fileName,reason,invalidData, schemaFileNames,createReportMessage)
+                reason = "Report rejected: `content_schema_name` or `content_schema_version` is missing or empty."
+                processError(fileName, reason, invalidData, schemaFileNames, createReportMessage)
             }
             //ContentSchema validation
             val contentSchemaName = contentSchemaNameNode.asText()
             val contentSchemaVersion = contentSchemaVersionNode.asText()
-            val contentSchemaFileName ="$contentSchemaName.$contentSchemaVersion.schema.json"
-            val contentSchemaFilePath =javaClass.getResource( "$schemaDirectoryPath/$contentSchemaFileName")
-                ?: throw IllegalArgumentException("File not found: $contentSchemaFileName")
+            val contentSchemaFileName = "$contentSchemaName.$contentSchemaVersion.schema.json"
+            val contentSchemaFilePath = javaClass.getResource("$schemaDirectoryPath/$contentSchemaFileName")
 
             // Attempt to load the schema
-            val contentSchemaFile = File(contentSchemaFilePath.toURI())
-            if (!contentSchemaFile .exists()) {
-                reason ="Report rejected: Content schema file not found for content schema name $contentSchemaName and schema version $contentSchemaVersion."
-                processError(contentSchemaFileName,reason,invalidData,schemaFileNames,createReportMessage)
+            val contentSchemaFile = if (contentSchemaFilePath != null) File(contentSchemaFilePath.toURI()) else null
+            if (contentSchemaFile == null || !contentSchemaFile.exists()) {
+                reason =
+                    "Report rejected: Content schema file not found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'."
+                processError(contentSchemaFileName, reason, invalidData, schemaFileNames, createReportMessage)
             }
 
             // Validate content schema
-            validateSchema(contentSchemaFileName,contentNode,contentSchemaFile,objectMapper,invalidData, schemaFileNames, createReportMessage)
+            validateSchema(
+                contentSchemaFileName,
+                contentNode,
+                contentSchemaFile!!,
+                objectMapper,
+                invalidData,
+                schemaFileNames,
+                createReportMessage
+            )
 
         } catch (e: Exception) {
             logger.error("Report rejected: Malformed JSON or error processing the report - ${e.message}")
@@ -210,11 +228,16 @@ class ServiceBusProcessor {
     }
 
     /**
-     *  Function to send the invalid data reasons to the deadLetter queue
+     *  Function to send the invalid data reasons to the deadLetter queue.
+     *
      *  @param invalidData MutableList<String>
      *  @param createReportMessage CreateReportSBMessage
      */
-    private fun sendToDeadLetter(invalidData:MutableList<String>, validationSchemaFileNames:MutableList<String>, createReportMessage: CreateReportSBMessage){
+    private fun sendToDeadLetter(
+        invalidData: MutableList<String>,
+        validationSchemaFileNames: MutableList<String>,
+        createReportMessage: CreateReportSBMessage
+    ) {
         if (invalidData.isNotEmpty()) {
             //This should not run for unit tests
             if (System.getProperty("isTestEnvironment") != "true") {
@@ -241,10 +264,11 @@ class ServiceBusProcessor {
     }
 
     /**
-     *  Function to send the invalid data reasons to the deadLetter queue
+     *  Function to send the invalid data reasons to the deadLetter queue.
+     *
      *  @param reason String
      */
-    private fun sendToDeadLetter(reason:String){
+    private fun sendToDeadLetter(reason: String) {
         //This should not run for unit tests
         if (System.getProperty("isTestEnvironment") != "true") {
             // Write the content of the dead-letter reports to CosmosDb
@@ -254,29 +278,40 @@ class ServiceBusProcessor {
     }
 
     /**
-     *  Function to process the error by logging it and adding to the invalidData list and sending it to deadletter
+     *  Function to process the error by logging it and adding to the invalidData list and sending it to deadletter.
+     *
      *  @param reason String
      *  @param invalidData MutableList<String>
      *  @param createReportMessage CreateReportSBMessage
      */
-    private fun processError(schemaFileName:String, reason:String, invalidData:MutableList<String>, validationSchemaFileNames:MutableList<String>,
-                             createReportMessage: CreateReportSBMessage) {
-
+    private fun processError(
+        schemaFileName: String,
+        reason: String,
+        invalidData: MutableList<String>,
+        validationSchemaFileNames: MutableList<String>,
+        createReportMessage: CreateReportSBMessage
+    ) {
         validationSchemaFileNames.add(schemaFileName)
-        val updatedReason = reason +  "Filename(s) used for validation: " + validationSchemaFileNames.joinToString(separator = ",")
-        logger.error(updatedReason)
-        invalidData.add(updatedReason)
+        logger.error(reason)
+        invalidData.add(reason)
         sendToDeadLetter(invalidData, validationSchemaFileNames, createReportMessage)
     }
 
     /**
-     *  Function to validate the schema based on the schema file and the json contents passed into it
+     *  Function to validate the schema based on the schema file and the json contents passed into it.
+     *
      *  @param schemaFile String
      *  @param objectMapper ObjectMapper
-
      */
-    private fun validateSchema(schemaFileName: String, jsonNode:JsonNode, schemaFile:File, objectMapper: ObjectMapper, invalidData:MutableList<String>,
-                               validationSchemaFileNames: MutableList<String>, createReportMessage: CreateReportSBMessage) {
+    private fun validateSchema(
+        schemaFileName: String,
+        jsonNode: JsonNode,
+        schemaFile: File,
+        objectMapper: ObjectMapper,
+        invalidData: MutableList<String>,
+        validationSchemaFileNames: MutableList<String>,
+        createReportMessage: CreateReportSBMessage
+    ) {
         val schemaNode: JsonNode = objectMapper.readTree(schemaFile)
         val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
         val schema: JsonSchema = schemaFactory.getSchema(schemaNode)
@@ -285,9 +320,9 @@ class ServiceBusProcessor {
         if (schemaValidationMessages.isEmpty()) {
             logger.info("JSON is valid against the content schema $schema.")
         } else {
-            val reason ="JSON is invalid against the content schema $schemaFileName."
+            val reason = "JSON is invalid against the content schema $schemaFileName."
             schemaValidationMessages.forEach { invalidData.add(it.message) }
-            processError(schemaFileName,reason, invalidData,validationSchemaFileNames,createReportMessage)
+            processError(schemaFileName, reason, invalidData, validationSchemaFileNames, createReportMessage)
         }
     }
 
