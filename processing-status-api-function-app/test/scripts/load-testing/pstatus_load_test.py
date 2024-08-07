@@ -1,7 +1,6 @@
 import asyncio
 import uuid
 import time
-import requests
 import reports
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
@@ -14,7 +13,9 @@ from azure.servicebus import TransportType
 ############################################################################################
 
 # Queue name is always the same regardless of environment
-QUEUE_NAME = "processing-status-cosmos-db-queue"
+QUEUE_NAME = "processing-status-cosmos-db-report-sink-queue"
+TOPIC_NAME = "processing-status-cosmos-db-report-sink-topics"
+USE_QUEUE = True
 
 env = {}
 with open("../.env") as envfile:
@@ -24,8 +25,6 @@ with open("../.env") as envfile:
         if var.startswith('"') and var.endswith('"'):
             var = var[1:-1]
         env[name.strip()] = var
-
-pstatus_base_url=env["pstatus_api_base_url"]
 
 async def send_single_message(sender, message):
     # Create a Service Bus message and send it to the queue
@@ -43,35 +42,49 @@ async def run():
         conn_str=env["service_bus_connection_str"],
         transport_type=TransportType.AmqpOverWebsocket,
         logging_enable=False) as servicebus_client:
-        # Get a Queue Sender object to send messages to the queue
-        sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
-        async with sender:
-            # Send upload messages
-            print("Sending simulated UPLOAD reports...")
-            num_chunks = 1
-            size = 27472691
-            for index in range(num_chunks):
-                offset = (index+1) * size / num_chunks
-                message = reports.create_upload(upload_id, offset, size)
-                #print(f"Sending: {message}")
-                await send_single_message(sender, message)
-                time.sleep(1)
+        if USE_QUEUE == True:
+            # Get a Queue Sender object to send messages to the queue
+            sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
+            async with sender:
+                await simulate(sender, upload_id)
+        else:
+            # Get a Topic Sender object to send messages to the queue
+            sender = servicebus_client.get_topic_sender(topic_name=TOPIC_NAME)
+            async with sender:
+                await simulate(sender, upload_id)
 
-            # Send routing message
-            print("Sending simulated ROUTING report...")
-            message = reports.create_routing(upload_id)
+async def simulate(sender, upload_id):
+        # Send upload messages
+        print("Sending simulated UPLOAD reports...")
+        num_chunks = 1
+        size = 27472691
+        for index in range(num_chunks):
+            offset = (index+1) * size / num_chunks
+            message = reports.create_upload(upload_id, offset, size)
             #print(f"Sending: {message}")
             await send_single_message(sender, message)
+            time.sleep(1)
 
-            # Send hl7 validation messages
-            print("Sending simulated HL7-VALIDATION reports...")
-            batch_message = await sender.create_message_batch()
-            num_lines = 2
-            for index in range(num_lines):
-                line = index + 1
-                message = reports.create_hl7_validation(upload_id, line)
-                #print(f"Sending: {message}")
-                batch_message.add_message(ServiceBusMessage(message))
+        # Send routing message
+        print("Sending simulated ROUTING report...")
+        message = reports.create_routing(upload_id)
+        #print(f"Sending: {message}")
+        await send_single_message(sender, message)
+
+        print("Sending simulated HL7 DEBATCH report...")
+        message = reports.create_hl7_debatch_report(upload_id)
+        # print("Sending message: " + message)
+        await send_single_message(sender, message)
+
+        # Send hl7 validation messages
+        print("Sending simulated HL7-VALIDATION reports...")
+        batch_message = await sender.create_message_batch()
+        num_lines = 1
+        for index in range(num_lines):
+            line = index + 1
+            message = reports.create_hl7_validation(upload_id, line)
+            #print(f"Sending: {message}")
+            batch_message.add_message(ServiceBusMessage(message))
 
 asyncio.run(run())
 print("Done sending messages")

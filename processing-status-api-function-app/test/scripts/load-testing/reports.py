@@ -1,10 +1,69 @@
 from datetime import datetime
 
-def create_upload(upload_id, offset, size):    
+def create_report_msg_from_content(upload_id, content):
+    message = """
+{
+    "report_schema_version": "1.0.0",
+    "upload_id": "%s",
+    "user_id": "test-event1",
+    "data_stream_id": "dex-testing",
+    "data_stream_route": "test-event1",
+    "jurisdiction": "SMOKE",
+    "sender_id": "APHL",
+    "data_producer_id": "smoke-test-data-producer",
+    "dex_ingest_datetime": "2024-07-10T15:40:01Z",
+    "status": "SUCCESS",
+    "messageMetadata": {
+       "type": "object",
+       "properties": {
+          "message_uuid": {
+             "type": "UUID",
+             "description": "Unique identifier for the message associated with this report.  Null if not applicable."
+          },
+          "message_hash": {
+             "type": "string",
+             "description": "MD5 hash of the message content."
+          },
+          "aggregation": {
+             "type": "string",
+             "enum": ["SINGLE", "BATCH"],
+             "description": "Enumeration: [SINGLE, BATCH]."
+          },
+          "message_index": {
+             "type": "integer",
+             "description": "Index of the message; e.g. row if csv."
+          }
+
+       }
+    },
+    "stage_info": {
+       "service": "HL7v2 Pipeline",
+       "action": "RECEIVER",
+       "version": "0.0.49-SNAPSHOT",
+       "status": "SUCCESS",
+       "issues": null,
+       "start_processing_time": "2024-07-10T15:40:10.162+00:00",
+       "end_processing_time": "2024-07-10T15:40:10.228+00:00"
+    },
+    "tags": {
+       "$ref": "test-ref",
+       "description": "Optional tag(s) associated with this report."
+    },
+    "data": {
+       "$ref": "keyValueMap",
+       "description": "Optional data associated with this report."
+    },
+    "content_type": "application/json",
+    "content": %s
+}
+""" % (upload_id, content)
+    return message
+
+def create_upload(upload_id, offset, size):
     content = """
 {
-    "schema_name":"upload",
-    "schema_version":"1.0",
+    "content_schema_name":"upload-status",
+    "content_schema_version":"1.0.0",
     "tguid":"%s",
     "offset":%d,
     "size":%d,
@@ -29,48 +88,62 @@ def create_upload(upload_id, offset, size):
 }
 """ % (upload_id, offset, size)
 
-    message = """
-{
-    "upload_id": "%s",
-    "destination_id": "dex-testing",
-    "event_type": "test-event1",
-    "stage_name": "dex-upload",
-    "content_type": "json",
-    "content": %s,
-    "disposition_type": "replace"
-}
-""" % (upload_id, content)
-    return message
+    return create_report_msg_from_content(upload_id, content)
 
 def create_routing(upload_id):
     content = """
 {
-    "schema_name": "dex-routing",
-    "schema_version": "1.0",
-    "route_source_blob_url": "",
-    "route_destination_blob_url": "",
+    "content_schema_name": "blob-file-copy",
+    "content_schema_version": "1.0.0",
+    "file_source_blob_url": "",
+    "file_destination_blob_url": "",
     "timestamp": "%s",
     "result": "success"
 }
-""" % (datetime.now())
+""" % (datetime.now().replace(microsecond=0).isoformat() + 'Z')
 
-    message = """
+    return create_report_msg_from_content(upload_id, content)
+
+def create_hl7_debatch_report(upload_id):
+    content = """
 {
-    "upload_id": "%s",
-    "destination_id": "dex-testing",
-    "event_type": "test-event1",
-    "stage_name": "dex-routing",
-    "content_type": "json",
-    "content": %s
+   "content_schema_name": "hl7v2-debatch",
+   "content_schema_version": "1.0.0",
+   "report": {
+      "ingested_file_path": "https://ocioedemessagesatst.blob.core.windows.net/hl7ingress/dex-routing/dex-smoke-test_319101ba2fd7835983f3257713819f7b",
+      "ingested_file_timestamp": "2024-07-10T15:40:09+00:00",
+      "ingested_file_size": 10240,
+      "received_filename": "dex-smoke-test",
+      "supporting_metadata": {
+         "meta_ext_source": "test-src",
+         "meta_ext_filestatus": "test-file-status",
+         "meta_ext_file_timestamp": "test-timestamp",
+         "system_provider": "DEX-ROUTING",
+         "meta_ext_uploadid": "test-upload-id",
+         "meta_ext_objectkey": "test-obj-key",
+         "reporting_jurisdiction": "unknown"
+      },
+      "aggregation": "SINGLE",
+      "number_of_messages": 1,
+      "number_of_messages_not_propagated": 1,
+      "error_messages": [
+         {
+            "message_uuid": "378d6660-903f-40b8-b48b-80f9d77aa69c",
+            "message_index": 1,
+            "error_message": "No valid message found."
+         }
+      ]
+   }
 }
-""" % (upload_id, content)
-    return message
+"""
+
+    return create_report_msg_from_content(upload_id, content)
 
 def create_hl7_validation(upload_id, line):
     content = """
 {
-    "schema_name": "hl7-validation",
-    "schema_version": "1.0",
+    "content_schema_name": "hl7-validation",
+    "content_schema_version": "1.0.0",
     "message_uuid": "",
     "entries": {
         "structure": [
@@ -108,16 +181,6 @@ def create_hl7_validation(upload_id, line):
     "status": "STRUCTURE_ERRORS"
 }
 """ % (line, line)
-    
-    message = """
-{
-    "upload_id": "%s",
-    "destination_id": "dex-testing",
-    "event_type": "test-event1",
-    "stage_name": "dex-hl7-validation",
-    "content_type": "json",
-    "content": %s
-}
-""" % (upload_id, content)
-    return message
+
+    return create_report_msg_from_content(upload_id, content)
 
