@@ -1,0 +1,418 @@
+Index: pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/Application.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/Application.kt b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/Application.kt
+--- a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/Application.kt	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/Application.kt	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -16,6 +16,7 @@
+         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
+         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
+         single { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
++        single { CosmosRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
+     }
+     return modules(listOf(cosmosModule))
+ }
+Index: pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/ReportManagerConfig.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/ReportManagerConfig.kt b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/ReportManagerConfig.kt
+--- a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/ReportManagerConfig.kt	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/ReportManagerConfig.kt	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -8,5 +8,6 @@
+  */
+ class ReportManagerConfig {
+     val reportsContainerName = "Reports"
++    val reportsDeadLetterContainerName = "Reports-DeadLetter"
+     private val partitionKey = "/uploadId"
+ }
+\ No newline at end of file
+Index: pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosContainerManager.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosContainerManager.kt b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosContainerManager.kt
+--- a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosContainerManager.kt	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosContainerManager.kt	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -17,8 +17,10 @@
+             val logger = KotlinLogging.logger {}
+             logger.info("Create database $databaseName if not exists...")
+             //  Create database if not exists
+-            val databaseResponse = cosmosClient.createDatabaseIfNotExists(databaseName)
+-            return cosmosClient.getDatabase(databaseResponse.properties.id)
++           // val databaseResponse = cosmosClient.createDatabaseIfNotExists(databaseName)
++           // return cosmosClient.getDatabase(databaseResponse.properties.id)
++
++            return cosmosClient.getDatabase(databaseName)
+         }
+ 
+         fun initDatabaseContainer(uri: String, authKey: String, containerName: String, partitionKey: String): CosmosContainer? {
+Index: pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosRepository.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosRepository.kt b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosRepository.kt
+--- a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosRepository.kt	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/cosmos/CosmosRepository.kt	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -6,4 +6,6 @@
+ 
+     val reportsContainer = CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)!!
+ 
++
++
+ }
+\ No newline at end of file
+Index: pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBus.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBus.kt b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBus.kt
+--- a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBus.kt	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBus.kt	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -1,11 +1,18 @@
+ package gov.cdc.ocio.processingstatusapi.plugins
+ 
++import com.azure.core.amqp.exception.AmqpException
++import com.azure.core.exception.AzureException
+ import com.azure.messaging.servicebus.*
++import com.azure.messaging.servicebus.models.DeadLetterOptions
++import gov.cdc.ocio.processingstatusapi.cosmos.CosmosContainerManager
++import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+ import io.ktor.server.application.*
+ import io.ktor.server.application.hooks.*
+ import io.ktor.server.config.*
+ import io.ktor.util.logging.*
++import io.netty.channel.ConnectTimeoutException
++import org.apache.qpid.proton.engine.TransportException
+ import java.util.concurrent.TimeUnit
+ 
+ internal val LOGGER = KtorSimpleLogger("pstatus-report-sink")
+@@ -13,6 +20,8 @@
+ class AzureServiceBusConfiguration(config: ApplicationConfig) {
+     var connectionString: String = config.tryGetString("connection_string") ?: ""
+     var queueName: String = config.tryGetString("queue_name") ?: ""
++    var topicName: String = config.tryGetString("topic_name") ?: ""
++    var subscriptionName: String = config.tryGetString("subscription_name") ?: ""
+ }
+ 
+ val AzureServiceBus = createApplicationPlugin(
+@@ -22,8 +31,11 @@
+ 
+     val connectionString = pluginConfig.connectionString
+     val queueName = pluginConfig.queueName
++    val topicName = pluginConfig.topicName
++    val subscriptionName = pluginConfig.subscriptionName
+ 
+-    val processorClient by lazy {
++// Initialize Service Bus client for queue
++    val processorQueueClient by lazy {
+         ServiceBusClientBuilder()
+             .connectionString(connectionString)
+             .processor()
+@@ -32,32 +44,90 @@
+             .processError { context -> processError(context) }
+             .buildProcessorClient()
+     }
++
++    // Initialize Service Bus client for topic
++    val processorTopicClient by lazy {
++        ServiceBusClientBuilder()
++            .connectionString(connectionString)
++            .processor()
++            .topicName(topicName)
++            .subscriptionName(subscriptionName)
++            .processMessage{ context -> processMessage(context) }
++            .processError { context -> processError(context) }
++            .buildProcessorClient()
++    }
+ 
+     // handles received messages
+     @Throws(InterruptedException::class)
+     fun receiveMessages() {
+-        // Create an instance of the processor through the ServiceBusClientBuilder
+-        println("Starting the Azure service bus processor")
+-        println("connectionString = $connectionString, queueName = $queueName")
+-        processorClient.start()
++        try {
++            // Create an instance of the processor through the ServiceBusClientBuilder
++            println("Starting the Azure service bus processor")
++            println("connectionString = $connectionString, queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
++            processorQueueClient.start()
++            processorTopicClient.start()
++        }
++
++        catch (e:AmqpException){
++            println("Non-ServiceBusException occurred : ${e.message}")
++        }
++        catch (e:TransportException){
++            println("Non-ServiceBusException occurred : ${e.message}")
++        }
++
++        catch (e:Exception){
++            println("Non-ServiceBusException occurred : ${e.message}")
++        }
++
++    }
++
++    fun sendMessage() {
++        val senderClient = ServiceBusClientBuilder()
++            .connectionString(connectionString)
++            .sender()
++            .queueName(queueName)
++            .buildClient()
++        try {
++            val message = ServiceBusMessage("Hello, Service Bus!")
++            senderClient.sendMessage(message)
++            println("Message sent to the queue.")
++
++        }
++        catch (e:AmqpException){
++            println("Non-ServiceBusException occurred : ${e.message}")
++        }
++        catch (e:TransportException){
++            println("Non-ServiceBusException occurred : ${e.message}")
++        }
++
++        catch (e:Exception){
++            println("Non-ServiceBusException occurred : ${e.message}")
++        }
++        finally {
++            senderClient.close()
++        }
+     }
+ 
+     on(MonitoringEvent(ApplicationStarted)) { application ->
+         application.log.info("Server is started")
+-        receiveMessages()
++         receiveMessages()
++       // sendMessage()
+     }
+     on(MonitoringEvent(ApplicationStopped)) { application ->
+         application.log.info("Server is stopped")
+         println("Stopping and closing the processor")
+-        processorClient.close()
++        processorQueueClient.close()
++        processorTopicClient.close()
+         // Release resources and unsubscribe from events
+         application.environment.monitor.unsubscribe(ApplicationStarted) {}
+         application.environment.monitor.unsubscribe(ApplicationStopped) {}
+     }
+ }
+ 
++
+ private fun processMessage(context: ServiceBusReceivedMessageContext) {
+     val message = context.message
++
+     LOGGER.trace(
+         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
+         message.messageId,
+@@ -68,10 +138,23 @@
+         ServiceBusProcessor().withMessage(message.body.toString())
+     } catch (e: BadRequestException) {
+         LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
+-    } catch (e: Exception) {
++    }
++    catch (e: IllegalArgumentException) { //  TODO : Is this the only exception at this time or more generic one???
++        LOGGER.warn("Message rejected: {}", e.localizedMessage)
++        //Writing to deadletter
++        //  TODO : Will this do it for queue and topic based on the context.
++        // TODO : Should this be "ValidationError" or something generic
++         context.deadLetter(DeadLetterOptions().setDeadLetterReason("ValidationError").setDeadLetterErrorDescription(e.message))
++
++         LOGGER.info("Message sent to the dead-letter queue.")
++    }
++    catch (e: Exception) {
+         LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)
+     }
++
+ }
++
++
+ 
+ private fun processError(context: ServiceBusErrorContext) {
+     System.out.printf(
+@@ -106,6 +189,8 @@
+     }
+ }
+ 
++
++
+ fun Application.serviceBusModule() {
+     install(AzureServiceBus) {
+         // any additional configuration goes here
+Index: pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBusProcessor.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBusProcessor.kt b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBusProcessor.kt
+--- a/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBusProcessor.kt	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/kotlin/gov/cdc/ocio/processingstatusapi/plugins/ServiceBusProcessor.kt	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -1,5 +1,8 @@
+ package gov.cdc.ocio.processingstatusapi.plugins
+ 
++import com.azure.messaging.servicebus.ServiceBusClientBuilder
++import com.azure.messaging.servicebus.ServiceBusReceivedMessage
++import com.azure.messaging.servicebus.models.DeadLetterOptions
+ import com.google.gson.GsonBuilder
+ import com.google.gson.JsonSyntaxException
+ import com.google.gson.ToNumberPolicy
+@@ -45,7 +48,12 @@
+             }
+             logger.info { "After Message received = $sbMessage" }
+             createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
+-        } catch (e: JsonSyntaxException) {
++        }
++        catch (e:IllegalArgumentException){
++            println("Validation failed: ${e.message}")
++            throw e
++        }
++        catch (e: JsonSyntaxException) {
+             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
+             throw BadStateException("Unable to interpret the create report message")
+         }
+@@ -59,44 +67,63 @@
+      */
+     @Throws(BadRequestException::class)
+     private fun createReport(createReportMessage: CreateReportSBMessage) {
+-
+-        val uploadId = createReportMessage.uploadId
+-            ?: throw BadRequestException("Missing required field upload_id")
+-
+-        val dataStreamId = createReportMessage.dataStreamId
+-            ?: throw BadRequestException("Missing required field data_stream_id")
+-
+-        val dataStreamRoute = createReportMessage.dataStreamRoute
+-            ?: throw BadRequestException("Missing required field data_stream_route")
+-
+-        val stageName = createReportMessage.stageName
+-            ?: throw BadRequestException("Missing required field stage_name")
+-
+-        val contentType = createReportMessage.contentType
+-            ?: throw BadRequestException("Missing required field content_type")
+-
+-        val content: String
+-        try {
+-            content = createReportMessage.contentAsString
+-                ?: throw BadRequestException("Missing required field content")
+-        } catch (ex: BadStateException) {
+-            // assume a bad request
+-            throw BadRequestException(ex.localizedMessage)
+-        }
+-
+-        logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
+-        ReportManager().createReportWithUploadId(
+-            uploadId,
+-            dataStreamId,
+-            dataStreamRoute,
+-            stageName,
+-            contentType,
+-            createReportMessage.messageId,
+-            createReportMessage.status,
+-            content,
+-            createReportMessage.dispositionType,
+-            Source.SERVICEBUS
+-        )
+-    }
++        try {
++            validateReport(createReportMessage)
++            val uploadId = createReportMessage.uploadId
++            val stageName = createReportMessage.stageName
++            logger.info("Creating report for uploadId = ${uploadId} with stageName = $stageName")
++            ReportManager().createReportWithUploadId(
++                createReportMessage.uploadId!!,
++                createReportMessage.dataStreamId!!,
++                createReportMessage.dataStreamRoute!!,
++                createReportMessage.stageName!!,
++                createReportMessage.contentType!!,
++                createReportMessage.messageId!!,
++                createReportMessage.status,
++                createReportMessage.contentAsString!!, // it was Content I changed to ContentAsString
++                createReportMessage.dispositionType,
++                Source.SERVICEBUS
++            )
++        }
++        catch (e:IllegalArgumentException){
++           throw e
++        }
++        catch (e: Exception) {
++            println("Failed to process service bus message:${e.message}")
++
++        }
++
++    }
++
++    // Function to validate report
++    private fun validateReport(createReportMessage: CreateReportSBMessage) {
++        val missingFields = mutableListOf<String>()
++
++        if (createReportMessage.uploadId.isNullOrBlank()) {
++            missingFields.add("uploadId")
++        }
++        if (createReportMessage.dataStreamId.isNullOrBlank()) {
++            missingFields.add("dataStreamId")
++        }
++        if (createReportMessage.dataStreamRoute.isNullOrBlank()) {
++            missingFields.add("dataStreamRoute")
++        }
++        if (createReportMessage.stageName.isNullOrBlank()) {
++            missingFields.add("stageName")
++        }
++        if (createReportMessage.contentType.isNullOrBlank()) {
++            missingFields.add("contentType")
++        }
++        if (createReportMessage.contentAsString.isNullOrBlank()) {
++            missingFields.add("content")
++        }
++
++        if (missingFields.isNotEmpty()) {
++            val reason ="Missing fields: ${missingFields.joinToString(", ")}"
++            throw IllegalArgumentException(reason)
++        }
++    }
++
++
+ 
+ }
+\ No newline at end of file
+Index: pstatus-report-sink-ktor/src/main/resources/application.conf
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pstatus-report-sink-ktor/src/main/resources/application.conf b/pstatus-report-sink-ktor/src/main/resources/application.conf
+--- a/pstatus-report-sink-ktor/src/main/resources/application.conf	(revision 6f5f64cef639df6a1b006329b59c193116d082b5)
++++ b/pstatus-report-sink-ktor/src/main/resources/application.conf	(revision 43dcf8f15e417d2595fa0507da73363361632550)
+@@ -13,6 +13,8 @@
+     service_bus {
+         connection_string = ${SERVICE_BUS_CONNECTION_STRING}
+         queue_name = ${SERVICE_BUS_REPORT_QUEUE_NAME}
++        topic_name = ${SERVICE_BUS_REPORT_TOPIC_NAME}
++        subscription_name = ${SERVICE_BUS_REPORT_TOPIC_SUBSCRIPTION_NAME}
+     }
+     cosmos_db {
+         client {
+diff --git a/pstatus-report-sink-ktor/src/main/ps1/SendMessageToQueue.ps1 b/pstatus-report-sink-ktor/src/main/ps1/SendMessageToQueue.ps1
+new file mode 100644
+index 0000000000000000000000000000000000000000..57cc192de7e42a2a3a10142bf57ecacd47d66759
+GIT binary patch
+literal 1062
+zc$|e(QBT`25PnDEKX?U+RuFeEjZK~UkXD7l)U6|(rit#sjjz<2V+Z>}3BP_9Cmmfk
+zu{YoO^L^iacRpYVAj1`~TsV;dg7a)?T}UP19#jf!Q2715!_*oBDJp9cbjsYZK5LDP
+z%&jum_lsV)Yg1(-kPu0Dh;nCB@ScDk1r|O+@JJE&b=5`T`C1ui*Pa`|?uTS09LPAW
+zUVVh}6RGLnSc?;3#2xJ1?xOpnpW`><t~x(=gVFKhESt%z`^iP7AD_Nw9%1_KI8GMV
+zlU4e5-EUDh_XQMCaa3(M$gM*k8H;MEQc*SOqW~f7{@ww*$|^)~g-jq$;YudFhisu0
+zkUg=K(X7mYMRA=C4X{>H5_`rQD<@WhZf&Ed0#~ekO(xdICXwV?VSPRX^U#|n^t8~h
+z!8kD3VbO4<v<$hU_^EKP;h~Am&-f`noolt2lf5(pBZZS^{PldIQfIwgBHw+(rPfEC
+zy5pe(fxrX{Hn5c1G`KNt7$UOn_Jv|!o{>L#Jp=3ZUpsWdo(HkZn^i8~0Z}%mft6)7
+ztubhAPgvmF-qBaBXY7BZO=?sl>$Vxv3?7k>Oll=bqr0!Oi}(Bza8T0jwzp+;8nFo&
+z8J1#0i#CLzsXxu)6*l&zNq<-BRK?@9Q1t8CA-DlwXlystr(_W_@@%PG7M5~<@0%lZ
+k^tr&iK-#Wq3Qe^h+g8}@?ND0}LDIhl$isCl>LoG107D#YM*si-
+
