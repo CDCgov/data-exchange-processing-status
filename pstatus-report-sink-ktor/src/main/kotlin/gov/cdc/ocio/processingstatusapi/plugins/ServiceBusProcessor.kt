@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
@@ -49,6 +48,7 @@ class ServiceBusProcessor {
         val sbMessageId = message.messageId
         var sbMessage =String(message.body.toBytes())
         val sbMessageStatus = message.state.name
+
         try {
             logger.info { "Before Message received = $sbMessage" }
             if (sbMessage.contains("destination_id")) {
@@ -60,15 +60,14 @@ class ServiceBusProcessor {
             logger.info { "After Message received = $sbMessage" }
             val disableValidation = System.getenv("DISABLE_VALIDATION")?.toBoolean() ?: false
 
-            if(disableValidation){
-                val isValid =  isJsonValid(sbMessage)
-                if(!isValid){
-                    sendToDeadLetter("Validation failed.The message is not in JSON format.")
-                }
+            if (disableValidation) {
+                val isValid = isJsonValid(sbMessage)
+                if (!isValid)
+                    sendToDeadLetter("Validation failed.  The message is not in JSON format.")
             }
-            else {
+            else
                 validateJsonSchema(message)
-            }
+
             createReport(sbMessageId, sbMessageStatus, gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         } catch (e: BadRequestException) {
             logger.error("Validation failed: ${e.message}")
@@ -93,7 +92,7 @@ class ServiceBusProcessor {
             if (stageName.isNullOrEmpty()) {
                 stageName = ""
             }
-            logger.info("Creating report for uploadId = ${uploadId} with stageName = $stageName")
+            logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
 
             ReportManager().createReportWithUploadId(
                 uploadId!!,
@@ -112,15 +111,13 @@ class ServiceBusProcessor {
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
-
         } catch (e: BadRequestException) {
             throw e
         } catch (e: Exception) {
             logger.error("Failed to process service bus message:${e.message}")
-
         }
-
     }
+
     /**
      * Function to validate report attributes for missing required fields, for schema validation and malformed content message using networknt/json-schema-validator
      * @param message ServiceBusReceivedMessage
@@ -139,15 +136,13 @@ class ServiceBusProcessor {
 
         // Check for the presence of `report_schema_version`
         try {
-
             val createReportMessage: CreateReportSBMessage = gson.fromJson(messageBody, CreateReportSBMessage::class.java)
-            //Convert to JSON
+            // Convert to JSON
             val jsonNode: JsonNode =objectMapper.readTree(messageBody)
             // Check for the presence of `report_schema_version`
             val reportSchemaVersionNode = jsonNode.get("report_schema_version")
             if (reportSchemaVersionNode == null || reportSchemaVersionNode.asText().isEmpty()) {
-                LOGGER.info("Report schema version node missing. Backward compatibility mode enabled ")
-
+                logger.info("Report schema version node missing. Backward compatibility mode enabled ")
             } else {
                 reportSchemaVersion = reportSchemaVersionNode.asText()
             }
@@ -161,7 +156,7 @@ class ServiceBusProcessor {
                 reason ="Report rejected: Schema file not found for base schema version $reportSchemaVersion."
                 processError(fileName,reason,invalidData,schemaFileNames,createReportMessage)
             }
-            //Validate report schema version schema
+            // Validate report schema version schema
             validateSchema(fileName,jsonNode,schemaFile,objectMapper,invalidData,schemaFileNames,createReportMessage)
             // Check if the content_type is JSON
             val contentTypeNode = jsonNode.get("content_type")
@@ -169,15 +164,12 @@ class ServiceBusProcessor {
                 reason="Report rejected: `content_type` is not JSON or is missing."
                 processError(fileName,reason,invalidData,schemaFileNames,createReportMessage)
             }
-            else{
-                if(!isJsonMimeType(contentTypeNode.asText()))
-                {
-                    //don't need to go further down if the mimetype is other than json. i.e. xml or text etc....
+            else {
+                if (!isJsonMimeType(contentTypeNode.asText())) {
+                    // Don't need to go further down if the mimetype is other than json. i.e. xml or text etc.
                     return
                 }
             }
-            //Check for the status wit
-
 
             // Open the content as JSON
             val contentNode = jsonNode.get("content")
@@ -207,11 +199,12 @@ class ServiceBusProcessor {
                 reason ="Report rejected: Content schema file not found for content schema name $contentSchemaName and schema version $contentSchemaVersion."
                 processError(contentSchemaFileName,reason,invalidData,schemaFileNames,createReportMessage)
             }
-            //Validate content schema
+
+            // Validate content schema
             validateSchema(contentSchemaFileName,contentNode,contentSchemaFile,objectMapper,invalidData, schemaFileNames, createReportMessage)
 
         } catch (e: Exception) {
-            LOGGER.error("Report rejected: Malformed JSON or error processing the report - ${e.message}")
+            logger.error("Report rejected: Malformed JSON or error processing the report - ${e.message}")
             throw e
         }
     }
@@ -271,7 +264,7 @@ class ServiceBusProcessor {
 
         validationSchemaFileNames.add(schemaFileName)
         val updatedReason = reason +  "Filename(s) used for validation: " + validationSchemaFileNames.joinToString(separator = ",")
-        LOGGER.error(updatedReason)
+        logger.error(updatedReason)
         invalidData.add(updatedReason)
         sendToDeadLetter(invalidData, validationSchemaFileNames, createReportMessage)
     }
@@ -290,7 +283,7 @@ class ServiceBusProcessor {
         val schemaValidationMessages: Set<ValidationMessage> = schema.validate(jsonNode)
 
         if (schemaValidationMessages.isEmpty()) {
-            LOGGER.info("JSON is valid against the content schema $schema.")
+            logger.info("JSON is valid against the content schema $schema.")
         } else {
             val reason ="JSON is invalid against the content schema $schemaFileName."
             schemaValidationMessages.forEach { invalidData.add(it.message) }
