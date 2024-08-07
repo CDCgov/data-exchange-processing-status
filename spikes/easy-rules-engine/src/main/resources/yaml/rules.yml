@@ -1,0 +1,21 @@
+---
+name: Upload Notification Rule
+description: Notify if no upload has occurred by 12pm
+priority: 1
+condition: "Jurisdiction.lastUploadTime != null && Jurisdiction.lastUploadTime.isAfter((java.time.LocalTime).NOON)"
+actions:
+  - "System.out.println(\"No upload has occurred for \" + Jurisdiction.name + \" by 12pm\")"
+---
+name: Processing Error Notification Rule
+description: Notify if upload completes with processing errors
+priority: 2
+condition: "UploadStatus.completed && UploadStatus.hasErrors"
+actions:
+  - "System.out.println(\"Upload completed with processing errors\")"
+---
+name: Digest Notification Rule
+description: Generate digest of upload counts
+priority: 1
+condition: "true"
+actions:
+  - "for (DataStream : dataStreams) { System.out.println(\"Data Stream: \" + DataStream.name + \", Upload Count: \" + DataStream.uploadCount) }"
