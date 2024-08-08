@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.models.dao
 import com.google.gson.Gson
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
-import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.ZoneOffset
 import java.util.*
 
@@ -45,7 +44,7 @@ open class ReportDao(
 
     var messageMetadata: MessageMetadata? = null,
 
-    var stageInfo: StageInfo? = null,
+    var stageInfo: StageInfoDao? = null,
 
     var tags: Map<String, String>? = null,
 
@@ -90,7 +89,7 @@ open class ReportDao(
         this.dataStreamRoute = this@ReportDao.dataStreamRoute
         this.dexIngestDateTime = this@ReportDao.dexIngestDateTime?.toInstant()?.atOffset(ZoneOffset.UTC)
         this.messageMetadata = this@ReportDao.messageMetadata
-        this.stageInfo = this@ReportDao.stageInfo
+        this.stageInfo = this@ReportDao.stageInfo?.toStageInfo()
         this.tags = this@ReportDao.tags
         this.data = this@ReportDao.data
         this.messageId = this@ReportDao.messageId

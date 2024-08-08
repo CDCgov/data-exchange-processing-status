@@ -14,6 +14,7 @@ enum class Level {
     @GraphQLDescription("Warning")
     WARNING
 }
+
 /**
  * Issues within a report.
  *
