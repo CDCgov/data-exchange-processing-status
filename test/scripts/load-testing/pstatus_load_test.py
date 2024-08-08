@@ -85,6 +85,7 @@ async def simulate(sender, upload_id):
             message = reports.create_hl7_validation(upload_id, line)
             #print(f"Sending: {message}")
             batch_message.add_message(ServiceBusMessage(message))
+        await sender.send_messages(batch_message)
 
 asyncio.run(run())
 print("Done sending messages")

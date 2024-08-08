@@ -142,7 +142,7 @@ def create_hl7_debatch_report(upload_id):
 def create_hl7_validation(upload_id, line):
     content = """
 {
-    "content_schema_name": "hl7-validation",
+    "content_schema_name": "hl7v2-structure-validation",
     "content_schema_version": "1.0.0",
     "message_uuid": "",
     "entries": {
