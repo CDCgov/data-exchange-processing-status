@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
+import java.util.*
 
 
 /**
@@ -29,6 +30,9 @@ class CreateReportSBMessage: ServiceBusMessage() {
 
     @SerializedName("data_stream_route")
     val dataStreamRoute: String? = null
+
+    @SerializedName("dex_ingest_datetime")
+    var dexIngestDateTime: Date? = null
 
     @SerializedName("message_metadata")
     val messageMetadata: MessageMetadata? = null
@@ -60,6 +64,4 @@ class CreateReportSBMessage: ServiceBusMessage() {
     // content will vary depending on content_type so make it any.  For example, if content_type is json then the
     // content type will be a Map<*, *>.
     var content: Any? = null
-
-
 }

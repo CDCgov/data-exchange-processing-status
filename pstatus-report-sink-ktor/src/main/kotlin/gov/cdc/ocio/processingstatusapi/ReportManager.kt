@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi
 
-
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
@@ -48,16 +47,20 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
+     * @param dexIngestDateTime Date
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
-     * @param tags Map<String,String>??
-     * @property data Map<String,String>?
+     * @param tags Map<String, String>?
+     * @param data Map<String, String>?
      * @param contentType String
-     * @param content String
-     * @param dispositionType DispositionType
+     * @param messageId String?
+     * @param status String?
+     * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
-     * @return String - stage report identifier
+     * @param dispositionType DispositionType
+     * @param source Source
+     * @return String
      * @throws BadStateException
      * @throws BadRequestException
      */
@@ -66,6 +69,7 @@ class ReportManager: KoinComponent {
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
+        dexIngestDateTime: Date,
         messageMetadata: MessageMetadata?,
         stageInfo: StageInfo?,
         tags: Map<String,String>?,
@@ -79,19 +83,12 @@ class ReportManager: KoinComponent {
         dispositionType: DispositionType,
         source: Source
     ): String {
-        // Verify the content contains the minimum schema information
-      /*  try {
-            SchemaDefinition.fromJsonString(content)
-        } catch(e: InvalidSchemaDefException) {
-            throw BadRequestException("Invalid schema definition: ${e.localizedMessage}")
-        } catch(e: Exception) {
-            throw BadRequestException("Malformed message: ${e.localizedMessage}")
-        }*/
         if (System.getProperty("isTestEnvironment") != "true") {
             return createReport(
                 uploadId,
                 dataStreamId,
                 dataStreamRoute,
+                dexIngestDateTime,
                 messageMetadata,
                 stageInfo,
                 tags,
@@ -116,19 +113,25 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param messageMetadata: MessageMetadata?,
-     * @param stageInfo: StageInfo?,
-     * @param tags: Map<String,String>?,
-     * @param data:Map<String,String>?,
+     * @param dexIngestDateTime Date
+     * @param messageMetadata MessageMetadata?
+     * @param stageInfo StageInfo?
+     * @param tags Map<String, String>?
+     * @param data Map<String, String>?
      * @param contentType String
-     * @param content String
-     * @param dispositionType DispositionType - indicates whether to add or replace any existing reports for the
-     * given stageName.
-     * @return String - stage report identifier
-     * */
+     * @param messageId String?
+     * @param status String?
+     * @param content Any?
+     * @param jurisdiction String?
+     * @param senderId String?
+     * @param dispositionType DispositionType - indicates whether to add or replace any existing reports for the given stageName.
+     * @param source Source
+     * @return String - report identifier
+     */
     private fun createReport(uploadId: String,
                              dataStreamId: String,
                              dataStreamRoute: String,
+                             dexIngestDateTime: Date,
                              messageMetadata: MessageMetadata?,
                              stageInfo: StageInfo?,
                              tags: Map<String,String>?,
@@ -167,11 +170,43 @@ class ReportManager: KoinComponent {
                 }
 
                 // Now create the new stage report
-                return createStageReport(uploadId, dataStreamId, dataStreamRoute, messageMetadata,stageInfo, tags, data, contentType, messageId, status, content, jurisdiction,senderId, source)
+                return createStageReport(
+                    uploadId,
+                    dataStreamId,
+                    dataStreamRoute,
+                    dexIngestDateTime,
+                    messageMetadata,
+                    stageInfo,
+                    tags,
+                    data,
+                    contentType,
+                    messageId,
+                    status,
+                    content,
+                    jurisdiction,
+                    senderId,
+                    source
+                )
             }
             DispositionType.ADD -> {
                 logger.info("Creating report for stage name = $stageInfo?.stage")
-                return createStageReport(uploadId, dataStreamId, dataStreamRoute, messageMetadata, stageInfo,tags,data, contentType, messageId, status, content, jurisdiction,senderId, source)
+                return createStageReport(
+                    uploadId,
+                    dataStreamId,
+                    dataStreamRoute,
+                    dexIngestDateTime,
+                    messageMetadata,
+                    stageInfo,
+                    tags,
+                    data,
+                    contentType,
+                    messageId,
+                    status,
+                    content,
+                    jurisdiction,
+                    senderId,
+                    source
+                )
             }
         }
     }
@@ -197,6 +232,7 @@ class ReportManager: KoinComponent {
     private fun createStageReport(uploadId: String,
                                   dataStreamId: String,
                                   dataStreamRoute: String,
+                                  dexIngestDateTime: Date,
                                   messageMetadata: MessageMetadata?,
                                   stageInfo: StageInfo?,
                                   tags: Map<String,String>?,
@@ -215,6 +251,7 @@ class ReportManager: KoinComponent {
             this.reportId = stageReportId
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
+            this.dexIngestDateTime = dexIngestDateTime
             this.jurisdiction= jurisdiction
             this.senderId= senderId
             this.messageMetadata = messageMetadata
@@ -259,6 +296,7 @@ class ReportManager: KoinComponent {
     fun createDeadLetterReport(uploadId: String?,
                                dataStreamId: String?,
                                dataStreamRoute: String?,
+                               dexIngestDateTime: Date?,
                                messageMetadata: MessageMetadata?,
                                stageInfo: StageInfo?,
                                tags: Map<String,String>?,
@@ -279,6 +317,7 @@ class ReportManager: KoinComponent {
             this.reportId = deadLetterReportId
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
+            this.dexIngestDateTime = dexIngestDateTime
             this.jurisdiction= jurisdiction
             this.senderId= senderId
             this.messageMetadata= messageMetadata
