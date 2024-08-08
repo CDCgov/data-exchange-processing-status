@@ -1,6 +1,7 @@
 import asyncio
 import uuid
 import time
+from datetime import datetime
 import reports
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
@@ -34,6 +35,7 @@ async def send_single_message(sender, message):
 async def run():
     # Generate a unqiue upload ID
     upload_id = str(uuid.uuid4())
+    dex_ingest_datetime = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
     print("Upload ID = " + upload_id)
     print("Sending simulated messages via the service bus...")
 
@@ -46,33 +48,33 @@ async def run():
             # Get a Queue Sender object to send messages to the queue
             sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
             async with sender:
-                await simulate(sender, upload_id)
+                await simulate(sender, upload_id, dex_ingest_datetime)
         else:
             # Get a Topic Sender object to send messages to the queue
             sender = servicebus_client.get_topic_sender(topic_name=TOPIC_NAME)
             async with sender:
-                await simulate(sender, upload_id)
+                await simulate(sender, upload_id, dex_ingest_datetime)
 
-async def simulate(sender, upload_id):
+async def simulate(sender, upload_id, dex_ingest_datetime):
         # Send upload messages
         print("Sending simulated UPLOAD reports...")
         num_chunks = 1
         size = 27472691
         for index in range(num_chunks):
             offset = (index+1) * size / num_chunks
-            message = reports.create_upload(upload_id, offset, size)
+            message = reports.create_upload(upload_id, dex_ingest_datetime, offset, size)
             #print(f"Sending: {message}")
             await send_single_message(sender, message)
             time.sleep(1)
 
         # Send routing message
         print("Sending simulated ROUTING report...")
-        message = reports.create_routing(upload_id)
+        message = reports.create_routing(upload_id, dex_ingest_datetime)
         #print(f"Sending: {message}")
         await send_single_message(sender, message)
 
         print("Sending simulated HL7 DEBATCH report...")
-        message = reports.create_hl7_debatch_report(upload_id)
+        message = reports.create_hl7_debatch_report(upload_id, dex_ingest_datetime)
         # print("Sending message: " + message)
         await send_single_message(sender, message)
 
@@ -82,7 +84,7 @@ async def simulate(sender, upload_id):
         num_lines = 1
         for index in range(num_lines):
             line = index + 1
-            message = reports.create_hl7_validation(upload_id, line)
+            message = reports.create_hl7_validation(upload_id, dex_ingest_datetime, line)
             #print(f"Sending: {message}")
             batch_message.add_message(ServiceBusMessage(message))
         await sender.send_messages(batch_message)
