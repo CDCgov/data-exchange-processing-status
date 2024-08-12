@@ -1,6 +1,9 @@
 from datetime import datetime
 
-def create_report_msg_from_content(upload_id, dex_ingest_datetime, content):
+def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, content):
+    disposition_type = "ADD"
+    if replace:
+        disposition_type = "REPLACE"
     message = """
 {
     "report_schema_version": "1.0.0",
@@ -13,6 +16,7 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, content):
     "data_producer_id": "smoke-test-data-producer",
     "dex_ingest_datetime": "%s",
     "status": "SUCCESS",
+    "disposition_type": "%s",
     "messageMetadata": {
        "type": "object",
        "properties": {
@@ -56,7 +60,7 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, content):
     "content_type": "application/json",
     "content": %s
 }
-""" % (upload_id, dex_ingest_datetime, content)
+""" % (upload_id, dex_ingest_datetime, disposition_type, content)
     return message
 
 def create_upload(upload_id, dex_ingest_datetime, offset, size):
@@ -88,7 +92,7 @@ def create_upload(upload_id, dex_ingest_datetime, offset, size):
 }
 """ % (upload_id, offset, size)
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, content)
+    return create_report_msg_from_content(upload_id, dex_ingest_datetime, True, content)
 
 def create_routing(upload_id, dex_ingest_datetime):
     content = """
@@ -102,7 +106,7 @@ def create_routing(upload_id, dex_ingest_datetime):
 }
 """ % (datetime.utcnow().replace(microsecond=0).isoformat() + 'Z')
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, content)
+    return create_report_msg_from_content(upload_id, dex_ingest_datetime, False, content)
 
 def create_hl7_debatch_report(upload_id, dex_ingest_datetime):
     content = """
@@ -137,7 +141,7 @@ def create_hl7_debatch_report(upload_id, dex_ingest_datetime):
 }
 """
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, content)
+    return create_report_msg_from_content(upload_id, dex_ingest_datetime, False, content)
 
 def create_hl7_validation(upload_id, dex_ingest_datetime, line):
     content = """
@@ -182,5 +186,5 @@ def create_hl7_validation(upload_id, dex_ingest_datetime, line):
 }
 """ % (line, line)
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, content)
+    return create_report_msg_from_content(upload_id, dex_ingest_datetime, False, content)
 

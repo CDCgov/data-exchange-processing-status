@@ -58,7 +58,7 @@ async def run():
 async def simulate(sender, upload_id, dex_ingest_datetime):
         # Send upload messages
         print("Sending simulated UPLOAD reports...")
-        num_chunks = 1
+        num_chunks = 4
         size = 27472691
         for index in range(num_chunks):
             offset = (index+1) * size / num_chunks
