@@ -67,7 +67,7 @@ class UploadStatus {
             // Convert the reports to their schema objects
             val reportsWithSchemaPairs = mutableListOf<Pair<SchemaDefinition, ReportDao>>()
             reports.forEach { report ->
-                if (report.contentType != "json")
+                if (report.contentType != "application/json")
                     throw ContentException("Content type is not JSON as expected")
 
                 val schemaDefinition = SchemaDefinition.fromJsonString(report.contentAsString)

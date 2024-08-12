@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
 
@@ -40,6 +41,8 @@ open class ReportDao(
 
     var dataStreamRoute: String? = null,
 
+    var dexIngestDateTime: OffsetDateTime? = null,
+
     var  messageMetadata: MessageMetadata? = null,
 
     var  stageInfo: StageInfo? = null,
@@ -66,7 +69,7 @@ open class ReportDao(
             if (content == null) return null
 
             return when (contentType?.lowercase(Locale.getDefault())) {
-                "json" -> {
+                "application/json" -> {
                     if (content is LinkedHashMap<*, *>)
                         Gson().toJson(content, MutableMap::class.java).toString()
                     else
@@ -85,6 +88,7 @@ open class ReportDao(
         this.reportId = this@ReportDao.reportId
         this.dataStreamId = this@ReportDao.dataStreamId
         this.dataStreamRoute = this@ReportDao.dataStreamRoute
+        this.dexIngestDateTime = this@ReportDao.dexIngestDateTime
         this.messageMetadata= this@ReportDao.messageMetadata
         this.stageInfo= this@ReportDao.stageInfo
         this.tags= this@ReportDao.tags

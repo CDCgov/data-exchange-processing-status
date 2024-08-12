@@ -41,6 +41,9 @@ data class Report(
     @GraphQLDescription("Data stream route")
     var dataStreamRoute: String? = null,
 
+    @GraphQLDescription("Data stream route")
+    var dexIngestDateTime: OffsetDateTime? = null,
+
     @GraphQLDescription("Message metadata")
     var messageMetadata: MessageMetadata? = null,
 

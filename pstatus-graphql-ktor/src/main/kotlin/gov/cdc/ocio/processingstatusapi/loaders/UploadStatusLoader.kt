@@ -38,7 +38,8 @@ class UploadStatusLoader: CosmosLoader() {
                         pageNumber: Int,
                         sortBy: String?,
                         sortOrder: String?,
-                        fileName:String?
+                        fileName:String?,
+                        status: String?
     ): UploadsStatus {
 
         logger.info("dataStreamId = $dataStreamId")
@@ -62,13 +63,17 @@ class UploadStatusLoader: CosmosLoader() {
             sqlQuery.append(" and r.content.filename = '$fileName'")
         }
 
+        status?.run {
+            sqlQuery.append(" and r.stageInfo.status = '$status'")
+        }
+
         dateStart?.run {
             val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-            sqlQuery.append(" and r._ts >= $dateStartEpochSecs")
+            sqlQuery.append(" and r.dexIngestDateTime >= $dateStartEpochSecs")
         }
         dateEnd?.run {
             val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-            sqlQuery.append(" and r._ts < $dateEndEpochSecs")
+            sqlQuery.append(" and r.dexIngestDateTime < $dateEndEpochSecs")
         }
 
         sqlQuery.append(" group by r.uploadId")
@@ -76,24 +81,25 @@ class UploadStatusLoader: CosmosLoader() {
         // Check the sort field as well to add them to the group by clause
         sortBy.run {
             val sortField = when (sortBy) {
-                //"date" -> "_ts" // "group  by _ts" is already added by default above
+                "date" -> "dexIngestDateTime" // "group  by _ts" is already added by default above
                 "fileName" -> "content.filename"
-                "dataStreamId" -> "destinationId"
-                "dataStreamRoute" -> "eventType"
-                "stageName" -> "stageName"
-                "jurisdiction" -> "content.metadata.meta_ext_source"
+                "dataStreamId" -> "dataStreamId"
+                "dataStreamRoute" -> "dataStreamRoute"
+                "stageName" -> "stageInfo.service"
+                "jurisdiction" -> "jurisdiction"
+                "status" -> "stageInfo.status"
                 else -> {
                     return@run
                 }
             }
             //Add the sort by fields to grouping
-            sqlQuery.append(" , r.$sortField, r.content.metadata.meta_ext_entity, r.content.metadata.meta_username")
+            sqlQuery.append(" , r.$sortField, r.jurisdiction, r.senderId")
         }
 
         logger.info("Upload Status, sqlQuery = $sqlQuery")
         // Query for getting counts in the structure of UploadCounts object.  Note the MAX aggregate which is used to
         // get the latest timestamp from t._ts.
-        val countQuery = "select count(1) as reportCounts, r.uploadId, MAX(r._ts) as latestTimestamp, r.content.metadata.meta_ext_entity as jurisdiction, r.content.metadata.meta_username as senderId $sqlQuery"
+        val countQuery = "select count(1) as reportCounts, r.uploadId, MAX(r.dexIngestDateTime) as latestTimestamp, r.jurisdiction as jurisdiction, r.senderId as senderId $sqlQuery"
         logger.info("upload status count query = $countQuery")
 
         var totalItems = 0
@@ -127,12 +133,13 @@ class UploadStatusLoader: CosmosLoader() {
 
             sortBy?.run {
                 val sortField = when (sortBy) {
-                    "date" -> "_ts"
+                    "date" -> "dexIngestDateTime"
                     "fileName" -> "content.filename"
-                    "dataStreamId" -> "destinationId"
-                    "dataStreamRoute" -> "eventType"
-                    "stageName" -> "stageName"
-                    "jurisdiction" -> "content.metadata.meta_ext_source"
+                    "dataStreamId" -> "dataStreamId"
+                    "dataStreamRoute" -> "dataStreamRoute"
+                    "stageName" -> "stageInfo.service"
+                    "jurisdiction" -> "jurisdiction"
+                    "status" -> "stageInfo.status"
                     else -> {
                         return@run
                         /* return request
@@ -158,7 +165,7 @@ class UploadStatusLoader: CosmosLoader() {
                 sqlQuery.append(" order by r.$sortField $sortOrderVal")
             }
             val offset = (pageNumberAsInt - 1) * pageSize
-            val dataSqlQuery = "select count(1) as reportCounts, r.uploadId, MAX(r._ts) as latestTimestamp, r.content.metadata.meta_ext_entity as jurisdiction, r.content.metadata.meta_username as senderId $sqlQuery offset $offset limit $pageSizeAsInt"
+            val dataSqlQuery = "select count(1) as reportCounts, r.uploadId, MAX(r.dexIngestDateTime) as latestTimestamp, r.jurisdiction as jurisdiction, r.senderId as senderId $sqlQuery offset $offset limit $pageSizeAsInt"
             logger.info("upload status data query = $dataSqlQuery")
             val results = reportsContainer?.queryItems(
                 dataSqlQuery, CosmosQueryRequestOptions(),
