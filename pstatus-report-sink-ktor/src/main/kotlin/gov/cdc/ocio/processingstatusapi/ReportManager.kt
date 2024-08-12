@@ -147,9 +147,9 @@ class ReportManager: KoinComponent {
 
         when (dispositionType) {
             DispositionType.REPLACE -> {
-                logger.info("Replacing report(s) with stage name = ${stageInfo?.action}")
-                // Delete all stages matching the report ID with the same stage name
-                val sqlQuery = "select * from ${reportMgrConfig.reportsContainerName} r where r.uploadId = '$uploadId' and r.stageName = '$stageInfo?.stage'"
+                logger.info("Replacing report(s) with service = '${stageInfo?.service}', action = '${stageInfo?.action}'")
+                // Delete all stages matching the report ID with the same service and action name
+                val sqlQuery = "select * from r where r.uploadId = '$uploadId' and r.stageInfo.service = '${stageInfo?.service}' and r.stageInfo.action = '${stageInfo?.action}'"
                 val items = cosmosRepository.reportsContainer?.queryItems(
                     sqlQuery, CosmosQueryRequestOptions(),
                     Report::class.java
