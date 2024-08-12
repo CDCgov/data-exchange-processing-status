@@ -41,7 +41,7 @@ data class Report(
     @GraphQLDescription("Data stream route")
     var dataStreamRoute: String? = null,
 
-    @GraphQLDescription("The offset DateTime")
+    @GraphQLDescription("Date/time of when the upload was first ingested into the data-exchange")
     var dexIngestDateTime: OffsetDateTime? = null,
 
     @GraphQLDescription("Message metadata")

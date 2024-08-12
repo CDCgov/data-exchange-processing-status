@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models.dao
 
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import java.time.ZoneOffset
+import java.util.*
 
 
 /**
@@ -25,6 +26,7 @@ data class ReportDeadLetterDao(
         this.reportId = this@ReportDeadLetterDao.reportId
         this.dataStreamId = this@ReportDeadLetterDao.dataStreamId
         this.dataStreamRoute = this@ReportDeadLetterDao.dataStreamRoute
+        this.dexIngestDateTime = this@ReportDeadLetterDao.dexIngestDateTime?.toInstant()?.atOffset(ZoneOffset.UTC)
        // this.messageId = this@ReportDeadLetterDao.messageId
        // this.status = this@ReportDeadLetterDao.status
         this.timestamp = this@ReportDeadLetterDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)

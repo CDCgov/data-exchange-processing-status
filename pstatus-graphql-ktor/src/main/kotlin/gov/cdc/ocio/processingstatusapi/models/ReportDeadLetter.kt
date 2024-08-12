@@ -41,6 +41,9 @@ data class ReportDeadLetter(
     @GraphQLDescription("Data stream route")
     var dataStreamRoute: String? = null,
 
+    @GraphQLDescription("Date/time of when the upload was first ingested into the data-exchange")
+    var dexIngestDateTime: OffsetDateTime? = null,
+
     @GraphQLDescription("Stage name this report is associated with")
     var stageName: String? = null,
 
@@ -56,7 +59,7 @@ data class ReportDeadLetter(
     @GraphQLDescription("Content of the report.  If the report is JSON then the content will be shown as JSON.  Otherwise, the content is a base64 encoded string.")
     var content : Map<*, *>? = null,
 
-    @GraphQLDescription("Datestamp the report was recorded in the database")
+    @GraphQLDescription("Date/time of when the report was recorded in the database")
     var timestamp: OffsetDateTime? = null,
 
     @GraphQLDescription("Disposition type of the report")

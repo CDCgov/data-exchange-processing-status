@@ -1,10 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.models
 
-
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
 import java.util.*
+
 
 /**
  * Report for a given stage.
@@ -35,6 +35,9 @@ open class Report(
 
     @SerializedName("data_stream_route")
     var dataStreamRoute: String? = null,
+
+    @SerializedName("dex_ingest_datetime")
+    var dexIngestDateTime: Date? = null,
 
     @SerializedName("message_metadata")
     var messageMetadata: MessageMetadata? = null,

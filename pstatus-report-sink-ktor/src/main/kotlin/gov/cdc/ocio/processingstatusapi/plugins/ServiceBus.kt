@@ -3,16 +3,16 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
-import com.azure.messaging.servicebus.models.DeadLetterOptions
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import io.ktor.util.logging.*
+import mu.KotlinLogging
 import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
-internal val LOGGER = KtorSimpleLogger("pstatus-report-sink")
+private val logger = KotlinLogging.logger {}
 
 /**
  * Class which initializes configuration values
@@ -72,32 +72,29 @@ val AzureServiceBus = createApplicationPlugin(
     fun receiveMessages() {
         try {
             // Create an instance of the processor through the ServiceBusClientBuilder
-            println("Starting the Azure service bus processor")
-            println("connectionString = $connectionString, queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
+            logger.info("Starting the Azure service bus processor")
+            logger.info("connectionString = $connectionString, queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
             processorQueueClient.start()
             processorTopicClient.start()
         }
-
-        catch (e:AmqpException){
-            println("Non-ServiceBusException occurred : ${e.message}")
+        catch (e:AmqpException) {
+            logger.info("AmqpException occurred : ${e.message}")
         }
-        catch (e:TransportException){
-            println("Non-ServiceBusException occurred : ${e.message}")
+        catch (e:TransportException) {
+            logger.info("TransportException occurred : ${e.message}")
         }
-
-        catch (e:Exception){
-            println("Non-ServiceBusException occurred : ${e.message}")
+        catch (e:Exception) {
+            logger.info("Non-ServiceBus exception occurred : ${e.message}")
         }
-
     }
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
-        application.log.info("Server is started")
+        logger.info("Server is started")
         receiveMessages()
     }
     on(MonitoringEvent(ApplicationStopped)) { application ->
-        application.log.info("Server is stopped")
-        println("Stopping and closing the processor")
+        logger.info("Server is stopped")
+        logger.info("Stopping and closing the processor")
         processorQueueClient.close()
         processorTopicClient.close()
         // Release resources and unsubscribe from events
@@ -116,7 +113,7 @@ val AzureServiceBus = createApplicationPlugin(
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
 
-    LOGGER.trace(
+    logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
         message.messageId,
         message.sequenceNumber,
@@ -127,12 +124,11 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
     }
     //This will handle all missing required fields, invalid schema definition and malformed json all under the BadRequest exception and writes to dead-letter queue or topics depending on the context
     catch (e: BadRequestException) {
-        LOGGER.warn("Unable to parse the message: {}", e.localizedMessage)
+        logger.warn("Unable to parse the message: {}", e.localizedMessage)
     }
     catch (e: Exception) {
-        LOGGER.warn("Failed to process service bus message: {}", e.localizedMessage)
+        logger.warn("Failed to process service bus message: {}", e.localizedMessage)
     }
-
 }
 
 /**
@@ -140,35 +136,26 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
  *  @param context ServiceBusErrorContext
  */
 private fun processError(context: ServiceBusErrorContext) {
-    System.out.printf(
-        "Error when receiving messages from namespace: '%s'. Entity: '%s'%n",
-        context.fullyQualifiedNamespace, context.entityPath
-    )
+    logger.error("Error when receiving messages from namespace: '${context.fullyQualifiedNamespace}', entity: '${context.entityPath}'")
     if (context.exception !is ServiceBusException) {
-        System.out.printf("Non-ServiceBusException occurred: %s%n", context.exception)
+        logger.error("Non-ServiceBusException occurred: ${context.exception}")
         return
     }
     val exception = context.exception as ServiceBusException
     val reason = exception.reason
     if (reason === ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED || reason === ServiceBusFailureReason.MESSAGING_ENTITY_NOT_FOUND || reason === ServiceBusFailureReason.UNAUTHORIZED) {
-        System.out.printf(
-            "An unrecoverable error occurred. Stopping processing with reason %s: %s%n",
-            reason, exception.message
-        )
+        logger.error("An unrecoverable error occurred. Stopping processing with reason $reason: ${exception.message}")
     } else if (reason === ServiceBusFailureReason.MESSAGE_LOCK_LOST) {
-        System.out.printf("Message lock lost for message: %s%n", context.exception)
+        logger.error("Message lock lost for message: ${context.exception}")
     } else if (reason === ServiceBusFailureReason.SERVICE_BUSY) {
         try {
             // Choosing an arbitrary amount of time to wait until trying again.
             TimeUnit.SECONDS.sleep(1)
         } catch (e: InterruptedException) {
-            System.err.println("Unable to sleep for period of time")
+            logger.error("Unable to sleep for period of time")
         }
     } else {
-        System.out.printf(
-            "Error source %s, reason %s, message: %s%n", context.errorSource,
-            reason, context.exception
-        )
+        logger.error("Error source ${context.errorSource}, reason $reason, message: ${context.exception}")
     }
 }
 
