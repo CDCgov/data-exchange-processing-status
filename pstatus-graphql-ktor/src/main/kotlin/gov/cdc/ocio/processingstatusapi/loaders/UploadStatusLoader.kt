@@ -85,7 +85,8 @@ class UploadStatusLoader: CosmosLoader() {
                 "fileName" -> "content.filename"
                 "dataStreamId" -> "dataStreamId"
                 "dataStreamRoute" -> "dataStreamRoute"
-                "stageName" -> "stageInfo.service"
+                "service" -> "stageInfo.service"
+                "action" -> "stageInfo.action"
                 "jurisdiction" -> "jurisdiction"
                 "status" -> "stageInfo.status"
                 else -> {
@@ -137,7 +138,8 @@ class UploadStatusLoader: CosmosLoader() {
                     "fileName" -> "content.filename"
                     "dataStreamId" -> "dataStreamId"
                     "dataStreamRoute" -> "dataStreamRoute"
-                    "stageName" -> "stageInfo.service"
+                    "service" -> "stageInfo.service"
+                    "action" -> "stageInfo.action"
                     "jurisdiction" -> "jurisdiction"
                     "status" -> "stageInfo.status"
                     else -> {

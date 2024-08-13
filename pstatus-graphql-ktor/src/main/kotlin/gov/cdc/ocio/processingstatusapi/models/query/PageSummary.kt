@@ -20,15 +20,15 @@ data class PageSummary(
     @GraphQLDescription("Total number of pages for the page size given")
     var numberOfPages: Int = 0,
 
-    @GraphQLDescription("Page size of the response")
+    @GraphQLDescription("Page size of the items in the response matching the search criteria")
     var pageSize: Int = 0,
 
-    @GraphQLDescription("Total number of items that can be provided")
+    @GraphQLDescription("Total number of items that can be provided matching the search criteria")
     var totalItems: Int = 0,
 
-    @GraphQLDescription("List of the senderIds")
+    @GraphQLDescription("List of all the senderIds in the entire dataset matching the search criteria, not just this page.")
     var senderIds: List<String> = listOf(),
 
-    @GraphQLDescription("List of the jurisdictions")
+    @GraphQLDescription("List of all the jurisdictions in the entire dataset matching the search criteria, not just this page.")
     var jurisdictions: List<String> = listOf()
 )

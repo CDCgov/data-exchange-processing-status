@@ -68,14 +68,16 @@ open class ReportDao(
             if (content == null) return null
 
             return when (contentType?.lowercase(Locale.getDefault())) {
-                "application/json" -> {
-                    if (content is LinkedHashMap<*, *>)
+                in setOf("application/json", "json") -> {
+                    if (content is LinkedHashMap<*, *>) {
                         Gson().toJson(content, MutableMap::class.java).toString()
-                    else
+                    } else {
                         content.toString()
+                    }
                 }
                 else -> content.toString()
             }
+
         }
 
     /**
