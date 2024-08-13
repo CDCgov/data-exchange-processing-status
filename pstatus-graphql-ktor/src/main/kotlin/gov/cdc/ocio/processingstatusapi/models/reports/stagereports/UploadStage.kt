@@ -37,6 +37,6 @@ class UploadStage: SchemaDefinition() {
     }
 
     companion object {
-        val schemaDefinition = SchemaDefinition(schemaName = "upload", schemaVersion = "1.0")
+        val schemaDefinition = SchemaDefinition(schemaName = "upload-status", schemaVersion = "1.0.0")
     }
 }

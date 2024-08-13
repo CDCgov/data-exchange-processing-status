@@ -6,10 +6,10 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 class MetadataVerifyContent : SchemaDefinition {
 
     @GraphQLDescription("Schema name for the report content")
-    override val schemaName: String = "upload-status"
+    override val schemaName: String = "dex-metadata-verify"
 
     @GraphQLDescription("Version of the schema for the report content")
-    override val schemaVersion: String = "1.0.0"
+    override val schemaVersion: String = "0.0.1"
 
     @GraphQLDescription("Filename of the uploaded file")
     var filename: String? = null

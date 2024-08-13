@@ -16,6 +16,6 @@ class UploadMetadataVerifyStage: SchemaDefinition(priority = -1) {
     var issues: List<String>? = null
 
     companion object {
-        val schemaDefinition = SchemaDefinition(schemaName = "upload-status", schemaVersion = "1.0.0")
+        val schemaDefinition = SchemaDefinition(schemaName = "dex-metadata-verify", schemaVersion = "0.0.1")
     }
 }
