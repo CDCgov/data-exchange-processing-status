@@ -79,6 +79,7 @@ class UploadStatusLoader: CosmosLoader() {
         sqlQuery.append(" group by r.uploadId")
 
         // Check the sort field as well to add them to the group by clause
+        var sortByQueryStr = StringBuilder()
         sortBy.run {
             val sortField = when (sortBy) {
                 "date" -> "dexIngestDateTime" // "group  by _ts" is already added by default above
@@ -95,6 +96,20 @@ class UploadStatusLoader: CosmosLoader() {
             }
             //Add the sort by fields to grouping
             sqlQuery.append(" , r.$sortField, r.jurisdiction, r.senderId")
+
+            var sortOrderVal = DEFAULT_SORT_ORDER
+            sortOrder?.run {
+                sortOrderVal = when (sortOrder) {
+                    "ascending" -> "asc"
+                    "descending" -> "desc"
+                    else -> {
+                        return@run
+                    }
+                }
+            }
+            //Sort By/ Order By the given sort field
+            sortByQueryStr.append(" order by r.$sortField $sortOrderVal")
+
         }
 
         logger.info("Upload Status, sqlQuery = $sqlQuery")
@@ -132,40 +147,9 @@ class UploadStatusLoader: CosmosLoader() {
 
             pageNumberAsInt = PageUtils.getPageNumber(pageNumber, numberOfPages)
 
-            sortBy?.run {
-                val sortField = when (sortBy) {
-                    "date" -> "dexIngestDateTime"
-                    "fileName" -> "content.filename"
-                    "dataStreamId" -> "dataStreamId"
-                    "dataStreamRoute" -> "dataStreamRoute"
-                    "service" -> "stageInfo.service"
-                    "action" -> "stageInfo.action"
-                    "jurisdiction" -> "jurisdiction"
-                    "status" -> "stageInfo.status"
-                    else -> {
-                        return@run
-                        /* return request
-                                 .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                                 .body("sort_by must be one of the following: [date]")
-                                 .build()*/
-                    }
-                }
-                var sortOrderVal = DEFAULT_SORT_ORDER
-                sortOrder?.run {
-                    sortOrderVal = when (sortOrder) {
-                        "ascending" -> "asc"
-                        "descending" -> "desc"
-                        else -> {
-                            return@run
-                            /*return request
-                                    .createResponseBuilder(HttpStatus.BAD_REQUEST)
-                                    .body("sort_order must be one of the following: [ascending, descending]")
-                                    .build()*/
-                        }
-                    }
-                }
-                sqlQuery.append(" order by r.$sortField $sortOrderVal")
-            }
+            //Add the sortBy query
+            sqlQuery.append(sortByQueryStr)
+
             val offset = (pageNumberAsInt - 1) * pageSize
             val dataSqlQuery = "select count(1) as reportCounts, r.uploadId, MAX(r.dexIngestDateTime) as latestTimestamp, r.jurisdiction as jurisdiction, r.senderId as senderId $sqlQuery offset $offset limit $pageSizeAsInt"
             logger.info("upload status data query = $dataSqlQuery")
