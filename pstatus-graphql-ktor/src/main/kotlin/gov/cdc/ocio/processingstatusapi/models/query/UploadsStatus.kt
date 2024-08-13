@@ -12,9 +12,9 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 @GraphQLDescription("Upload statuses for the provided parameters")
 data class UploadsStatus(
 
-    @GraphQLDescription("Page summary for the upload statuses provided")
+    @GraphQLDescription("Page summary for the upload statuses returned from the search")
     var summary: PageSummary = PageSummary(),
 
-    @GraphQLDescription("Upload status items")
+    @GraphQLDescription("A list of all the Upload status items matching the Search Criteria")
     var items: MutableList<UploadStatus> = mutableListOf()
 )
