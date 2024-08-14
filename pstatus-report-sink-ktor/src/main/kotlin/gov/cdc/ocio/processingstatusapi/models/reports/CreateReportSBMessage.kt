@@ -17,49 +17,42 @@ import java.util.*
  * @property tags String?
  * @property data Lost<KeyValue>?
  * @property contentType String?
- * @property messageId String?
  * @property content Any?
  */
 class CreateReportSBMessage: ServiceBusMessage() {
 
     @SerializedName("upload_id")
-    val uploadId: String? = null
+    var uploadId: String? = null
 
     @SerializedName("data_stream_id")
-    val dataStreamId: String? = null
+    var dataStreamId: String? = null
 
     @SerializedName("data_stream_route")
-    val dataStreamRoute: String? = null
+    var dataStreamRoute: String? = null
 
     @SerializedName("dex_ingest_datetime")
     var dexIngestDateTime: Date? = null
 
     @SerializedName("message_metadata")
-    val messageMetadata: MessageMetadata? = null
+    var messageMetadata: MessageMetadata? = null
 
     @SerializedName("stage_info")
-    val stageInfo: StageInfo? = null
+    var stageInfo: StageInfo? = null
 
     @SerializedName("tags")
-    val tags: Map<String,String>? = null
+    var tags: Map<String,String>? = null
 
     @SerializedName("data")
-    val data: Map<String,String>? = null
+    var data: Map<String,String>? = null
 
     @SerializedName("jurisdiction")
-    val jurisdiction: String? = null
+    var jurisdiction: String? = null
 
     @SerializedName("sender_id")
-    val senderId: String? = null
+    var senderId: String? = null
 
     @SerializedName("content_type")
-    val contentType: String? = null
-
-    @SerializedName("message_id")
-    var messageId: String? = null
-
-/*    @SerializedName("status")
-    var status : String? = null*/
+    var contentType: String? = null
 
     // content will vary depending on content_type so make it any.  For example, if content_type is json then the
     // content type will be a Map<*, *>.

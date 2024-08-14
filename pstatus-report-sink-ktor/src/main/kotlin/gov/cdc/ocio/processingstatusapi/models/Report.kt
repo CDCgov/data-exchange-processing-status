@@ -9,16 +9,22 @@ import java.util.*
 /**
  * Report for a given stage.
  *
+ * @property id String?
  * @property uploadId String?
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property stageName String?
+ * @property dexIngestDateTime Date?
+ * @property messageMetadata MessageMetadata?
+ * @property stageInfo StageInfo?
+ * @property tags Map<String, String>?
+ * @property data Map<String, String>?
  * @property contentType String?
- * @property messageId String?
- * @property status String?
- * @property content String?
+ * @property jurisdiction String?
+ * @property senderId String?
+ * @property content Any?
  * @property timestamp Date
+ * @constructor
  */
 open class Report(
 
@@ -46,25 +52,19 @@ open class Report(
     var stageInfo: StageInfo? = null,
 
     @SerializedName("tags")
-    var tags: Map<String,String>? = null,
+    var tags: Map<String, String>? = null,
 
     @SerializedName("data")
-    var data: Map<String,String>? = null,
+    var data: Map<String, String>? = null,
 
     @SerializedName("content_type")
     var contentType : String? = null,
-
-    @SerializedName("message_id")
-    var messageId: String? = null,
 
     @SerializedName("jurisdiction")
     var jurisdiction: String? = null,
 
     @SerializedName("sender_id")
     var senderId: String? = null,
-
-    @SerializedName("status")
-    var status : String? = null,
 
     var content: Any? = null,
 
