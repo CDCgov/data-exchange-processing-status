@@ -22,12 +22,12 @@ class UploadQueryService : Query {
                 dataStreamRoute: String? = null,
 
                 @GraphQLDescription(
-                   "*Start Date* is a Date Time value. Sets the start date for the search results :\n"
+                   "*Start Date* is a Date Time value(Use ISO 8601 format: YYYY-MM-DDThhmmssZ). Sets the start date for the search results :\n"
                 )
                 dateStart: String? = null,
 
                 @GraphQLDescription(
-                   "*End Date* is a Date Time value. Sets the end date for the search results :\n"
+                   "*End Date* is a Date Time value(Use ISO 8601 format: YYYY-MM-DDThhmmssZ). Sets the end date for the search results :\n"
                 )
                 dateEnd: String? = null,
 
@@ -47,7 +47,7 @@ class UploadQueryService : Query {
                            + "`date`: Sort By the date\n"
                            + "`dataStreamId`: Sort By the dataStreamId\n"
                            + "`dataStreamRoute`: Sort By the dataStreamRoute\n"
-                           + "`stageName`: Sort By the stageName\n"
+                           + "`status`: Sort By the status\n"
                            + "If a value is provided that is not supported then a bad request response is returned."
                 )
                 sortBy: String? = null,
@@ -63,7 +63,12 @@ class UploadQueryService : Query {
                 @GraphQLDescription(
                     "*File Name* Search by the provided File Name:\n"
                 )
-                fileName: String? = null) =
+                fileName: String? = null,
+
+                @GraphQLDescription(
+                    "*Status* Search by the status of the upload:\n"
+                )
+                status: String? = null) =
         UploadStatusLoader().getUploadStatus(dataStreamId,
                                         dataStreamRoute,
                                         dateStart,
@@ -72,7 +77,8 @@ class UploadQueryService : Query {
                                         pageNumber,
                                         sortBy,
                                         sortOrder,
-                                        fileName)
+                                        fileName,
+                                        status)
 
     @GraphQLDescription("Return various uploads statistics")
     @Suppress("unused")

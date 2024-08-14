@@ -11,8 +11,8 @@ import gov.cdc.ocio.processingstatusapi.exceptions.InvalidSchemaDefException
  * @property schemaVersion String?
  * @constructor
  */
-open class SchemaDefinition(@SerializedName("schema_name") var schemaName: String? = null,
-                            @SerializedName("schema_version") var schemaVersion: String? = null,
+open class SchemaDefinition(@SerializedName("content_schema_name") var schemaName: String? = null,
+                            @SerializedName("content_schema_version") var schemaVersion: String? = null,
                             @Transient private val priority: Int = 0) :
     Comparable<SchemaDefinition> {
 

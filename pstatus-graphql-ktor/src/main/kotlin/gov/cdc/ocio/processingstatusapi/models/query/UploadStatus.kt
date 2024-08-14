@@ -14,7 +14,7 @@ import java.util.*
 
 
 /**
- * Upload status response definition.
+ * Upload status response definition for each upload
  *
  * @property status String?
  * @property percentComplete Float?
@@ -25,28 +25,46 @@ import java.util.*
  * @property timeUploadingSec Double?
  * @property issues MutableList<String>?
  * @property timestamp OffsetDateTime?
+ * @property senderId String?
+ * @property jurisdiction String?
  */
 class UploadStatus {
 
+    @GraphQLDescription("The status of upload for the corresponding uploadId")
     var status: String? = null
 
+    @GraphQLDescription("Percentage complete for the corresponding uploadId")
     var percentComplete: Float? = null
 
+    @GraphQLDescription("The name of the file associated with the corresponding uploadId")
     var fileName: String? = null
 
+    @GraphQLDescription("The size of the file associated with the corresponding uploadId")
     var fileSizeBytes: Long? = null
 
+    @GraphQLDescription("The size of the data already uploaded to the application for the corresponding uploadId")
     var bytesUploaded: Long? = null
 
+    @GraphQLDescription("The uploadId")
     var uploadId: String? = null
 
+    @GraphQLDescription("The amount of time it took for the respective uploadId")
     var timeUploadingSec: Double? = null
 
+    @GraphQLDescription("A Map of all the metadata associated with the corresponding uploadId")
     var metadata: Map<String, Any>? = null
 
+    @GraphQLDescription("A List of all the issues associated with the corresponding uploadId")
     var issues: MutableList<String>? = null
 
+    @GraphQLDescription("The timestamp value associated with the corresponding uploadId. Value is of type, OffsetDateTime")
     var timestamp: OffsetDateTime? = null
+
+    @GraphQLDescription("The senderId of the unit/organization from which the file was sent")
+    var senderId: String? = null
+
+    @GraphQLDescription("The jurisdiction from which the file was sent")
+    var jurisdiction: String? = null
 
     companion object {
 
@@ -67,7 +85,7 @@ class UploadStatus {
             // Convert the reports to their schema objects
             val reportsWithSchemaPairs = mutableListOf<Pair<SchemaDefinition, ReportDao>>()
             reports.forEach { report ->
-                if (report.contentType != "json")
+                if (report.contentType != "application/json" && report.contentType != "json")
                     throw ContentException("Content type is not JSON as expected")
 
                 val schemaDefinition = SchemaDefinition.fromJsonString(report.contentAsString)
@@ -108,6 +126,8 @@ class UploadStatus {
                         uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
                         uploadStatus.metadata = uploadStage.metadata
                         uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+                        uploadStatus.senderId = report.senderId
+                        uploadStatus.jurisdiction = report.jurisdiction
                     }
                     UploadMetadataVerifyStage.schemaDefinition -> {
                         val metadataVerifyStage = Gson().fromJson(stageReportJson, UploadMetadataVerifyStage::class.java)

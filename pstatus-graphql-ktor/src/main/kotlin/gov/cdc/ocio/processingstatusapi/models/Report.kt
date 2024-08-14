@@ -71,6 +71,6 @@ data class Report(
     @GraphQLDescription("Content of the report.  If the report is JSON then the content will be shown as JSON.  Otherwise, the content is a base64 encoded string.")
     var content : Map<*, *>? = null,
 
-    @GraphQLDescription("Date/time of when the report was recorded in the database")
+    @GraphQLDescription("Datestamp the report was recorded in the database")
     var timestamp: OffsetDateTime? = null
 )
