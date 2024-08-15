@@ -5,23 +5,26 @@ import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.OffsetDateTime
 
+
 /**
  * Report for a given stage.
  *
+ * @property id String?
  * @property uploadId String?
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
+ * @property dexIngestDateTime OffsetDateTime?
  * @property messageMetadata MessageMetadata?
  * @property stageInfo StageInfo?
- * @property tags Tags?
- * @property data Map<String,String>?
+ * @property tags Map<String, String>?
+ * @property data Map<String, String>?
  * @property contentType String?
- * @property messageId String?
  * @property jurisdiction String?
  * @property senderId String?
- * @property content String?
- * @property timestamp OffsetDateTime
+ * @property content Map<*, *>?
+ * @property timestamp OffsetDateTime?
+ * @constructor
  */
 @GraphQLDescription("Contains Report content.")
 data class Report(
@@ -58,9 +61,6 @@ data class Report(
 
     @GraphQLDescription("Indicates the content type of the content; e.g. JSON, XML")
     var contentType : String? = null,
-
-    @GraphQLDescription("Message id this report belongs to; set to null if not applicable")
-    var messageId: String? = null,
 
     @GraphQLDescription("Jurisdiction report belongs to; set to null if not applicable")
     var jurisdiction: String? = null,
