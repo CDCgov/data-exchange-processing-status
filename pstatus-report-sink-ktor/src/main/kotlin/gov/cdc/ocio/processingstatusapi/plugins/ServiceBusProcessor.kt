@@ -266,21 +266,21 @@ class ServiceBusProcessor {
             // Try to get the stage info as JSON object, but if not, get it as a string
             val stageInfoAsNode = runCatching { jsonNode.get("stage_info") }.getOrNull()
             stageInfo = runCatching { when (stageInfoAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<StageInfo>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(stageInfoAsNode, object : TypeReference<StageInfo>() {})
                 else -> null
             }}.getOrNull()
 
             // Try to get the tags as JSON object, but if not, get it as a string
             val tagsAsNode = runCatching { jsonNode.get("tags") }.getOrNull()
             tags = runCatching { when (tagsAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<Map<String, String>>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(tagsAsNode, object : TypeReference<Map<String, String>>() {})
                 else -> null
             }}.getOrNull()
 
             // Try to get the data as JSON object, but if not, get it as a string
             val dataAsNode = runCatching { jsonNode.get("data") }.getOrNull()
             data = runCatching { when (dataAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<Map<String, String>>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(dataAsNode, object : TypeReference<Map<String, String>>() {})
                 else -> null
             }}.getOrNull()
 
