@@ -26,7 +26,7 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, with
        "message_uuid": "5a1fff57-2ea1-4a64-81de-aa7f3096a1ce",
        "message_hash": "38c2cc0dcc05f2b68c4287040cfcf71",
        "aggregation": "SINGLE",
-       "message_index": "1"
+       "message_index": 1
     },
     "stage_info": {
        "service": "HL7v2 Pipeline",
