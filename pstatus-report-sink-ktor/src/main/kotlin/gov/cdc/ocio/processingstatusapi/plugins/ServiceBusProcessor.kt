@@ -1,26 +1,32 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.JsonNodeType
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
-import gov.cdc.ocio.processingstatusapi.ReportManager
-import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
-import gov.cdc.ocio.processingstatusapi.models.reports.Source
-import mu.KotlinLogging
-import com.fasterxml.jackson.databind.ObjectMapper
-import java.util.*
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
+import gov.cdc.ocio.processingstatusapi.ReportManager
+import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
+import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
+import gov.cdc.ocio.processingstatusapi.models.reports.Source
+import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
+import mu.KotlinLogging
 import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
+import java.time.Instant
+import java.util.*
 import javax.activation.MimeType
+
 
 /**
  * The service bus is another interface for receiving reports.
@@ -45,9 +51,7 @@ class ServiceBusProcessor {
      */
     @Throws(BadRequestException::class)
     fun withMessage(message: ServiceBusReceivedMessage) {
-        val sbMessageId = message.messageId
         var sbMessage = String(message.body.toBytes())
-        val sbMessageStatus = message.state.name
 
         try {
             logger.info { "Before Message received = $sbMessage" }
@@ -67,7 +71,7 @@ class ServiceBusProcessor {
             } else
                 validateJsonSchema(message)
 
-            createReport(sbMessageId, sbMessageStatus, gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
+            createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         } catch (e: BadRequestException) {
             logger.error("Validation failed: ${e.message}")
             throw e
@@ -84,7 +88,7 @@ class ServiceBusProcessor {
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class)
-    private fun createReport(messageId: String, messageStatus: String, createReportMessage: CreateReportSBMessage) {
+    private fun createReport(createReportMessage: CreateReportSBMessage) {
         try {
             val uploadId = createReportMessage.uploadId
             var stageName = createReportMessage.stageInfo?.action
@@ -103,8 +107,6 @@ class ServiceBusProcessor {
                 createReportMessage.tags,
                 createReportMessage.data,
                 createReportMessage.contentType!!,
-                messageId, //createReportMessage.messageId is null
-                messageStatus, //createReportMessage.status is null
                 createReportMessage.content!!, // it was Content I changed to ContentAsString
                 createReportMessage.jurisdiction,
                 createReportMessage.senderId,
@@ -133,7 +135,7 @@ class ServiceBusProcessor {
         val schemaDirectoryPath = "/schema"
         // Convert the message body to a JSON string
         val messageBody = String(message.body.toBytes())
-        val objectMapper: ObjectMapper = jacksonObjectMapper()
+        val objectMapper = jacksonObjectMapper()
         var reportSchemaVersion =
             "0.0.1" // for backward compatibility - this schema will load if report_schema_version is not found
 
@@ -226,9 +228,74 @@ class ServiceBusProcessor {
             )
 
         } catch (e: Exception) {
-            logger.error("Report rejected: Malformed JSON or error processing the report - ${e.message}")
-            throw e
+            reason = "Report rejected: Malformed JSON or error processing the report"
+            e.message?.let { invalidData.add(it) }
+            val malformedReportSBMessage = safeParseMessageAsReport(messageBody)
+            processError(reason, invalidData, schemaFileNames, malformedReportSBMessage)
         }
+    }
+
+    /**
+     * Attempts to safely parse the message body into a report for deadlettering.  Note, this is needed when the
+     * content may be malformed, such as the structure not being valid JSON or elements not of the expected type.
+     *
+     * @param messageBody String
+     * @return CreateReportSBMessage
+     */
+    private fun safeParseMessageAsReport(messageBody: String): CreateReportSBMessage {
+        val objectMapper = jacksonObjectMapper()
+        val jsonNode = objectMapper.readTree(messageBody)
+        val malformedReportSBMessage = CreateReportSBMessage().apply {
+            // Attempt to get each element of the json structure if available
+            uploadId = runCatching { jsonNode.get("upload_id") }.getOrNull()?.asText()
+            dataStreamId = runCatching { jsonNode.get("data_stream_id") }.getOrNull()?.asText()
+            dataStreamRoute = runCatching { jsonNode.get("data_stream_route") }.getOrNull()?.asText()
+            dexIngestDateTime = runCatching {
+                val dexIngestDateTimeStr = jsonNode.get("dex_ingest_datetime").asText()
+                val dexIngestDateTimeInstant = Instant.parse(dexIngestDateTimeStr)
+                Date.from(dexIngestDateTimeInstant)
+            }.getOrNull()
+
+            // Try to get the metadata as JSON object, but if not, get it as a string
+            val messageMetadataAsNode = runCatching { jsonNode.get("message_metadata") }.getOrNull()
+            messageMetadata = runCatching { when (messageMetadataAsNode?.nodeType) {
+                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<MessageMetadata>() {})
+                else -> null
+            }}.getOrNull()
+
+            // Try to get the stage info as JSON object, but if not, get it as a string
+            val stageInfoAsNode = runCatching { jsonNode.get("stage_info") }.getOrNull()
+            stageInfo = runCatching { when (stageInfoAsNode?.nodeType) {
+                JsonNodeType.OBJECT -> objectMapper.convertValue(stageInfoAsNode, object : TypeReference<StageInfo>() {})
+                else -> null
+            }}.getOrNull()
+
+            // Try to get the tags as JSON object, but if not, get it as a string
+            val tagsAsNode = runCatching { jsonNode.get("tags") }.getOrNull()
+            tags = runCatching { when (tagsAsNode?.nodeType) {
+                JsonNodeType.OBJECT -> objectMapper.convertValue(tagsAsNode, object : TypeReference<Map<String, String>>() {})
+                else -> null
+            }}.getOrNull()
+
+            // Try to get the data as JSON object, but if not, get it as a string
+            val dataAsNode = runCatching { jsonNode.get("data") }.getOrNull()
+            data = runCatching { when (dataAsNode?.nodeType) {
+                JsonNodeType.OBJECT -> objectMapper.convertValue(dataAsNode, object : TypeReference<Map<String, String>>() {})
+                else -> null
+            }}.getOrNull()
+
+            jurisdiction = runCatching { jsonNode.get("jurisdiction") }.getOrNull()?.asText()
+            senderId = runCatching { jsonNode.get("sender_id") }.getOrNull()?.asText()
+
+            contentType = runCatching { jsonNode.get("content_type") }.getOrNull()?.asText()
+            // Try to get the content as JSON object, but if not, get it as a string
+            val contentAsNode = runCatching { jsonNode.get("content") }.getOrNull()
+            content = runCatching { when (contentAsNode?.nodeType) {
+                JsonNodeType.OBJECT -> objectMapper.convertValue(contentAsNode, object : TypeReference<Map<*, *>>() {})
+                else -> contentAsNode?.asText()
+            }}.getOrNull()
+        }
+        return malformedReportSBMessage
     }
 
     /**

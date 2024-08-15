@@ -53,8 +53,6 @@ class ReportManager: KoinComponent {
      * @param tags Map<String, String>?
      * @param data Map<String, String>?
      * @param contentType String
-     * @param messageId String?
-     * @param status String?
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
@@ -75,8 +73,6 @@ class ReportManager: KoinComponent {
         tags: Map<String,String>?,
         data:Map<String,String>?,
         contentType: String,
-        messageId: String?,
-        status: String?,
         content: Any?,
         jurisdiction: String?,
         senderId:String?,
@@ -94,8 +90,6 @@ class ReportManager: KoinComponent {
                 tags,
                 data,
                 contentType,
-                messageId,
-                status,
                 content,
                 jurisdiction,
                 senderId,
@@ -119,8 +113,6 @@ class ReportManager: KoinComponent {
      * @param tags Map<String, String>?
      * @param data Map<String, String>?
      * @param contentType String
-     * @param messageId String?
-     * @param status String?
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
@@ -137,8 +129,6 @@ class ReportManager: KoinComponent {
                              tags: Map<String,String>?,
                              data:Map<String,String>?,
                              contentType: String,
-                             messageId: String?,
-                             status: String?,
                              content: Any?,
                              jurisdiction: String?,
                              senderId:String?,
@@ -180,8 +170,6 @@ class ReportManager: KoinComponent {
                     tags,
                     data,
                     contentType,
-                    messageId,
-                    status,
                     content,
                     jurisdiction,
                     senderId,
@@ -200,8 +188,6 @@ class ReportManager: KoinComponent {
                     tags,
                     data,
                     contentType,
-                    messageId,
-                    status,
                     content,
                     jurisdiction,
                     senderId,
@@ -217,14 +203,16 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
+     * @param dexIngestDateTime Date
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
-     * @param tags Map<String,String>??
-     * @property data Map<String,String>?
-     * @param contentType String?
-     * @param content String?
+     * @param tags Map<String, String>?
+     * @param data Map<String, String>?
+     * @param contentType String
+     * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param source Source
      * @return String
      * @throws BadStateException
      */
@@ -238,8 +226,6 @@ class ReportManager: KoinComponent {
                                   tags: Map<String,String>?,
                                   data:Map<String,String>?,
                                   contentType: String,
-                                  messageId: String?,
-                                  status: String?,
                                   content: Any?,
                                   jurisdiction: String?,
                                   senderId:String?,
@@ -252,17 +238,15 @@ class ReportManager: KoinComponent {
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.dexIngestDateTime = dexIngestDateTime
-            this.jurisdiction= jurisdiction
-            this.senderId= senderId
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
             this.messageMetadata = messageMetadata
             this.stageInfo= stageInfo
-            this.tags= tags
-            this.data= data
-            this.jurisdiction= jurisdiction
-            this.senderId= senderId
+            this.tags = tags
+            this.data = data
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
             this.contentType = contentType
-            this.messageId = messageId
-            this.status = status
 
             if (contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
