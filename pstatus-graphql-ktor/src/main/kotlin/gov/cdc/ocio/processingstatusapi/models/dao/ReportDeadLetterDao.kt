@@ -35,6 +35,8 @@ data class ReportDeadLetterDao(
         this.dispositionType = this@ReportDeadLetterDao.dispositionType
         this.deadLetterReasons = this@ReportDeadLetterDao.deadLetterReasons
         this.validationSchemas = this@ReportDeadLetterDao.validationSchemas
+        this.jurisdiction = this@ReportDeadLetterDao.jurisdiction
+        this.senderId = this@ReportDeadLetterDao.senderId
     }
 
 }
