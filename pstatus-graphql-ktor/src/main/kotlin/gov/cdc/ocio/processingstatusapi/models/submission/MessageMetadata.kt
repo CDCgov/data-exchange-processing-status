@@ -36,6 +36,5 @@ data class MessageMetadata(
     var aggregation: Aggregation? = null,
 
     @GraphQLDescription("Message Index")
-    var messageIndex: Int? = null,
-
+    var messageIndex: Int? = null
 )

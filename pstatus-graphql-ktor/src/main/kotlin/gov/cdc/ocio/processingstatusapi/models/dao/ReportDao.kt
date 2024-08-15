@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.models.dao
 
 import com.google.gson.Gson
 import gov.cdc.ocio.processingstatusapi.models.Report
-import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import java.time.ZoneOffset
 import java.util.*
 
@@ -20,7 +19,6 @@ import java.util.*
  * @property tags Map<String,String??
  * @property data Map<String,String>?
  * @property contentType String?
- * @property messageId String?
  * @property timestamp Date?
  * @property content Any?
  * @property jurisdiction String?
@@ -42,7 +40,7 @@ open class ReportDao(
 
     var dexIngestDateTime: Date? = null,
 
-    var messageMetadata: MessageMetadata? = null,
+    var messageMetadata: MessageMetadataDao? = null,
 
     var stageInfo: StageInfoDao? = null,
 
@@ -55,8 +53,6 @@ open class ReportDao(
     var jurisdiction:String? =null,
 
     var senderId:String? = null,
-
-    var messageId: String? = null,
 
     var timestamp: Date? = null,
 
@@ -90,11 +86,10 @@ open class ReportDao(
         this.dataStreamId = this@ReportDao.dataStreamId
         this.dataStreamRoute = this@ReportDao.dataStreamRoute
         this.dexIngestDateTime = this@ReportDao.dexIngestDateTime?.toInstant()?.atOffset(ZoneOffset.UTC)
-        this.messageMetadata = this@ReportDao.messageMetadata
+        this.messageMetadata = this@ReportDao.messageMetadata?.toMessageMetadata()
         this.stageInfo = this@ReportDao.stageInfo?.toStageInfo()
         this.tags = this@ReportDao.tags
         this.data = this@ReportDao.data
-        this.messageId = this@ReportDao.messageId
         this.jurisdiction = this@ReportDao.jurisdiction
         this.senderId = this@ReportDao.senderId
         this.timestamp = this@ReportDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
