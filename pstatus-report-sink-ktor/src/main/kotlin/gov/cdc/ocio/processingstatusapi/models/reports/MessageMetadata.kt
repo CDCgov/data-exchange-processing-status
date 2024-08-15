@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
 
 
 /**
@@ -23,19 +23,19 @@ enum class Aggregation {
  * @property messageIndex Int?
  *
  */
-
-class MessageMetadata: ServiceBusMessage() {
+class MessageMetadata {
 
     @SerializedName("message_uuid")
+    @JsonProperty("message_uuid")
     var messageUUID : String? = null
 
     @SerializedName("message_hash")
+    @JsonProperty("message_hash")
     var messageHash: String? = null
 
-    @SerializedName("aggregation")
     var aggregation: Aggregation? = null
 
     @SerializedName("message_index")
+    @JsonProperty("message_index")
     var messageIndex: Int? = null
-
 }
