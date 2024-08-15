@@ -35,7 +35,7 @@ async def send_single_message(sender, message):
 async def run():
     # Generate a unqiue upload ID
     upload_id = str(uuid.uuid4())
-    dex_ingest_datetime = datetime.now(timezone.utc)
+    dex_ingest_datetime = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     print("Upload ID = " + upload_id)
     print("Sending simulated messages via the service bus...")
 
