@@ -81,8 +81,15 @@ ktor {
 }
 
 jib {
+    from {
+        auth {
+            username = System.getenv("DOCKERHUB_USERNAME") ?: ""
+            password = System.getenv("DOCKERHUB_TOKEN") ?: ""
+        }
+    }
     to {
         image = 'imagehub.cdc.gov:6989/dex/pstatus/graphql-service'
+        tags = ['v1.0.0', 'latest']
         auth {
             username = System.getenv("IMAGEHUB_USERNAME") ?: ""
             password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
