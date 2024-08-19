@@ -3,16 +3,16 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.rabbitmq.client.*
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_HOST
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_PASSWORD
-import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_PORT
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_USERNAME
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_VIRTUAL_HOST
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
+import org.apache.qpid.proton.TimeoutException
+import java.io.IOException
 
 object RMQConstants {
     const val DEFAULT_HOST = "localhost"
-    const val DEFAULT_PORT = 5672
     const val DEFAULT_VIRTUAL_HOST = "/"
     const val DEFAULT_USERNAME = "guest"
     const val DEFAULT_PASSWORD = "guest"
@@ -22,8 +22,6 @@ class RabbitMQUtil(config: ApplicationConfig,configurationPath: String? = null) 
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private val configPath= if (configurationPath != null) "$configurationPath." else ""
     val queue = config.tryGetString("${configPath}queue_name") ?: ""
-    val exchange = config.tryGetString("${configPath}exchange_name") ?: ""
-    val routingKey = config.tryGetString("${configPath}routing_key") ?: ""
 
     init {
         connectionFactory.host = config.tryGetString("${configPath}host") ?: DEFAULT_HOST
@@ -31,6 +29,7 @@ class RabbitMQUtil(config: ApplicationConfig,configurationPath: String? = null) 
         connectionFactory.virtualHost = config.tryGetString("${configPath}virtual_host") ?: DEFAULT_VIRTUAL_HOST
         connectionFactory.username = config.tryGetString("${configPath}user_name") ?: DEFAULT_USERNAME
         connectionFactory.password = config.tryGetString("${configPath}password") ?: DEFAULT_PASSWORD
+        //attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000)
     }
     fun getConnectionFactory(): ConnectionFactory {
@@ -45,89 +44,67 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
-    val exchangeName = pluginConfig.exchange
-    val routingKeyName = pluginConfig.routingKey
 
-    LOGGER.info("FACTORY ${factory.virtualHost}, port ${factory.port} user ${factory.username}  password ${factory.password} virtual_host ${factory.virtualHost}" )
+    lateinit var connection: Connection
+    lateinit var channel: Channel
 
-    val connection by lazy {factory.newConnection()}
-    val channel by lazy {connection.createChannel()}
+    try {
+        connection = factory.newConnection()
+        LOGGER.info("Connection to the RabbitMQ server was successfully established")
+        channel = connection.createChannel()
+        LOGGER.info("Channel was successfully created.")
+    } catch (e: IOException ) {
+        LOGGER.error("IOException occurred {}", e.message)
+    }catch (e: TimeoutException){
+        LOGGER.error("TimeoutException occurred $e.message")
+    }
 
-    LOGGER.info("Connection output $connection")
-    LOGGER.info ("channel was successfully created $channel")
 
+    /**
+     * consumeMessages function listens to the queue, receives the messages
+     * @param channel The RabbitMQ `Channel` used for communicating with the queue.
+     * @param queueName The name of the queue to consume messages from.
+     * @throws IOException
+     */
     fun consumeMessages(channel: Channel, queueName: String) {
         val autoAck = false
         val consumerTag = "myConsumerTag"
-       // channel.exchangeDeclare(exchangeName, BuiltinExchangeType.TOPIC, true)
+        try {
+            channel.basicConsume(queueName, autoAck, consumerTag, object : DefaultConsumer(channel) {
 
-       // channel.queueDeclare(queueName, true, false, false, null)
-        LOGGER.info("successfully declared queue $queueName")
+                override fun handleDelivery(
+                    consumerTag: String,
+                    envelope: Envelope,
+                    properties: AMQP.BasicProperties,
+                    body: ByteArray
+                ) {
+                    val routingKey = envelope.routingKey
+                    val contentType = properties.contentType
+                    val deliveryTag = envelope.deliveryTag
+
+                    // Process the message components here
+                    val message = String(body, Charsets.UTF_8)
+                    println("Received message: $message with routingKey: $routingKey")
+                    RabbitMQProcessor().validateMessage(message)
 
 
-        //channel.queueBind(queueName,exchangeName, routingKeyName)
-        LOGGER.info("successfully bound queue $queueName")
-        channel.basicConsume(queueName, autoAck, consumerTag, object : DefaultConsumer(channel) {
+                    // Acknowledge the message
+                    channel.basicAck(deliveryTag, false)
+                }
+            })
+        }catch (e: IOException){
+            LOGGER.error("IOException occurred failed to process message from the queue $e.message")
+        }
 
-            override fun handleDelivery(
-                consumerTag: String,
-                envelope: Envelope,
-                properties: AMQP.BasicProperties,
-                body: ByteArray
-            ) {
-                val routingKey = envelope.routingKey
-                val contentType = properties.contentType
-                val deliveryTag = envelope.deliveryTag
-
-                // Process the message components here
-                val message = String(body, Charsets.UTF_8)
-                println("Received message: $message with routingKey: $routingKey and contentType: $contentType")
-
-                // Acknowledge the message
-                channel.basicAck(deliveryTag, false)
-            }
-        })
     }
-    /*
-    //@Throws(InterruptedException::class)
-    fun startListening() {
-
-        LOGGER.info("connection output $connection")
-
-
-
-        LOGGER.info("successfully created channel with connection to the rabbitmq server")
-
-        channel.exchangeDeclare(exchangeName, BuiltinExchangeType.TOPIC, true)
-
-        channel.queueDeclare(queueName, true, false, false, null)
-        LOGGER.info("successfully declared queue $queueName")
-
-
-        channel.queueBind(queueName,exchangeName, routingKeyName)
-        LOGGER.info("successfully bind queue to exchange $exchangeName  queueName $queueName and routing key $routingKeyName and ")
-
-        LOGGER.info("Starting RabbitMQ consumer for queue: $queueName")
-
-        channel.basicConsume(queueName, false, { consumerTag, message: Delivery ->
-            LOGGER.info("inside basic consume")
-            val receivedMessage = String(message.body, Charsets.UTF_8)
-            LOGGER.info("Received message {} with consumerTag {} ", receivedMessage, consumerTag)
-
-        }, { consumerTag ->
-            LOGGER.warn("error $consumerTag")
-        })
-    }
-
-     */
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
-        application.log.info("Application started successfully is ready to process messages")
+        application.log.info("Application started successfully.")
         consumeMessages(channel, queueName)
     }
 
     on(MonitoringEvent(ApplicationStopped)) { application ->
-        application.log.info("Application stopped successfully")
+        application.log.info("Application stopped successfully.")
         cleanupResourcesAndUnsubscribe(channel, connection, application)
     }
 }
@@ -135,10 +112,6 @@ val RabbitMQPlugin = createApplicationPlugin(
 
 /**
  * We need to clean up the resources and unsubscribe from application life events.
- * During the application's lifecycle, various resources like network connections,
- * file handles, and memory allocations are used. When the application is about to stop
- * it's critical to clean up these resources to avoid potential issues like resource leaks.
- *
  * @param channel The RabbitMQ `Channel` used for communicating with the queue.
  * @param connection The RabbitMQ `Connection` representing the connection to the RabbitMQ
  * server.
@@ -152,6 +125,7 @@ private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connect
     application.environment.monitor.unsubscribe(ApplicationStarted){}
     application.environment.monitor.unsubscribe(ApplicationStopped){}
 }
+
 fun Application.rabbitMQModule() {
     install(RabbitMQPlugin)
 }
