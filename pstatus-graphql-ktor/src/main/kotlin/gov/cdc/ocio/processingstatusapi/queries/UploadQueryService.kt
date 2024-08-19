@@ -58,17 +58,12 @@ class UploadQueryService : Query {
                             + "`desc`: Descending order\n"
                             + "If a value is provided that is not supported then a bad request response is returned."
                 )
-                sortOrder: String?,
+                sortOrder: String? = null,
 
                 @GraphQLDescription(
                     "*File Name* Search by the provided File Name:\n"
                 )
-                fileName: String? = null,
-
-                @GraphQLDescription(
-                    "*Status* Search by the status of the upload:\n"
-                )
-                status: String? = null) =
+                fileName: String? = null) =
         UploadStatusLoader().getUploadStatus(dataStreamId,
                                         dataStreamRoute,
                                         dateStart,
@@ -77,8 +72,7 @@ class UploadQueryService : Query {
                                         pageNumber,
                                         sortBy,
                                         sortOrder,
-                                        fileName,
-                                        status)
+                                        fileName)
 
     @GraphQLDescription("Return various uploads statistics")
     @Suppress("unused")
