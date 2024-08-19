@@ -57,4 +57,20 @@ class UploadsStatusDataGenerator {
             items = sampleUploadStatuses
         )
     }
+
+    fun createEmptyResults():UploadsStatus {
+
+        // Create and return an instance of UploadsStatus with the sample data
+        return UploadsStatus(
+                items = mutableListOf(),
+                summary = PageSummary(
+                    pageNumber = 1,
+                    pageSize = 10,
+                    numberOfPages = 0,
+                    totalItems = 0,
+                    jurisdictions = emptyList(),
+                    senderIds = emptyList()
+                )
+        )
+    }
 }
