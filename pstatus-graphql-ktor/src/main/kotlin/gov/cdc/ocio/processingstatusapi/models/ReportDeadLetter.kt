@@ -85,10 +85,4 @@ data class ReportDeadLetter(
 
     @GraphQLDescription("Schemas used to validate the report")
     var validationSchemas: List<String>? = null,
-
-    @GraphQLDescription("Jurisdiction associated with this report")
-    var jurisdiction: String? = null,
-
-    @GraphQLDescription("SenderId associated with this report")
-    var senderId: String? = null,
 )

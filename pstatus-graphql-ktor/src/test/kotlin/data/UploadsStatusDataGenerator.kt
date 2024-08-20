@@ -86,13 +86,11 @@ class UploadsStatusDataGenerator {
                 dataStreamId = "dataStream1",
                 dataStreamRoute = "routeA",
                 dexIngestDateTime = Date(),
-                messageMetadata = MessageMetadata(),
                 tags = mapOf("tag1" to "value1", "tag2" to "value2"),
                 data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
                 contentType = "application/json",
                 jurisdiction = "jurisdictionXYZ",
                 senderId = "sender123",
-                messageId = "message789",
                 timestamp = Date(),
             ),
             ReportDao(
@@ -102,13 +100,11 @@ class UploadsStatusDataGenerator {
                 dataStreamId = "dataStream2",
                 dataStreamRoute = "routeB",
                 dexIngestDateTime = Date(), // current date and time
-                messageMetadata = MessageMetadata(),
                 tags = mapOf("tag1" to "value1", "tag2" to "value2"),
                 data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
                 contentType = "application/json",
                 jurisdiction = "jurisdictionXYZ",
                 senderId = "sender123",
-                messageId = "message789",
                 timestamp = Date(), // current date and time
             ), // fill with actual fields  // fill with actual fields
         )

@@ -194,7 +194,11 @@ class UploadStatusLoader: CosmosLoader() {
         uploadsStatus.summary.senderIds = senderIds.toMutableList()
         uploadsStatus.summary.jurisdictions = jurisdictions.toMutableList()
 
-        SortUtils.sortByField(uploadsStatus, sortBy.toString(), sortOrder.toString())
+        if(sortOrder.isNullOrEmpty()){
+            SortUtils.sortByField(uploadsStatus, sortBy.toString(), DEFAULT_SORT_ORDER)
+        }else{
+            SortUtils.sortByField(uploadsStatus, sortBy.toString(), sortOrder.toString())
+        }
 
         return uploadsStatus
     }
@@ -204,6 +208,6 @@ class UploadStatusLoader: CosmosLoader() {
         private const val MAX_PAGE_SIZE = 10000
         const val DEFAULT_PAGE_SIZE = 100
 
-        private const val DEFAULT_SORT_ORDER = "asc"
+        private const val DEFAULT_SORT_ORDER = "desc"
     }
 }

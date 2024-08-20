@@ -9,7 +9,7 @@ open class CosmosLoader: KoinComponent {
 
     private val cosmosRepository by inject<CosmosRepository>()
 
-    protected val reportsContainer = cosmosRepository.reportsContainer
+    protected var reportsContainer = cosmosRepository.reportsContainer
 
     protected val logger = KotlinLogging.logger {}
 }
