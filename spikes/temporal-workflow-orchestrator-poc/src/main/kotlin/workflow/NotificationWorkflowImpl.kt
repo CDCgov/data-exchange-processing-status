@@ -4,7 +4,9 @@ import io.temporal.workflow.Workflow
 import java.time.Duration
 import java.time.LocalTime
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 class NotificationWorkflowImpl : NotificationWorkflow {
 
@@ -31,20 +33,23 @@ class NotificationWorkflowImpl : NotificationWorkflow {
         val formatter = DateTimeFormatter.ofPattern("HH:mm:ssXXX")
         val timeToRunParsed = LocalTime.parse(timeToRun, formatter)
         val now = LocalTime.now(ZoneOffset.UTC)
+        val dayOfWeek= ZonedDateTime.now(ZoneOffset.UTC).dayOfWeek.toString().substring(0, 2)
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
         val waitTime = if (timeToRunParsed.isAfter(now)) {
             Duration.between(now, timeToRunParsed)
         } else {
             Duration.between(now, timeToRunParsed.plusHours(24))
         }
+        //if (daysToRun.contains(dayOfWeek.name.substring(0, 2))) {
+        if (daysToRun.contains(dayOfWeek)) {
+            Workflow.sleep(waitTime)
+            // Logic to check if the upload occurred
+            val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
 
-        Workflow.sleep(waitTime)
-
-        // Logic to check if the upload occurred
-        val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
-
-        if (!uploadOccurred) {
-            activities.sendNotification(dataStreamId, dataStreamRoute, jurisdiction, deliveryReference)
+            if (!uploadOccurred) {
+                activities.sendNotification(dataStreamId, dataStreamRoute, jurisdiction, deliveryReference)
+            }
         }
 
         // Re-run the workflow the next day

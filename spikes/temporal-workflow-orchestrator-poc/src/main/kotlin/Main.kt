@@ -24,8 +24,8 @@ fun main() {
         workflowOptions
     )
 
-    val daysToRun = listOf("MO", "Tu", "We", "Th", "Fr")
-    val timeToRun = "19:54:10+00:00"
+    val daysToRun = listOf("MO", "TU", "WE", "TH", "FR","SA","SU")
+    val timeToRun = "16:05:25+00:00"
 
     workflow.checkUploadAndNotify(
         dataStreamId = "dataStreamId",

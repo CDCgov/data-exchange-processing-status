@@ -21,7 +21,6 @@ class DeadlineCheckWorkflowImpl : DeadlineCheckWorkflow {
         timeToRun: String,
         deliveryReference: String
     ) {
-        val formatter = DateTimeFormatter.ofPattern("HH:mm:ssZ")
         val parsedTime = LocalTime.parse(timeToRun.substring(0, 8), DateTimeFormatter.ofPattern("HH:mm:ss"))
         val zoneOffset = ZoneId.of(timeToRun.substring(8))
 
