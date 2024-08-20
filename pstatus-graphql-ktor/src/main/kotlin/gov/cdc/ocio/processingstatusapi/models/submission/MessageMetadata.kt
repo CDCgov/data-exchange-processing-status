@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.models.submission
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 
 /**
- * Status of Report-SUCCESS OR FAILURE
+ * Aggregation of message - SINGLE or BATCH
  */
 enum class Aggregation {
 
@@ -11,7 +11,7 @@ enum class Aggregation {
     SINGLE,
 
     @GraphQLDescription("Batch")
-    FAILURE
+    BATCH
 }
 
 
@@ -36,6 +36,5 @@ data class MessageMetadata(
     var aggregation: Aggregation? = null,
 
     @GraphQLDescription("Message Index")
-    var messageIndex: Int? = null,
-
+    var messageIndex: Int? = null
 )
