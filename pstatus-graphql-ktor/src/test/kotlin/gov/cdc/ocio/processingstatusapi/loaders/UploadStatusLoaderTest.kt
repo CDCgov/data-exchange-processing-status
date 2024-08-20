@@ -1,15 +1,22 @@
 import data.UploadsStatusDataGenerator
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.util.CosmosPagedFlux
 import com.azure.cosmos.util.CosmosPagedIterable
+import com.azure.cosmos.util.UtilBridgeInternal.createCosmosPagedIterable
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.loaders.UploadStatusLoader
+import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
+import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import io.mockk.*
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.koin.core.context.startKoin
@@ -17,6 +24,8 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.*
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -166,6 +175,76 @@ class UploadStatusLoaderTest : KoinTest {
         assertEquals(10, uploadsStatus.summary.pageSize)
         assertEquals(0, uploadsStatus.summary.numberOfPages)
         assertEquals(0, uploadsStatus.summary.totalItems)
+    }
+
+
+    @Test
+    fun getUploads_results() {
+        // Setup mocks
+        //Return PageIterable of type UploadCounts
+        val uploadCounts = listOf(
+            UploadCounts(4, "uploadId1", Date(), "jurisdiction1", "senderId1"),
+            UploadCounts(2, "uploadId2", Date(), "jurisdiction2","senderId2")
+        )
+        val uploadCountsIterator = uploadCounts.iterator()
+        val mockPagedIterableForUploadCounts: CosmosPagedIterable<UploadCounts> = mockk {
+            every { iterator() } returns uploadCountsIterator as MutableIterator<UploadCounts>
+        }
+
+        every {
+            mockReportsContainer.queryItems(
+                any<String>(),
+                any<CosmosQueryRequestOptions>(),
+                UploadCounts::class.java
+            )
+        } returns mockPagedIterableForUploadCounts
+
+
+        //Return PageIterable of type ReportDAO
+        val reports = UploadsStatusDataGenerator().createReportsData()
+        val reportsIterator = reports.iterator()
+        val mockPagedIterableForReports: CosmosPagedIterable<ReportDao> = mockk {
+            every { iterator() } returns reportsIterator as MutableIterator<ReportDao>
+        }
+
+        every {
+            mockReportsContainer.queryItems(
+                any<String>(),
+                any<CosmosQueryRequestOptions>(),
+                ReportDao::class.java
+            )
+        } returns mockPagedIterableForReports
+
+
+        every {
+            uploadStatusLoader.getUploadStatus(
+                dataStreamId ="dex-testing",
+                dataStreamRoute = "",
+                dateStart = "2024-08-14T00:00:00Z",
+                dateEnd = "2024-08-15T00:00:00Z",
+                pageSize =10,
+                pageNumber = 1,
+                sortBy = "fileName",
+                sortOrder = "desc",
+                fileName = ""
+            )
+        } returns UploadsStatusDataGenerator().createUploadsStatusTestData()
+
+        // Execute the method
+        val uploadsStatus =  uploadStatusLoader.getUploadStatus(
+            dataStreamId ="dex-testing",
+            dataStreamRoute = "",
+            dateStart = "2024-08-14T00:00:00Z",
+            dateEnd = "2024-08-15T00:00:00Z",
+            pageSize =10,
+            pageNumber = 1,
+            sortBy = "fileName",
+            sortOrder = "desc",
+            fileName = ""
+        )
+
+        // Verify the results
+        assertNotNull(uploadsStatus)
     }
 
 }

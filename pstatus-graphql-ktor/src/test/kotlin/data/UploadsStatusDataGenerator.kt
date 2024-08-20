@@ -1,10 +1,13 @@
 package data
 
+import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
+import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.util.*
 
 // Define the class to create sample data
 class UploadsStatusDataGenerator {
@@ -17,8 +20,8 @@ class UploadsStatusDataGenerator {
             numberOfPages = 3,
             pageSize = 2,
             totalItems = 6,
-            senderIds = listOf("sender1", "sender2"),
-            jurisdictions = listOf("jurisdiction1", "jurisdiction2")
+            senderIds = mutableListOf("sender1", "sender2"),
+            jurisdictions = mutableListOf("jurisdiction1", "jurisdiction2")
         )
 
         // Create sample UploadStatus items
@@ -68,9 +71,48 @@ class UploadsStatusDataGenerator {
                     pageSize = 10,
                     numberOfPages = 0,
                     totalItems = 0,
-                    jurisdictions = emptyList(),
-                    senderIds = emptyList()
+                    jurisdictions = mutableListOf(),
+                    senderIds = mutableListOf()
                 )
         )
+    }
+
+    fun createReportsData():List<ReportDao>{
+        val reports = listOf(
+            ReportDao(
+                id = "sampleId1",
+                uploadId = "uploadId1",
+                reportId = "sampleId1",
+                dataStreamId = "dataStream1",
+                dataStreamRoute = "routeA",
+                dexIngestDateTime = Date(),
+                messageMetadata = MessageMetadata(),
+                tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+                data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+                contentType = "application/json",
+                jurisdiction = "jurisdictionXYZ",
+                senderId = "sender123",
+                messageId = "message789",
+                timestamp = Date(),
+            ),
+            ReportDao(
+                id = "sampleId2",
+                uploadId = "uploadId2",
+                reportId = "sampleId2",
+                dataStreamId = "dataStream2",
+                dataStreamRoute = "routeB",
+                dexIngestDateTime = Date(), // current date and time
+                messageMetadata = MessageMetadata(),
+                tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+                data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+                contentType = "application/json",
+                jurisdiction = "jurisdictionXYZ",
+                senderId = "sender123",
+                messageId = "message789",
+                timestamp = Date(), // current date and time
+            ), // fill with actual fields  // fill with actual fields
+        )
+
+        return reports
     }
 }
