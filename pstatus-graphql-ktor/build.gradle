@@ -89,6 +89,7 @@ jib {
     }
     to {
         image = 'imagehub.cdc.gov:6989/dex/pstatus/graphql-service'
+        tags = ['v1.5.0']
         auth {
             username = System.getenv("IMAGEHUB_USERNAME") ?: ""
             password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
