@@ -1,46 +1,49 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
-import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.utils.checkAndReplaceDeprecatedFields
-import mu.KotlinLogging
-import gov.cdc.ocio.processingstatusapi.utils.isJsonValid
+import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.utils.*
+
 
 class RabbitMQProcessor {
-    private val logger = KotlinLogging.logger {}
-
-
-    private val gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .create()
 
     @Throws(BadRequestException::class)
     fun validateMessage(messageAsString: String){
         try {
-            logger.debug { "Message received as original $messageAsString" }
+            Helpers.logger.debug { "Message received as original $messageAsString" }
             val message = checkAndReplaceDeprecatedFields(messageAsString)
-            logger.debug { "Message after checking for depreciated fields $messageAsString" }
+            Helpers.logger.debug { "Message after checking for depreciated fields $messageAsString" }
 
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
              * Otherwise, proceeds with schema validation.
              */
             val isValidationDisabled = System.getenv("DISABLE_VALIDATION")?.toBoolean() ?: false
+            val isReportValidJson = isJsonValid(messageAsString)
+
             if (isValidationDisabled) {
-                if (!isJsonValid(message)){
-                    logger.error { "Message is not in correct JSON format." }
-                    //sendToDeadLetter("Validation failed.The message is not in JSON format.")
+                if (!isJsonValid(messageAsString)){
+                    Helpers.logger.error { "Message is not in correct JSON format." }
+                    sendToDeadLetter("Validation failed.The message is not in JSON format.")
+                    return
                 }
             }else{
-                println ("create function to validation schema")
+                if (isReportValidJson){
+                    Helpers.logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
+                    validateJsonSchema(message)
+                }else{
+                    Helpers.logger.error { "Validation is enabled, but the message is not in correct JSON format." }
+                    sendToDeadLetter("The message is not in correct JSON format.")
+                    return
+                }
             }
-            println ("create report for valid message")
+            Helpers.logger.info { "The message is valid creating report."}
+            createReport(Helpers.gson.fromJson(message, CreateReportSBMessage::class.java))
         } catch (e: BadRequestException) {
-            logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
+            Helpers.logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
         }catch(e: JsonSyntaxException){
-            logger.error(e) { "Failed to parse rabbitMQ message ${e.message}" }
+            Helpers.logger.error(e) { "Failed to parse rabbitMQ message ${e.message}" }
         }
     }
 }

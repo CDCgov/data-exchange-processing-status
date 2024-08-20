@@ -5,6 +5,7 @@ import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_HOST
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_PASSWORD
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_USERNAME
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_VIRTUAL_HOST
+import gov.cdc.ocio.processingstatusapi.utils.Helpers
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -17,6 +18,7 @@ object RMQConstants {
     const val DEFAULT_USERNAME = "guest"
     const val DEFAULT_PASSWORD = "guest"
 }
+
 
 class RabbitMQUtil(config: ApplicationConfig,configurationPath: String? = null) {
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
@@ -50,13 +52,13 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     try {
         connection = factory.newConnection()
-        LOGGER.info("Connection to the RabbitMQ server was successfully established")
+        Helpers.logger.info("Connection to the RabbitMQ server was successfully established")
         channel = connection.createChannel()
-        LOGGER.info("Channel was successfully created.")
+        Helpers.logger.info("Channel was successfully created.")
     } catch (e: IOException ) {
-        LOGGER.error("IOException occurred {}", e.message)
+        Helpers.logger.error("IOException occurred {}", e.message)
     }catch (e: TimeoutException){
-        LOGGER.error("TimeoutException occurred $e.message")
+        Helpers.logger.error("TimeoutException occurred $e.message")
     }
 
 
@@ -79,12 +81,11 @@ val RabbitMQPlugin = createApplicationPlugin(
                     body: ByteArray
                 ) {
                     val routingKey = envelope.routingKey
-                    val contentType = properties.contentType
+                    //val contentType = properties.contentType
                     val deliveryTag = envelope.deliveryTag
 
-                    // Process the message components here
                     val message = String(body, Charsets.UTF_8)
-                    println("Received message: $message with routingKey: $routingKey")
+                    Helpers.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
                     RabbitMQProcessor().validateMessage(message)
 
 
@@ -93,7 +94,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                 }
             })
         }catch (e: IOException){
-            LOGGER.error("IOException occurred failed to process message from the queue $e.message")
+            Helpers.logger.error("IOException occurred failed to process message from the queue $e.message")
         }
 
     }

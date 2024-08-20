@@ -51,8 +51,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
         }
     }
-   //return modules(listOf(cosmosModule , configModule))
-    return modules(listOf(configModule))
+   return modules(listOf(cosmosModule , configModule))
 }
 
 /**
