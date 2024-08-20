@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
+import java.util.*
 
 
 /**
@@ -10,36 +11,50 @@ import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
  * @property uploadId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property stageName String?
+ * @property dataStreamRoute String?
+ * @property messageMetadata MessageMetadata?
+ * @property StageInfo StageInfo?
+ * @property tags String?
+ * @property data Lost<KeyValue>?
  * @property contentType String?
- * @property content String?
+ * @property content Any?
  */
 class CreateReportSBMessage: ServiceBusMessage() {
 
     @SerializedName("upload_id")
-    val uploadId: String? = null
+    var uploadId: String? = null
 
     @SerializedName("data_stream_id")
-    val dataStreamId: String? = null
+    var dataStreamId: String? = null
 
     @SerializedName("data_stream_route")
-    val dataStreamRoute: String? = null
+    var dataStreamRoute: String? = null
 
-    @SerializedName("stage_name")
-    val stageName: String? = null
+    @SerializedName("dex_ingest_datetime")
+    var dexIngestDateTime: Date? = null
+
+    @SerializedName("message_metadata")
+    var messageMetadata: MessageMetadata? = null
+
+    @SerializedName("stage_info")
+    var stageInfo: StageInfo? = null
+
+    @SerializedName("tags")
+    var tags: Map<String,String>? = null
+
+    @SerializedName("data")
+    var data: Map<String,String>? = null
+
+    @SerializedName("jurisdiction")
+    var jurisdiction: String? = null
+
+    @SerializedName("sender_id")
+    var senderId: String? = null
 
     @SerializedName("content_type")
-    val contentType: String? = null
-
-    @SerializedName("message_id")
-    var messageId: String? = null
-
-    @SerializedName("status")
-    var status : String? = null
+    var contentType: String? = null
 
     // content will vary depending on content_type so make it any.  For example, if content_type is json then the
     // content type will be a Map<*, *>.
     var content: Any? = null
-
-
 }

@@ -3,7 +3,9 @@
     "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
     "title": "Base Report",
     "type": "object",
-    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_timestamp", "sender_id", "status", "stage_info", "content_type"],
+
+    "required": ["report_schema_version", "upload_id", "data_stream_id", "data_stream_route", "dex_ingest_datetime", "sender_id", "stage_info", "content_type"],
+
     "if": {
         "properties": {
             "content_type": {
@@ -45,8 +47,8 @@
         "data_producer_id": {
             "type": "string"
         },
-        "dex_ingest_timestamp": {
-            "$ref": "#/$defs/timestamp"
+        "dex_ingest_datetime": {
+            "$ref": "#/$defs/datetime"
         },
         "message_metadata": {
             "$ref": "#/$defs/messageMetadata",
@@ -73,7 +75,7 @@
             "type": "string",
             "format": "uuid"
         },
-        "timestamp": {
+        "datetime": {
             "type": "string",
             "format": "date-time"
         },
@@ -100,26 +102,36 @@
             }
         },
         "stageInfo": {
-            "service": {
-                "type": "string",
-                "description": "Name of the service associated with this report."
-            },
-            "stage": {
-                "type": "string",
-                "description": "Action the stage was conducting when providing this report."
-            },
-            "version": {
-                "type": "string",
-                "description": "Version of the stage providing this report"
-            },
-            "status": {
-                "type": "string",
-                "enum": ["SUCCESS", "FAILURE"]
-            },
-            "issues": {
-                "type": "array",
-                "items": {
-                    "type": "object",
+            "type": "object",
+            "required": [
+                "service",
+                "action",
+                "status",
+                "start_processing_time",
+                "end_processing_time"
+            ],
+            "properties": {
+                "service": {
+                    "type": "string",
+                    "description": "Name of the service associated with this report."
+                },
+                "action": {
+                    "type": "string",
+                    "description": "Action the stage was conducting when providing this report."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Version of the stage providing this report"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "SUCCESS",
+                        "FAILURE"
+                    ]
+                },
+                "issues": {
+                    "type": [ "array", "null" ],
                     "properties": {
                         "level": {
                             "type": "string",
@@ -132,13 +144,13 @@
                             "type": "string"
                         }
                     }
+                },
+                "start_processing_time": {
+                    "$ref": "#/$defs/datetime"
+                },
+                "end_processing_time": {
+                    "$ref": "#/$defs/datetime"
                 }
-            },
-            "start_processing_time": {
-                "$ref": "#/$defs/timestamp"
-            },
-            "end_processing_time": {
-                "$ref": "#/$defs/timestamp"
             }
         },
         "keyValueMap": {

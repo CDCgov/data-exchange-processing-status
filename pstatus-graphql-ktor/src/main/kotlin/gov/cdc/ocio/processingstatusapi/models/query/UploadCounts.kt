@@ -16,5 +16,9 @@ data class UploadCounts(
 
     var uploadId: String? = null,
 
-    var latestTimestamp: Date? = null
+    var latestTimestamp: Date? = null,
+
+    var jurisdiction: String? = null,
+
+    var senderId: String? = null
 )

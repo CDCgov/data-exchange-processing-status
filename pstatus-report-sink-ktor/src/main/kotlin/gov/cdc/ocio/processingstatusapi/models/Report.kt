@@ -1,22 +1,30 @@
 package gov.cdc.ocio.processingstatusapi.models
 
-
 import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
+import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
 import java.util.*
+
 
 /**
  * Report for a given stage.
  *
+ * @property id String?
  * @property uploadId String?
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property stageName String?
+ * @property dexIngestDateTime Date?
+ * @property messageMetadata MessageMetadata?
+ * @property stageInfo StageInfo?
+ * @property tags Map<String, String>?
+ * @property data Map<String, String>?
  * @property contentType String?
- * @property messageId String?
- * @property status String?
- * @property content String?
+ * @property jurisdiction String?
+ * @property senderId String?
+ * @property content Any?
  * @property timestamp Date
+ * @constructor
  */
 open class Report(
 
@@ -34,17 +42,29 @@ open class Report(
     @SerializedName("data_stream_route")
     var dataStreamRoute: String? = null,
 
-    @SerializedName("stage_name")
-    var stageName: String? = null,
+    @SerializedName("dex_ingest_datetime")
+    var dexIngestDateTime: Date? = null,
+
+    @SerializedName("message_metadata")
+    var messageMetadata: MessageMetadata? = null,
+
+    @SerializedName("stage_info")
+    var stageInfo: StageInfo? = null,
+
+    @SerializedName("tags")
+    var tags: Map<String, String>? = null,
+
+    @SerializedName("data")
+    var data: Map<String, String>? = null,
 
     @SerializedName("content_type")
     var contentType : String? = null,
 
-    @SerializedName("message_id")
-    var messageId: String? = null,
+    @SerializedName("jurisdiction")
+    var jurisdiction: String? = null,
 
-    @SerializedName("status")
-    var status : String? = null,
+    @SerializedName("sender_id")
+    var senderId: String? = null,
 
     var content: Any? = null,
 

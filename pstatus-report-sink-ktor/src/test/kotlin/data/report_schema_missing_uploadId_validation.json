@@ -6,11 +6,11 @@
 	"jurisdiction": "SMOKE",
 	"sender_id": "APHL",
 	"data_producer_id": "smoke-test-data-producer",
-	"dex_ingest_timestamp": "2024-07-10T15:40:01Z",
+	"dex_ingest_datetime": "2024-07-10T15:40:01Z",
 	"message_metadata": null,
 	"stage_info": {
 		"service": "HL7v2 Pipeline",
-		"stage": "RECEIVER",
+		"action": "RECEIVER",
 		"version": "0.0.49-SNAPSHOT",
 		"status": "SUCCESS",
 		"issues": null,
