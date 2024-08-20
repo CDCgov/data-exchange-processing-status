@@ -187,15 +187,14 @@ class UploadStatusLoader: CosmosLoader() {
             uploadsStatus.items.add(uploadStatus)
         }
 
-
-//        SortUtils.sortByField(uploadsStatus, sortBy.toString(), sortOrder.toString())
-
         uploadsStatus.summary.pageNumber = pageNumberAsInt
         uploadsStatus.summary.pageSize = pageSize
         uploadsStatus.summary.numberOfPages = numberOfPages
         uploadsStatus.summary.totalItems = totalItems
-        uploadsStatus.summary.senderIds = senderIds
-        uploadsStatus.summary.jurisdictions = jurisdictions
+        uploadsStatus.summary.senderIds = senderIds.toMutableList()
+        uploadsStatus.summary.jurisdictions = jurisdictions.toMutableList()
+
+        SortUtils.sortByField(uploadsStatus, sortBy.toString(), sortOrder.toString())
 
         return uploadsStatus
     }

@@ -23,7 +23,7 @@ object DateUtils {
             var dateFormat = FastDateFormat.getInstance(DATE_FORMAT)
             // Parse the date string to a Date object
             val date = dateFormat.parse(dateStr)
-            return date.time / 1000 // convert to secs from millisecs
+            return date.time // time with millisecs
         } catch (e: ParseException) {
             throw BadRequestException("Failed to parse $fieldName: $dateStr.  Format should be: ${DATE_FORMAT}.")
         }
