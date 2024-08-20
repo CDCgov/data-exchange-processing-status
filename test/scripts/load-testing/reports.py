@@ -22,28 +22,11 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, with
     "dex_ingest_datetime": "%s",
     "status": "SUCCESS",
     "disposition_type": "%s",
-    "messageMetadata": {
-       "type": "object",
-       "properties": {
-          "message_uuid": {
-             "type": "UUID",
-             "description": "Unique identifier for the message associated with this report.  Null if not applicable."
-          },
-          "message_hash": {
-             "type": "string",
-             "description": "MD5 hash of the message content."
-          },
-          "aggregation": {
-             "type": "string",
-             "enum": ["SINGLE", "BATCH"],
-             "description": "Enumeration: [SINGLE, BATCH]."
-          },
-          "message_index": {
-             "type": "integer",
-             "description": "Index of the message; e.g. row if csv."
-          }
-
-       }
+    "message_metadata": {
+       "message_uuid": "5a1fff57-2ea1-4a64-81de-aa7f3096a1ce",
+       "message_hash": "38c2cc0dcc05f2b68c4287040cfcf71",
+       "aggregation": "SINGLE",
+       "message_index": 1
     },
     "stage_info": {
        "service": "HL7v2 Pipeline",
@@ -55,12 +38,10 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, with
        "end_processing_time": "2024-07-10T15:40:10.228+00:00"
     },
     "tags": {
-       "$ref": "test-ref",
-       "description": "Optional tag(s) associated with this report."
+       "tag_field1": "value1"
     },
     "data": {
-       "$ref": "keyValueMap",
-       "description": "Optional data associated with this report."
+       "data_field1": "value1"
     },
     "content_type": "application/json",
     "content": %s
