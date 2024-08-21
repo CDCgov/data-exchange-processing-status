@@ -1,4 +1,0 @@
-graphql:
-  enabled: true
-  graphiql: # enables the /graphiql endpoint to test calls against your graph.
-    enabled: true
