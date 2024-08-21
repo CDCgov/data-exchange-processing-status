@@ -20,7 +20,7 @@ object RMQConstants {
 }
 
 
-class RabbitMQUtil(config: ApplicationConfig,configurationPath: String? = null) {
+class RabbitMQService(config: ApplicationConfig, configurationPath: String? = null) {
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private val configPath= if (configurationPath != null) "$configurationPath." else ""
     val queue = config.tryGetString("${configPath}queue_name") ?: ""
@@ -42,7 +42,7 @@ class RabbitMQUtil(config: ApplicationConfig,configurationPath: String? = null) 
 val RabbitMQPlugin = createApplicationPlugin(
     name = "RabbitMQ",
     configurationPath = "rabbitMQ",
-    createConfiguration = ::RabbitMQUtil) {
+    createConfiguration = ::RabbitMQService) {
 
     val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
