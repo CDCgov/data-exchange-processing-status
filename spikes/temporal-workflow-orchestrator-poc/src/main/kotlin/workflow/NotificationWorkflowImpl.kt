@@ -6,7 +6,7 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+
 
 class NotificationWorkflowImpl : NotificationWorkflow {
 
@@ -33,8 +33,8 @@ class NotificationWorkflowImpl : NotificationWorkflow {
         val formatter = DateTimeFormatter.ofPattern("HH:mm:ssXXX")
         val timeToRunParsed = LocalTime.parse(timeToRun, formatter)
         val now = LocalTime.now(ZoneOffset.UTC)
-        val dayOfWeek= ZonedDateTime.now(ZoneOffset.UTC).dayOfWeek.toString().substring(0, 2)
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        val dayOfWeek= ZonedDateTime.now(ZoneOffset.UTC).dayOfWeek.toString().substring(0, 2).capitalizeWords()
+
 
         val waitTime = if (timeToRunParsed.isAfter(now)) {
             Duration.between(now, timeToRunParsed)
@@ -60,4 +60,12 @@ class NotificationWorkflowImpl : NotificationWorkflow {
         // Simulated check logic
         return false
     }
+
+    private fun String.capitalizeWords(delimiter: String = " ") =
+        split(delimiter).joinToString(delimiter) { word ->
+
+            val smallCaseWord = word.lowercase()
+            smallCaseWord.replaceFirstChar(Char::titlecaseChar)
+
+        }
 }

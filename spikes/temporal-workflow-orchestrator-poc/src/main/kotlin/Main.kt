@@ -24,8 +24,8 @@ fun main() {
         workflowOptions
     )
 
-    val daysToRun = listOf("MO", "TU", "WE", "TH", "FR","SA","SU")
-    val timeToRun = "16:05:25+00:00"
+    val daysToRun = listOf("Mo", "Tu", "We", "Th", "Fr","Sa","Su")
+    val timeToRun = "16:11:25+00:00"
 
     workflow.checkUploadAndNotify(
         dataStreamId = "dataStreamId",
@@ -36,3 +36,6 @@ fun main() {
         deliveryReference = "xph6@cdc.gov"
     )
 }
+
+
+

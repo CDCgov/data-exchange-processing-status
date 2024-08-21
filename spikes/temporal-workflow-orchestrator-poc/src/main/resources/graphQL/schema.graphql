@@ -1,0 +1,13 @@
+# schema.graphql
+type Mutation {
+    subscribeDeadlineCheck(
+        dataStreamId: String!,
+        dataStreamRoute: String!,
+        jurisdiction: String!,
+        daysToRun: String!,
+        timeToRun: String!,
+        deliveryReference: String!
+    ): String
+}
+
+
