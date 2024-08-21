@@ -84,5 +84,5 @@ data class ReportDeadLetter(
     var deadLetterReasons: List<String>? = null,
 
     @GraphQLDescription("Schemas used to validate the report")
-    var validationSchemas: List<String>? = null
+    var validationSchemas: List<String>? = null,
 )
