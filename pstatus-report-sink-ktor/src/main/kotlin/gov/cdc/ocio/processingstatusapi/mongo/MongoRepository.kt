@@ -10,16 +10,35 @@ import org.bson.BsonDocument
 import org.bson.BsonInt64
 
 
+/**
+ * Base class for all processing status repositories
+ *
+ * @property reportsCollection Collection
+ * @property reportsDeadLetterCollection Collection
+ */
 open class ProcessingStatusRepository {
 
+    // Common interface for the reports collection
     open lateinit var reportsCollection: Collection
 
+    // Common interface for the reports deadletter collection
     open lateinit var reportsDeadLetterCollection: Collection
 }
 
+/**
+ * Mongo repository implementation
+ *
+ * @property mongoClient MongoClient?
+ * @property reportsDatabase MongoDatabase?
+ * @property reportsMongoCollection MongoCollection<(Document..Document?)>?
+ * @property reportsDeadLetterMongoCollection MongoCollection<(Document..Document?)>?
+ * @property reportsCollection Collection
+ * @property reportsDeadLetterCollection Collection
+ * @constructor
+ */
 class MongoRepository(uri: String, databaseName: String): ProcessingStatusRepository() {
 
-    private var mongoClient: MongoClient? = null// = MongoClients.create(uri)
+    private var mongoClient: MongoClient? = null
 
     private val reportsDatabase = connectToDatabase(uri, databaseName)
 
