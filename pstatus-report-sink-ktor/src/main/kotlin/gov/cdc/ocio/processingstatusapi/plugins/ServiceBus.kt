@@ -88,7 +88,7 @@ val AzureServiceBus = createApplicationPlugin(
         }
     }
 
-    on(MonitoringEvent(ApplicationStarted)) { application ->
+    on(MonitoringEvent(ApplicationStarted)) { _ ->
         logger.info("Server is started")
         receiveMessages()
     }

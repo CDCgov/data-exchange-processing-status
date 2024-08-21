@@ -68,6 +68,7 @@ class ServiceBusProcessor {
                 val isValid = isJsonValid(sbMessage)
                 if (!isValid)
                     sendToDeadLetter("Validation failed.  The message is not in JSON format.")
+                    return
             } else
                 validateJsonSchema(message)
 
