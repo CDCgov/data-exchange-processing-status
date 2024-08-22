@@ -2,8 +2,6 @@ package gov.cdc.ocio.processingnotifications.cache
 
 import gov.cdc.ocio.processingnotifications.DeadlineCheckSubscription
 import gov.cdc.ocio.processingnotifications.DeadlineCheckSubscriptionResult
-import gov.cdc.ocio.processingnotifications.model.DeadLineCheckNotificationSubscription
-
 /**
  * This class is a service that interacts with InMemory Cache in order to subscribe/unsubscribe users
  */
@@ -16,29 +14,20 @@ class InMemoryCacheService {
      *
 
      */
-    fun updateDeadlineCheckNotificationPreferences(deadLineCheckSubscription: DeadlineCheckSubscription): DeadlineCheckSubscriptionResult {
+    fun updateDeadlineCheckSubscriptionPreferences(workflowId:String, deadLineCheckSubscription: DeadlineCheckSubscription): DeadlineCheckSubscriptionResult {
         try {
-             return  InMemoryCache.updateDeadLineCheckCacheForSubscription(deadLineCheckSubscription)
+             return  InMemoryCache.updateDeadLineCheckCacheForSubscription(workflowId,deadLineCheckSubscription)
         } catch (e: Exception) {
             throw e
         }
     }
 
-    /**
-     * This methods checks for subscription rule and gets the subscriptionId.
-     * In turn uses the subscription Id to retrieve the NotificationSubscription details
-     * @param ruleId String
-     * @return Boolean
-     */
-    fun getSubscription(ruleId: String): List<DeadLineCheckNotificationSubscription> {
+    fun updateDeadlineCheckUnSubscriptionPreferences(workflowId:String): DeadlineCheckSubscriptionResult {
         try {
-            val subscriptionId = InMemoryCache.getSubscriptionId(ruleId)
-            if (subscriptionId != null) {
-                return InMemoryCache.getSubscriptionDetails(subscriptionId).orEmpty()
-            }
-            return emptyList()
+            return  InMemoryCache.updateDeadLineCheckCacheForUnSubscription(workflowId)
         } catch (e: Exception) {
             throw e
         }
     }
+
 }

@@ -18,6 +18,7 @@ fun Application.module() {
     }
     routing {
         subscribeDeadlineCheckRoute()
+        unsubscribeDeadlineCheck()
     }
 
 }

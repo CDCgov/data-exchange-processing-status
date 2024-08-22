@@ -95,8 +95,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
         daysToRun: List<String>,
         timeToRun: String,
         deliveryReference: String
-    )
-            : DeadlineCheckSubscriptionResult {
+    ): DeadlineCheckSubscriptionResult {
         val url = "$deadlineCheckSubscriptionUrl/subscribe/deadlineCheck"
 
         return runBlocking {
@@ -123,6 +122,41 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
             }
         }
     }
+
+    /**
+     *  SubscribeEmail function which inturn uses the http client to invoke the notifications ktor microservice route to subscribe
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param email String
+     * @param stageName String
+     * @param statusType String
+     */
+
+    @GraphQLDescription("UnSubscribe Deadline Check")
+    @Suppress("unused")
+    fun unsubscribeDeadlineCheck(
+        subscriptionId: String
+    ): DeadlineCheckSubscriptionResult {
+        val url = "$deadlineCheckSubscriptionUrl/unsubscribe/deadlineCheck"
+
+        return runBlocking {
+            try {
+                val response = client.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        DeadlineCheckUnSubscription(subscriptionId)
+                    )
+                }
+                return@runBlocking ProcessResponse(response)
+            } catch (e: Exception) {
+                if (e.message!!.contains("Status:")) {
+                    ProcessErrorCodes(url, e, null)
+                }
+                throw Exception(serviceUnavailable)
+            }
+        }
+    }
+
 
 
     companion object {

@@ -13,7 +13,7 @@ import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.worker.WorkerFactory
 
 
-class DeadLineCheckNotificationService {
+class DeadLineCheckSubscriptionService {
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
     fun run(subscription: DeadlineCheckSubscription):
             DeadlineCheckSubscriptionResult {
@@ -43,26 +43,7 @@ class DeadLineCheckNotificationService {
             NotificationWorkflow::class.java,
             workflowOptions
         )
-
-       /* val daysToRun = listOf("Mo", "Tu", "We", "Th", "Fr","Sa","Su")
-        val timeToRun = "17:12:25+00:00"*/
- /* try {
-      workflow.checkUploadAndNotify(
-          dataStreamId = dataStreamId,
-          dataStreamRoute = dataStreamRoute,
-          jurisdiction = jurisdiction,
-          daysToRun = daysToRun,
-          timeToRun = timeToRun,
-          deliveryReference = deliveryReference
-      )
-  }
-  catch (e:Exception){
-   val error = e.message
-  }*/
-
-        WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, daysToRun, timeToRun, deliveryReference)
-        //return true
-
-        return cacheService.updateDeadlineCheckNotificationPreferences(subscription)
+       val execution =    WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, daysToRun, timeToRun, deliveryReference)
+       return cacheService.updateDeadlineCheckSubscriptionPreferences(execution.workflowId,subscription)
     }
 }
