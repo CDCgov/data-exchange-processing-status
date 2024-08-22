@@ -112,7 +112,6 @@ val AzureServiceBus = createApplicationPlugin(
  */
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
-
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
         message.messageId,

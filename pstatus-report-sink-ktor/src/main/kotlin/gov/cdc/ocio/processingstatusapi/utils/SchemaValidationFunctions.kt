@@ -31,6 +31,7 @@ import javax.activation.MimeType
 
 
 object Helpers {
+    //Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     val gson: Gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .create()
@@ -46,6 +47,7 @@ object Helpers {
         return schemaFilePath?.let { File(it.toURI()) }?.takeIf { it.exists() }
 
     }
+
     lateinit var reason: String
 }
 

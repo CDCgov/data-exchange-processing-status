@@ -5,15 +5,17 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
 import gov.cdc.ocio.processingstatusapi.utils.*
 
-
+/**
+ * The RabbitMQ service is additional interface for receiving and validating reports for local runs.
+ */
 class RabbitMQProcessor {
 
     @Throws(BadRequestException::class)
     fun validateMessage(messageAsString: String){
         try {
-            Helpers.logger.debug { "Message received as original $messageAsString" }
+            Helpers.logger.info { "Received message from RabbitMQ: $messageAsString" }
             val message = checkAndReplaceDeprecatedFields(messageAsString)
-            Helpers.logger.debug { "Message after checking for depreciated fields $messageAsString" }
+            Helpers.logger.info { "RabbitMQ message after checking for depreciated fields $messageAsString" }
 
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
