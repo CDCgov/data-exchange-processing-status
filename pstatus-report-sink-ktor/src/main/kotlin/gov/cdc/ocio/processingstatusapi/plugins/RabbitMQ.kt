@@ -127,6 +127,9 @@ private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connect
     application.environment.monitor.unsubscribe(ApplicationStopped){}
 }
 
+/**
+ * The main application module which runs always
+ */
 fun Application.rabbitMQModule() {
     install(RabbitMQPlugin)
 }
