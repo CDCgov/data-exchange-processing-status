@@ -37,6 +37,7 @@ class DeadLineCheckSubscriptionService {
 
         val workflowOptions = WorkflowOptions.newBuilder()
             .setTaskQueue(taskQueue)
+            .setCronSchedule(timeToRun) // Cron schedule: 15 5 * * 1-5 - Every week day at  5:15a
             .build()
 
         val workflow = client.newWorkflowStub(
