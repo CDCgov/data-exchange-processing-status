@@ -1,6 +1,6 @@
 from datetime import datetime
 
-def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, with_issues, content):
+def create_report_msg_from_content(upload_id, service, action, dex_ingest_datetime, replace, with_issues, content):
     disposition_type = "ADD"
     if replace:
         disposition_type = "REPLACE"
@@ -29,8 +29,8 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, with
        "message_index": 1
     },
     "stage_info": {
-       "service": "HL7v2 Pipeline",
-       "action": "RECEIVER",
+       "service": "%s",
+       "action": "%s",
        "version": "0.0.49-SNAPSHOT",
        "status": "%s",
        "issues": %s,
@@ -46,7 +46,7 @@ def create_report_msg_from_content(upload_id, dex_ingest_datetime, replace, with
     "content_type": "application/json",
     "content": %s
 }
-""" % (upload_id, dex_ingest_datetime, disposition_type, status, issues, content)
+""" % (upload_id, dex_ingest_datetime, disposition_type, service, action, status, issues, content)
     return message
 
 def create_upload(upload_id, dex_ingest_datetime, offset, size):
@@ -78,7 +78,7 @@ def create_upload(upload_id, dex_ingest_datetime, offset, size):
 }
 """ % (upload_id, offset, size)
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, True, False, content)
+    return create_report_msg_from_content(upload_id, "upload", "upload-status", dex_ingest_datetime, True, False, content)
 
 def create_routing(upload_id, dex_ingest_datetime):
     content = """
@@ -92,7 +92,7 @@ def create_routing(upload_id, dex_ingest_datetime):
 }
 """ % (datetime.utcnow().replace(microsecond=0).isoformat() + 'Z')
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(upload_id, "routing", "blob-file-copy", dex_ingest_datetime, False, False, content)
 
 def create_hl7_debatch_report(upload_id, dex_ingest_datetime):
     content = """
@@ -127,7 +127,7 @@ def create_hl7_debatch_report(upload_id, dex_ingest_datetime):
 }
 """
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(upload_id, "hl7v2", "debatch", dex_ingest_datetime, False, False, content)
 
 def create_hl7_validation(upload_id, dex_ingest_datetime, line):
     content = """
@@ -172,5 +172,5 @@ def create_hl7_validation(upload_id, dex_ingest_datetime, line):
 }
 """ % (line, line)
 
-    return create_report_msg_from_content(upload_id, dex_ingest_datetime, False, True, content)
+    return create_report_msg_from_content(upload_id, "hl7v2", "structure-validation", dex_ingest_datetime, False, True, content)
 
