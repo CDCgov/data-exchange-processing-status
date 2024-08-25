@@ -72,7 +72,7 @@ val AzureServiceBus = createApplicationPlugin(
         try {
             // Create an instance of the processor through the ServiceBusClientBuilder
             logger.info("Starting the Azure service bus processor")
-            logger.info("connectionString = $connectionString, queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
+            logger.info("queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
             processorQueueClient.start()
             processorTopicClient.start()
         }
