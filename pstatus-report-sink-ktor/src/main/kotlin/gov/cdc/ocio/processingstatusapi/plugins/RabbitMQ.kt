@@ -81,13 +81,11 @@ val RabbitMQPlugin = createApplicationPlugin(
                     body: ByteArray
                 ) {
                     val routingKey = envelope.routingKey
-                    //val contentType = properties.contentType
                     val deliveryTag = envelope.deliveryTag
 
                     val message = String(body, Charsets.UTF_8)
                     Helpers.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
                     RabbitMQProcessor().validateMessage(message)
-
 
                     // Acknowledge the message
                     channel.basicAck(deliveryTag, false)
