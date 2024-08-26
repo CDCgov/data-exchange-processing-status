@@ -26,7 +26,21 @@ interface Collection {
      * @return Boolean
      */
     fun <T> createItem(
+        id: String,
         item: T,
         partitionKey: String?
     ): Boolean
+
+    /**
+     * Delete an item in the collection
+     *
+     * @param itemId String?
+     * @param partitionKey String?
+     * @return Any
+     */
+    fun deleteItem(
+        itemId: String?,
+        partitionKey: String?
+    ): Any
+
 }

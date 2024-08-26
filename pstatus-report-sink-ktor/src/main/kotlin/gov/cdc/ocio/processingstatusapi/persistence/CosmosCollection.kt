@@ -22,7 +22,7 @@ class CosmosCollection(private val cosmosContainer: CosmosContainer?): Collectio
         return items?.toList() ?: listOf()
     }
 
-    override fun <T> createItem(item: T, partitionKey: String?): Boolean {
+    override fun <T> createItem(id: String, item: T, partitionKey: String?): Boolean {
         val response = cosmosContainer?.createItem(
             item,
             PartitionKey(partitionKey),
@@ -33,6 +33,15 @@ class CosmosCollection(private val cosmosContainer: CosmosContainer?): Collectio
             in 200..201 -> true
             else -> false
         }
+    }
+
+    override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
+        val response = cosmosContainer?.deleteItem(
+            itemId,
+            PartitionKey(partitionKey),
+            CosmosItemRequestOptions()
+        )
+        return response != null
     }
 
 }

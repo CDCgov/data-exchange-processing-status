@@ -16,10 +16,7 @@ import com.networknt.schema.ValidationMessage
 import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
-import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
-import gov.cdc.ocio.processingstatusapi.models.reports.Source
-import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
+import gov.cdc.ocio.processingstatusapi.models.reports.*
 import mu.KotlinLogging
 import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
@@ -259,14 +256,14 @@ class ServiceBusProcessor {
             // Try to get the metadata as JSON object, but if not, get it as a string
             val messageMetadataAsNode = runCatching { jsonNode.get("message_metadata") }.getOrNull()
             messageMetadata = runCatching { when (messageMetadataAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<MessageMetadata>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<MessageMetadataSB>() {})
                 else -> null
             }}.getOrNull()
 
             // Try to get the stage info as JSON object, but if not, get it as a string
             val stageInfoAsNode = runCatching { jsonNode.get("stage_info") }.getOrNull()
             stageInfo = runCatching { when (stageInfoAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(stageInfoAsNode, object : TypeReference<StageInfo>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(stageInfoAsNode, object : TypeReference<StageInfoSB>() {})
                 else -> null
             }}.getOrNull()
 

@@ -1,9 +1,65 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
 import java.util.*
 
+class MessageMetadataSB {
+
+    @SerializedName("message_uuid")
+    @JsonProperty("message_uuid")
+    var messageUUID : String? = null
+
+    @SerializedName("message_hash")
+    @JsonProperty("message_hash")
+    var messageHash: String? = null
+
+    var aggregation: Aggregation? = null
+
+    @SerializedName("message_index")
+    @JsonProperty("message_index")
+    var messageIndex: Int? = null
+
+    fun toMessageMetadata(): MessageMetadata = MessageMetadata().apply {
+        this.messageUUID = this@MessageMetadataSB.messageUUID
+        this.messageHash = this@MessageMetadataSB.messageHash
+        this.aggregation = this@MessageMetadataSB.aggregation
+        this.messageIndex = this@MessageMetadataSB.messageIndex
+    }
+}
+
+class StageInfoSB {
+
+    var service : String? = null
+
+    var action: String? = null
+
+    var version: String? = null
+
+    var status: Status? = null
+
+    var issues: List<Issue>? = null
+
+    @SerializedName("start_processing_time")
+    @JsonProperty("start_processing_time")
+    var startProcessingTime: Date? = null
+
+    @SerializedName("end_processing_time")
+    @JsonProperty("end_processing_time")
+    var endProcessingTime: Date? = null
+
+    fun toStageInfo(): StageInfo = StageInfo().apply {
+        this.service = this@StageInfoSB.service
+        this.action = this@StageInfoSB.action
+        this.version = this@StageInfoSB.version
+        this.status = this@StageInfoSB.status
+        this.issues = this@StageInfoSB.issues
+        this.startProcessingTime = this@StageInfoSB.startProcessingTime
+        this.endProcessingTime = this@StageInfoSB.endProcessingTime
+    }
+
+}
 
 /**
  * Create a report service bus message.
@@ -34,16 +90,16 @@ class CreateReportSBMessage: ServiceBusMessage() {
     var dexIngestDateTime: Date? = null
 
     @SerializedName("message_metadata")
-    var messageMetadata: MessageMetadata? = null
+    var messageMetadata: MessageMetadataSB? = null
 
     @SerializedName("stage_info")
-    var stageInfo: StageInfo? = null
+    var stageInfo: StageInfoSB? = null
 
     @SerializedName("tags")
-    var tags: Map<String,String>? = null
+    var tags: Map<String, String>? = null
 
     @SerializedName("data")
-    var data: Map<String,String>? = null
+    var data: Map<String, String>? = null
 
     @SerializedName("jurisdiction")
     var jurisdiction: String? = null

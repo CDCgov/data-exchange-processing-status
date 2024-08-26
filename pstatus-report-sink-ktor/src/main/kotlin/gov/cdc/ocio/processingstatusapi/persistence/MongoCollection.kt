@@ -15,10 +15,14 @@ class MongoCollection(private val mongoCollection: com.mongodb.client.MongoColle
         TODO("Not yet implemented")
     }
 
-    override fun <T> createItem(item: T, partitionKey: String?): Boolean {
+    override fun <T> createItem(id: String, item: T, partitionKey: String?): Boolean {
         val document = Document.parse(Gson().toJson(item))
         val result = mongoCollection.insertOne(document)
         return result.wasAcknowledged()
+    }
+
+    override fun deleteItem(itemId: String?, partitionKey: String?): Any {
+        TODO("Not yet implemented")
     }
 
 }
