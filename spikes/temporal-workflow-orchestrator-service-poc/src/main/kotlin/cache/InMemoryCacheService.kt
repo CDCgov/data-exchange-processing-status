@@ -1,7 +1,9 @@
 package gov.cdc.ocio.processingnotifications.cache
 
-import gov.cdc.ocio.processingnotifications.DeadlineCheckSubscription
-import gov.cdc.ocio.processingnotifications.DeadlineCheckSubscriptionResult
+
+import gov.cdc.ocio.processingnotifications.model.BaseSubscription
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
+
 /**
  * This class is a service that interacts with InMemory Cache in order to subscribe/unsubscribe users
  */
@@ -14,17 +16,17 @@ class InMemoryCacheService {
      *
 
      */
-    fun updateDeadlineCheckSubscriptionPreferences(workflowId:String, deadLineCheckSubscription: DeadlineCheckSubscription): DeadlineCheckSubscriptionResult {
+    fun updateSubscriptionPreferences(workflowId:String, baseSubscription: BaseSubscription): WorkflowSubscriptionResult {
         try {
-             return  InMemoryCache.updateDeadLineCheckCacheForSubscription(workflowId,deadLineCheckSubscription)
+             return  InMemoryCache.updateCacheForSubscription(workflowId,baseSubscription)
         } catch (e: Exception) {
             throw e
         }
     }
 
-    fun updateDeadlineCheckUnSubscriptionPreferences(workflowId:String): DeadlineCheckSubscriptionResult {
+    fun updateDeadlineCheckUnSubscriptionPreferences(workflowId:String): WorkflowSubscriptionResult {
         try {
-            return  InMemoryCache.updateDeadLineCheckCacheForUnSubscription(workflowId)
+            return  InMemoryCache.updateCacheForUnSubscription(workflowId)
         } catch (e: Exception) {
             throw e
         }

@@ -15,4 +15,10 @@ class NotificationActivitiesImpl : NotificationActivities {
         println(msg)
         emailService.sendEmail("TEST EMAIL- Temporal Workflow execution update",msg, deliveryReference)
     }
+
+    override fun sendUploadErrorsNotification(error: String, deliveryReference: String) {
+        val msg ="Errors while upload. $error"
+        println(msg)
+        emailService.sendEmail("TEST EMAIL-UPLOAD ERRORS NOTIFICATION",msg, deliveryReference)
+    }
 }

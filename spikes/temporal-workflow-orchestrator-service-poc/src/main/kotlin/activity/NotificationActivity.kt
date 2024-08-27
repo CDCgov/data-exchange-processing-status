@@ -12,4 +12,9 @@ interface NotificationActivities {
         jurisdiction: String,
         deliveryReference: String
     )
+    @ActivityMethod
+    fun sendUploadErrorsNotification(
+       error:String,
+       deliveryReference: String
+    )
 }

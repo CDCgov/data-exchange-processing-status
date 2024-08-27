@@ -1,37 +1,21 @@
 @file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package gov.cdc.ocio.processingnotifications
 
+import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
+import gov.cdc.ocio.processingnotifications.model.DeadlineCheckUnSubscription
+import gov.cdc.ocio.processingnotifications.model.UploadErrorsNotificationSubscription
+import gov.cdc.ocio.processingnotifications.model.UploadErrorsNotificationUnSubscription
 import gov.cdc.ocio.processingnotifications.service.DeadLineCheckSubscriptionService
 import gov.cdc.ocio.processingnotifications.service.DeadLineCheckUnSubscriptionService
+import gov.cdc.ocio.processingnotifications.service.UploadErrorsNotificationSubscriptionService
+import gov.cdc.ocio.processingnotifications.service.UploadErrorsNotificationUnSubscriptionService
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 
-/**
- * DeadlineCheck Subscription data class which is serialized back and forth
- */
-data class DeadlineCheckSubscription( val dataStreamId: String,
-                                      val dataStreamRoute: String,
-                                      val jurisdiction: String,
-                                      val daysToRun: List<String>,
-                                      val timeToRun: String,
-                                      val deliveryReference: String)
 
-/**
- * DeadlineCheckUnSubscription data class which is serialized back and forth when we need to unsubscribe the workflow by the subscriptionId
- */
-data class DeadlineCheckUnSubscription(val subscriptionId:String)
-
-/**
- * The resultant class for subscription of email/webhooks
- */
-data class DeadlineCheckSubscriptionResult(
-    var subscriptionId: String? = null,
-    var message: String? = "",
-    var deliveryReference:String
-)
 
 /**
  * Route to subscribe for DeadlineCheck subscription
@@ -58,3 +42,27 @@ fun Route.unsubscribeDeadlineCheck() {
 }
 
 
+/**
+ * Route to subscribe for DeadlineCheck subscription
+ */
+fun Route.subscribeUploadErrorsNotification() {
+    post("/subscribe/uploadErrorsNotification") {
+        val subscription = call.receive<UploadErrorsNotificationSubscription>()
+        val uploadErrorsNotificationSubscription = UploadErrorsNotificationSubscription(subscription.dataStreamId, subscription.dataStreamRoute,
+            subscription.jurisdiction,
+            subscription.daysToRun, subscription.timeToRun,  subscription.deliveryReference)
+        val result = UploadErrorsNotificationSubscriptionService().run(uploadErrorsNotificationSubscription)
+        call.respond(result)
+
+    }
+}
+/**
+ * Route to Unsubscribe for DeadlineCheck unsubscription
+ */
+fun Route.unsubscribeUploadErrorsNotification() {
+    post("/unsubscribe/uploadErrorsNotification") {
+        val subscription = call.receive<UploadErrorsNotificationUnSubscription>()
+        val result = UploadErrorsNotificationUnSubscriptionService().run(subscription.subscriptionId)
+        call.respond(result)
+    }
+}

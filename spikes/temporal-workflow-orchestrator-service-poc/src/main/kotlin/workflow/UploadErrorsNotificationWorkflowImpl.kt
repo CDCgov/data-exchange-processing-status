@@ -6,7 +6,7 @@ import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
 import java.time.Duration
 
-class NotificationWorkflowImpl : NotificationWorkflow {
+class UploadErrorsNotificationWorkflowImpl : UploadErrorsNotificationWorkflow {
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
         ActivityOptions.newBuilder()
@@ -20,7 +20,7 @@ class NotificationWorkflowImpl : NotificationWorkflow {
             .build()
     )
 
-    override fun checkUploadAndNotify(
+    override fun checkUploadErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
@@ -28,22 +28,27 @@ class NotificationWorkflowImpl : NotificationWorkflow {
         timeToRun: String,
         deliveryReference: String
     ) {
-
         try {
             // Logic to check if the upload occurred*/
-            val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
-            if (!uploadOccurred) {
-                activities.sendNotification(dataStreamId, dataStreamRoute, jurisdiction, deliveryReference)
+            val error = checkUploadErrors(dataStreamId, dataStreamRoute, jurisdiction)
+            if (error.isNotEmpty()) {
+                activities.sendUploadErrorsNotification(error,deliveryReference)
             }
         } catch (e: Exception) {
         }
-
     }
 
-    private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
-        // add check logic here
-        return false
+    private fun checkUploadErrors(dataStreamId: String, dataStreamRoute: String, jurisdiction: String): String {
+        var error = ""
+        if (dataStreamId.isEmpty()) {
+            error = "DataStreamId is missing from the upload."
+        }
+        if (dataStreamRoute.isEmpty()) {
+            error += "DataStreamRoute is missing from the upload."
+        }
+        if (jurisdiction.isEmpty()) {
+            error += "Jurisdiction is missing from the upload"
+        }
+        return error
     }
-
-
 }

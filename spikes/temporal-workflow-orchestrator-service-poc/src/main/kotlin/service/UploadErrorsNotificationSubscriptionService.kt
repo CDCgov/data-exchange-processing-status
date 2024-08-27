@@ -1,13 +1,12 @@
 package gov.cdc.ocio.processingnotifications.service
 
-
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
-import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
+import gov.cdc.ocio.processingnotifications.model.UploadErrorsNotificationSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.model.getCronExpression
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.UploadErrorsNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.UploadErrorsNotificationWorkflowImpl
 
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
@@ -15,9 +14,9 @@ import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.worker.WorkerFactory
 
 
-class DeadLineCheckSubscriptionService {
+class UploadErrorsNotificationSubscriptionService {
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    fun run(subscription: DeadlineCheckSubscription):
+    fun run(subscription: UploadErrorsNotificationSubscription):
             WorkflowSubscriptionResult {
         val dataStreamId = subscription.dataStreamId
         val dataStreamRoute = subscription.dataStreamRoute
@@ -29,10 +28,10 @@ class DeadLineCheckSubscriptionService {
         val service = WorkflowServiceStubs.newLocalServiceStubs()
         val client = WorkflowClient.newInstance(service)
         val factory = WorkerFactory.newInstance(client)
-        val taskQueue = "notificationTaskQueue"
+        val taskQueue = "uploadErrorsNotificationTaskQueue"
 
         val worker = factory.newWorker(taskQueue)
-        worker.registerWorkflowImplementationTypes(NotificationWorkflowImpl::class.java)
+        worker.registerWorkflowImplementationTypes(UploadErrorsNotificationWorkflowImpl::class.java)
         worker.registerActivitiesImplementations(NotificationActivitiesImpl())
 
         factory.start()
@@ -43,10 +42,10 @@ class DeadLineCheckSubscriptionService {
             .build()
 
         val workflow = client.newWorkflowStub(
-            NotificationWorkflow::class.java,
+            UploadErrorsNotificationWorkflow::class.java,
             workflowOptions
         )
-       val execution =    WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, daysToRun, timeToRun, deliveryReference)
-       return cacheService.updateSubscriptionPreferences(execution.workflowId,subscription)
+        val execution =  WorkflowClient.start(workflow::checkUploadErrorsAndNotify, dataStreamId, dataStreamRoute, jurisdiction,daysToRun, timeToRun, deliveryReference)
+        return cacheService.updateSubscriptionPreferences(execution.workflowId,subscription)
     }
 }

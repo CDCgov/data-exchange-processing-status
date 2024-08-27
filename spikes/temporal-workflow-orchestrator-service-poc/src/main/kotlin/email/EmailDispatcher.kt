@@ -44,7 +44,7 @@ class EmailDispatcher {
      * Method to send email
 
      */
-     fun sendEmail(subject:String,body:String, toEmail:String): Unit {
+    fun sendEmail(subject:String,body:String, toEmail:String): Unit {
 
         try{
 
@@ -57,17 +57,15 @@ class EmailDispatcher {
             val session = Session.getInstance(props, null)
             sendEmail(session, toEmalId, subject,body)
         } catch(_: Exception) {
-         //   logger.info("Unable to send email")
+            //   logger.info("Unable to send email")
         }
 
     }
-    fun sendEmail(session: Session?, toEmail: String?, subject: String?, body: String?) {
+
+
+    private fun sendEmail(session: Session?, toEmail: String?, subject: String?, body: String?) {
         try {
             val msg = MimeMessage(session)
-            // TODO: Uncomment this later
-//            val replyToEmail = System.getenv("ReplyToEmail")
-//            val replyToName = System.getenv("ReplyToName")
-
             val replyToEmail = "donotreply@cdc.gov"
             val replyToName = "DoNOtReply (DEX Team)"
             //set message headers
@@ -96,13 +94,9 @@ class EmailDispatcher {
     private fun checkSMTPStatusWithoutCredentials(): Boolean {
         // This is to get the status from curl statement to see if server is connected
         try {
-            // TODO : Uncomment this later
-//            val smtpServer = System.getenv("SmtpHostServer")
-//            val port = System.getenv("SmtpHostPort").toInt()
 
             val smtpServer = "smtpgw.cdc.gov"
             val port = 25
-
             val socket = Socket(smtpServer, port)
             val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
             // Read the server response

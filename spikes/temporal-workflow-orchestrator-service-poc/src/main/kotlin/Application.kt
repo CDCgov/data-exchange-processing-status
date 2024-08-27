@@ -19,6 +19,8 @@ fun Application.module() {
     routing {
         subscribeDeadlineCheckRoute()
         unsubscribeDeadlineCheck()
+        subscribeUploadErrorsNotification()
+        unsubscribeUploadErrorsNotification()
     }
 
 }

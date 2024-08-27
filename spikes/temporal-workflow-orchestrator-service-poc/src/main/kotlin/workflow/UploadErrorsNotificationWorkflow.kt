@@ -4,9 +4,10 @@ import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 
 @WorkflowInterface
-interface NotificationWorkflow {
+interface UploadErrorsNotificationWorkflow {
+
     @WorkflowMethod
-    fun checkUploadAndNotify(
+    fun checkUploadErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,

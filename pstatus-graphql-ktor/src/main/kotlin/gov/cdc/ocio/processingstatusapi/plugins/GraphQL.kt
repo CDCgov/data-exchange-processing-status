@@ -8,6 +8,7 @@ import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
 import gov.cdc.ocio.processingstatusapi.mutations.DeadlineCheckSubscriptionMutationService
 import gov.cdc.ocio.processingstatusapi.mutations.NotificationsMutationService
+import gov.cdc.ocio.processingstatusapi.mutations.UploadErrorsNotificationSubscriptionMutationService
 import gov.cdc.ocio.processingstatusapi.queries.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
@@ -94,8 +95,8 @@ fun Application.graphQLModule() {
             )
             mutations= listOf(
                 NotificationsMutationService(),
-                DeadlineCheckSubscriptionMutationService()
-
+                DeadlineCheckSubscriptionMutationService(),
+                UploadErrorsNotificationSubscriptionMutationService()
             )
 //            subscriptions = listOf(
 //                ErrorSubscriptionService()

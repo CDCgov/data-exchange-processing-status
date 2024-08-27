@@ -8,17 +8,17 @@ import io.temporal.client.WorkflowStub
 import io.temporal.serviceclient.WorkflowServiceStubs
 
 
-class DeadLineCheckUnSubscriptionService {
+class UploadErrorsNotificationUnSubscriptionService {
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
     fun run(subscriptionId: String):
             WorkflowSubscriptionResult {
         val service = WorkflowServiceStubs.newLocalServiceStubs()
         val client = WorkflowClient.newInstance(service)
 
-         // Retrieve the workflow by its ID
+        // Retrieve the workflow by its ID
         val workflow: WorkflowStub = client.newUntypedWorkflowStub(subscriptionId)
         // Cancel the workflow
-       workflow.cancel()
-      return cacheService.updateDeadlineCheckUnSubscriptionPreferences(subscriptionId)
+        workflow.cancel()
+        return cacheService.updateDeadlineCheckUnSubscriptionPreferences(subscriptionId)
     }
 }

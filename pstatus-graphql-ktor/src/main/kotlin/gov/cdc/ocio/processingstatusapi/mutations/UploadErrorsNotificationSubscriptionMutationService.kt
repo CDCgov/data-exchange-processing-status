@@ -1,5 +1,3 @@
-@file:Suppress("PLUGIN_IS_NOT_ENABLED")
-
 package gov.cdc.ocio.processingstatusapi.mutations
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
@@ -27,7 +25,7 @@ import kotlinx.serialization.Serializable
  * @param statusType String
  */
 @Serializable
-data class DeadlineCheckSubscription( val dataStreamId: String,
+data class UploadErrorsNotificationSubscription( val dataStreamId: String,
                                       val dataStreamRoute: String,
                                       val jurisdiction: String,
                                       val daysToRun: List<String>,
@@ -39,7 +37,7 @@ data class DeadlineCheckSubscription( val dataStreamId: String,
  * @param subscriptionId
  */
 @Serializable
-data class DeadlineCheckUnSubscription(val subscriptionId:String)
+data class UploadErrorsNotificationUnSubscription(val subscriptionId:String)
 
 /**
  * SubscriptionResult is the response class which is serialized back and forth which is in turn used for getting the response which contains the subscriberId , message and the status of subscribe/unsubscribe operations
@@ -49,7 +47,7 @@ data class DeadlineCheckUnSubscription(val subscriptionId:String)
  * @param message
  */
 @Serializable
-data class DeadlineCheckSubscriptionResult(
+data class UploadErrorsNotificationSubscriptionResult(
     var subscriptionId: String? = null,
     var message: String? = "",
     var deliveryReference:String
@@ -59,8 +57,8 @@ data class DeadlineCheckSubscriptionResult(
  * The graphQL mutation class for notifications
  */
 
-class DeadlineCheckSubscriptionMutationService : Mutation {
-    private val deadlineCheckSubscriptionUrl: String = System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
+class UploadErrorsNotificationSubscriptionMutationService : Mutation {
+    private val uploadErrorsNotificationSubscriptionUrl: String = System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
     private val serviceUnavailable =
         "DeadlineCheckSubscription service is unavailable and no connection has been established. Make sure the service is running"
     private val client = HttpClient {
@@ -89,7 +87,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
 
     @GraphQLDescription("Subscribe Deadline Check")
     @Suppress("unused")
-    fun subscribeDeadlineCheck(
+    fun subscribeUploadErrorsNotification(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
@@ -97,14 +95,14 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
         timeToRun: String,
         deliveryReference: String
     ): DeadlineCheckSubscriptionResult {
-        val url = "$deadlineCheckSubscriptionUrl/subscribe/deadlineCheck"
+        val url = "$uploadErrorsNotificationSubscriptionUrl/subscribe/uploadErrorsNotification"
 
         return runBlocking {
             try {
                 val response = client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(
-                        DeadlineCheckSubscription(
+                        UploadErrorsNotificationSubscription(
                             dataStreamId,
                             dataStreamRoute,
                             jurisdiction,
@@ -135,10 +133,10 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
 
     @GraphQLDescription("UnSubscribe Deadline Check")
     @Suppress("unused")
-    fun unsubscribeDeadlineCheck(
+    fun unsubscribeUploadErrorsNotification(
         subscriptionId: String
     ): DeadlineCheckSubscriptionResult {
-        val url = "$deadlineCheckSubscriptionUrl/unsubscribe/deadlineCheck"
+        val url = "$uploadErrorsNotificationSubscriptionUrl/unsubscribe/uploadErrorsNotification"
 
         return runBlocking {
             try {
@@ -157,6 +155,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
             }
         }
     }
+
 
 
 

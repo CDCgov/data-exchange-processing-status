@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingnotifications.cache
 
-import gov.cdc.ocio.processingnotifications.*
-import gov.cdc.ocio.processingnotifications.model.DeadLineCheckNotificationSubscription
+import gov.cdc.ocio.processingnotifications.model.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.HashMap
 
@@ -15,7 +14,7 @@ object InMemoryCache {
     Cache to store "SubscriptionId ->  Subscriber Info (Email or Url and type of subscription)"
     subscriberCache = HashMap<String, NotificationSubscriber>()
     */
-    private val subscriberCache = HashMap<String, MutableList<DeadLineCheckNotificationSubscription>>()
+    private val subscriberCache = HashMap<String, MutableList<NotificationSubscriptionResponse>>()
 
 
     /**
@@ -28,29 +27,29 @@ object InMemoryCache {
 
      * @return String
      */
-    fun updateDeadLineCheckCacheForSubscription(workflowId:String,deadlineCheckSubscription: DeadlineCheckSubscription): DeadlineCheckSubscriptionResult {
+    fun updateCacheForSubscription(workflowId:String, baseSubscription: BaseSubscription): WorkflowSubscriptionResult {
        // val uuid = generateUniqueSubscriptionId()
         try {
 
-          updateDeadLineCheckSubscriberCache(workflowId,
-              DeadLineCheckNotificationSubscription(subscriptionId = workflowId,deadlineCheckSubscription= deadlineCheckSubscription))
-          return DeadlineCheckSubscriptionResult(subscriptionId = workflowId, message = "Successfully subscribed for $workflowId", deliveryReference = deadlineCheckSubscription.deliveryReference)
+          updateSubscriberCache(workflowId,
+              NotificationSubscriptionResponse(subscriptionId = workflowId, subscription = baseSubscription))
+          return WorkflowSubscriptionResult(subscriptionId = workflowId, message = "Successfully subscribed for $workflowId", deliveryReference = baseSubscription.deliveryReference)
       }
       catch (e: Exception){
-          return DeadlineCheckSubscriptionResult(subscriptionId = workflowId, message = e.message, deliveryReference = deadlineCheckSubscription.deliveryReference)
+          return WorkflowSubscriptionResult(subscriptionId = workflowId, message = e.message, deliveryReference = baseSubscription.deliveryReference)
       }
 
     }
 
-    fun updateDeadLineCheckCacheForUnSubscription(workflowId:String): DeadlineCheckSubscriptionResult {
+    fun updateCacheForUnSubscription(workflowId:String): WorkflowSubscriptionResult {
         // val uuid = generateUniqueSubscriptionId()
         try {
 
-            unsubscribeDeadLineCheckSubscriber(workflowId)
-            return DeadlineCheckSubscriptionResult(subscriptionId = workflowId, message = "Successfully unsubscribed Id = $workflowId", deliveryReference = "")
+            unsubscribeSubscriberCache(workflowId)
+            return WorkflowSubscriptionResult(subscriptionId = workflowId, message = "Successfully unsubscribed Id = $workflowId", deliveryReference = "")
         }
         catch (e: Exception){
-            return DeadlineCheckSubscriptionResult(subscriptionId = workflowId, message = e.message,"")
+            return WorkflowSubscriptionResult(subscriptionId = workflowId, message = e.message,"")
         }
 
     }
@@ -61,15 +60,15 @@ object InMemoryCache {
      * This method adds to the subscriber cache the new entry of subscriptionId to the NotificationSubscriber
      *
      * @param subscriptionId String
-     * @param deadLineCheckNotificationSubscription DeadLineCheckNotificationSubscription
+
      */
-    private fun updateDeadLineCheckSubscriberCache(subscriptionId: String,
-                                                   deadLineCheckNotificationSubscription: DeadLineCheckNotificationSubscription) {
+    private fun updateSubscriberCache(subscriptionId: String,
+                                      notificationSubscriptionResponse: NotificationSubscriptionResponse) {
         //logger.debug("Subscriber added in subscriber cache")
         readWriteLock.writeLock().lock()
         try {
             subscriberCache.putIfAbsent(subscriptionId, mutableListOf())
-            subscriberCache[subscriptionId]?.add(deadLineCheckNotificationSubscription)
+            subscriberCache[subscriptionId]?.add(notificationSubscriptionResponse)
         } finally {
             readWriteLock.writeLock().unlock()
         }
@@ -84,7 +83,7 @@ object InMemoryCache {
      * @param subscriptionId String
      * @return Boolean
      */
-    private fun unsubscribeDeadLineCheckSubscriber(subscriptionId: String): Boolean {
+    private fun unsubscribeSubscriberCache(subscriptionId: String): Boolean {
         if (subscriberCache.containsKey(subscriptionId)) {
             val subscribers = subscriberCache[subscriptionId]?.filter { it.subscriptionId == subscriptionId }.orEmpty().toMutableList()
 
