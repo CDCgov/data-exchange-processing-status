@@ -25,7 +25,6 @@ enum class MessageSystem{
  * @param environment ApplicationEnvironment
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
-    val msgType = environment.config.property("ktor.message_system").getString()
     val cosmosModule = module {
         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
@@ -37,6 +36,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     }
 
     val configModule = module {
+        val msgType = environment.config.property("ktor.message_system").getString()
+        single {msgType} // add msgType to Koin Modules
+
         when (msgType) {
             MessageSystem.AZURE_SERVICE_BUS.toString() -> {
                 single(createdAtStart = true) {

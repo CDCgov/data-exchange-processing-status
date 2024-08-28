@@ -3,9 +3,11 @@ package gov.cdc.ocio.processingstatusapi
 import com.azure.core.exception.ResourceNotFoundException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.microsoft.azure.servicebus.primitives.ServiceBusException
+import com.rabbitmq.client.Connection
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -45,6 +47,14 @@ class HealthCheckCosmosDb: HealthCheckSystem() {
 class HealthCheckServiceBus: HealthCheckSystem() {
     override val service: String = "Azure Service Bus"
 }
+/**
+ * Concrete implementation of the RabbitMQ health check.
+ *
+ * @property service String
+ */
+class HealthCheckRabbitMQ: HealthCheckSystem() {
+    override val service: String = "RabbitMQ"
+}
 
 /**
  * Run health checks for the service.
@@ -68,6 +78,7 @@ class HealthCheck {
  * @property logger KLogger
  * @property cosmosConfiguration CosmosConfiguration
  * @property azureServiceBusConfiguration AzureServiceBusConfiguration
+ * @property rabbitMQServiceConfiguration RabbitMQServiceConfiguration
  */
 class HealthQueryService: KoinComponent {
 
@@ -77,6 +88,11 @@ class HealthQueryService: KoinComponent {
 
     private val azureServiceBusConfiguration by inject<AzureServiceBusConfiguration>()
 
+    private val rabbitMQServiceConfiguration by inject<RabbitMQServiceConfiguration>()
+
+    private val msgType: String by inject()
+
+
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
      *
@@ -85,8 +101,12 @@ class HealthQueryService: KoinComponent {
     fun getHealth(): HealthCheck {
         var cosmosDBHealthy = false
         var serviceBusHealthy = false
+        var rabbitMQHealthy = false
         val cosmosDBHealth = HealthCheckCosmosDb()
-        val serviceBusHealth = HealthCheckServiceBus()
+        lateinit var rabbitMQHealth: HealthCheckRabbitMQ
+        lateinit var serviceBusHealth: HealthCheckServiceBus
+
+
         val time = measureTimeMillis {
             try {
                 cosmosDBHealthy = isCosmosDBHealthy(config = cosmosConfiguration)
@@ -95,21 +115,43 @@ class HealthQueryService: KoinComponent {
                 cosmosDBHealth.healthIssues = ex.message
                 logger.error("CosmosDB is not healthy: ${ex.message}")
             }
-
-            try {
-                serviceBusHealthy = isServiceBusHealthy(config = azureServiceBusConfiguration)
-                serviceBusHealth.status = "UP"
-            } catch (ex: Exception) {
-                serviceBusHealth.healthIssues = ex.message
-                logger.error("Azure Service Bus is not healthy: ${ex.message}")
+            // selectively check health of the messaging service based on msgType
+            when (msgType) {
+                MessageSystem.AZURE_SERVICE_BUS.toString() -> {
+                    serviceBusHealth = HealthCheckServiceBus()
+                    try {
+                        serviceBusHealthy = isServiceBusHealthy(config = azureServiceBusConfiguration)
+                        serviceBusHealth.status = "UP"
+                    } catch (ex: Exception) {
+                        serviceBusHealth.healthIssues = ex.message
+                        logger.error("Azure Service Bus is not healthy: ${ex.message}")
+                    }
+                }
+                MessageSystem.RABBITMQ.toString() -> {
+                    rabbitMQHealth = HealthCheckRabbitMQ()
+                    try {
+                        rabbitMQHealthy = isRabbitMQHealthy(config = rabbitMQServiceConfiguration)
+                        rabbitMQHealth.status = "UP"
+                    } catch (ex: Exception) {
+                        rabbitMQHealth.healthIssues = ex.message
+                        logger.error("RabbitMQ is not healthy: ${ex.message}")
+                    }
+                }
             }
         }
-
         return HealthCheck().apply {
-            status = if (cosmosDBHealthy && serviceBusHealthy) "UP" else "DOWN"
+            status = if (cosmosDBHealthy && (serviceBusHealthy || rabbitMQHealthy)) "UP" else "DOWN"
             totalChecksDuration = formatMillisToHMS(time)
             dependencyHealthChecks.add(cosmosDBHealth)
-            dependencyHealthChecks.add(serviceBusHealth)
+            when (msgType) {
+                MessageSystem.AZURE_SERVICE_BUS.toString() -> {
+                    dependencyHealthChecks.add(serviceBusHealth)
+                }
+                MessageSystem.RABBITMQ.toString() -> {
+                    dependencyHealthChecks.add(rabbitMQHealth)
+                }
+            }
+
         }
     }
 
@@ -142,6 +184,24 @@ class HealthQueryService: KoinComponent {
         adminClient.getTopic(config.topicName)
 
         return true
+    }
+
+    /**
+     * Check whether rabbitMQ is healthy.
+     *
+     * @return Boolean
+     */
+    @Throws(ResourceNotFoundException::class, ServiceBusException::class)
+    private fun isRabbitMQHealthy(config: RabbitMQServiceConfiguration): Boolean {
+        var rabbitMQConnection: Connection? = null
+        return try {
+            rabbitMQConnection = config.getConnectionFactory().newConnection()
+            rabbitMQConnection.isOpen
+        }catch (e: Exception) {
+            throw Exception("Failed to establish connection to RabbitMQ server.")
+        } finally {
+            rabbitMQConnection?.close()
+        }
     }
 
     /**
