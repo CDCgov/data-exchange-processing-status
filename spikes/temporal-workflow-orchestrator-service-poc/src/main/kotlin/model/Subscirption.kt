@@ -48,9 +48,10 @@ data class UploadErrorsNotificationSubscription( override val dataStreamId: Stri
 
 /**
  * DeadlineCheck Subscription data class which is serialized back and forth
+ * daysToRun:["Mon","Tue","Wed"]
+ * timeToRun:"45 16 * *" - this should be the format
  */
 data class UploadErrorsNotificationUnSubscription(val subscriptionId:String)
-
 
 fun getCronExpression(daysToRun: List<String>, timeToRun: String):String{
     val daysToRunInStr =daysToRun.joinToString(separator = ",")

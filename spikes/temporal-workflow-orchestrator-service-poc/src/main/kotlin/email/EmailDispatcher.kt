@@ -12,33 +12,6 @@ import javax.mail.internet.InternetAddress
 
 class EmailDispatcher {
 
-    /*fun sendEmailUsingSendGrid(
-        apiKey: String,
-        toEmail: String,
-        fromEmail: String,
-        subject: String,
-        body: String
-    ) {
-        val from = Email(fromEmail)
-        val to = Email(toEmail)
-        val content = Content("text/plain", body)
-        val mail = Mail(from, subject, to, content)
-
-        val sendGrid = SendGrid(apiKey)
-        val request = Request()
-
-        try {
-            request.method = Method.POST
-            request.endpoint = "mail/send"
-            request.body = mail.build()
-            val response = sendGrid.api(request)
-            println("Response status: ${response.statusCode}")
-            println("Response body: ${response.body}")
-            println("Response headers: ${response.headers}")
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
-    }*/
 
     /**
      * Method to send email
