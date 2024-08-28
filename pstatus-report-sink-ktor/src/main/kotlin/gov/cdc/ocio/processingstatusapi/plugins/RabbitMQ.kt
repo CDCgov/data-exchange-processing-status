@@ -5,7 +5,7 @@ import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_HOST
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_PASSWORD
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_USERNAME
 import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_VIRTUAL_HOST
-import gov.cdc.ocio.processingstatusapi.utils.Helpers
+import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -20,7 +20,7 @@ object RMQConstants {
 }
 
 
-class RabbitMQService(config: ApplicationConfig, configurationPath: String? = null) {
+class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private val configPath= if (configurationPath != null) "$configurationPath." else ""
     val queue = config.tryGetString("${configPath}queue_name") ?: ""
@@ -42,7 +42,7 @@ class RabbitMQService(config: ApplicationConfig, configurationPath: String? = nu
 val RabbitMQPlugin = createApplicationPlugin(
     name = "RabbitMQ",
     configurationPath = "rabbitMQ",
-    createConfiguration = ::RabbitMQService) {
+    createConfiguration = ::RabbitMQServiceConfiguration) {
 
     val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
@@ -52,13 +52,13 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     try {
         connection = factory.newConnection()
-        Helpers.logger.info("Connection to the RabbitMQ server was successfully established")
+        SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
         channel = connection.createChannel()
-        Helpers.logger.info("Channel was successfully created.")
+        SchemaValidation.logger.info("Channel was successfully created.")
     } catch (e: IOException ) {
-        Helpers.logger.error("IOException occurred {}", e.message)
+        SchemaValidation.logger.error("IOException occurred {}", e.message)
     }catch (e: TimeoutException){
-        Helpers.logger.error("TimeoutException occurred $e.message")
+        SchemaValidation.logger.error("TimeoutException occurred $e.message")
     }
 
 
@@ -84,7 +84,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                     val deliveryTag = envelope.deliveryTag
 
                     val message = String(body, Charsets.UTF_8)
-                    Helpers.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
+                    SchemaValidation.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
                     RabbitMQProcessor().validateMessage(message)
 
                     // Acknowledge the message
@@ -92,7 +92,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                 }
             })
         }catch (e: IOException){
-            Helpers.logger.error("IOException occurred failed to process message from the queue $e.message")
+            SchemaValidation.logger.error("IOException occurred failed to process message from the queue $e.message")
         }
 
     }

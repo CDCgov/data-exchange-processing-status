@@ -13,9 +13,9 @@ class RabbitMQProcessor {
     @Throws(BadRequestException::class)
     fun validateMessage(messageAsString: String){
         try {
-            Helpers.logger.info { "Received message from RabbitMQ: $messageAsString" }
+            SchemaValidation.logger.info { "Received message from RabbitMQ: $messageAsString" }
             val message = checkAndReplaceDeprecatedFields(messageAsString)
-            Helpers.logger.info { "RabbitMQ message after checking for depreciated fields $messageAsString" }
+            SchemaValidation.logger.info { "RabbitMQ message after checking for depreciated fields $messageAsString" }
 
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
@@ -26,26 +26,26 @@ class RabbitMQProcessor {
 
             if (isValidationDisabled) {
                 if (!isJsonValid(messageAsString)){
-                    Helpers.logger.error { "Message is not in correct JSON format." }
+                    SchemaValidation.logger.error { "Message is not in correct JSON format." }
                     sendToDeadLetter("Validation failed.The message is not in JSON format.")
                     return
                 }
             }else{
                 if (isReportValidJson){
-                    Helpers.logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
+                    SchemaValidation.logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
                     validateJsonSchema(message)
                 }else{
-                    Helpers.logger.error { "Validation is enabled, but the message is not in correct JSON format." }
+                    SchemaValidation.logger.error { "Validation is enabled, but the message is not in correct JSON format." }
                     sendToDeadLetter("The message is not in correct JSON format.")
                     return
                 }
             }
-            Helpers.logger.info { "The message is valid creating report."}
-            createReport(Helpers.gson.fromJson(message, CreateReportSBMessage::class.java))
+            SchemaValidation.logger.info { "The message is valid creating report."}
+            createReport(SchemaValidation.gson.fromJson(message, CreateReportSBMessage::class.java))
         } catch (e: BadRequestException) {
-            Helpers.logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
+            SchemaValidation.logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
         }catch(e: JsonSyntaxException){
-            Helpers.logger.error(e) { "Failed to parse rabbitMQ message ${e.message}" }
+            SchemaValidation.logger.error(e) { "Failed to parse rabbitMQ message ${e.message}" }
         }
     }
 }

@@ -45,7 +45,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
             MessageSystem.RABBITMQ.toString() -> {
                 single(createdAtStart = true) {
-                    RabbitMQService(environment.config, configurationPath = "rabbitMQ")
+                    RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
                 }
 
             }

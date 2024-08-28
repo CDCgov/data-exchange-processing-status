@@ -6,8 +6,8 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
 import gov.cdc.ocio.processingstatusapi.utils.*
-import gov.cdc.ocio.processingstatusapi.utils.Helpers.gson
-import gov.cdc.ocio.processingstatusapi.utils.Helpers.logger
+import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
+import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
 import java.util.*
 
 /**

@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.ToNumberPolicy
+
 import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
@@ -18,40 +16,20 @@ import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
-import gov.cdc.ocio.processingstatusapi.utils.Helpers.logger
-import gov.cdc.ocio.processingstatusapi.utils.Helpers.reason
+import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
+import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.reason
 
-import mu.KotlinLogging
 import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
 import java.time.Instant
 import java.util.*
 import javax.activation.MimeType
 
-
-
-object Helpers {
-    //Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
-    val gson: Gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .create()
-    val logger = KotlinLogging.logger {}
-
-    /**
-     * Loads a base schema file from resources folder and returns file object.
-     * @param schemaDirectoryPath The directory path where schema file is located.
-     * @param fileName The name of the schema file to load.
-     */
-    fun loadSchemaFile(schemaDirectoryPath: String, fileName: String): File?{
-        val schemaFilePath = javaClass.classLoader.getResource("$schemaDirectoryPath/$fileName")
-        return schemaFilePath?.let { File(it.toURI()) }?.takeIf { it.exists() }
-
-    }
-
-    lateinit var reason: String
-}
-
-
+/**
+ * Function checks if input string is a valid JSON
+ * @param jsonString to be checked
+ * @return boolean true if its valid JSON otherwise false
+ */
 fun isJsonValid(jsonString: String): Boolean {
     return try {
         val mapper = jacksonObjectMapper()
@@ -65,6 +43,9 @@ fun isJsonValid(jsonString: String): Boolean {
 /**
  * Checks for depreciated fields within message that are still accepted for backward compatability.
  * If any depreciated fields are found, they are replaced with their corresponding new fields.
+ *
+ * @param messageAsString message to be checked against depreciated fields.
+ * @return updated message if depreciated fields were found.
  */
 fun checkAndReplaceDeprecatedFields(messageAsString: String): String {
     var message = messageAsString
@@ -77,7 +58,8 @@ fun checkAndReplaceDeprecatedFields(messageAsString: String): String {
     return message
 }
 /**
- * Function to validate report attributes for missing required fields, for schema validation and malformed content message using networknt/json-schema-validator
+ * Function to validate report attributes for missing required fields, for schema validation and malformed content message using networknt/json-schema-validator.
+ *
  * @param message ReceivedMessage(from Azure Service Bus, RabbitMQ Queue or AWS SNS/SQS)
  * @throws BadRequestException
  */
@@ -92,14 +74,15 @@ fun validateJsonSchema(message: String) {
 
     val createReportMessage: CreateReportSBMessage
     try {
-        createReportMessage = Helpers.gson.fromJson(message, CreateReportSBMessage::class.java)
+        createReportMessage = SchemaValidation.gson.fromJson(message, CreateReportSBMessage::class.java)
         //convert to Json
         val reportJsonNode = objectMapper.readTree(message)
         // get schema version, and use appropriate base schema version
         val reportSchemaVersion = getSchemaVersion(message)?:defaultSchemaVersion
+        logger.info ("The version of schema report $reportSchemaVersion")
         val baseSchemaFileName = "base.$reportSchemaVersion.schema.json"
 
-        val schemaFile = Helpers.loadSchemaFile(schemaDirectoryPath, baseSchemaFileName)?: return processError(
+        val schemaFile = SchemaValidation().loadSchemaFile(schemaDirectoryPath, baseSchemaFileName)?: return processError(
             "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
             invalidData,
             schemaFileNames,
@@ -152,7 +135,7 @@ fun validateJsonSchema(message: String) {
         val contentSchemaName = contentSchemaNameNode.asText()
         val contentSchemaVersion = contentSchemaVersionNode.asText()
         val contentSchemaFileName = "$contentSchemaName.$contentSchemaVersion.schema.json"
-        val contentSchemaFilePath = Helpers.loadSchemaFile(schemaDirectoryPath, contentSchemaFileName)
+        val contentSchemaFilePath = SchemaValidation().loadSchemaFile(schemaDirectoryPath, contentSchemaFileName)
 
         val contentSchemaFile = if (contentSchemaFilePath !=null) File(contentSchemaFilePath.toURI()) else null
         if (contentSchemaFile == null || !contentSchemaFile.exists()) {
@@ -180,7 +163,15 @@ fun validateJsonSchema(message: String) {
         processError(reason, invalidData, schemaFileNames, malformedReportSBMessage)
     }
 }
-@Throws(BadRequestException::class)
+
+/**
+ * Creates report using ReportManager() and persists to Cosmos DB.
+ *
+ * @param createReportMessage The message that contains details about the report to be processed
+ * The message may come from Azure Service Bus, AWS SQS or RabbitMQ.
+ * @throws BadRequestException
+ * @throws Exception
+ */
 fun createReport(createReportMessage: CreateReportSBMessage) {
     try {
         val uploadId = createReportMessage.uploadId
@@ -207,15 +198,16 @@ fun createReport(createReportMessage: CreateReportSBMessage) {
             Source.SERVICEBUS
         )
     } catch (e: BadRequestException) {
-        throw e
+        logger.error("createReport - bad request exception: ${e.message}")
     } catch (e: Exception) {
-        logger.error("createReport - Failed to process message:${e.message}")
+        logger.error("createReport - Failed to process message:${e}")
     }
 }
 /**
- *  Function to send the invalid data reasons to the deadLetter queue.
+ *  Sends invalid report to dead-letter container in Cosmos DB.
  *
- *  @param reason String
+ *  @param reason String that explains the failure
+ *  @throws BadRequestException
  */
 fun sendToDeadLetter(reason:String){
     //This should not run for unit tests
@@ -226,8 +218,11 @@ fun sendToDeadLetter(reason:String){
     }
 }
 /**
- * Function to check whether the content type is json or application/json using MimeType
+ * Function to check whether the content type is json or application/json using MimeType.
+ *
  * @param contentType String
+ * @throws MimeTypeParseException
+ * @return boolean true if mimeType is `json` or `application/json` otherwise false
  */
 private fun isJsonMimeType(contentType: String): Boolean {
     return try {
@@ -237,6 +232,16 @@ private fun isJsonMimeType(contentType: String): Boolean {
         false
     }
 }
+
+/**
+ * Creates report and Sends to dead-letter container in Cosmos DB.
+ *
+ * @param invalidData list of reason(s) why report failed
+ * @param validationSchemaFileNames schema files used during validation process
+ * @param createReportMessage The message that contains details about the report to be processed
+ * The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
+ * @throws BadRequestException
+ */
 fun sendToDeadLetter(
     invalidData: MutableList<String>,
     validationSchemaFileNames: MutableList<String>,
@@ -268,17 +273,24 @@ fun sendToDeadLetter(
     }
 }
 
+/**
+ * This function parses the provided message and attempts to extract `report_schema_version` field.
+ * @param message message to be parsed
+ * @return value for `report_schema_version` field if found, otherwise `null`
+ *
+ */
 fun getSchemaVersion(message: String) :String?{
     val jsonNode = jacksonObjectMapper().readTree(message)
     return jsonNode.get("report_schema_version")?.asText().takeIf { !it.isNullOrEmpty() }
 
 }
 /**
- * Attempts to safely parse the message body into a report for deadlettering.  Note, this is needed when the
+ * Attempts to safely parse the message body into a report for dead-lettering.  Note, this is needed when the
  * content may be malformed, such as the structure not being valid JSON or elements not of the expected type.
  *
  * @param messageBody String
- * @return CreateReportSBMessage
+ * @return CreateReportSBMessage The message that contains details about the report to be processed
+ *   The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
  */
 fun safeParseMessageAsReport(messageBody: String): CreateReportSBMessage {
     val objectMapper = jacksonObjectMapper()
@@ -336,13 +348,27 @@ fun safeParseMessageAsReport(messageBody: String): CreateReportSBMessage {
     return malformedReportSBMessage
 }
 
+/**
+ * Function validates the content of the JSON node against specified JSON Schema using
+ * `networknt` JSON schema validator and calls processError() for further processing failed node.
+ *
+ * @param schemaFileName The name of the JSON schema file used for validation.
+ * @param jsonNode The node containing data to be validated.
+ * @param schemaFile The schema file read from `schemaFilePath`
+ * @param objectMapper The ObjectMapper used to read and parse the schema file.
+ * @param invalidData The list with validation error messages.
+ * @param validationSchemaFileNames The base schema file names used during the validation process
+ * @param createReportMessage The message that contains details about the report to be processed
+ *     The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
+ *
+ */
 fun validateSchemaContent(schemaFileName: String, jsonNode: JsonNode, schemaFile: File, objectMapper: ObjectMapper,
                           invalidData: MutableList<String>, validationSchemaFileNames: MutableList<String>, createReportMessage: CreateReportSBMessage) {
     val schemaNode: JsonNode = objectMapper.readTree(schemaFile)
     val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
     val schema: JsonSchema = schemaFactory.getSchema(schemaNode)
     val schemaValidationMessages: Set<ValidationMessage> = schema.validate(jsonNode)
-    println ("schema node $schemaNode factory $schemaFactory schema $schema  schemaValidationMessages $schemaValidationMessages" )
+
     if (schemaValidationMessages.isEmpty()) {
         logger.info("JSON is valid against the content schema $schema.")
     } else {
@@ -350,8 +376,6 @@ fun validateSchemaContent(schemaFileName: String, jsonNode: JsonNode, schemaFile
         schemaValidationMessages.forEach { invalidData.add(it.message) }
         processError(reason, invalidData,validationSchemaFileNames,createReportMessage)
     }
-
-
 }
 
 /**
@@ -360,7 +384,8 @@ fun validateSchemaContent(schemaFileName: String, jsonNode: JsonNode, schemaFile
  * @param reason String
  * @param invalidData MutableList<String>
  * @param validationSchemaFileNames MutableList<String>
- * @param createReportMessage CreateReportSBMessage
+ * @param createReportMessage The message that contains details about the report to be sent to dead-letter
+ *     The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
  */
 private fun processError(
     reason: String,
