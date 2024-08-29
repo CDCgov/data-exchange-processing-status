@@ -15,17 +15,17 @@ class RabbitMQProcessor {
         try {
             SchemaValidation.logger.info { "Received message from RabbitMQ: $messageAsString" }
             val message = checkAndReplaceDeprecatedFields(messageAsString)
-            SchemaValidation.logger.info { "RabbitMQ message after checking for depreciated fields $messageAsString" }
+            SchemaValidation.logger.info { "RabbitMQ message after checking for depreciated fields $message" }
 
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
              * Otherwise, proceeds with schema validation.
              */
             val isValidationDisabled = System.getenv("DISABLE_VALIDATION")?.toBoolean() ?: false
-            val isReportValidJson = isJsonValid(messageAsString)
+            val isReportValidJson = isJsonValid(message)
 
             if (isValidationDisabled) {
-                if (!isJsonValid(messageAsString)){
+                if (!isJsonValid(message)){
                     SchemaValidation.logger.error { "Message is not in correct JSON format." }
                     sendToDeadLetter("Validation failed.The message is not in JSON format.")
                     return
