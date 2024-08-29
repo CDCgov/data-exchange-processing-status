@@ -6,6 +6,7 @@ import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import com.rabbitmq.client.Connection
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
 import mu.KotlinLogging
@@ -191,7 +192,7 @@ class HealthQueryService: KoinComponent {
      *
      * @return Boolean
      */
-    @Throws(ResourceNotFoundException::class, ServiceBusException::class)
+    @Throws(BadStateException::class)
     private fun isRabbitMQHealthy(config: RabbitMQServiceConfiguration): Boolean {
         var rabbitMQConnection: Connection? = null
         return try {
