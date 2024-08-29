@@ -139,7 +139,7 @@ class ReportSchemaValidationTests {
             exceptionThrown = ex.localizedMessage.contains("File not found: hl7v2-debatch.2.0.0.schema.json")
         }
         catch(ex: BadRequestException) {
-            exceptionThrown = ex.localizedMessage.contains("Report rejected: Content schema file not found for content schema name hl7v2-debatch and schema version 2.0.0.")
+            exceptionThrown = ex.localizedMessage.contains("Report rejected: Content schema file not found for content schema name 'hl7v2-debatch' and schema version '2.0.0'.")
         }
         Assert.assertTrue(exceptionThrown)
     }

@@ -37,7 +37,7 @@ data class SubmissionDetails(
     @GraphQLDescription("Upload Id of the report")
     var uploadId: String? = null,
 
-    @GraphQLDescription("Datestamp the report was recorded in the database")
+    @GraphQLDescription("Date/time of when the report was recorded in the database")
     var dexIngestDateTime: OffsetDateTime? = null,
 
     @GraphQLDescription("DataStreamId in the report")

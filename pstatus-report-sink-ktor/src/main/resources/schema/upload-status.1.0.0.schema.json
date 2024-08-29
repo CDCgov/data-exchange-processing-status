@@ -3,12 +3,12 @@
     "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
     "title": "Upload Status Report",
     "type": "object",
-    "required": ["schema_name", "schema_version", "tguid", "offset", "size", "filename"],
+    "required": ["content_schema_name", "content_schema_version", "tguid", "offset", "size", "filename"],
     "properties": {
-        "schema_name": {
+        "content_schema_name": {
             "type": "string"
         },
-        "schema_version": {
+        "content_schema_version": {
             "type": "string"
         },
         "tguid": {
