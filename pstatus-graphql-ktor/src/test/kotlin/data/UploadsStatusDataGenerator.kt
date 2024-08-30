@@ -37,6 +37,7 @@ class UploadsStatusDataGenerator {
                 issues = mutableListOf()
                 timestamp = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC)
                 senderId = "sender1"
+                dataProducerId="dataProducer1"
                 jurisdiction = "jurisdiction1"
             },
             UploadStatus().apply {
@@ -50,6 +51,7 @@ class UploadsStatusDataGenerator {
                 issues = mutableListOf("Issue with resolution")
                 timestamp = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC)
                 senderId = "sender2"
+                dataProducerId="dataProducer2"
                 jurisdiction = "jurisdiction2"
             }
         )
@@ -91,6 +93,7 @@ class UploadsStatusDataGenerator {
                 contentType = "application/json",
                 jurisdiction = "jurisdictionXYZ",
                 senderId = "sender123",
+                dataProducerId="dataProducer123",
                 timestamp = Date(),
             ),
             ReportDao(
@@ -105,6 +108,7 @@ class UploadsStatusDataGenerator {
                 contentType = "application/json",
                 jurisdiction = "jurisdictionXYZ",
                 senderId = "sender123",
+                dataProducerId="dataProducer123",
                 timestamp = Date(), // current date and time
             ), // fill with actual fields  // fill with actual fields
         )
