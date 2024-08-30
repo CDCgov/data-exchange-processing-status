@@ -56,6 +56,7 @@ class ReportManager: KoinComponent {
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @param dispositionType DispositionType
      * @param source Source
      * @return String
@@ -76,6 +77,7 @@ class ReportManager: KoinComponent {
         content: Any?,
         jurisdiction: String?,
         senderId:String?,
+        dataProducerId: String?,
         dispositionType: DispositionType,
         source: Source
     ): String {
@@ -93,6 +95,7 @@ class ReportManager: KoinComponent {
                 content,
                 jurisdiction,
                 senderId,
+                dataProducerId,
                 dispositionType,
                 source
             )
@@ -116,6 +119,7 @@ class ReportManager: KoinComponent {
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @param dispositionType DispositionType - indicates whether to add or replace any existing reports for the given stageName.
      * @param source Source
      * @return String - report identifier
@@ -132,6 +136,7 @@ class ReportManager: KoinComponent {
                              content: Any?,
                              jurisdiction: String?,
                              senderId:String?,
+                             dataProducerId: String?,
                              dispositionType: DispositionType,
                              source: Source): String {
 
@@ -173,6 +178,7 @@ class ReportManager: KoinComponent {
                     content,
                     jurisdiction,
                     senderId,
+                    dataProducerId,
                     source
                 )
             }
@@ -191,6 +197,7 @@ class ReportManager: KoinComponent {
                     content,
                     jurisdiction,
                     senderId,
+                    dataProducerId,
                     source
                 )
             }
@@ -212,6 +219,7 @@ class ReportManager: KoinComponent {
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @param source Source
      * @return String
      * @throws BadStateException
@@ -229,6 +237,7 @@ class ReportManager: KoinComponent {
                                   content: Any?,
                                   jurisdiction: String?,
                                   senderId:String?,
+                                  dataProducerId: String?,
                                   source: Source): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
@@ -238,14 +247,13 @@ class ReportManager: KoinComponent {
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.dexIngestDateTime = dexIngestDateTime
-            this.jurisdiction = jurisdiction
-            this.senderId = senderId
             this.messageMetadata = messageMetadata
             this.stageInfo= stageInfo
             this.tags = tags
             this.data = data
             this.jurisdiction = jurisdiction
             this.senderId = senderId
+            this.dataProducerId= dataProducerId
             this.contentType = contentType
 
             if (contentType.lowercase() == "json") {
@@ -272,6 +280,7 @@ class ReportManager: KoinComponent {
      * @param content String
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @return String
      * @throws BadStateException
      */
@@ -290,6 +299,7 @@ class ReportManager: KoinComponent {
                                content: Any?,
                                jurisdiction: String?,
                                senderId:String?,
+                               dataProducerId: String?,
                                deadLetterReasons: List<String>,
                                validationSchemaFileNames:List<String>
     ): String {
@@ -302,14 +312,13 @@ class ReportManager: KoinComponent {
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.dexIngestDateTime = dexIngestDateTime
-            this.jurisdiction= jurisdiction
-            this.senderId= senderId
             this.messageMetadata= messageMetadata
             this.stageInfo= stageInfo
             this.tags= tags
             this.data= data
             this.jurisdiction= jurisdiction
             this.senderId= senderId
+            this.dataProducerId= dataProducerId
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
