@@ -28,21 +28,21 @@ class ServiceBusProcessor {
 
         try {
             logger.info { "Received message from Service Bus: $sbMessage" }
-            sbMessage = checkAndReplaceDeprecatedFields(sbMessage)
+            sbMessage = SchemaValidation().checkAndReplaceDeprecatedFields(sbMessage)
 
             logger.info { "Service Bus message after checking for depreciated fields$sbMessage" }
             val disableValidation = System.getenv("DISABLE_VALIDATION")?.toBoolean() ?: false
 
             if (disableValidation) {
-                val isValid = isJsonValid(sbMessage)
+                val isValid = SchemaValidation().isJsonValid(sbMessage)
                 if (!isValid)
                     logger.error { "Message is not in correct JSON format." }
-                    sendToDeadLetter("Validation failed.  The message is not in JSON format.")
+                    SchemaValidation().sendToDeadLetter("Validation failed.  The message is not in JSON format.")
                     return
             } else
-                validateJsonSchema(sbMessage)
+                SchemaValidation().validateJsonSchema(sbMessage)
             logger.info { "The message is valid creating report."}
-            createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
+            SchemaValidation().createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
         } catch (e: BadRequestException) {
             logger.error("Failed to validate service bus message ${e.message}")
             throw e
