@@ -32,14 +32,15 @@ data class ReportDeadLetterDao(
         this.data = this@ReportDeadLetterDao.data
         this.jurisdiction = this@ReportDeadLetterDao.jurisdiction
         this.senderId = this@ReportDeadLetterDao.senderId
+        this.dataProducerId = this@ReportDeadLetterDao.dataProducerId
         this.timestamp = this@ReportDeadLetterDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
         this.contentType = this@ReportDeadLetterDao.contentType
         this.content = this@ReportDeadLetterDao.content as? Map<*, *>
         this.dispositionType = this@ReportDeadLetterDao.dispositionType
         this.deadLetterReasons = this@ReportDeadLetterDao.deadLetterReasons
         this.validationSchemas = this@ReportDeadLetterDao.validationSchemas
-        this.jurisdiction = this@ReportDeadLetterDao.jurisdiction
-        this.senderId = this@ReportDeadLetterDao.senderId
+
+
     }
 
 }

@@ -63,6 +63,9 @@ class UploadStatus {
     @GraphQLDescription("The senderId of the unit/organization from which the file was sent")
     var senderId: String? = null
 
+    @GraphQLDescription("The dataProducerId from which the file was sent")
+    var dataProducerId: String? = null
+
     @GraphQLDescription("The jurisdiction from which the file was sent")
     var jurisdiction: String? = null
 
