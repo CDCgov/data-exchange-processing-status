@@ -312,6 +312,7 @@ class SchemaValidation {
                 createReportMessage.content!!, // it was Content I changed to ContentAsString
                 createReportMessage.jurisdiction,
                 createReportMessage.senderId,
+                createReportMessage.dataProducerId,
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
@@ -368,6 +369,7 @@ class SchemaValidation {
                     createReportMessage.content,
                     createReportMessage.jurisdiction,
                     createReportMessage.senderId,
+                    createReportMessage.dataProducerId,
                     invalidData,
                     validationSchemaFileNames
                 )
