@@ -25,6 +25,10 @@ import java.time.Instant
 import java.util.*
 import javax.activation.MimeType
 
+/**
+ * Utility class for validating reports against predefined schemas. It's intended to be re-used across supported
+ * messaging systems: Azure Service Bus, RabbitMQ and AWS SQS to ensure consistent schema validation and error handling.
+ */
 class SchemaValidation {
     companion object {
         //Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles

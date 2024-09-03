@@ -1,10 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
-import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_HOST
-import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_PASSWORD
-import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_USERNAME
-import gov.cdc.ocio.processingstatusapi.plugins.RMQConstants.DEFAULT_VIRTUAL_HOST
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
@@ -12,15 +8,22 @@ import io.ktor.server.config.*
 import org.apache.qpid.proton.TimeoutException
 import java.io.IOException
 
-object RMQConstants {
-    const val DEFAULT_HOST = "localhost"
-    const val DEFAULT_VIRTUAL_HOST = "/"
-    const val DEFAULT_USERNAME = "guest"
-    const val DEFAULT_PASSWORD = "guest"
-}
 
 
+/**
+ * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings provided in an `ApplicationConfig`.
+ * @param config `ApplicationConfig` containing the configuration settings for RabbitMQ, including connection details.
+ * @param configurationPath represents prefix used to locate environment variables specific to RabbitMQ within the configuration.
+ */
 class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+
+    companion object {
+        const val DEFAULT_HOST = "localhost"
+        const val DEFAULT_VIRTUAL_HOST = "/"
+        const val DEFAULT_USERNAME = "guest"
+        const val DEFAULT_PASSWORD = "guest"
+    }
+
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private val configPath= if (configurationPath != null) "$configurationPath." else ""
     val queue = config.tryGetString("${configPath}queue_name") ?: ""
