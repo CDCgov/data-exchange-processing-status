@@ -17,6 +17,7 @@ import java.time.OffsetDateTime
  * @property dataStreamRoute String?
  * @property jurisdiction String?
  * @property senderId String?
+ * @property dataProducerId String?
  * @property reports List<Report>
  */
 @GraphQLDescription("Contains upload details")
@@ -51,6 +52,9 @@ data class SubmissionDetails(
 
     @GraphQLDescription("SenderId mentioned in the report")
     var senderId: String? = null,
+
+    @GraphQLDescription("DataProducerId mentioned in the report")
+    var dataProducerId: String? = null,
 
     @GraphQLDescription("Array of the raw reports provided for this upload ID.")
     var reports: List<Report>? = null
