@@ -3,9 +3,7 @@ package gov.cdc.ocio.processingstatusapi
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
-import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
-import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
-import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule
+import gov.cdc.ocio.processingstatusapi.plugins.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -15,6 +13,11 @@ import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
+enum class MessageSystem{
+    AWS,
+    AZURE_SERVICE_BUS,
+    RABBITMQ
+}
 
 /**
  * Load the environment configuration values
@@ -31,12 +34,26 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         //  Create a CosmosDB config that can be dependency injected (for health checks)
         single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
     }
-    val asbConfigModule = module {
-        // Create an azure service bus config that can be dependency injected (for health checks)
-        single(createdAtStart = true) { AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus") }
-    }
 
-    return modules(listOf(cosmosModule, asbConfigModule))
+    val configModule = module {
+        val msgType = environment.config.property("ktor.message_system").getString()
+        single {msgType} // add msgType to Koin Modules
+
+        when (msgType) {
+            MessageSystem.AZURE_SERVICE_BUS.toString() -> {
+                single(createdAtStart = true) {
+                    AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus") }
+
+            }
+            MessageSystem.RABBITMQ.toString() -> {
+                single(createdAtStart = true) {
+                    RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
+                }
+
+            }
+        }
+    }
+   return modules(listOf(cosmosModule , configModule))
 }
 
 /**
@@ -52,7 +69,28 @@ fun main(args: Array<String>) {
  */
 fun Application.module() {
     configureRouting()
-    serviceBusModule()
+
+    //determine which messaging system module to load
+    val messageSystem: MessageSystem? =  try {
+        val currentMessagingSystem = environment.config.property("ktor.message_system").getString()
+        MessageSystem.valueOf(currentMessagingSystem)
+    } catch (e: IllegalArgumentException) {
+        log.error("Invalid message system configuration: ${e.message}")
+        null
+    }
+
+    when (messageSystem) {
+        MessageSystem.AZURE_SERVICE_BUS -> {
+            serviceBusModule()
+        }
+        MessageSystem.RABBITMQ -> {
+            rabbitMQModule()
+        }
+
+        MessageSystem.AWS -> TODO()
+        null -> TODO()
+    }
+
     install(Koin) {
         loadKoinModules(environment)
     }
