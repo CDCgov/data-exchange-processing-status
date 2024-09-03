@@ -51,6 +51,11 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 }
 
             }
+            MessageSystem.AWS.toString() -> {
+                single(createdAtStart = true) {
+                    //AWSQServiceConfiguration(environment.config, configurationPath = "aws")
+                }
+            }
         }
     }
    return modules(listOf(cosmosModule , configModule))
@@ -87,7 +92,9 @@ fun Application.module() {
             rabbitMQModule()
         }
 
-        MessageSystem.AWS -> TODO()
+        MessageSystem.AWS -> {
+            awsSQSModule()
+        }
         null -> TODO()
     }
 

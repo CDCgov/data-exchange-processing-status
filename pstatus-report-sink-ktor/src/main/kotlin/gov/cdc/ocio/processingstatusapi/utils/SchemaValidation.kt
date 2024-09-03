@@ -312,6 +312,7 @@ class SchemaValidation {
                 createReportMessage.content!!, // it was Content I changed to ContentAsString
                 createReportMessage.jurisdiction,
                 createReportMessage.senderId,
+                createReportMessage.dataProducerId,
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
@@ -353,7 +354,6 @@ class SchemaValidation {
         if (invalidData.isNotEmpty()) {
             //This should not run for unit tests
             if (System.getProperty("isTestEnvironment") != "true") {
-                // Write the content of the dead-letter reports to CosmosDb
                 ReportManager().createDeadLetterReport(
                     createReportMessage.uploadId,
                     createReportMessage.dataStreamId,
@@ -368,6 +368,7 @@ class SchemaValidation {
                     createReportMessage.content,
                     createReportMessage.jurisdiction,
                     createReportMessage.senderId,
+                    createReportMessage.dataProducerId,
                     invalidData,
                     validationSchemaFileNames
                 )
