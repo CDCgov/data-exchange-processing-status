@@ -53,6 +53,16 @@ data class UploadErrorsNotificationSubscription( override val dataStreamId: Stri
  */
 data class UploadErrorsNotificationUnSubscription(val subscriptionId:String)
 
+data class DataStreamTopErrorsNotificationSubscription( override val dataStreamId: String,
+                                                 override val dataStreamRoute: String,
+                                                 override val jurisdiction: String,
+                                                 override val daysToRun: List<String>,
+                                                 override val timeToRun: String,
+                                                 override val deliveryReference: String) : BaseSubscription(dataStreamId, dataStreamRoute ,jurisdiction, daysToRun, timeToRun, deliveryReference )
+
+data class DataStreamTopErrorsNotificationUnSubscription(val subscriptionId:String)
+
+
 fun getCronExpression(daysToRun: List<String>, timeToRun: String):String{
     val daysToRunInStr =daysToRun.joinToString(separator = ",")
     val cronExpression= "$timeToRun $daysToRunInStr"

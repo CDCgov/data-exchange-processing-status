@@ -1,16 +1,21 @@
 package gov.cdc.ocio.processingstatusapi.mutations.response
 
-import gov.cdc.ocio.processingstatusapi.mutations.DeadlineCheckSubscriptionResult
+
+import gov.cdc.ocio.processingstatusapi.mutations.NotificationSubscriptionResult
+import gov.cdc.ocio.processingstatusapi.mutations.SubscriptionResult
 import io.ktor.client.call.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
 object SubscriptionResponse{
+
+
     /**
      * Function to process the http response coming from notifications service
      * @param response HttpResponse
      */
-    suspend fun ProcessResponse(response: HttpResponse): DeadlineCheckSubscriptionResult {
+    @JvmStatic
+    suspend fun ProcessNotificationResponse(response: HttpResponse): NotificationSubscriptionResult {
         if (response.status == HttpStatusCode.OK) {
             return response.body()
         } else {

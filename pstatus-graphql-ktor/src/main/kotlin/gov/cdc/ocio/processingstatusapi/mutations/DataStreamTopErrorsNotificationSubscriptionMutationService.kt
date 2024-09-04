@@ -1,5 +1,3 @@
-@file:Suppress("PLUGIN_IS_NOT_ENABLED")
-
 package gov.cdc.ocio.processingstatusapi.mutations
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
@@ -27,19 +25,19 @@ import kotlinx.serialization.Serializable
  * @param statusType String
  */
 @Serializable
-data class DeadlineCheckSubscription( val dataStreamId: String,
-                                      val dataStreamRoute: String,
-                                      val jurisdiction: String,
-                                      val daysToRun: List<String>,
-                                      val timeToRun: String,
-                                      val deliveryReference: String)
+data class DataStreamTopErrorsNotificationSubscription( val dataStreamId: String,
+                                                 val dataStreamRoute: String,
+                                                 val jurisdiction: String,
+                                                 val daysToRun: List<String>,
+                                                 val timeToRun: String,
+                                                 val deliveryReference: String)
 
 /**
  * UnSubscription data class which is serialized back and forth which is in turn used for unsubscribing  from the cache for emails and webhooks using the given subscriberId
  * @param subscriptionId
  */
 @Serializable
-data class DeadlineCheckUnSubscription(val subscriptionId:String)
+data class DataStreamTopErrorsNotificationUnSubscription(val subscriptionId:String)
 
 /**
  * SubscriptionResult is the response class which is serialized back and forth which is in turn used for getting the response which contains the subscriberId , message and the status of subscribe/unsubscribe operations
@@ -49,7 +47,7 @@ data class DeadlineCheckUnSubscription(val subscriptionId:String)
  * @param message
  */
 @Serializable
-data class NotificationSubscriptionResult(
+data class DataStreamTopErrorsNotificationSubscriptionResult(
     var subscriptionId: String? = null,
     var message: String? = "",
     var deliveryReference:String
@@ -59,8 +57,8 @@ data class NotificationSubscriptionResult(
  * The graphQL mutation class for notifications
  */
 
-class DeadlineCheckSubscriptionMutationService : Mutation {
-    private val deadlineCheckSubscriptionUrl: String = System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
+class DataStreamTopErrorsNotificationSubscriptionMutationService : Mutation {
+    private val dataStreamTopErrorsNotificationSubscriptionUrl: String = System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
     private val serviceUnavailable =
         "DeadlineCheckSubscription service is unavailable and no connection has been established. Make sure the service is running"
     private val client = HttpClient {
@@ -89,7 +87,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
 
     @GraphQLDescription("Subscribe Deadline Check")
     @Suppress("unused")
-    fun subscribeDeadlineCheck(
+    fun subscribeDataStreamTopErrorsNotification(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
@@ -97,14 +95,14 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
         timeToRun: String,
         deliveryReference: String
     ): NotificationSubscriptionResult {
-        val url = "$deadlineCheckSubscriptionUrl/subscribe/deadlineCheck"
+        val url = "$dataStreamTopErrorsNotificationSubscriptionUrl/subscribe/dataStreamTopErrorsNotification"
 
         return runBlocking {
             try {
                 val response = client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(
-                        DeadlineCheckSubscription(
+                        DataStreamTopErrorsNotificationSubscription(
                             dataStreamId,
                             dataStreamRoute,
                             jurisdiction,
@@ -135,17 +133,17 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
 
     @GraphQLDescription("UnSubscribe Deadline Check")
     @Suppress("unused")
-    fun unsubscribeDeadlineCheck(
+    fun unsubscribesDataStreamTopErrorsNotification(
         subscriptionId: String
     ): NotificationSubscriptionResult {
-        val url = "$deadlineCheckSubscriptionUrl/unsubscribe/deadlineCheck"
+        val url = "$dataStreamTopErrorsNotificationSubscriptionUrl/unsubscribe/dataStreamTopErrorsNotification"
 
         return runBlocking {
             try {
                 val response = client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(
-                        DeadlineCheckUnSubscription(subscriptionId)
+                        DataStreamTopErrorsNotificationUnSubscription(subscriptionId)
                     )
                 }
                 return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
@@ -157,6 +155,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
             }
         }
     }
+
 
 
 

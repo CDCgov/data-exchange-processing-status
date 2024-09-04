@@ -94,7 +94,7 @@ class UploadErrorsNotificationSubscriptionMutationService : Mutation {
         daysToRun: List<String>,
         timeToRun: String,
         deliveryReference: String
-    ): DeadlineCheckSubscriptionResult {
+    ): NotificationSubscriptionResult {
         val url = "$uploadErrorsNotificationSubscriptionUrl/subscribe/uploadErrorsNotification"
 
         return runBlocking {
@@ -112,7 +112,7 @@ class UploadErrorsNotificationSubscriptionMutationService : Mutation {
                         )
                     )
                 }
-                return@runBlocking SubscriptionResponse.ProcessResponse(response)
+                return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
                     SubscriptionResponse.ProcessErrorCodes(url, e, null)
@@ -135,7 +135,7 @@ class UploadErrorsNotificationSubscriptionMutationService : Mutation {
     @Suppress("unused")
     fun unsubscribeUploadErrorsNotification(
         subscriptionId: String
-    ): DeadlineCheckSubscriptionResult {
+    ): NotificationSubscriptionResult {
         val url = "$uploadErrorsNotificationSubscriptionUrl/unsubscribe/uploadErrorsNotification"
 
         return runBlocking {
@@ -146,7 +146,7 @@ class UploadErrorsNotificationSubscriptionMutationService : Mutation {
                         DeadlineCheckUnSubscription(subscriptionId)
                     )
                 }
-                return@runBlocking SubscriptionResponse.ProcessResponse(response)
+                return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
                     SubscriptionResponse.ProcessErrorCodes(url, e, null)

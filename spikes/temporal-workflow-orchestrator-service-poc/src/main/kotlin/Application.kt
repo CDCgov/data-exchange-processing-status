@@ -21,6 +21,8 @@ fun Application.module() {
         unsubscribeDeadlineCheck()
         subscribeUploadErrorsNotification()
         unsubscribeUploadErrorsNotification()
+        subscribeDataStreamTopErrorsNotification()
+        unsubscribesDataStreamTopErrorsNotification()
     }
 
 }

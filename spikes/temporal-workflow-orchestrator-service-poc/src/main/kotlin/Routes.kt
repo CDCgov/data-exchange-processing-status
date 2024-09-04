@@ -1,14 +1,8 @@
 @file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package gov.cdc.ocio.processingnotifications
 
-import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
-import gov.cdc.ocio.processingnotifications.model.DeadlineCheckUnSubscription
-import gov.cdc.ocio.processingnotifications.model.UploadErrorsNotificationSubscription
-import gov.cdc.ocio.processingnotifications.model.UploadErrorsNotificationUnSubscription
-import gov.cdc.ocio.processingnotifications.service.DeadLineCheckSubscriptionService
-import gov.cdc.ocio.processingnotifications.service.DeadLineCheckUnSubscriptionService
-import gov.cdc.ocio.processingnotifications.service.UploadErrorsNotificationSubscriptionService
-import gov.cdc.ocio.processingnotifications.service.UploadErrorsNotificationUnSubscriptionService
+import gov.cdc.ocio.processingnotifications.model.*
+import gov.cdc.ocio.processingnotifications.service.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -63,6 +57,30 @@ fun Route.unsubscribeUploadErrorsNotification() {
     post("/unsubscribe/uploadErrorsNotification") {
         val subscription = call.receive<UploadErrorsNotificationUnSubscription>()
         val result = UploadErrorsNotificationUnSubscriptionService().run(subscription.subscriptionId)
+        call.respond(result)
+    }
+}
+/**
+ * Route to subscribe for DeadlineCheck subscription
+ */
+fun Route.subscribeDataStreamTopErrorsNotification() {
+    post("/subscribe/dataStreamTopErrorsNotification") {
+        val subscription = call.receive<DataStreamTopErrorsNotificationSubscription>()
+        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(subscription.dataStreamId, subscription.dataStreamRoute,
+            subscription.jurisdiction,
+            subscription.daysToRun, subscription.timeToRun,  subscription.deliveryReference)
+        val result = DataStreamTopErrorsNotificationSubscriptionService().run(dataStreamTopErrorsNotificationSubscription)
+        call.respond(result)
+
+    }
+}
+/**
+ * Route to Unsubscribe for DeadlineCheck unsubscription
+ */
+fun Route.unsubscribesDataStreamTopErrorsNotification() {
+    post("/unsubscribe/dataStreamTopErrorsNotification") {
+        val subscription = call.receive<DataStreamTopErrorsNotificationUnSubscription>()
+        val result = DataStreamTopErrorsNotificationUnSubscriptionService().run(subscription.subscriptionId)
         call.respond(result)
     }
 }

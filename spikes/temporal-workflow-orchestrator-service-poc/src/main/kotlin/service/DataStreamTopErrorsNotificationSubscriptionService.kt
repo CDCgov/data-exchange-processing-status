@@ -2,19 +2,18 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
-import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
+import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotficationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotificationWorkflow
 import io.temporal.client.WorkflowClient
 
-class DeadLineCheckSubscriptionService {
+class DataStreamTopErrorsNotificationSubscriptionService {
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
+    private val workflowEngine:WorkflowEngine = WorkflowEngine()
     private val notificationActivitiesImpl:NotificationActivitiesImpl = NotificationActivitiesImpl()
-
-    fun run(subscription: DeadlineCheckSubscription):
+    fun run(subscription: DataStreamTopErrorsNotificationSubscription):
             WorkflowSubscriptionResult {
         val dataStreamId = subscription.dataStreamId
         val dataStreamRoute = subscription.dataStreamRoute
@@ -22,12 +21,12 @@ class DeadLineCheckSubscriptionService {
         val daysToRun = subscription.daysToRun
         val timeToRun = subscription.timeToRun
         val deliveryReference= subscription.deliveryReference
-        val taskQueue = "notificationTaskQueue"
+        val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
         val workflow =  workflowEngine.setupWorkflow(taskQueue,daysToRun,timeToRun,
-            NotificationWorkflowImpl::class.java ,notificationActivitiesImpl, NotificationWorkflow::class.java)
-        val execution =    WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, daysToRun, timeToRun, deliveryReference)
+            DataStreamTopErrorsNotficationWorkflowImpl::class.java ,notificationActivitiesImpl, DataStreamTopErrorsNotificationWorkflow::class.java)
 
+        val execution =  WorkflowClient.start(workflow::checkDataStreamTopErrorsAndNotify, dataStreamId, dataStreamRoute, jurisdiction,daysToRun, timeToRun, deliveryReference)
         return cacheService.updateSubscriptionPreferences(execution.workflowId,subscription)
     }
 }
