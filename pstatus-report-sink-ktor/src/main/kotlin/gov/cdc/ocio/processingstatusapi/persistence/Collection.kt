@@ -21,13 +21,16 @@ interface Collection {
     /**
      * Create an item in the collection
      *
+     * @param id String
      * @param item T
+     * @param classType Class<T>
      * @param partitionKey String?
      * @return Boolean
      */
     fun <T> createItem(
         id: String,
         item: T,
+        classType: Class<T>,
         partitionKey: String?
     ): Boolean
 

@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.google.gson.annotations.SerializedName
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 
 /**
@@ -19,6 +20,7 @@ enum class Level {
  * @property message String?
 
  */
+@DynamoDbBean
 class Issue {
 
     @SerializedName("level")

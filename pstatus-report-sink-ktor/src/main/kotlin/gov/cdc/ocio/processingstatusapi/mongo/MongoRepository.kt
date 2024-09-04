@@ -6,24 +6,10 @@ import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoDatabase
 import gov.cdc.ocio.processingstatusapi.persistence.Collection
 import gov.cdc.ocio.processingstatusapi.persistence.MongoCollection
+import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import org.bson.BsonDocument
 import org.bson.BsonInt64
 
-
-/**
- * Base class for all processing status repositories
- *
- * @property reportsCollection Collection
- * @property reportsDeadLetterCollection Collection
- */
-open class ProcessingStatusRepository {
-
-    // Common interface for the reports collection
-    open lateinit var reportsCollection: Collection
-
-    // Common interface for the reports deadletter collection
-    open lateinit var reportsDeadLetterCollection: Collection
-}
 
 /**
  * Mongo repository implementation

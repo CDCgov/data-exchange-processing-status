@@ -1,8 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.models
 
+import gov.cdc.ocio.processingstatusapi.dynamo.Content
+import gov.cdc.ocio.processingstatusapi.dynamo.ContentConverterProvider
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
-import java.util.*
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
+import java.time.Instant
 
 
 /**
@@ -25,8 +29,13 @@ import java.util.*
  * @property timestamp Date
  * @constructor
  */
+@DynamoDbBean(converterProviders = [
+    ContentConverterProvider::class,
+//    DateConverterProvider::class
+])
 open class Report(
 
+    @get:DynamoDbPartitionKey
     var id : String? = null,
 
     var uploadId: String? = null,
@@ -37,7 +46,7 @@ open class Report(
 
     var dataStreamRoute: String? = null,
 
-    var dexIngestDateTime: Date? = null,
+    var dexIngestDateTime: Instant? = null,
 
     var messageMetadata: MessageMetadata? = null,
 
@@ -53,7 +62,7 @@ open class Report(
 
     var senderId: String? = null,
 
-    var content: Any? = null,
+    var content: Content? = null,
 
-    val timestamp: Date = Date()
+    val timestamp: Instant = Instant.now()
 )

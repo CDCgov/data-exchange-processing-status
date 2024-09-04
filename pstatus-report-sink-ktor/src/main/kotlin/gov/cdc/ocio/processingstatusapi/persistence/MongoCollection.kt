@@ -15,7 +15,7 @@ class MongoCollection(private val mongoCollection: com.mongodb.client.MongoColle
         TODO("Not yet implemented")
     }
 
-    override fun <T> createItem(id: String, item: T, partitionKey: String?): Boolean {
+    override fun <T> createItem(id: String, item: T, classType: Class<T>, partitionKey: String?): Boolean {
         val document = Document.parse(Gson().toJson(item))
         val result = mongoCollection.insertOne(document)
         return result.wasAcknowledged()

@@ -3,8 +3,9 @@ package gov.cdc.ocio.processingstatusapi
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.couchbase.CouchbaseRepository
+import gov.cdc.ocio.processingstatusapi.dynamo.DynamoRepository
 import gov.cdc.ocio.processingstatusapi.mongo.MongoRepository
-import gov.cdc.ocio.processingstatusapi.mongo.ProcessingStatusRepository
+import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule
@@ -53,6 +54,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
 
                 //  Create a CosmosDB config that can be dependency injected (for health checks)
                 single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
+            }
+            DatabaseType.DYNAMO.value -> {
+                val dynamoDbPrefix = environment.config.property("dynamo.db_prefix").getString()
+                single<ProcessingStatusRepository>(createdAtStart = true) {
+                    DynamoRepository(dynamoDbPrefix)
+                }
             }
             else -> logger.error("Unsupported database requested: $database")
         }

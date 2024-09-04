@@ -37,7 +37,7 @@ class CouchbaseCollection(
         return results
     }
 
-    override fun <T> createItem(id: String, item: T, partitionKey: String?): Boolean {
+    override fun <T> createItem(id: String, item: T, classType: Class<T>, partitionKey: String?): Boolean {
         val upsertResult = couchbaseCollection.upsert(
             id,
             item

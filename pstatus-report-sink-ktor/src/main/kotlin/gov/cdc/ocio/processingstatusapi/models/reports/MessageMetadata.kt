@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 
 /**
@@ -23,6 +24,7 @@ enum class Aggregation {
  * @property messageIndex Int?
  *
  */
+@DynamoDbBean
 class MessageMetadata {
 
     @SerializedName("message_uuid")

@@ -2,7 +2,9 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
-import java.util.*
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
+import java.time.Instant
+
 
 /*
    Status of whether the report is a SUCCESS OR FAILURE
@@ -22,10 +24,12 @@ enum class Status {
  * @property service String?
  * @property action String?
  * @property version String?
- * @property status String?
- * @property startProcessingTime Date?
- * @property endProcessingTime Date?
+ * @property status Status?
+ * @property issues List<Issue>?
+ * @property startProcessingTime Instant?
+ * @property endProcessingTime Instant?
  */
+@DynamoDbBean
 class StageInfo {
 
     var service : String? = null
@@ -40,9 +44,9 @@ class StageInfo {
 
     @SerializedName("start_processing_time")
     @JsonProperty("start_processing_time")
-    var startProcessingTime: Date? = null
+    var startProcessingTime: Instant? = null
 
     @SerializedName("end_processing_time")
     @JsonProperty("end_processing_time")
-    var endProcessingTime: Date? = null
+    var endProcessingTime: Instant? = null
 }

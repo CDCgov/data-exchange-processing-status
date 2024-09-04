@@ -1,24 +1,23 @@
 package gov.cdc.ocio.processingstatusapi
 
-import com.azure.cosmos.models.CosmosItemRequestOptions
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.PartitionKey
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
+import gov.cdc.ocio.processingstatusapi.dynamo.Content
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.models.reports.*
-import gov.cdc.ocio.processingstatusapi.mongo.ProcessingStatusRepository
+import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.*
 import io.netty.handler.codec.http.HttpResponseStatus
+import java.time.Instant
 
 
 /**
@@ -43,7 +42,7 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param dexIngestDateTime Date
+     * @param dexIngestDateTime Instant
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
      * @param tags Map<String, String>?
@@ -63,7 +62,7 @@ class ReportManager: KoinComponent {
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
-        dexIngestDateTime: Date,
+        dexIngestDateTime: Instant,
         messageMetadata: MessageMetadataSB?,
         stageInfo: StageInfoSB?,
         tags: Map<String, String>?,
@@ -103,7 +102,7 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param dexIngestDateTime Date
+     * @param dexIngestDateTime Instant
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
      * @param tags Map<String, String>?
@@ -119,7 +118,7 @@ class ReportManager: KoinComponent {
     private fun createReport(uploadId: String,
                              dataStreamId: String,
                              dataStreamRoute: String,
-                             dexIngestDateTime: Date,
+                             dexIngestDateTime: Instant,
                              messageMetadata: MessageMetadataSB?,
                              stageInfo: StageInfoSB?,
                              tags: Map<String, String>?,
@@ -198,7 +197,7 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param dexIngestDateTime Date
+     * @param dexIngestDateTime Instant
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
      * @param tags Map<String, String>?
@@ -215,7 +214,7 @@ class ReportManager: KoinComponent {
     private fun createStageReport(uploadId: String,
                                   dataStreamId: String,
                                   dataStreamRoute: String,
-                                  dexIngestDateTime: Date,
+                                  dexIngestDateTime: Instant,
                                   messageMetadata: MessageMetadataSB?,
                                   stageInfo: StageInfoSB?,
                                   tags: Map<String, String>?,
@@ -245,10 +244,10 @@ class ReportManager: KoinComponent {
 
             if (contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
+                val jsonMap: Content = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap
-            } else
-                this.content = content
+            } //else
+                //this.content = content
         }
        return createReportItem(uploadId,stageReportId,stageReport)
     }
@@ -256,17 +255,21 @@ class ReportManager: KoinComponent {
     /**
      * Creates a dead-letter report if there is a malformed data or missing required fields
      *
-     * @param uploadId String
-     * @param dataStreamId String
-     * @param dataStreamRoute String
+     * @param uploadId String?
+     * @param dataStreamId String?
+     * @param dataStreamRoute String?
+     * @param dexIngestDateTime Instant?
      * @param messageMetadata MessageMetadataSB?
      * @param stageInfo StageInfoSB?
      * @param tags Map<String, String>?
      * @param data Map<String, String>?
-     * @param contentType String
-     * @param content String
+     * @param dispositionType DispositionType
+     * @param contentType String?
+     * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param deadLetterReasons List<String>
+     * @param validationSchemaFileNames List<String>
      * @return String
      * @throws BadStateException
      */
@@ -274,7 +277,7 @@ class ReportManager: KoinComponent {
     fun createDeadLetterReport(uploadId: String?,
                                dataStreamId: String?,
                                dataStreamRoute: String?,
-                               dexIngestDateTime: Date?,
+                               dexIngestDateTime: Instant?,
                                messageMetadata: MessageMetadataSB?,
                                stageInfo: StageInfoSB?,
                                tags: Map<String,String>?,
@@ -310,12 +313,12 @@ class ReportManager: KoinComponent {
             this.validationSchemas= validationSchemaFileNames
             if (contentType?.lowercase() == "json" && !isNullOrEmpty(content) && !isBase64Encoded(content.toString())) {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
+                val jsonMap: Content = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
                 this.content = jsonMap
-            } else
-                this.content = content
+            } //else
+                //this.content = content
         }
-        return  createReportItem(uploadId,deadLetterReportId,deadLetterReport)
+        return createReportItem(uploadId,deadLetterReportId,deadLetterReport)
     }
 
     /**
@@ -405,6 +408,7 @@ class ReportManager: KoinComponent {
                         val response = repository.reportsCollection.createItem(
                             reportType.id!!,
                             reportType,
+                            Report::class.java,
                             uploadId
                         )
 

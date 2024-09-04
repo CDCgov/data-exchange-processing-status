@@ -3,7 +3,8 @@ package gov.cdc.ocio.processingstatusapi.models.reports
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
-import java.util.*
+import java.time.Instant
+
 
 class MessageMetadataSB {
 
@@ -43,11 +44,11 @@ class StageInfoSB {
 
     @SerializedName("start_processing_time")
     @JsonProperty("start_processing_time")
-    var startProcessingTime: Date? = null
+    var startProcessingTime: Instant? = null
 
     @SerializedName("end_processing_time")
     @JsonProperty("end_processing_time")
-    var endProcessingTime: Date? = null
+    var endProcessingTime: Instant? = null
 
     fun toStageInfo(): StageInfo = StageInfo().apply {
         this.service = this@StageInfoSB.service
@@ -67,11 +68,13 @@ class StageInfoSB {
  * @property uploadId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property dataStreamRoute String?
- * @property messageMetadata MessageMetadata?
- * @property StageInfo StageInfo?
- * @property tags String?
- * @property data Lost<KeyValue>?
+ * @property dexIngestDateTime Instant?
+ * @property messageMetadata MessageMetadataSB?
+ * @property stageInfo StageInfoSB?
+ * @property tags Map<String, String>?
+ * @property data Map<String, String>?
+ * @property jurisdiction String?
+ * @property senderId String?
  * @property contentType String?
  * @property content Any?
  */
@@ -87,7 +90,7 @@ class CreateReportSBMessage: ServiceBusMessage() {
     var dataStreamRoute: String? = null
 
     @SerializedName("dex_ingest_datetime")
-    var dexIngestDateTime: Date? = null
+    var dexIngestDateTime: Instant? = null
 
     @SerializedName("message_metadata")
     var messageMetadata: MessageMetadataSB? = null

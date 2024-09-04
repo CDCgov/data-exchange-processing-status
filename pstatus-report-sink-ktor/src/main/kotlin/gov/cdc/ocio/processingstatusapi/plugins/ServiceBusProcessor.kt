@@ -17,6 +17,7 @@ import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.reports.*
+import gov.cdc.ocio.processingstatusapi.utils.InstantTypeAdapter
 import mu.KotlinLogging
 import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
@@ -38,6 +39,7 @@ class ServiceBusProcessor {
     // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     private val gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
         .create()
 
     /**
@@ -250,7 +252,7 @@ class ServiceBusProcessor {
             dexIngestDateTime = runCatching {
                 val dexIngestDateTimeStr = jsonNode.get("dex_ingest_datetime").asText()
                 val dexIngestDateTimeInstant = Instant.parse(dexIngestDateTimeStr)
-                Date.from(dexIngestDateTimeInstant)
+                Instant.from(dexIngestDateTimeInstant)
             }.getOrNull()
 
             // Try to get the metadata as JSON object, but if not, get it as a string
