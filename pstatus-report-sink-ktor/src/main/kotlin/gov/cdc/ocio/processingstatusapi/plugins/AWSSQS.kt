@@ -17,8 +17,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.apache.qpid.proton.TimeoutException
 
-
-class AWSQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+/**
+ * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
+ * This class extracts necessary AWS credentials and configuration details, such as the SQS queue URL, access key, secret key, and region,
+ * using the provided configuration path as a prefix.
+ * @param config `ApplicationConfig` containing the configuration settings for AWS SQS.
+ * @param configurationPath represents prefix used to locate environment variables specific to AWS within the configuration.
+ */
+class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
     private val accessKeyID = config.tryGetString("${configPath}access_key_id") ?: ""
@@ -28,16 +34,16 @@ class AWSQServiceConfiguration(config: ApplicationConfig, configurationPath: Str
     fun createSQSClient(): SqsClient{
 
         return SqsClient{ credentialsProvider = StaticCredentialsProvider {
-            accessKeyId = this@AWSQServiceConfiguration.accessKeyID
-            secretAccessKey = this@AWSQServiceConfiguration.secretAccessKey
-        }; region = this@AWSQServiceConfiguration.region }
+            accessKeyId = this@AWSSQServiceConfiguration.accessKeyID
+            secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+        }; region = this@AWSSQServiceConfiguration.region }
     }
 }
 
 val AWSSQSPlugin = createApplicationPlugin(
     name = "AWSSQS",
     configurationPath = "aws",
-    createConfiguration = ::AWSQServiceConfiguration
+    createConfiguration = ::AWSSQServiceConfiguration
 ) {
     lateinit var sqsClient: SqsClient
     lateinit var queueUrl: String
@@ -55,10 +61,17 @@ val AWSSQSPlugin = createApplicationPlugin(
     } catch (e: Exception) {
         SchemaValidation.logger.error("Unexpected error occurred ${e.message}")
     }
-
+    /**
+     * The `consumeMessages` function continuously listens for and processes messages from an AWS SQS queue.
+     * This function runs in a blocking coroutine, retrieving messages from the queue, validating them using
+     * `AWSSQSProcessor`, and then deleting the processed messages from the queue.
+     *
+     * @throws Exception
+     * @throws AwsServiceException
+     */
     fun consumeMessages() {
         SchemaValidation.logger.info("Consuming messages from AWS SQS")
-        runBlocking(Dispatchers.Default) {
+        runBlocking(Dispatchers.IO) {
             while (true) {
                 try {
                     val receiveMessageRequest = ReceiveMessageRequest {
@@ -101,7 +114,7 @@ val AWSSQSPlugin = createApplicationPlugin(
  *
  * @param application The Ktor instance, provides access to the environment monitor used
  * for unsubscribing from events.
- * @param sqsClient  `sqsClient` used to receive/delete messages from AWS SQS
+ * @param sqsClient  `sqsClient` used to receive and then delete messages from AWS SQS
  */
 private fun cleanupResourcesAndUnsubscribe(application: Application, sqsClient: SqsClient) {
     application.log.info("Closing SQS client")

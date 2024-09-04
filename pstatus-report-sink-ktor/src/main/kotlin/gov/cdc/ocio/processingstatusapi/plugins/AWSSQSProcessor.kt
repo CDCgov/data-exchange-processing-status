@@ -9,10 +9,15 @@ import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
 
 /**
- * The AWS SQS service is additional interface for receiving and validating reports.
+ * The AWS SQS service is an additional interface for receiving and validating reports.
  */
 class AWSSQSProcessor {
-
+    /**
+     * Validates a message received from AWS SQS queue
+     * @param messageAsString String
+     * @throws BadRequestException
+     * @throws JsonSyntaxException
+     */
     @Throws(BadRequestException::class)
     fun validateMessage(messageAsString: String){
         try {
