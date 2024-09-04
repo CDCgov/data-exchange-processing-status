@@ -1,4 +1,4 @@
-package gov.cdc.ocio.pstatus.topic.sink.model
+package gov.cdc.ocio.reader.sink.model
 
 data class CloudConfig(
     var provider: String, // "aws" or "azure"

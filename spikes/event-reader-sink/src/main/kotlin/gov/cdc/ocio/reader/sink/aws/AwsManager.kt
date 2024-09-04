@@ -1,10 +1,9 @@
-package gov.cdc.ocio.pstatus.topic.sink.blob.aws
+package gov.cdc.ocio.reader.sink.aws
 
 import org.apache.camel.component.aws2.s3.AWS2S3Component
 import org.apache.camel.component.aws2.s3.AWS2S3Configuration
 import org.apache.camel.component.aws2.sqs.Sqs2Component
 import org.apache.camel.component.aws2.sqs.Sqs2Configuration
-import software.amazon.awssdk.regions.Region
 
 /**
  * Class for creating Aws Components
