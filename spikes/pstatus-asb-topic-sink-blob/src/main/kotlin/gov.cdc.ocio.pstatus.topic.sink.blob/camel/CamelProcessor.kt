@@ -5,14 +5,76 @@ import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
 import com.azure.storage.blob.BlobServiceClientBuilder
 import com.azure.storage.blob.models.BlobStorageException
-import org.apache.camel.Exchange
-import org.apache.camel.Processor
+import gov.cdc.ocio.pstatus.topic.sink.blob.aws.AwsManager
+import gov.cdc.ocio.pstatus.topic.sink.model.CloudConfig
 import org.apache.camel.component.amqp.AMQPComponent
 import org.apache.qpid.jms.JmsConnectionFactory
 
 class CamelProcessor {
 
-    fun sinkAsbTopicSubscriptionToBlob(
+    /*
+    * Sink messages from the given cloud provider messaging system into the respective storage
+    * AWS - Sink messages from SNS/SQS Queue into the S3 bucket
+    * Azure - Sink messages delivered though Azure Service Bus into the Azure Container
+    * */
+    fun sinkMessageToStorage(cloudConfig: CloudConfig){
+
+        when (cloudConfig.provider) {
+            "aws" -> {
+               sinkSQSTopicSubscriptionToS3(cloudConfig)
+            }
+            "azure" -> {
+                sinkAsbTopicSubscriptionToBlob(cloudConfig.connectionString.toString(),
+                    cloudConfig.storageAccountName.toString(),
+                    cloudConfig.storageAccountKey.toString(),
+                    cloudConfig.containerName.toString(),
+                    cloudConfig.namespace.toString(),cloudConfig.sharedAccessKeyName.toString(),
+                    cloudConfig.sharedAccessKey.toString(), cloudConfig.topicName.toString(), cloudConfig.subscriptionName.toString())
+            }
+            else -> throw IllegalArgumentException("Unsupported cloud provider")
+        }
+
+    }
+
+
+    /*
+        * Sink messages from the given cloud provider messaging system into the respective storage
+        * AWS - Sink messages from SNS/SQS Queue into the S3 bucket
+    * */
+    private fun sinkSQSTopicSubscriptionToS3(cloudConfig: CloudConfig){
+
+        // Initialize the Camel context
+        val camelContext: CamelContext = DefaultCamelContext()
+
+        //Configure AWS Components
+        // Configure SQS Component
+        val sqsComponent = AwsManager().configureAwsSQSComponent(cloudConfig.awsAccessKeyId.toString(), cloudConfig.awsSecretAccessKey.toString(), cloudConfig.awsSqsRegion.toString())
+        camelContext.addComponent("aws2-sqs", sqsComponent)
+
+        // Configure S3 Component
+        val s3Component = AwsManager().configureAwsS3Component(cloudConfig.awsAccessKeyId.toString(), cloudConfig.awsSecretAccessKey.toString(), cloudConfig.awsS3Region.toString())
+        camelContext.addComponent("aws2-s3", s3Component)
+
+        // Add routes
+        camelContext.addRoutes(object : RouteBuilder() {
+            override fun configure() {
+                from("aws2-sqs://${cloudConfig.awsSqsQueueName}")
+                    .setHeader("CamelAwsS3Key", simple("message-${System.currentTimeMillis()}.txt")) // Set S3 key dynamically
+                    .to("aws2-s3://${cloudConfig.awsS3BucketName}?accessKey=${cloudConfig.awsAccessKeyId}&secretKey=${cloudConfig.awsSecretAccessKey}&region=${cloudConfig.awsS3Region}")
+            }
+        })
+
+        // Start the Camel context
+        camelContext.start()
+        Runtime.getRuntime().addShutdownHook(Thread { camelContext.stop() })
+    }
+
+
+    /*
+        * Sink messages from the given cloud provider messaging system into the respective storage
+        * Azure - Sink messages delivered though Azure Service Bus into the Azure Container
+    * */
+    private fun sinkAsbTopicSubscriptionToBlob(
         connectionString: String, accountName: String, accountKey: String, containerName: String,
         serviceBusNamespace: String, sharedAccessKeyName: String, sharedAccessKey: String, topicName: String, subscriptionName: String
     ) {
@@ -51,6 +113,7 @@ class CamelProcessor {
         Runtime.getRuntime().addShutdownHook(Thread { camelContext.stop() })
     }
 
+
     private fun configureAMQPComponent(
         connectionString: String,
         camelContext: CamelContext,
@@ -59,8 +122,8 @@ class CamelProcessor {
         sharedAccessKey: String
     ) {
         // Create the AMQP URI
-       // val endpoint ="Endpoint=sb://ocio-ede-dev-processingstatus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=PCmVAxYcWtdtHbcMEAXhW1yZNQeDd4jXe+ASbIXaG3A="
-        val endpoint =connectionString
+        val endpoint ="Endpoint=sb://ocio-ede-dev-processingstatus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=PCmVAxYcWtdtHbcMEAXhW1yZNQeDd4jXe+ASbIXaG3A="
+       // val endpoint =connectionString
         val connectionFactory = JmsConnectionFactory()
         connectionFactory.remoteURI = "amqps://${endpoint.substringAfter("sb://")}"
         connectionFactory.username = sharedAccessKeyName
@@ -72,4 +135,5 @@ class CamelProcessor {
         // Register the component
         camelContext.addComponent("amqp", amqpComponent)
     }
+
 }
