@@ -48,7 +48,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 
-        implementation 'com.azure:azure-messaging-servicebus:7.15.0'
+    implementation 'com.azure:azure-messaging-servicebus:7.15.0'
     implementation 'com.microsoft.azure:azure-servicebus:3.6.7'
     implementation 'com.azure:azure-identity:1.8.0'
 
@@ -60,13 +60,16 @@ dependencies {
 
     agent "io.opentelemetry.javaagent:opentelemetry-javaagent:1.29.0"
 
-    implementation("org.apache.camel:camel-core:3.14.0")
+    implementation("org.apache.camel:camel-core:3.19.0")
     implementation("org.apache.camel:camel-azure-storage-blob:3.14.0")
-    implementation("org.apache.camel:camel-amqp:3.14.0")
+    implementation("org.apache.camel:camel-amqp:3.19.0")
     implementation("com.microsoft.azure:azure-servicebus:3.6.0")
     implementation("com.azure:azure-storage-blob:12.14.0")
     implementation("ch.qos.logback:logback-classic:1.2.11")
 
+    // For AWS Integration
+    implementation("org.apache.camel:camel-aws2-s3:3.19.0")
+    implementation("org.apache.camel:camel-aws2-sqs:3.19.0")
 
 }
 test {
