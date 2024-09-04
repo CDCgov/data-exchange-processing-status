@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.google.gson.JsonSyntaxException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.utils.*
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 
@@ -48,7 +48,7 @@ class RabbitMQProcessor {
                 }
             }
             SchemaValidation.logger.info { "The message is valid creating report."}
-            SchemaValidation().createReport(gson.fromJson(message, CreateReportSBMessage::class.java))
+            SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java))
         } catch (e: BadRequestException) {
             SchemaValidation.logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
         }catch(e: JsonSyntaxException){

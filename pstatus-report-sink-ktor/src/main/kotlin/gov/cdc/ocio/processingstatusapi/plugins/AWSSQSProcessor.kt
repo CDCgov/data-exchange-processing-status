@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.google.gson.JsonSyntaxException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
@@ -49,7 +49,7 @@ class AWSSQSProcessor {
                 }
             }
             logger.info { "The message is valid creating report."}
-            SchemaValidation().createReport(gson.fromJson(message, CreateReportSBMessage::class.java))
+            SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java))
 
         }catch (e: BadRequestException) {
             logger.error("Failed to validate message received from AWS SQS: ${e.message}")

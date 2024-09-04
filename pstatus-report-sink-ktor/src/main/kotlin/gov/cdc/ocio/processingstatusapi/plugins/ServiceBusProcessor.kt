@@ -4,7 +4,7 @@ import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.google.gson.JsonSyntaxException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.utils.*
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
@@ -42,7 +42,7 @@ class ServiceBusProcessor {
             } else
                 SchemaValidation().validateJsonSchema(sbMessage)
             logger.info { "The message is valid creating report."}
-            SchemaValidation().createReport(gson.fromJson(sbMessage, CreateReportSBMessage::class.java))
+            SchemaValidation().createReport(gson.fromJson(sbMessage, CreateReportMessage::class.java))
         } catch (e: BadRequestException) {
             logger.error("Failed to validate service bus message ${e.message}")
             throw e

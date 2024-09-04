@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models.reports
 
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
+import gov.cdc.ocio.processingstatusapi.models.MessageBase
 import java.util.*
 
 
@@ -11,15 +11,18 @@ import java.util.*
  * @property uploadId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property dataStreamRoute String?
+ * @property dexIngestDateTime Date?
  * @property messageMetadata MessageMetadata?
  * @property StageInfo StageInfo?
  * @property tags String?
  * @property data Lost<KeyValue>?
+ * @property jurisdiction String?
+ * @property senderId String?
+ * @property dataProducerId String?
  * @property contentType String?
  * @property content Any?
  */
-class CreateReportSBMessage: ServiceBusMessage() {
+class CreateReportMessage: MessageBase() {
 
     @SerializedName("upload_id")
     var uploadId: String? = null
