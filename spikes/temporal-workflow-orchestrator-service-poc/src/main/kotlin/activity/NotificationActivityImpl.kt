@@ -11,14 +11,19 @@ class NotificationActivitiesImpl : NotificationActivities {
         jurisdiction: String,
         deliveryReference: String
     ) {
-        val msg ="Sending the notification to $deliveryReference for dataStreamId: $dataStreamId, jurisdiction: $jurisdiction"
+        val msg ="Upload deadline over. Failed to get the upload for dataStreamId: $dataStreamId, jurisdiction: $jurisdiction.Sending the notification to $deliveryReference "
         println(msg)
-        emailService.sendEmail("TEST EMAIL- Temporal Workflow execution update",msg, deliveryReference)
+        emailService.sendEmail("TEST EMAIL- UPLOAD DEADLINE CHECK EXPIRED",msg, deliveryReference)
     }
 
     override fun sendUploadErrorsNotification(error: String, deliveryReference: String) {
         val msg ="Errors while upload. $error"
         println(msg)
         emailService.sendEmail("TEST EMAIL-UPLOAD ERRORS NOTIFICATION",msg, deliveryReference)
+    }
+
+    override fun sendDataStreamTopErrorsNotification(error: String, deliveryReference: String) {
+        println(error)
+        emailService.sendEmail("TEST EMAIL-DATA STREAM TOP ERRORS NOTIFICATION",error, deliveryReference)
     }
 }

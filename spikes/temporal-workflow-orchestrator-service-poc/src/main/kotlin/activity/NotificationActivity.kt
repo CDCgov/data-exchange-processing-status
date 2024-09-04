@@ -17,4 +17,9 @@ interface NotificationActivities {
        error:String,
        deliveryReference: String
     )
+    @ActivityMethod
+    fun sendDataStreamTopErrorsNotification(
+        error:String,
+        deliveryReference: String
+    )
 }

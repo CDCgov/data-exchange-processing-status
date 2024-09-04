@@ -49,7 +49,7 @@ class DataStreamTopErrorsNotficationWorkflowImpl : DataStreamTopErrorsNotificati
             val (totalCount, topErrors)  = getTopErrors(errorList)
             val errors = topErrors.filter{it.description.isNotEmpty()}.joinToString()
             if (topErrors.isNotEmpty()) {
-                activities.sendUploadErrorsNotification("There are $totalCount errors and these are the topErrors :$errors",deliveryReference)
+                activities.sendDataStreamTopErrorsNotification("There are $totalCount errors \n These are the top errors : \n $errors \n",deliveryReference)
             }
         } catch (e: Exception) {
         }
