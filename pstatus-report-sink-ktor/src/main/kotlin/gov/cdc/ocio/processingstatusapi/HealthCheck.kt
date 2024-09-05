@@ -1,8 +1,8 @@
 package gov.cdc.ocio.processingstatusapi
 
 import com.azure.core.exception.ResourceNotFoundException
+import com.azure.messaging.servicebus.ServiceBusException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
-import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import com.rabbitmq.client.Connection
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
@@ -58,6 +58,14 @@ class HealthCheckRabbitMQ: HealthCheckSystem() {
 }
 
 /**
+ * Concrete implementation of the Unsupported message system
+ *
+ */
+class HealthCheckUnsupportedMessageSystem: HealthCheckSystem() {
+    override  val service: String = "Messaging System"
+}
+
+/**
  * Run health checks for the service.
  *
  * @property status String?
@@ -106,6 +114,7 @@ class HealthQueryService: KoinComponent {
         val cosmosDBHealth = HealthCheckCosmosDb()
         lateinit var rabbitMQHealth: HealthCheckRabbitMQ
         lateinit var serviceBusHealth: HealthCheckServiceBus
+        lateinit var unsupportedMessageSystem: HealthCheckUnsupportedMessageSystem
 
 
         val time = measureTimeMillis {
@@ -138,6 +147,12 @@ class HealthQueryService: KoinComponent {
                         logger.error("RabbitMQ is not healthy: ${ex.message}")
                     }
                 }
+                else -> {
+                    unsupportedMessageSystem = HealthCheckUnsupportedMessageSystem()
+                    unsupportedMessageSystem.status = "DOWN"
+                    unsupportedMessageSystem.healthIssues = "message system $msgType is not supported"
+                    logger.error("Unsupported message system $msgType config.")
+                }
             }
         }
         return HealthCheck().apply {
@@ -150,6 +165,9 @@ class HealthQueryService: KoinComponent {
                 }
                 MessageSystem.RABBITMQ.toString() -> {
                     dependencyHealthChecks.add(rabbitMQHealth)
+                }
+                else ->{
+                    dependencyHealthChecks.add(unsupportedMessageSystem)
                 }
             }
 

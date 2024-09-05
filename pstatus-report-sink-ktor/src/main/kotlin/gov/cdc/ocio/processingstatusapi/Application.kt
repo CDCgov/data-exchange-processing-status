@@ -95,7 +95,7 @@ fun Application.module() {
         MessageSystem.AWS -> {
             awsSQSModule()
         }
-        null -> TODO()
+        else -> log.error("Invalid message system configuration")
     }
 
     install(Koin) {
