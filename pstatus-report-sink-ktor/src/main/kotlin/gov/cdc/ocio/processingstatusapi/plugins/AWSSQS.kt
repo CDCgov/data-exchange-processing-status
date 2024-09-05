@@ -72,10 +72,10 @@ val AWSSQSPlugin = createApplicationPlugin(
     fun consumeMessages() {
         SchemaValidation.logger.info("Consuming messages from AWS SQS")
         runBlocking(Dispatchers.IO) {
-            while (true) {
                 try {
                     val receiveMessageRequest = ReceiveMessageRequest {
                         this.queueUrl = queueUrl
+                        maxNumberOfMessages = 5
                     }
                     val response = sqsClient.receiveMessage(receiveMessageRequest)
                     response.messages?.forEach { message ->
@@ -94,7 +94,6 @@ val AWSSQSPlugin = createApplicationPlugin(
                 } catch (e: AwsServiceException) {
                     SchemaValidation.logger.error("AWS service exception occurred: ${e.message}")
                 }
-            }
         }
 
     }
