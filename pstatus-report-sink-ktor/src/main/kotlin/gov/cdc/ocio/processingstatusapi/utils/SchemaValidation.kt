@@ -256,9 +256,9 @@ class SchemaValidation {
         val schemaValidationMessages: Set<ValidationMessage> = schema.validate(jsonNode)
 
         if (schemaValidationMessages.isEmpty()) {
-            logger.info("JSON is valid against the content schema $schema.")
+            logger.info("The report has been successfully validated against the JSON schema:$schemaFileName.")
         } else {
-            val reason ="JSON is invalid against the content schema $schemaFileName."
+            val reason ="The report could not be validated against the JSON schema: $schemaFileName."
             schemaValidationMessages.forEach { invalidData.add(it.message) }
             processError(reason, invalidData,validationSchemaFileNames,createReportMessage)
         }
