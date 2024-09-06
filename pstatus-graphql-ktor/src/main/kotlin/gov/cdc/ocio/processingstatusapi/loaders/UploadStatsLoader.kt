@@ -63,7 +63,7 @@ class UploadStatsLoader: CosmosLoader() {
 
         val duplicateFilenameCountQuery = (
                 "select * from "
-                        + "(select r.content.metadata.filename, count(1) as totalCount "
+                        + "(select r.content.metadata.received_filename, count(1) as totalCount "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
                         + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'metadata-verify' and "
