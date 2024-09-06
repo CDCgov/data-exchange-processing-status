@@ -23,6 +23,7 @@ import java.util.*
  * @property content Any?
  * @property jurisdiction String?
  * @property senderId String?
+ * @property dataProducerId String?
  * @property contentAsString String?
  * @constructor
  */
@@ -53,6 +54,8 @@ open class ReportDao(
     var jurisdiction:String? =null,
 
     var senderId:String? = null,
+
+    var dataProducerId:String? = null,
 
     var timestamp: Date? = null,
 
@@ -92,6 +95,7 @@ open class ReportDao(
         this.data = this@ReportDao.data
         this.jurisdiction = this@ReportDao.jurisdiction
         this.senderId = this@ReportDao.senderId
+        this.dataProducerId= this@ReportDao.dataProducerId
         this.timestamp = this@ReportDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
         this.contentType = this@ReportDao.contentType
         this.content = this@ReportDao.content as? Map<*, *>

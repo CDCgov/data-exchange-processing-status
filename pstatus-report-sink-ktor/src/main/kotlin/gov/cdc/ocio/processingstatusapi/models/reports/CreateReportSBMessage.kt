@@ -51,6 +51,9 @@ class CreateReportSBMessage: ServiceBusMessage() {
     @SerializedName("sender_id")
     var senderId: String? = null
 
+    @SerializedName("data_producer_id")
+    var dataProducerId: String? = null
+
     @SerializedName("content_type")
     var contentType: String? = null
 

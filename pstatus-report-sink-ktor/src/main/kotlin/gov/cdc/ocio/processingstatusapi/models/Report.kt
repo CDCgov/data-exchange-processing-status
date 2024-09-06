@@ -22,6 +22,7 @@ import java.util.*
  * @property contentType String?
  * @property jurisdiction String?
  * @property senderId String?
+ * @param dataProducerId String?
  * @property content Any?
  * @property timestamp Date
  * @constructor
@@ -65,6 +66,9 @@ open class Report(
 
     @SerializedName("sender_id")
     var senderId: String? = null,
+
+    @SerializedName("data_producer_id")
+    var dataProducerId: String? = null,
 
     var content: Any? = null,
 

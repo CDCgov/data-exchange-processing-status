@@ -4,6 +4,7 @@ import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -12,7 +13,6 @@ import mu.KotlinLogging
 import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
-private val logger = KotlinLogging.logger {}
 
 /**
  * Class which initializes configuration values
@@ -73,7 +73,7 @@ val AzureServiceBus = createApplicationPlugin(
         try {
             // Create an instance of the processor through the ServiceBusClientBuilder
             logger.info("Starting the Azure service bus processor")
-            logger.info("connectionString = $connectionString, queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
+            logger.info("queueName = $queueName, topicName= $topicName, subscriptionName=$subscriptionName")
             processorQueueClient.start()
             processorTopicClient.start()
         }
@@ -89,17 +89,12 @@ val AzureServiceBus = createApplicationPlugin(
     }
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
-        logger.info("Server is started")
+        application.log.info("Application started successfully.")
         receiveMessages()
     }
     on(MonitoringEvent(ApplicationStopped)) { application ->
-        logger.info("Server is stopped")
-        logger.info("Stopping and closing the processor")
-        processorQueueClient.close()
-        processorTopicClient.close()
-        // Release resources and unsubscribe from events
-        application.environment.monitor.unsubscribe(ApplicationStarted) {}
-        application.environment.monitor.unsubscribe(ApplicationStopped) {}
+        application.log.info("Application stopped successfully.")
+        cleanupResourcesAndUnsubscribe(processorQueueClient, processorTopicClient, application)
     }
 }
 
@@ -107,12 +102,10 @@ val AzureServiceBus = createApplicationPlugin(
  * Function which processes the message received in the queue or topics
  *   @param context ServiceBusReceivedMessageContext
  *   @throws BadRequestException
- *   @throws IllegalArgumentException
  *   @throws Exception generic
  */
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
-
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
         message.messageId,
@@ -122,7 +115,6 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
     try {
         ServiceBusProcessor().withMessage(message)
     }
-    //This will handle all missing required fields, invalid schema definition and malformed json all under the BadRequest exception and writes to dead-letter queue or topics depending on the context
     catch (e: BadRequestException) {
         logger.warn("Unable to parse the message: {}", e.localizedMessage)
     }
@@ -158,7 +150,22 @@ private fun processError(context: ServiceBusErrorContext) {
         logger.error("Error source ${context.errorSource}, reason $reason, message: ${context.exception}")
     }
 }
-
+/**
+ * We need to clean up the resources and unsubscribe from application life events.
+ * @param processorQueueClient The service bus `Queue` used for communicating with the queue.
+ * @param processorTopicClient The service bus `Topic` used for communicating with the topic.
+ * @param application The Ktor instance , provides access to the environment monitor used
+ * for unsubscribing from events.
+ */
+private fun cleanupResourcesAndUnsubscribe(processorQueueClient:  ServiceBusProcessorClient,
+                                           processorTopicClient: ServiceBusProcessorClient,
+                                           application: Application) {
+    application.log.info("Closing Service Bus Queue and Topic clients")
+    processorQueueClient.close()
+    processorTopicClient.close()
+    application.environment.monitor.unsubscribe(ApplicationStarted){}
+    application.environment.monitor.unsubscribe(ApplicationStopped){}
+}
 /**
  * The main application module which runs always
  */

@@ -176,6 +176,7 @@ class ReportLoader: CosmosLoader() {
             dataStreamRoute = firstReport?.dataStreamRoute,
             jurisdiction = firstReport?.jurisdiction,
             senderId = firstReport?.senderId,
+            dataProducerId= firstReport?.dataProducerId,
             reports = reports
         )
     }
