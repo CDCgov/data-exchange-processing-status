@@ -48,7 +48,7 @@ class UploadStatsLoader: CosmosLoader() {
         val inProgressUploadsCountQuery = (
                 "select value count(1) "
                         + "from r "
-                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
+                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-status' and "
                         + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
                 )
@@ -65,7 +65,7 @@ class UploadStatsLoader: CosmosLoader() {
                 "select * from "
                         + "(select r.content.metadata.received_filename, count(1) as totalCount "
                         + "from r "
-                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
+                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'metadata-verify' and "
                         + "$timeRangeWhereClause "
                         + "group by r.content.metadata.received_filename"
