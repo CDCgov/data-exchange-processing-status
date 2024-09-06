@@ -79,9 +79,29 @@ def create_metadata_verify(upload_id, dex_ingest_datetime):
 }
 """ % (upload_id)
 
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "upload-status", dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(upload_id, "UPLOAD API", "metadata-verify", dex_ingest_datetime, False, False, content)
 
-def create_upload(upload_id, dex_ingest_datetime, offset, size):
+def create_upload_started(upload_id, dex_ingest_datetime):
+    content = """
+{
+    "content_schema_name": "upload-started",
+    "content_schema_version": "1.0.0",
+    "status": "SUCCESS"
+}
+"""
+    return create_report_msg_from_content(upload_id, "UPLOAD API", "upload-started", dex_ingest_datetime, False, False, content)
+
+def create_upload_completed(upload_id, dex_ingest_datetime):
+    content = """
+{
+    "content_schema_name": "upload-completed",
+    "content_schema_version": "1.0.0",
+    "status": "SUCCESS"
+}
+"""
+    return create_report_msg_from_content(upload_id, "UPLOAD API", "upload-completed", dex_ingest_datetime, False, False, content)
+
+def create_upload_status(upload_id, dex_ingest_datetime, offset, size):
     content = """
 {
     "content_schema_name":"upload-status",

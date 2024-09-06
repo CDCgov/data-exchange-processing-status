@@ -16,7 +16,7 @@ from azure.servicebus import TransportType
 # Queue name is always the same regardless of environment
 QUEUE_NAME = "processing-status-cosmos-db-report-sink-queue"
 TOPIC_NAME = "processing-status-cosmos-db-report-sink-topics"
-USE_QUEUE = True
+USE_QUEUE = False
 
 env = {}
 with open("../.env") as envfile:
@@ -56,25 +56,39 @@ async def run():
                 await simulate(sender, upload_id, dex_ingest_datetime)
 
 async def simulate(sender, upload_id, dex_ingest_datetime):
-        # Send metadata verify message
-        message = reports.create_metadata_verify(upload_id, dex_ingest_datetime)
-        await send_single_message(sender, message)
+    print("Sending simulated UPLOAD reports...")
+    
+    # Send metadata verify message
+    print("Sending METADATA-VERIFY report...")
+    message = reports.create_metadata_verify(upload_id, dex_ingest_datetime)
+    await send_single_message(sender, message)
 
-        # Send upload messages
-        print("Sending simulated UPLOAD reports...")
-        num_chunks = 4
-        size = 27472691
-        for index in range(num_chunks):
-            offset = (index+1) * size / num_chunks
-            message = reports.create_upload(upload_id, dex_ingest_datetime, offset, size)
-            #print(f"Sending: {message}")
-            await send_single_message(sender, message)
-            time.sleep(1)
+    # Send upload started message
+    print("Sending UPLOAD-STARTED report...")
+    message = reports.create_upload_started(upload_id, dex_ingest_datetime)
+    await send_single_message(sender, message)
 
-        # Send upload routing message
-        message = reports.create_routing(upload_id, dex_ingest_datetime)
+    # Send upload status messages
+    num_chunks = 4
+    size = 27472691
+    for index in range(num_chunks):
+        offset = int((index+1) * size / num_chunks)
+        print(f"Sending UPLOAD-STATUS ({offset} of {size} bytes) report...")
+        message = reports.create_upload_status(upload_id, dex_ingest_datetime, offset, size)
         #print(f"Sending: {message}")
         await send_single_message(sender, message)
+        time.sleep(1)
+
+    # Send upload completed message
+    print("Sending UPLOAD-COMPLETED report...")
+    message = reports.create_upload_completed(upload_id, dex_ingest_datetime)
+    await send_single_message(sender, message)
+
+    # Send upload routing message
+    print("Sending UPLOAD-ROUTED report...")
+    message = reports.create_routing(upload_id, dex_ingest_datetime)
+    #print(f"Sending: {message}")
+    await send_single_message(sender, message)
 
 asyncio.run(run())
 print("Done sending messages")
