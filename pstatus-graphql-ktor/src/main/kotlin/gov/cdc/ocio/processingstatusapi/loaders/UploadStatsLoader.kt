@@ -33,7 +33,7 @@ class UploadStatsLoader: CosmosLoader() {
                 "select value count(1) "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
-                        + "r.content.schema_name = 'upload' and "
+                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-status' and "
                         + timeRangeWhereClause
                 )
 
@@ -41,15 +41,15 @@ class UploadStatsLoader: CosmosLoader() {
                 "select value count(1) "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
-                        + "r.content.schema_name = 'dex-metadata-verify' and "
-                        + "ARRAY_LENGTH(r.content.issues) > 0 and $timeRangeWhereClause"
+                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'metadata-verify' and "
+                        + "ARRAY_LENGTH(r.stageInfo.issues) > 0 and $timeRangeWhereClause"
                 )
 
         val inProgressUploadsCountQuery = (
                 "select value count(1) "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
-                        + "r.content.schema_name = 'upload' and "
+                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-status' and "
                         + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
                 )
 
@@ -57,7 +57,7 @@ class UploadStatsLoader: CosmosLoader() {
                 "select value count(1) "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
-                        + "r.content.schema_name = 'upload' and "
+                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-status' and "
                         + "r.content['offset'] = r.content['size'] and $timeRangeWhereClause"
                 )
 
@@ -66,9 +66,9 @@ class UploadStatsLoader: CosmosLoader() {
                         + "(select r.content.metadata.filename, count(1) as totalCount "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = 'dataStreamRoute' and "
-                        + "r.content.schema_name = 'dex-metadata-verify' and "
+                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'metadata-verify' and "
                         + "$timeRangeWhereClause "
-                        + "group by r.content.metadata.filename"
+                        + "group by r.content.metadata.received_filename"
                         + ") r where r.totalCount > 1"
                 )
 
