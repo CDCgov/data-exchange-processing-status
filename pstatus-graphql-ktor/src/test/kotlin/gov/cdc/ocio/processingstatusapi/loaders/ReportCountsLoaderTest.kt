@@ -1,16 +1,15 @@
+package gov.cdc.ocio.processingstatusapi.loaders
+
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.util.CosmosPagedIterable
 import data.UploadsStatusDataGenerator
 import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
-import gov.cdc.ocio.processingstatusapi.loaders.ReportCountsLoader
 import gov.cdc.ocio.processingstatusapi.models.ReportCounts
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.reports.StageCounts
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
-import junit.framework.TestCase.assertNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
