@@ -220,7 +220,7 @@ class SchemaValidation {
 
             jurisdiction = runCatching { jsonNode.get("jurisdiction") }.getOrNull()?.asText()
             senderId = runCatching { jsonNode.get("sender_id") }.getOrNull()?.asText()
-
+            dataProducerId = runCatching { jsonNode.get("data_producer_id") }.getOrNull()?.asText()
             contentType = runCatching { jsonNode.get("content_type") }.getOrNull()?.asText()
             // Try to get the content as JSON object, but if not, get it as a string
             val contentAsNode = runCatching { jsonNode.get("content") }.getOrNull()
@@ -312,6 +312,7 @@ class SchemaValidation {
                 createReportMessage.content!!, // it was Content I changed to ContentAsString
                 createReportMessage.jurisdiction,
                 createReportMessage.senderId,
+                createReportMessage.dataProducerId,
                 createReportMessage.dispositionType,
                 Source.SERVICEBUS
             )
@@ -368,6 +369,7 @@ class SchemaValidation {
                     createReportMessage.content,
                     createReportMessage.jurisdiction,
                     createReportMessage.senderId,
+                    createReportMessage.dataProducerId,
                     invalidData,
                     validationSchemaFileNames
                 )
