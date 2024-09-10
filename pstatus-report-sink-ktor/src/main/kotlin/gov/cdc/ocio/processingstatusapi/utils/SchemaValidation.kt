@@ -219,7 +219,7 @@ class SchemaValidation {
 
             jurisdiction = runCatching { jsonNode.get("jurisdiction") }.getOrNull()?.asText()
             senderId = runCatching { jsonNode.get("sender_id") }.getOrNull()?.asText()
-
+            dataProducerId = runCatching { jsonNode.get("data_producer_id") }.getOrNull()?.asText()
             contentType = runCatching { jsonNode.get("content_type") }.getOrNull()?.asText()
             // Try to get the content as JSON object, but if not, get it as a string
             val contentAsNode = runCatching { jsonNode.get("content") }.getOrNull()
