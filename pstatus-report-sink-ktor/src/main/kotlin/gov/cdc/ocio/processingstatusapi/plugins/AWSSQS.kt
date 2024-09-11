@@ -16,7 +16,6 @@ import io.ktor.server.config.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.apache.qpid.proton.TimeoutException
 
 /**
