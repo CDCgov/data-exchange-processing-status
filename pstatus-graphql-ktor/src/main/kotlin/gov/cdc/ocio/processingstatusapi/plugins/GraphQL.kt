@@ -7,6 +7,8 @@ import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
 import gov.cdc.ocio.processingstatusapi.mutations.NotificationsMutationService
+import gov.cdc.ocio.processingstatusapi.mutations.ReportMutation
+import gov.cdc.ocio.processingstatusapi.mutations.ReportMutationService
 import gov.cdc.ocio.processingstatusapi.queries.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
@@ -21,6 +23,7 @@ import io.ktor.server.websocket.*
 import mu.KotlinLogging
 import java.time.Duration
 import java.util.*
+import org.koin.ktor.ext.inject
 
 
 /**
@@ -80,6 +83,9 @@ fun Application.graphQLModule() {
 //    install(CORS) {
 //        anyHost()
 //    }
+
+//    val reportMutation by inject<ReportMutation>() // Inject ReportMutation from Koin
+
     install(GraphQL) {
         schema {
             packages = listOf("gov.cdc.ocio.processingstatusapi")
@@ -92,7 +98,8 @@ fun Application.graphQLModule() {
 
             )
             mutations= listOf(
-                NotificationsMutationService()
+                NotificationsMutationService(),
+                ReportMutationService()
             )
 //            subscriptions = listOf(
 //                ErrorSubscriptionService()
