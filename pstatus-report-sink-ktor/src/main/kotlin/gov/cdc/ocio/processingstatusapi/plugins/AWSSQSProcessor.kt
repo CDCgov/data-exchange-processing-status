@@ -4,6 +4,7 @@ import com.google.gson.JsonSyntaxException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
@@ -41,7 +42,7 @@ class AWSSQSProcessor {
             }else{
                 if (isReportValidJson){
                     logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
-                    SchemaValidation().validateJsonSchema(message)
+                    SchemaValidation().validateJsonSchema(message, Source.AWS)
                 }else{
                     logger.error { "Validation is enabled, but the message is not in correct JSON format." }
                     SchemaValidation().sendToDeadLetter("The message is not in correct JSON format.")
@@ -49,7 +50,7 @@ class AWSSQSProcessor {
                 }
             }
             logger.info { "The message is valid creating report."}
-            SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java))
+            SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java), Source.AWS)
 
         }catch (e: BadRequestException) {
             logger.error("Failed to validate message received from AWS SQS: ${e.message}")

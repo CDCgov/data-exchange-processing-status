@@ -57,6 +57,9 @@ class CreateReportMessage: MessageBase() {
     @SerializedName("data_producer_id")
     var dataProducerId: String? = null
 
+    @SerializedName("source")
+    var source: Source? = null
+
     @SerializedName("content_type")
     var contentType: String? = null
 

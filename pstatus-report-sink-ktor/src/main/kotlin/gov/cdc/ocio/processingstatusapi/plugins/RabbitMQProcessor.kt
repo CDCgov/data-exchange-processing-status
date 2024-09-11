@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.google.gson.JsonSyntaxException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import gov.cdc.ocio.processingstatusapi.utils.*
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 
@@ -40,7 +41,7 @@ class RabbitMQProcessor {
             }else{
                 if (isReportValidJson){
                     SchemaValidation.logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
-                    SchemaValidation().validateJsonSchema(message)
+                    SchemaValidation().validateJsonSchema(message, Source.RABBITMQ)
                 }else{
                     SchemaValidation.logger.error { "Validation is enabled, but the message is not in correct JSON format." }
                     SchemaValidation().sendToDeadLetter("The message is not in correct JSON format.")
@@ -48,7 +49,7 @@ class RabbitMQProcessor {
                 }
             }
             SchemaValidation.logger.info { "The message is valid creating report."}
-            SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java))
+            SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java), Source.RABBITMQ)
         } catch (e: BadRequestException) {
             SchemaValidation.logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
         }catch(e: JsonSyntaxException){

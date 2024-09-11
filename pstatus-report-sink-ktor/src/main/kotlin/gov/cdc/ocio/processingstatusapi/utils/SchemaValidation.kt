@@ -55,7 +55,7 @@ class SchemaValidation {
      * @param message ReceivedMessage(from Azure Service Bus, RabbitMQ Queue or AWS SNS/SQS)
      * @throws BadRequestException
      */
-    fun validateJsonSchema(message: String) {
+    fun validateJsonSchema(message: String, source: Source) {
         val invalidData = mutableListOf<String>()
         val schemaFileNames = mutableListOf<String>()
         val objectMapper: ObjectMapper = jacksonObjectMapper()
@@ -66,6 +66,7 @@ class SchemaValidation {
         val createReportMessage: CreateReportMessage
         try {
             createReportMessage = gson.fromJson(message, CreateReportMessage::class.java)
+            createReportMessage.source = source
             //convert to Json
             val reportJsonNode = objectMapper.readTree(message)
             // get schema version, and use appropriate base schema version
@@ -289,14 +290,16 @@ class SchemaValidation {
      * @throws BadRequestException
      * @throws Exception
      */
-    fun createReport(createReportMessage: CreateReportMessage) {
+    fun createReport(createReportMessage: CreateReportMessage, source:Source) {
         try {
             val uploadId = createReportMessage.uploadId
             var stageName = createReportMessage.stageInfo?.action
+            //set report source: AWS, RabbitMQ or Azure Service Bus
+            createReportMessage.source = source
             if (stageName.isNullOrEmpty()) {
                 stageName = ""
             }
-            logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
+            logger.info("Creating report for uploadId = $uploadId with stageName = $stageName and source = $source")
 
             ReportManager().createReportWithUploadId(
                 uploadId!!,
@@ -313,12 +316,12 @@ class SchemaValidation {
                 createReportMessage.senderId,
                 createReportMessage.dataProducerId,
                 createReportMessage.dispositionType,
-                Source.SERVICEBUS
+                createReportMessage.source
             )
         } catch (e: BadRequestException) {
             logger.error("createReport - bad request exception: ${e.message}")
         } catch (e: Exception) {
-            logger.error("createReport - Failed to process message:${e}")
+            logger.error("createReport - Failed to process message:${e.message}")
         }
     }
     /**
@@ -368,6 +371,7 @@ class SchemaValidation {
                     createReportMessage.jurisdiction,
                     createReportMessage.senderId,
                     createReportMessage.dataProducerId,
+                    createReportMessage.source,
                     invalidData,
                     validationSchemaFileNames
                 )
