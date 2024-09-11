@@ -5,6 +5,7 @@ val logback_version: String by project
 plugins {
     kotlin("jvm") version "2.0.20"
     id("io.ktor.plugin") version "3.0.0-rc-1"
+    kotlin("plugin.serialization") version "1.9.10"
 }
 
 group = "dextest"
@@ -30,6 +31,8 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-server-auth:$ktor_version")
+
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.16.0")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
