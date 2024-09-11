@@ -13,7 +13,9 @@ import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.apache.qpid.proton.TimeoutException
 
@@ -41,7 +43,7 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
 }
 
 val AWSSQSPlugin = createApplicationPlugin(
-    name = "AWSSQS",
+    name = "AWS SQS",
     configurationPath = "aws",
     createConfiguration = ::AWSSQServiceConfiguration
 ) {
@@ -71,7 +73,7 @@ val AWSSQSPlugin = createApplicationPlugin(
      */
     fun consumeMessages() {
         SchemaValidation.logger.info("Consuming messages from AWS SQS")
-        runBlocking(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
             while (true) {
                 try {
                     val receiveMessageRequest = ReceiveMessageRequest {
@@ -88,15 +90,17 @@ val AWSSQSPlugin = createApplicationPlugin(
                             this.receiptHandle = message.receiptHandle
                         }
                         sqsClient.deleteMessage(deleteMessageRequest)
+                        SchemaValidation.logger.info("Deleted message from AWS SQS: ${message.body}")
 
                     }
-                } catch (e: Exception) {
-                    SchemaValidation.logger.error("Something went wrong while processing the request ${e.message}")
                 } catch (e: AwsServiceException) {
+                    SchemaValidation.logger.error("Something went wrong while processing the request ${e.message}")
+                } catch (e: Exception) {
                     SchemaValidation.logger.error("AWS service exception occurred: ${e.message}")
                 }
             }
         }
+
 
     }
     on(MonitoringEvent(ApplicationStarted)) { application ->

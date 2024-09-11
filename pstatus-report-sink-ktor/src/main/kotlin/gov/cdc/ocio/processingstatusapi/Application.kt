@@ -53,7 +53,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
             MessageSystem.AWS.toString() -> {
                 single(createdAtStart = true) {
-                    //AWSQServiceConfiguration(environment.config, configurationPath = "aws")
+                    AWSSQServiceConfiguration(environment.config, configurationPath = "aws")
                 }
             }
         }
