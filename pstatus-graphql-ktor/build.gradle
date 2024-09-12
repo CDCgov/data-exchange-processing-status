@@ -73,10 +73,6 @@ dependencies {
     testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 
-//    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-//    testImplementation 'org.mockito:mockito-core:4.6.1'
-//    testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
-
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.1"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:5.8.1"
     testImplementation "org.mockito:mockito-core:4.5.1"
@@ -106,6 +102,18 @@ jib {
             password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
         }
     }
+}
+
+test {
+
+    // Discover and execute JUnit Platform-based (JUnit 5, JUnit Jupiter) tests
+    // JUnit 5 has the ability to execute JUnit 4 tests as well
+    useJUnitPlatform()
+
+    //Change this to "true" if we want to execute unit tests
+    systemProperty("isTestEnvironment", "false")
+
+    // Set the test classpath, if required
 }
 
 
