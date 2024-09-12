@@ -19,13 +19,15 @@ enum class DispositionType {
 }
 
 /**
- * Base class for all service bus messages.  Contains all the common required parameters for all service bus messages.
- * Note the ServiceBusMessage class must be *open* not *abstract* as it will need to be initially created to determine
- * the type.
+ * Base class for all messages, supporting various messaging systems such as Azure Service Bus, AWS SQS and RabbitMQ.
+ * This class contains common required parameters for handling messages across these systems.
  *
- * @property dispositionType DispositionType
+ * Note that the `MessageBase` class must be *open* not *abstract* as it may need to be instantiated to determine
+ * the type of message at runtime.
+ *
+ * @property dispositionType DispositionType The action or state of the message, defaulting to ADD.
  */
-open class ServiceBusMessage {
+open class MessageBase {
 
     @SerializedName("disposition_type")
     // Default is to add
