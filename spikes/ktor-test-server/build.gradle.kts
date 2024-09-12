@@ -33,6 +33,8 @@ dependencies {
     implementation("io.ktor:ktor-server-auth:$ktor_version")
 
     implementation("com.google.auth:google-auth-library-oauth2-http:1.16.0")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.22")
+    implementation("org.json:json:20230618")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
