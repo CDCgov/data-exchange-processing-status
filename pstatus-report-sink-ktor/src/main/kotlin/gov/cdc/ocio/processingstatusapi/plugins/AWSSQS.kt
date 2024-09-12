@@ -64,7 +64,7 @@ val AWSSQSPlugin = createApplicationPlugin(
     }
     /**
      * The `consumeMessages` function continuously listens for and processes messages from an AWS SQS queue.
-     * This function runs in a blocking coroutine, retrieving messages from the queue, validating them using
+     * This function runs in a non-blocking coroutine, retrieving messages from the queue, validating them using
      * `AWSSQSProcessor`, and then deleting the processed messages from the queue.
      *
      * @throws Exception
