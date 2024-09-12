@@ -121,13 +121,19 @@ sourceSets {
         kotlin {
             srcDir 'src/kotlin'
         }
+        java {
+            srcDir 'src/kotlin'
+        }
         resources {
             srcDir 'src/resources'
         }
     }
     test {
         kotlin {
-            srcDir 'src/test'
+            srcDir 'src/kotlin'
+        }
+        java {
+            srcDir 'src/kotlin'
         }
     }
 }
