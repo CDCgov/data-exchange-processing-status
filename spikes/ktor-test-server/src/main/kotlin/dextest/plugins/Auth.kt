@@ -4,20 +4,13 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import kotlinx.serialization.Serializable
 
-import com.google.auth.oauth2.TokenVerifier
-
-import com.nimbusds.jwt.SignedJWT
-import com.nimbusds.jose.crypto.RSASSAVerifier
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.RSAKey
-import org.json.JSONObject
+import com.auth0.jwk.JwkProviderBuilder
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import java.net.URL
 import java.security.interfaces.RSAPublicKey
+import org.json.JSONObject
 
-
-@Serializable
-data class Claims(val scope: String)
 
 @Serializable
 data class IntrospectionResponse(val active: Boolean, val scope: String)
@@ -56,68 +49,44 @@ fun Application.configureAuth() {
     }
 }
 
-suspend fun getIssuerPublicKey(issuer: String, keyId: String): RSAPublicKey? {
-    // Fetch the OIDC configuration to get the JWKS URI
+fun getIssuerPublicKey(issuer: String, keyId: String): RSAPublicKey? {
+
     val oidcConfigUrl = "$issuer/.well-known/openid-configuration"
     val oidcConfigJson = URL(oidcConfigUrl).readText()
 
-    // Parse the JSON string
     val jsonObject = JSONObject(oidcConfigJson)
-
-    // Get the JWKS URI from the JSON
     val jwksUri = jsonObject.getString("jwks_uri")
 
-    // Fetch the JWKS from the JWKS URI
-    val jwksJson = URL(jwksUri).readText()
+    val provider = JwkProviderBuilder(URL(jwksUri)).build()
+    val jwk = provider.get(keyId)
 
-    // Parse the JWKS
-    val jwkSet = JWKSet.parse(jwksJson)
-
-    // Find the JWK with the matching key ID
-    val jwk: JWK? = jwkSet.keys.find { it.keyID == keyId }
-
-    // Convert the JWK to an RSA public key
-    return (jwk as? RSAKey)?.toRSAPublicKey()
+    return jwk.publicKey as? RSAPublicKey
 }
 
-suspend fun validateJWT(token: String) {
+fun validateJWT(token: String) {
     val issuer = authConfig.issuerUrl
 
-    // Parse the JWT
-    val signedJWT = SignedJWT.parse(token)
+    val decodedJWT = JWT.decode(token)
+    val keyId = decodedJWT.keyId
 
-    // Get the Key ID from the JWT header
-    val keyId = signedJWT.header.keyID
-
-    // Get the public key for the issuer using the Key ID
     val publicKey = getIssuerPublicKey(issuer, keyId)
         ?: throw IllegalArgumentException("Public key not found for Key ID: $keyId")
 
-    // Create the JWS verifier
-    val verifier = RSASSAVerifier(publicKey)
+    val algorithm = Algorithm.RSA256(publicKey, null)
 
-    // Verify the token's signature
-    if (!signedJWT.verify(verifier)) {
-        throw IllegalArgumentException("Invalid JWT token")
-    }
+    val verifier = com.auth0.jwt.JWT.require(algorithm)
+        .withIssuer(issuer)
+        .build()
 
-    val claims = signedJWT.jwtClaimsSet.getStringClaim("scope") ?: throw IllegalArgumentException("No scopes found")
+    verifier.verify(decodedJWT)
+
+    val claims = decodedJWT.getClaim("scope").asString() ?: throw IllegalArgumentException("No scopes found")
     val actualScopes = claims.split(" ")
 
     checkScopes(actualScopes)
-
-//    using Google Oauth2 package
-//    val verifier = TokenVerifier.newBuilder().setIssuer(authConfig.issuerUrl).setPublicKey(publicKey).build()
-//
-//    val idToken = verifier.verify(token) ?: throw IllegalArgumentException("Invalid JWT token")
-//
-//    val claims: Claims = idToken.claims["scope"] ?: throw IllegalArgumentException("No scopes found")
-//    val actualScopes = claims.split(" ")
-//
-//    checkScopes(actualScopes)
 }
 
-suspend fun validateOpaqueToken(token: String) {}
+fun validateOpaqueToken(token: String) {}
 
 fun checkScopes(actualScopes: List<String>) {
     val requiredScopes = authConfig.requiredScopes?.split(" ") ?: return

@@ -32,9 +32,9 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-server-auth:$ktor_version")
 
-    implementation("com.google.auth:google-auth-library-oauth2-http:1.16.0")
-    implementation("com.nimbusds:nimbus-jose-jwt:9.22")
-    implementation("org.json:json:20230618")
+    implementation("org.json:json:20231013")
+    implementation("com.auth0:java-jwt:4.4.0")
+    implementation("com.auth0:jwks-rsa:0.21.1")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
