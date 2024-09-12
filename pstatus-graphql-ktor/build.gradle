@@ -116,4 +116,15 @@ test {
     // Set the test classpath, if required
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir 'src/kotlin'
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
+}
+
 
