@@ -118,11 +118,16 @@ test {
 
 sourceSets {
     main {
-        java {
+        kotlin {
             srcDir 'src/kotlin'
         }
         resources {
             srcDir 'src/resources'
+        }
+    }
+    test {
+        kotlin {
+            srcDir 'src/test'
         }
     }
 }
