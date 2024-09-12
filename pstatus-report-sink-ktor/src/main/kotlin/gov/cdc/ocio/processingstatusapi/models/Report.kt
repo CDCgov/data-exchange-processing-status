@@ -1,11 +1,11 @@
 package gov.cdc.ocio.processingstatusapi.models
 
-import gov.cdc.ocio.processingstatusapi.dynamo.Content
-import gov.cdc.ocio.processingstatusapi.dynamo.ContentConverterProvider
+import gov.cdc.ocio.processingstatusapi.dynamo.JsonNodeConverterProvider
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
+import software.amazon.awssdk.protocols.jsoncore.JsonNode
 import java.time.Instant
 
 
@@ -30,8 +30,7 @@ import java.time.Instant
  * @constructor
  */
 @DynamoDbBean(converterProviders = [
-    ContentConverterProvider::class,
-//    DateConverterProvider::class
+    JsonNodeConverterProvider::class
 ])
 open class Report(
 
@@ -62,8 +61,7 @@ open class Report(
 
     var senderId: String? = null,
 
-    var content: Content? = null,
-//    var content: Map<String, Any>? = null,
+    var content: JsonNode? = null,
 
     val timestamp: Instant = Instant.now()
 )
