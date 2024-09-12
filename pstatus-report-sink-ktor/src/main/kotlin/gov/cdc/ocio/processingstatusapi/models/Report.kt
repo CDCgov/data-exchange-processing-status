@@ -63,6 +63,7 @@ open class Report(
     var senderId: String? = null,
 
     var content: Content? = null,
+//    var content: Map<String, Any>? = null,
 
     val timestamp: Instant = Instant.now()
 )

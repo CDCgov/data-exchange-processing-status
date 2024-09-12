@@ -12,12 +12,13 @@ import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.models.reports.*
 import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
+import io.netty.handler.codec.http.HttpResponseStatus
 import mu.KotlinLogging
+import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.util.*
-import io.netty.handler.codec.http.HttpResponseStatus
 import java.time.Instant
+import java.util.*
 
 
 /**
@@ -242,12 +243,18 @@ class ReportManager: KoinComponent {
             this.senderId = senderId
             this.contentType = contentType
 
-            if (contentType.lowercase() == "json") {
+            if (contentType.lowercase() == "application/json" || contentType.lowercase() == "json") {
                 val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Content = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
-                this.content = jsonMap
-            } //else
-                //this.content = content
+                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
+                this.content = Content()
+                jsonMap.entries.forEach {
+                    this.content!![it.key] = it.value
+                }
+            } else {
+                val bytesArray = SerializationUtils.serialize(content as String)
+                val base64Encoded = Base64.getEncoder().encodeToString(bytesArray)
+                this.content = mapOf("base64Encoded" to base64Encoded) as Content
+            }
         }
        return createReportItem(uploadId,stageReportId,stageReport)
     }
