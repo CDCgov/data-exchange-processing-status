@@ -13,18 +13,19 @@ import java.util.stream.Collectors
  * @property defaultProvider AttributeConverterProvider
  */
 class JsonNodeConverterProvider : AttributeConverterProvider {
+
     private val customConverters = listOf<AttributeConverter<*>>(
         JsonItemAttributeConverter.create()
     )
 
-    private val customConvertersMap: MutableMap<EnhancedType<*>, AttributeConverter<*>> =
+    private val customConvertersMap =
         customConverters.stream().collect(
             Collectors.toMap(
                 { obj: AttributeConverter<*> -> obj.type() },
                 { c: AttributeConverter<*> -> c }
             ))
 
-    private val defaultProvider: AttributeConverterProvider = DefaultAttributeConverterProvider.create()
+    private val defaultProvider = DefaultAttributeConverterProvider.create()
 
     /**
      * Converter for the enhanced type generic.

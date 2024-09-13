@@ -18,6 +18,8 @@ import software.amazon.awssdk.services.dynamodb.model.ListTablesResponse
  * DynamoDB repository implementation
  *
  * @property ddbEnhancedClient DynamoDbEnhancedClient
+ * @property reportsTableName String
+ * @property reportsDeadLetterTableName String
  * @property reportsCollection Collection
  * @property reportsDeadLetterCollection Collection
  * @constructor
@@ -32,7 +34,7 @@ class DynamoRepository(dbPrefix: String): ProcessingStatusRepository() {
 
     override var reportsCollection = DynamoCollection(ddbEnhancedClient, reportsTableName, Report::class.java) as Collection
 
-//    override var reportsDeadLetterCollection = DynamoCollection(ddbEnhancedClient, reportsDeadLetterTableName, ReportDeadLetter::class.java) as Collection
+    override var reportsDeadLetterCollection = DynamoCollection(ddbEnhancedClient, reportsDeadLetterTableName, ReportDeadLetter::class.java) as Collection
 
     private fun getDynamoDbEnhancedClient(): DynamoDbEnhancedClient {
 
