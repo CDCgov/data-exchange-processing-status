@@ -27,9 +27,9 @@ data class AuthConfig(
 
 // Dummy appConfig, replace with actual config loading logic
 val authConfig = AuthConfig(
-    issuerUrl = "https://apigw-stg.cdc.gov:8443",
+    issuerUrl = "http://localhost:8080/realms/test-realm-a",
     introspectionUrl = "https://your-introspection-url",
-    requiredScopes = "dex:upload"
+    requiredScopes = "email"
 )
 
 fun Application.configureAuth() {
@@ -111,7 +111,7 @@ fun validateJWT(token: String) {
 fun validateOpaqueToken(token: String) {}
 
 fun checkScopes(actualScopes: List<String>) {
-    val requiredScopes = authConfig.requiredScopes?.split(" ") ?: return
+    val requiredScopes = authConfig.requiredScopes?.takeIf { it.isNotBlank() }?.split(" ") ?: return
 
     if (!requiredScopes.all { it in actualScopes }) {
         throw InsufficientScopesException("One or more required scopes not found")
