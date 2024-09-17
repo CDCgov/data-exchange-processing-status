@@ -27,9 +27,9 @@ data class AuthConfig(
 
 // Dummy appConfig, replace with actual config loading logic
 val authConfig = AuthConfig(
-    issuerUrl = "http://localhost:8080/realms/test-realm-a",
+    issuerUrl = "http://localhost:8080/realms/test-realm-jwt",
     introspectionUrl = "https://your-introspection-url",
-    requiredScopes = "email"
+    requiredScopes = "email profile"
 )
 
 fun Application.configureAuth() {
@@ -93,9 +93,7 @@ fun validateJWT(token: String) {
     val algorithm = Algorithm.RSA256(publicKey, null)
 
     try {
-        val verifier = JWT.require(algorithm)
-            .withIssuer(issuer)
-            .build()
+        val verifier = JWT.require(algorithm).withIssuer(issuer).build()
 
         verifier.verify(decodedJWT)
     } catch (e: Exception) {
