@@ -4,9 +4,32 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.models.reports.ReportInput
 
+/**
+ * ReportMutationService class handles GraphQL mutations for report creation and replacement.
+ *
+ * This service provides a single mutation operation to either create a new report or replace an
+ * existing report in the system. It utilizes the ReportMutation class to perform the actual
+ * upsert operation based on the provided input and action.
+ *
+ * Annotations:
+ * - GraphQLDescription: Provides descriptions for the class and its methods for GraphQL documentation.
+ *
+ * Dependencies:
+ * - ReportInput: Represents the input model for report data.
+ */
 @GraphQLDescription("A Mutation Service to either create a new report or replace an existing report")
 class ReportMutationService() : Mutation {
 
+    /**
+     * Upserts a report based on the provided input and action.
+     *
+     * This function serves as a GraphQL mutation to create a new report or replace an existing one.
+     * It delegates the actual upsert logic to the ReportMutation class.
+     *
+     * @param input The ReportInput containing details of the report to be created or replaced.
+     * @param action A string specifying the action to perform: "create" or "replace".
+     * @return The result of the upsert operation, handled by the ReportMutation class.
+     */
     @GraphQLDescription("Create upload")
     @Suppress("unused")
     fun upsertReport(

@@ -5,14 +5,24 @@ import gov.cdc.ocio.processingstatusapi.models.submission.Aggregation
 import gov.cdc.ocio.processingstatusapi.models.submission.Status
 import java.time.OffsetDateTime
 
-@GraphQLDescription("Input type for a key-value pair")
-data class KeyValueInput(
-    @GraphQLDescription("Key of the key-value pair")
-    val key: String,
+/**
+ * Sealed class representing different types of content.
+ */
+/*@GraphQLDescription("Content can be either JSON or a base64 encoded string.")
+//@GraphQLUnion(name = "ContentInput", possibleTypes = ["JsonContentInput", "StringContentInput"])
+sealed class ContentInput
 
-    @GraphQLDescription("Value of the key-value pair")
-    val value: String
-)
+@GraphQLDescription("Input type for JSON content")
+data class JsonContentInput(
+    @GraphQLDescription("JSON data")
+    val data: Map<String, Any>
+) : ContentInput()
+
+@GraphQLDescription("Input type for Base64 encoded string content")
+data class StringContentInput(
+    @GraphQLDescription("Base64 encoded string")
+    val content: String
+) : ContentInput()*/
 
 @GraphQLDescription("Input type for creating or updating a report")
 data class ReportInput(
@@ -40,11 +50,11 @@ data class ReportInput(
     @GraphQLDescription("Stage info")
     val stageInfo: StageInfoInput? = null,
 
-    @GraphQLDescription("Tags associated with the report")
-    val tags: List<KeyValueInput>? = null,
+    @GraphQLDescription("Tags")
+    val tags: List<TagInput>? = null,
 
-    @GraphQLDescription("Data associated with the report")
-    val data: List<KeyValueInput>? = null,
+    @GraphQLDescription("Data")
+    val data: List<DataInput>? = null,
 
     @GraphQLDescription("Indicates the content type of the content; e.g. JSON, XML")
     val contentType: String? = null,
@@ -58,8 +68,8 @@ data class ReportInput(
     @GraphQLDescription("Data Producer ID stated in the report; set to null if not applicable")
     val dataProducerId: String? = null,
 
-    @GraphQLDescription("Content of the report. If the report is JSON then the content will be shown as JSON. Otherwise, the content is a base64 encoded string.")
-    val content: List<KeyValueInput>? = null,
+    @GraphQLDescription("Content of the report. If the report is JSON then the content will be a map, otherwise, it will be a string")
+    var content : String? = null,
 
     @GraphQLDescription("Timestamp when the report was recorded in the database")
     val timestamp: OffsetDateTime? = null
@@ -111,4 +121,23 @@ data class IssueInput(
 
     @GraphQLDescription("Issue description")
     val description: String? = null
+)
+
+
+@GraphQLDescription("Input type for tags")
+data class TagInput(
+    @GraphQLDescription("Tag key")
+    val key: String,
+
+    @GraphQLDescription("Tag value")
+    val value: String
+)
+
+@GraphQLDescription("Input type for tags")
+data class DataInput(
+    @GraphQLDescription("Tag key")
+    val key: String,
+
+    @GraphQLDescription("Tag value")
+    val value: String
 )
