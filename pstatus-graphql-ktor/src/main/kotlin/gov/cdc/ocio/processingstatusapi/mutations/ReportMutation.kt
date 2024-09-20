@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.loaders.CosmosLoader
+import gov.cdc.ocio.processingstatusapi.models.ReportContentType
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.reports.*
 import gov.cdc.ocio.processingstatusapi.models.submission.Issue
@@ -31,7 +32,6 @@ import java.util.*
  *   into usable formats.
  *
  */
-
 class ReportMutation : CosmosLoader() {
 
     private val objectMapper = ObjectMapper()
@@ -57,7 +57,7 @@ class ReportMutation : CosmosLoader() {
             performUpsert(input, action)
         } catch (e: Exception) {
             logger.error("Error upserting report: ${e.message}", e)
-            null
+            throw BadRequestException("Failed to upsert report: ${e.message}")
         }
     }
 
@@ -65,6 +65,11 @@ class ReportMutation : CosmosLoader() {
      * Executes the upsert operation for a report.
      *
      * Validates the action type and performs either a create or replace operation on the report.
+     *
+     *  * Additionally, checks for the presence of required fields: `dataStreamId`, `dataStreamRoute`,
+     *  * and both `stageInfo.service` and `stageInfo.action`. Throws a BadRequestException if any of
+     *  * these fields are missing.
+     *
      * Generates a new ID for the report if creating, and checks for existence when replacing.
      *
      * @param input The ReportInput containing details of the report to be created or replaced.
@@ -75,14 +80,18 @@ class ReportMutation : CosmosLoader() {
     @Throws(BadRequestException::class)
     private fun performUpsert(input: ReportInput, action: String): Report? {
         // Validate action parameter
-        if (action !in listOf("create", "replace")) {
-            throw BadRequestException("Invalid action specified: $action. Must be 'create' or 'replace'.")
+        val upsertAction = UpsertAction.fromString(action)
+
+        // Validate required fields for ReportInput
+        if (input.dataStreamId.isNullOrBlank() || input.dataStreamRoute.isNullOrBlank() ||
+            input.stageInfo?.service.isNullOrBlank() || input.stageInfo?.action.isNullOrBlank()) {
+            throw BadRequestException("Missing required fields: dataStreamId, dataStreamRoute, stageInfo.service, and stageInfo.action must be present.")
         }
 
         val report = mapInputToReport(input)
 
-        return when (action) {
-            "create" -> {
+        return when (upsertAction) {
+            UpsertAction.CREATE -> {
                 if (!report.id.isNullOrBlank()) {
                     throw BadRequestException("ID should not be provided for create action.")
                 }
@@ -93,7 +102,7 @@ class ReportMutation : CosmosLoader() {
                 val createResponse: CosmosItemResponse<Report>? = reportsContainer?.createItem(report, PartitionKey(report.uploadId!!), options)
                 createResponse?.item
             }
-            "replace" -> {
+            UpsertAction.REPLACE -> {
                 if (report.id.isNullOrBlank()) {
                     throw BadRequestException("ID must be provided for replace action.")
                 }
@@ -223,10 +232,11 @@ class ReportMutation : CosmosLoader() {
      */
     @Throws(ContentException::class)
     private fun parseContent(content: String, contentType: String?): Any {
-        val objectMapper = ObjectMapper()
 
-        return when (contentType?.lowercase(Locale.getDefault())) {
-            "application/json", "json" -> {
+        val validContentType = contentType?.let { ReportContentType.fromString(it) }
+
+        return when (validContentType) {
+            ReportContentType.JSON, ReportContentType.JSON_SHORT -> {
                 // Parse JSON content into a Map
                 try {
                     objectMapper.readValue<Map<String, Any>>(content)
@@ -234,7 +244,7 @@ class ReportMutation : CosmosLoader() {
                     throw ContentException("Invalid JSON format: ${e.message}")
                 }
             }
-            "base64" -> {
+            ReportContentType.BASE64 -> {
                 // Decode base64 content into a Map, if expected
                 val decodedBytes = Base64.getDecoder().decode(content)
                 val decodedString = String(decodedBytes)
@@ -248,6 +258,18 @@ class ReportMutation : CosmosLoader() {
             else -> {
                 throw ContentException("Unsupported content type: $contentType")
             }
+        }
+    }
+}
+
+enum class UpsertAction(val action: String) {
+    CREATE("create"),
+    REPLACE("replace");
+
+    companion object {
+        fun fromString(action: String): UpsertAction {
+            return values().find { it.action.equals(action, ignoreCase = true) }
+                ?: throw BadRequestException("Invalid action specified: $action. Must be 'create' or 'replace'.")
         }
     }
 }

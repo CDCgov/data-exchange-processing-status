@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.mutations
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
+import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.models.reports.ReportInput
 
 /**
@@ -32,6 +33,7 @@ class ReportMutationService() : Mutation {
      */
     @GraphQLDescription("Create upload")
     @Suppress("unused")
+    @Throws(BadRequestException::class)
     fun upsertReport(
         @GraphQLDescription(
             "*Report Input* to be created or updated:\n"
