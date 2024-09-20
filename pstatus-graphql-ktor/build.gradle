@@ -125,6 +125,14 @@ sourceSets {
             srcDir 'src/resources'
         }
     }
+    test {
+        java {
+            srcDir 'src/kotlin'
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
 }
 
 
