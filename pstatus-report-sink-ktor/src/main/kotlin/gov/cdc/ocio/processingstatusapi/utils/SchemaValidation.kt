@@ -70,19 +70,28 @@ class SchemaValidation {
             //convert to Json
             val reportJsonNode = objectMapper.readTree(message)
             // get schema version, and use appropriate base schema version
-            val reportSchemaVersion = getSchemaVersion(message)?:defaultSchemaVersion
-            logger.info ("The version of schema report $reportSchemaVersion")
+            val reportSchemaVersion = getSchemaVersion(message) ?: defaultSchemaVersion
+            logger.info("The version of schema report $reportSchemaVersion")
             val baseSchemaFileName = "base.$reportSchemaVersion.schema.json"
 
-            val schemaFile = loadSchemaFile(baseSchemaFileName)?: return processError(
+            val schemaFile = loadSchemaFile(baseSchemaFileName) ?: return processError(
                 "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
                 invalidData,
                 schemaFileNames,
-                createReportMessage)
+                createReportMessage
+            )
 
             schemaFileNames.add(baseSchemaFileName)
             //validate base schema version
-            validateSchemaContent(schemaFile.name,reportJsonNode, schemaFile,objectMapper, invalidData, schemaFileNames, createReportMessage)
+            validateSchemaContent(
+                schemaFile.name,
+                reportJsonNode,
+                schemaFile,
+                objectMapper,
+                invalidData,
+                schemaFileNames,
+                createReportMessage
+            )
             //check for content type
 
             val contentTypeNode = reportJsonNode.get("content_type")
@@ -92,8 +101,9 @@ class SchemaValidation {
                     reason,
                     invalidData,
                     schemaFileNames,
-                    createReportMessage)
-            }else{
+                    createReportMessage
+                )
+            } else {
                 if (!isJsonMimeType(contentTypeNode.asText())) {
                     // Don't need to go further down if the mimetype is other than json. i.e. xml or text etc.
                     return
@@ -107,7 +117,8 @@ class SchemaValidation {
                     reason,
                     invalidData,
                     schemaFileNames,
-                    createReportMessage)
+                    createReportMessage
+                )
             }
             //check for `content_schema_name` and `content_schema_version`
             val contentSchemaNameNode = contentNode.get("content_schema_name")
@@ -120,7 +131,8 @@ class SchemaValidation {
                     reason,
                     invalidData,
                     schemaFileNames,
-                    createReportMessage)
+                    createReportMessage
+                )
             }
 
             //proceed with content validation
@@ -129,14 +141,16 @@ class SchemaValidation {
             val contentSchemaFileName = "$contentSchemaName.$contentSchemaVersion.schema.json"
             val contentSchemaFilePath = SchemaValidation().loadSchemaFile(contentSchemaFileName)
 
-            val contentSchemaFile = if (contentSchemaFilePath !=null) File(contentSchemaFilePath.toURI()) else null
+            val contentSchemaFile = if (contentSchemaFilePath != null) File(contentSchemaFilePath.toURI()) else null
             if (contentSchemaFile == null || !contentSchemaFile.exists()) {
-                reason = "Report rejected: Content schema file not found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'."
+                reason =
+                    "Report rejected: Content schema file not found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'."
                 processError(
                     reason,
                     invalidData,
                     schemaFileNames,
-                    createReportMessage)
+                    createReportMessage
+                )
             }
             schemaFileNames.add(contentSchemaFileName)
             //validate content schema
@@ -147,12 +161,16 @@ class SchemaValidation {
                 objectMapper,
                 invalidData,
                 schemaFileNames,
-                createReportMessage)
+                createReportMessage
+            )
+        }catch (e: BadRequestException) {
+            logger.error("The report validation failed ${e.message}")
+            throw e
         }catch (e: Exception){
             reason = "Report rejected: Malformed JSON or error processing the report"
             e.message?.let { invalidData.add(it) }
-            val malformedReportSBMessage = safeParseMessageAsReport(message)
-            processError(reason, invalidData, schemaFileNames, malformedReportSBMessage)
+            val malformedReportMessage = safeParseMessageAsReport(message)
+            processError(reason, invalidData, schemaFileNames, malformedReportMessage)
         }
     }
 
