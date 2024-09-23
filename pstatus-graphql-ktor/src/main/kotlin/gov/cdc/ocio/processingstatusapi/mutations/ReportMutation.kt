@@ -123,6 +123,7 @@ class ReportMutation : CosmosLoader() {
      * @param input The ReportInput containing the details to map to a Report.
      * @return A Report object populated with data from the input.
      */
+    @Throws(ContentException::class)
     private fun mapInputToReport(input: ReportInput): Report {
 
         return try {
