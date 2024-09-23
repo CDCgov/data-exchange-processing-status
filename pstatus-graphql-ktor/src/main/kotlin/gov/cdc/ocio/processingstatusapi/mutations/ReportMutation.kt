@@ -11,6 +11,10 @@ import gov.cdc.ocio.processingstatusapi.loaders.CosmosLoader
 import gov.cdc.ocio.processingstatusapi.models.ReportContentType
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.reports.*
+import gov.cdc.ocio.processingstatusapi.models.reports.inputs.IssueInput
+import gov.cdc.ocio.processingstatusapi.models.reports.inputs.MessageMetadataInput
+import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
+import gov.cdc.ocio.processingstatusapi.models.reports.inputs.StageInfoInput
 import gov.cdc.ocio.processingstatusapi.models.submission.Issue
 import gov.cdc.ocio.processingstatusapi.models.submission.Level
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
@@ -49,15 +53,21 @@ class ReportMutation : CosmosLoader() {
      * @throws BadRequestException If the action is invalid or if the ID is improperly provided.
      * @throws ContentException If there is an error with the content format.
      */
-    @Throws(BadRequestException::class)
+    @Throws(BadRequestException::class, ContentException::class, Exception::class)
     fun upsertReport(input: ReportInput, action: String): Report? {
         logger.info("ReportId, id = ${input.id}, action = $action")
 
         return try {
             performUpsert(input, action)
+        } catch (e: BadRequestException) {
+            logger.error("Bad request while upserting report: ${e.message}", e)
+            throw e // Re-throwing the BadRequestException
+        } catch (e: ContentException) {
+            logger.error("Content error while upserting report: ${e.message}", e)
+            throw e // Re-throwing the ContentException
         } catch (e: Exception) {
-            logger.error("Error upserting report: ${e.message}", e)
-            throw BadRequestException("Failed to upsert report: ${e.message}")
+            logger.error("Unexpected error while upserting report: ${e.message}", e)
+            throw BadRequestException("Failed to upsert report due to an unexpected error: ${e.message}")
         }
     }
 
@@ -77,49 +87,30 @@ class ReportMutation : CosmosLoader() {
      * @return The updated or newly created Report, or null if the operation fails.
      * @throws BadRequestException If the action is invalid or the ID is improperly provided.
      */
-    @Throws(BadRequestException::class)
+    @Throws(BadRequestException::class, ContentException::class)
     private fun performUpsert(input: ReportInput, action: String): Report? {
         // Validate action parameter
         val upsertAction = UpsertAction.fromString(action)
 
         // Validate required fields for ReportInput
-        if (input.dataStreamId.isNullOrBlank() || input.dataStreamRoute.isNullOrBlank() ||
-            input.stageInfo?.service.isNullOrBlank() || input.stageInfo?.action.isNullOrBlank()) {
-            throw BadRequestException("Missing required fields: dataStreamId, dataStreamRoute, stageInfo.service, and stageInfo.action must be present.")
-        }
+        validateInput(input, upsertAction)
 
-        val report = mapInputToReport(input)
+        return try {
+            val report = mapInputToReport(input)
 
-        return when (upsertAction) {
-            UpsertAction.CREATE -> {
-                if (!report.id.isNullOrBlank()) {
-                    throw BadRequestException("ID should not be provided for create action.")
-                }
-
-                // Generate a new ID if not provided
-                report.id = generateNewId()
-                val options = CosmosItemRequestOptions()
-                val createResponse: CosmosItemResponse<Report>? = reportsContainer?.createItem(report, PartitionKey(report.uploadId!!), options)
-                createResponse?.item
+            when (upsertAction) {
+                UpsertAction.CREATE -> createReport(report)
+                UpsertAction.REPLACE -> replaceReport(report)
             }
-            UpsertAction.REPLACE -> {
-                if (report.id.isNullOrBlank()) {
-                    throw BadRequestException("ID must be provided for replace action.")
-                }
-
-                // Attempt to read the existing item
-                val readResponse: CosmosItemResponse<Report>? = reportsContainer?.readItem(report.id!!, PartitionKey(report.uploadId!!), Report::class.java)
-
-                if (readResponse != null) {
-                    // Replace the existing item
-                    val options = CosmosItemRequestOptions()
-                    val replaceResponse: CosmosItemResponse<Report>? = reportsContainer?.replaceItem(report, report.id!!, PartitionKey(report.uploadId!!), options)
-                    replaceResponse?.item
-                } else {
-                    throw BadRequestException("Report with ID ${report.id} not found for replacement.")
-                }
-            }
-            else -> throw BadRequestException("Unexpected action: $action")
+        } catch (e: BadRequestException) {
+            logger.error("Validation error during upsert: ${e.message}", e)
+            throw e // Re-throwing the BadRequestException
+        } catch (e: ContentException) {
+            logger.error("Content error during upsert: ${e.message}", e)
+            throw e // Re-throwing the ContentException
+        } catch (e: Exception) {
+            logger.error("Unexpected error during upsert: ${e.message}", e)
+            throw ContentException("Failed to perform upsert: ${e.message}")
         }
     }
 
@@ -133,27 +124,38 @@ class ReportMutation : CosmosLoader() {
      * @return A Report object populated with data from the input.
      */
     private fun mapInputToReport(input: ReportInput): Report {
-        // Parse the content based on its type
-        val parsedContent = input.content?.let { parseContent(it, input.contentType) } as? Map<*, *>?
 
-        return Report(
-            id = input.id,
-            uploadId = input.uploadId,
-            reportId = input.reportId,
-            dataStreamId = input.dataStreamId,
-            dataStreamRoute = input.dataStreamRoute,
-            dexIngestDateTime = input.dexIngestDateTime,
-            messageMetadata = input.messageMetadata?.let { mapInputToMessageMetadata(it) },
-            stageInfo = input.stageInfo?.let { mapInputToStageInfo(it) },
-            tags = input.tags?.associate { it.key to it.value },
-            data = input.data?.associate { it.key to it.value },
-            contentType = input.contentType,
-            jurisdiction = input.jurisdiction,
-            senderId = input.senderId,
-            dataProducerId = input.dataProducerId,
-            content = parsedContent,
-            timestamp = input.timestamp
-        )
+        return try {
+
+            // Parse the content based on its type
+            val parsedContent = input.content?.let { parseContent(it, input.contentType) } as? Map<*, *>?
+
+            // Set id and reportId to be the same
+            val reportId = input.id ?: generateNewId() // Generate a new ID if not provided
+
+
+            Report(
+                id = reportId,
+                uploadId = input.uploadId,
+                reportId = reportId, //Set reportId to be the same as id
+                dataStreamId = input.dataStreamId,
+                dataStreamRoute = input.dataStreamRoute,
+                dexIngestDateTime = input.dexIngestDateTime,
+                messageMetadata = input.messageMetadata?.let { mapInputToMessageMetadata(it) },
+                stageInfo = input.stageInfo?.let { mapInputToStageInfo(it) },
+                tags = input.tags?.associate { it.key to it.value },
+                data = input.data?.associate { it.key to it.value },
+                contentType = input.contentType,
+                jurisdiction = input.jurisdiction,
+                senderId = input.senderId,
+                dataProducerId = input.dataProducerId,
+                content = parsedContent,
+                timestamp = input.timestamp
+            )
+        } catch (e: Exception) {
+            logger.error("Error mapping input to report: ${e.message}", e)
+            throw ContentException("Failed to map input to report: ${e.message}")
+        }
     }
 
     /**
@@ -241,6 +243,7 @@ class ReportMutation : CosmosLoader() {
                 try {
                     objectMapper.readValue<Map<String, Any>>(content)
                 } catch (e: Exception) {
+                    logger.error(e.localizedMessage)
                     throw ContentException("Invalid JSON format: ${e.message}")
                 }
             }
@@ -252,6 +255,7 @@ class ReportMutation : CosmosLoader() {
                 try {
                     objectMapper.readValue<Map<String, Any>>(decodedString)
                 } catch (e: Exception) {
+                    logger.error(e.localizedMessage)
                     throw ContentException("Invalid JSON format after base64 decode: ${e.message}")
                 }
             }
@@ -260,6 +264,155 @@ class ReportMutation : CosmosLoader() {
             }
         }
     }
+
+
+    /**
+     * Validates the input for a report based on the specified action.
+     *
+     * This function checks the validity of the provided `input` object based on the
+     * specified `action` (CREATE or REPLACE). It ensures that the required fields
+     * are present and valid. Specifically, for the CREATE action, it checks that
+     * no ID is provided, while for the REPLACE action, it verifies that an ID is
+     * supplied. Additionally, it validates the presence of `dataStreamId`,
+     * `dataStreamRoute`, and checks the properties of `stageInfo`.
+     *
+     * @param input The ReportInput object to be validated. It must contain the necessary
+     *              fields based on the action specified.
+     * @param action The UpsertAction indicating the type of operation (CREATE or REPLACE).
+     * @throws BadRequestException If the input is invalid, such as:
+     *         - For CREATE: ID is provided.
+     *         - For REPLACE: ID is missing.
+     *         - If any of the required fields are missing: dataStreamId, dataStreamRoute,
+     *           or stageInfo (including service and action).
+     */
+    @Throws (BadRequestException::class)
+    private fun validateInput(input: ReportInput, action: UpsertAction) {
+        when (action) {
+            UpsertAction.CREATE -> {
+                if (!input.id.isNullOrBlank()) {
+                    throw BadRequestException("ID should not be provided for create action.")
+                }
+            }
+            UpsertAction.REPLACE -> {
+                if (input.id.isNullOrBlank()) {
+                    throw BadRequestException("ID must be provided for replace action.")
+                }
+                // Ensure reportId matches id if both are provided
+                if (!input.reportId.isNullOrBlank() && input.id != input.reportId) {
+                    throw BadRequestException("ID and reportId must be the same for replace action.")
+                }
+            }
+        }
+
+        // Validate dataStreamId and dataStreamRoute fields
+        if (input.dataStreamId.isNullOrBlank() || input.dataStreamRoute.isNullOrBlank()) {
+            throw BadRequestException("Missing required fields: dataStreamId and dataStreamRoute must be present.")
+        }
+
+        // Check if stageInfo is null
+        if (input.stageInfo == null) {
+            throw BadRequestException("Missing required field: stageInfo must be present.")
+        }
+
+        // Check properties of stageInfo
+        if (input.stageInfo.service.isNullOrBlank() || input.stageInfo.action.isNullOrBlank()) {
+            throw BadRequestException("Missing required fields in stageInfo: service and action must be present.")
+        }
+    }
+
+    /**
+     * Creates a new report in the database.
+     *
+     * This function generates a new ID for the report, validates the provided upload ID,
+     * and attempts to create the report in the Cosmos DB container. If the report ID
+     * is provided or if the upload ID is missing, a BadRequestException is thrown.
+     * If there is an error during the creation process, a ContentException is thrown.
+     *
+     * @param report The report object to be created. Must not have an existing ID and must include a valid upload ID.
+     * @return The created Report object, or null if the creation fails.
+     * @throws BadRequestException If the report ID is provided or if the upload ID is missing.
+     * @throws ContentException If there is an error during the report creation process.
+     */
+    @Throws(BadRequestException::class, ContentException:: class)
+    private fun createReport(report: Report): Report? {
+
+        if (!report.id.isNullOrBlank()) {
+            throw BadRequestException("ID should not be provided for create action.")
+        }
+
+        // Validate uploadId
+        if (report.uploadId.isNullOrBlank()) {
+            throw BadRequestException("Upload ID must be provided.")
+        }
+
+        report.id = generateNewId()
+        report.reportId = report.id
+        val options = CosmosItemRequestOptions()
+
+        return try {
+            val createResponse: CosmosItemResponse<Report>? = reportsContainer?.createItem(report, PartitionKey(report.uploadId), options)
+
+            // Check if createResponse is null and throw an exception if it is
+            createResponse?.item ?: throw ContentException("Failed to create report: response was null.")
+
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            throw ContentException("Failed to create report: ${e.message}")
+        }
+    }
+
+
+    /**
+     * Replaces an existing report in the database.
+     *
+     * This function checks if the report ID is provided and validates the upload ID.
+     * It attempts to read the existing report from the Cosmos DB container and,
+     * if found, replaces it with the new report data. If the report ID is missing,
+     * or if the upload ID is not provided, a BadRequestException is thrown. If
+     * the report is not found for replacement, another BadRequestException is thrown.
+     * In case of any error during the database operations, an appropriate exception
+     * will be thrown.
+     *
+     * @param report The report object containing the new data. Must have a valid ID and upload ID.
+     * @return The updated Report object, or null if the replacement fails.
+     * @throws BadRequestException If the report ID is missing, the upload ID is missing, or the report is not found.
+     */
+    @Throws(BadRequestException::class, ContentException::class)
+    private fun replaceReport(report: Report): Report? {
+
+        if (report.id.isNullOrBlank()) {
+            throw BadRequestException("ID must be provided for replace action.")
+        }
+
+        // Validate uploadId
+        if (report.uploadId.isNullOrBlank()) {
+            throw BadRequestException("Upload ID must be provided.")
+        }
+
+        return try {
+            val readResponse: CosmosItemResponse<Report> = reportsContainer?.readItem(
+                report.id!!,
+                PartitionKey(report.uploadId!!),
+                Report::class.java
+            ) ?: throw ContentException("Report with ID ${report.id} not found for replacement.")
+
+            val options = CosmosItemRequestOptions()
+            val replaceResponse: CosmosItemResponse<Report>? = reportsContainer?.replaceItem(
+                report,
+                report.id!!,
+                PartitionKey(report.uploadId!!),
+                options
+            )
+
+            // Check if replaceResponse is null and throw an exception if it is
+            replaceResponse?.item ?: throw ContentException("Failed to replace report: response was null.")
+
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage)
+            throw ContentException("Failed to replace report: ${e.message}")
+        }
+    }
+
 }
 
 enum class UpsertAction(val action: String) {
@@ -268,7 +421,7 @@ enum class UpsertAction(val action: String) {
 
     companion object {
         fun fromString(action: String): UpsertAction {
-            return values().find { it.action.equals(action, ignoreCase = true) }
+            return entries.find { it.action.equals(action, ignoreCase = true) }
                 ?: throw BadRequestException("Invalid action specified: $action. Must be 'create' or 'replace'.")
         }
     }

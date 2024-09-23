@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.reports.ReportInput
+import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
 
 /**
  * ReportMutationService class handles GraphQL mutations for report creation and replacement.
