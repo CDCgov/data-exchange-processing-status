@@ -1,12 +1,18 @@
 #!/bin/bash
 
-# Define variables
-KEYCLOAK_URL="http://localhost:8080"
+KEYCLOAK_URL="http://localhost:9080"
 REALM="test-realm-jwt"
 CLIENT_ID="test-client-jwt"
 CLIENT_SECRET="AvkgJNTDhfQECsnnCZp9uAmt8lbZOhx1"
 USERNAME="test-user"
 PASSWORD="test"
+
+# KEYCLOAK_URL="http://localhost:9080"
+# REALM="test-realm-alternate"
+# CLIENT_ID="test-client-jwt"
+# CLIENT_SECRET="N1MGAKDaSoRsA0tyJEC6LGgb9UbLIKGn"
+# USERNAME="test-user"
+# PASSWORD="test"
 
 # Execute curl request to get the token
 curl --location --request POST "$KEYCLOAK_URL/realms/$REALM/protocol/openid-connect/token" \

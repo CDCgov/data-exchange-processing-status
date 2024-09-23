@@ -22,20 +22,25 @@ class PublicKeyNotFoundException(message: String?) : Exception(message)
 data class IntrospectionResponse(val active: Boolean, val scope: String)
 
 data class AuthConfig(
-    val issuerUrl: String, val introspectionUrl: String, val requiredScopes: String?
+    val authEnabled: Boolean, val issuerUrl: String, val introspectionUrl: String, val requiredScopes: String?
 )
 
 // Dummy appConfig, replace with actual config loading logic
 val authConfig = AuthConfig(
-    issuerUrl = "http://localhost:8080/realms/test-realm-jwt",
+    authEnabled = true,
+    issuerUrl = "http://localhost:9080/realms/test-realm-jwt",
     introspectionUrl = "https://your-introspection-url",
-    requiredScopes = "email profile"
+    requiredScopes = ""
 )
 
 fun Application.configureAuth() {
     install(Authentication) {
         bearer("oauth") {
             authenticate { credentials ->
+                if (!authConfig.authEnabled) {
+                    return@authenticate UserIdPrincipal("public")
+                }
+
                 val token = credentials.token
                 try {
                     if (token.count { it == '.' } == 2) {
@@ -52,6 +57,7 @@ fun Application.configureAuth() {
             }
         }
     }
+
     install(StatusPages) {
         exception<InvalidTokenException> { call, cause ->
             call.respond(HttpStatusCode.Forbidden, cause.message ?: "Invalid token")
@@ -100,7 +106,8 @@ fun validateJWT(token: String) {
         throw InvalidTokenException(e.message)
     }
 
-    val claims = decodedJWT.getClaim("scope").asString() ?: throw IllegalArgumentException("No scopes found")
+    val claims =
+        decodedJWT.getClaim("scope").asString() ?: throw InsufficientScopesException("Failed to parse token claims")
     val actualScopes = claims.split(" ")
 
     checkScopes(actualScopes)
