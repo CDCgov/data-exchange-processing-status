@@ -30,8 +30,11 @@ For RabbitMQ(Local Runs) only,  set the following environment variables:
 - `RABBITMQ_REPORT_QUEUE_NAME` - Your RabbitMQ queue name bound to the desired exchange topic.
 - `RABBITMQ_VIRTUAL_HOST` - if not provided, default virtual host `/` will be used.
 
-For AWS SNS/SQS only, set the following environment variables: TODO
-
+For AWS SNS/SQS only, set the following environment variables:
+- `AWS_SQS_URL` - URL of the Amazon Simple Queue Service(SQS) queue that the Ktor module will interact with to receive, process and delete messages.
+- `AWS_ACCESS_KEY_ID` - The Access Key ID for an IAM user with permissions to receive and delete messages from specified SQS queue.
+- `AWS_SECRET_ACCESS_KEY` - The secret access key for an IAM user with permissions to receive and delete messages from the specified SQS queue. This key is used for authentication and secure access to the queue.
+- `AWS_REGION` (Optional) - The AWS region where your SQS queue is located, if not provided, default region `us-east-1` will be used
 
 # Publish to CDC's ImageHub
 With one gradle command you can build and publish the project's Docker container image to the external container registry, imagehub, which is a nexus repository.
@@ -45,14 +48,14 @@ gradle jib
 The location of the deployment will be to the `docker-dev2` repository under the folder `/v2/dex/pstatus`.
 
 # Report Delivery Mechanisms
-Reports may be provided in one of three ways - either through calls into the Processing Status (PS) API as GraphQL mutations, by way of an Azure Service Bus, or using RabbitMQ.  There are pros and cons of each summarized below.
+Reports may be provided in one of four ways - either through calls into the Processing Status (PS) API as GraphQL mutations, by way of an Azure Service Bus, AWS SNS/SQS or using RabbitMQ.  There are pros and cons of each summarized below.
 
-| Azure Service Bus   | GraphQL                  | RabbitMQ(Local Runs)                        |
-|---------------------|--------------------------|---------------------------------------------|
-| Fire and forget [1] | Confirmation of delivery | Fire and forget [1], publisher confirms [2] |
-| Fast                | Slower                   | Fast and lightweight                        |
+| Azure Service Bus   | AWS SQS            | GraphQL                  | RabbitMQ(Local Runs)                        |
+|---------------------|--------------------|--------------------------|---------------------------------------------|
+| Fire and forget [1] | Fire and forget[1] | Confirmation of delivery | Fire and forget [1], publisher confirms [2] |
+| Fast                | Fast               | Slower                   | Fast and lightweight                        |
 
-[1] Failed reports are sent to a Report dead-letter that can be queried to find out the reason(s) for its rejection.  When using ASB there is no direct feedback mechanism to the report provider of the rejection.
+[1] Failed reports are sent to a Report dead-letter that can be queried to find out the reason(s) for its rejection.  When using Azure Service Bus or AWS SNS/SQS there is no direct feedback mechanism to the report provider of the rejection.
 [2] Publisher confirms mode can be enabled, which provides asynchronous way to confirm that message has been received.
 
 ### GraphQL Mutations
@@ -160,7 +163,39 @@ factory.newConnection().use { connection: com.rabbitmq.client.ConnectionFactory 
     }
 }
 ```
+### AWS SNS/SQS
+The reports may be sent to PS API AWS SQS queue.
+#### How to send reports to AWS SNS/SQS
+There are two ways reports can be sent  through AWS Console and programmatically.
+1. Using AWS Console:
+    - Navigate to AWS Management Console in your browser.
+    - Access the SNS Topic Subscription page, where you can view and manage SNS topics and their associated subscriptions.
+    - Select the desired SNS topic that is configured to send messages to your queue. You can directly `publish messages` to a topic.
+2. Sending reports programmatically:
 
+```kotlin
+val report = MyDEXReport().apply {
+    // set the report fields
+}
+suspend fun createSQSClient(): SqsClient{
+    return SqsClient{}
+}
+suspend fun sendReportsToSQS(queueURL: String, report: String){
+    val sqsClient = createSQSClient()
+    try {
+        val requestToSendReport = SendMessageRequest{
+            message = report
+           this.queueURL = queueURL
+        }
+       val response = sqsClient.sendMessage(requestToSendReport)
+       logger.infor("The report sent, response received: $response")
+    }catch (ex:SqsException){
+        logger.error("Failed to send the message: $ex.message")
+    }finally {
+        sqsClient.close()
+    }
+}
+```
 # Checking on Reports
 GraphQL queries are available to look for reports, whether they were accepted by PS API or not.  If a report can't be ingested, typically due to failed validations, then it will go to deadletter.  The deadletter'd reports can be searched for and the reason(s) for its failure examined.   
 

@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.models
 
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
+import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
 import java.util.*
 
@@ -69,6 +70,9 @@ open class Report(
 
     @SerializedName("data_producer_id")
     var dataProducerId: String? = null,
+
+    @SerializedName("source")
+    var source: Source? = null,
 
     var content: Any? = null,
 

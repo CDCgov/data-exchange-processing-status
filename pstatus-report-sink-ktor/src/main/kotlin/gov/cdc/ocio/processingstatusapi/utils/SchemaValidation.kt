@@ -14,7 +14,7 @@ import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
 import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportSBMessage
+import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.reports.Source
 import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
@@ -36,7 +36,6 @@ class SchemaValidation {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create()
         val logger = KotlinLogging.logger {}
-
         lateinit var reason: String
     }
     /**
@@ -56,7 +55,7 @@ class SchemaValidation {
      * @param message ReceivedMessage(from Azure Service Bus, RabbitMQ Queue or AWS SNS/SQS)
      * @throws BadRequestException
      */
-    fun validateJsonSchema(message: String) {
+    fun validateJsonSchema(message: String, source: Source) {
         val invalidData = mutableListOf<String>()
         val schemaFileNames = mutableListOf<String>()
         val objectMapper: ObjectMapper = jacksonObjectMapper()
@@ -64,9 +63,10 @@ class SchemaValidation {
         //for backward compatability following schema version will be loaded if report_schema_version is not found
         val defaultSchemaVersion = "0.0.1"
 
-        val createReportMessage: CreateReportSBMessage
+        val createReportMessage: CreateReportMessage
         try {
-            createReportMessage = gson.fromJson(message, CreateReportSBMessage::class.java)
+            createReportMessage = gson.fromJson(message, CreateReportMessage::class.java)
+            createReportMessage.source = source
             //convert to Json
             val reportJsonNode = objectMapper.readTree(message)
             // get schema version, and use appropriate base schema version
@@ -176,10 +176,10 @@ class SchemaValidation {
      * @return CreateReportSBMessage The message that contains details about the report to be processed
      *   The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
      */
-    private fun safeParseMessageAsReport(messageBody: String): CreateReportSBMessage {
+    private fun safeParseMessageAsReport(messageBody: String): CreateReportMessage {
         val objectMapper = jacksonObjectMapper()
         val jsonNode = objectMapper.readTree(messageBody)
-        val malformedReportSBMessage = CreateReportSBMessage().apply {
+        val malformedReportMessage = CreateReportMessage().apply {
             // Attempt to get each element of the json structure if available
             uploadId = runCatching { jsonNode.get("upload_id") }.getOrNull()?.asText()
             dataStreamId = runCatching { jsonNode.get("data_stream_id") }.getOrNull()?.asText()
@@ -229,7 +229,7 @@ class SchemaValidation {
                 else -> contentAsNode?.asText()
             }}.getOrNull()
         }
-        return malformedReportSBMessage
+        return malformedReportMessage
     }
 
     /**
@@ -247,7 +247,7 @@ class SchemaValidation {
      *
      */
     private fun validateSchemaContent(schemaFileName: String, jsonNode: JsonNode, schemaFile: File, objectMapper: ObjectMapper,
-                              invalidData: MutableList<String>, validationSchemaFileNames: MutableList<String>, createReportMessage: CreateReportSBMessage
+                              invalidData: MutableList<String>, validationSchemaFileNames: MutableList<String>, createReportMessage: CreateReportMessage
     ) {
         logger.info("Schema file base: $schemaFileName")
         logger.info("schemaFileNames: $validationSchemaFileNames")
@@ -257,9 +257,9 @@ class SchemaValidation {
         val schemaValidationMessages: Set<ValidationMessage> = schema.validate(jsonNode)
 
         if (schemaValidationMessages.isEmpty()) {
-            logger.info("JSON is valid against the content schema $schema.")
+            logger.info("The report has been successfully validated against the JSON schema:$schemaFileName.")
         } else {
-            val reason ="JSON is invalid against the content schema $schemaFileName."
+            val reason ="The report could not be validated against the JSON schema: $schemaFileName."
             schemaValidationMessages.forEach { invalidData.add(it.message) }
             processError(reason, invalidData,validationSchemaFileNames,createReportMessage)
         }
@@ -290,14 +290,16 @@ class SchemaValidation {
      * @throws BadRequestException
      * @throws Exception
      */
-    fun createReport(createReportMessage: CreateReportSBMessage) {
+    fun createReport(createReportMessage: CreateReportMessage, source:Source) {
         try {
             val uploadId = createReportMessage.uploadId
             var stageName = createReportMessage.stageInfo?.action
+            //set report source: AWS, RabbitMQ or Azure Service Bus
+            createReportMessage.source = source
             if (stageName.isNullOrEmpty()) {
                 stageName = ""
             }
-            logger.info("Creating report for uploadId = $uploadId with stageName = $stageName")
+            logger.info("Creating report for uploadId = $uploadId with stageName = $stageName and source = $source")
 
             ReportManager().createReportWithUploadId(
                 uploadId!!,
@@ -314,12 +316,12 @@ class SchemaValidation {
                 createReportMessage.senderId,
                 createReportMessage.dataProducerId,
                 createReportMessage.dispositionType,
-                Source.SERVICEBUS
+                createReportMessage.source
             )
         } catch (e: BadRequestException) {
             logger.error("createReport - bad request exception: ${e.message}")
         } catch (e: Exception) {
-            logger.error("createReport - Failed to process message:${e}")
+            logger.error("createReport - Failed to process message:${e.message}")
         }
     }
     /**
@@ -349,12 +351,11 @@ class SchemaValidation {
     private fun sendToDeadLetter(
         invalidData: MutableList<String>,
         validationSchemaFileNames: MutableList<String>,
-        createReportMessage: CreateReportSBMessage
+        createReportMessage: CreateReportMessage
     ) {
         if (invalidData.isNotEmpty()) {
             //This should not run for unit tests
             if (System.getProperty("isTestEnvironment") != "true") {
-                // Write the content of the dead-letter reports to CosmosDb
                 ReportManager().createDeadLetterReport(
                     createReportMessage.uploadId,
                     createReportMessage.dataStreamId,
@@ -370,6 +371,7 @@ class SchemaValidation {
                     createReportMessage.jurisdiction,
                     createReportMessage.senderId,
                     createReportMessage.dataProducerId,
+                    createReportMessage.source,
                     invalidData,
                     validationSchemaFileNames
                 )
@@ -391,7 +393,7 @@ class SchemaValidation {
         reason: String,
         invalidData: MutableList<String>,
         validationSchemaFileNames: MutableList<String>,
-        createReportMessage: CreateReportSBMessage
+        createReportMessage: CreateReportMessage
     ) {
         logger.error(reason)
         invalidData.add(reason)

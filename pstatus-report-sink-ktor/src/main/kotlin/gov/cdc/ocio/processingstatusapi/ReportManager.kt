@@ -79,7 +79,7 @@ class ReportManager: KoinComponent {
         senderId:String?,
         dataProducerId: String?,
         dispositionType: DispositionType,
-        source: Source
+        source: Source?
     ): String {
         if (System.getProperty("isTestEnvironment") != "true") {
             return createReport(
@@ -124,21 +124,23 @@ class ReportManager: KoinComponent {
      * @param source Source
      * @return String - report identifier
      */
-    private fun createReport(uploadId: String,
-                             dataStreamId: String,
-                             dataStreamRoute: String,
-                             dexIngestDateTime: Date,
-                             messageMetadata: MessageMetadata?,
-                             stageInfo: StageInfo?,
-                             tags: Map<String,String>?,
-                             data:Map<String,String>?,
-                             contentType: String,
-                             content: Any?,
-                             jurisdiction: String?,
-                             senderId:String?,
-                             dataProducerId: String?,
-                             dispositionType: DispositionType,
-                             source: Source): String {
+    private fun createReport(
+        uploadId: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
+        dexIngestDateTime: Date,
+        messageMetadata: MessageMetadata?,
+        stageInfo: StageInfo?,
+        tags: Map<String,String>?,
+        data:Map<String,String>?,
+        contentType: String,
+        content: Any?,
+        jurisdiction: String?,
+        senderId:String?,
+        dataProducerId: String?,
+        dispositionType: DispositionType,
+        source: Source?
+    ): String {
 
         when (dispositionType) {
             DispositionType.REPLACE -> {
@@ -225,20 +227,22 @@ class ReportManager: KoinComponent {
      * @throws BadStateException
      */
     @Throws(BadStateException::class)
-    private fun createStageReport(uploadId: String,
-                                  dataStreamId: String,
-                                  dataStreamRoute: String,
-                                  dexIngestDateTime: Date,
-                                  messageMetadata: MessageMetadata?,
-                                  stageInfo: StageInfo?,
-                                  tags: Map<String,String>?,
-                                  data:Map<String,String>?,
-                                  contentType: String,
-                                  content: Any?,
-                                  jurisdiction: String?,
-                                  senderId:String?,
-                                  dataProducerId: String?,
-                                  source: Source): String {
+    private fun createStageReport(
+        uploadId: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
+        dexIngestDateTime: Date,
+        messageMetadata: MessageMetadata?,
+        stageInfo: StageInfo?,
+        tags: Map<String,String>?,
+        data:Map<String,String>?,
+        contentType: String,
+        content: Any?,
+        jurisdiction: String?,
+        senderId:String?,
+        dataProducerId: String?,
+        source: Source?
+    ): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
             this.id = stageReportId
@@ -254,6 +258,7 @@ class ReportManager: KoinComponent {
             this.jurisdiction = jurisdiction
             this.senderId = senderId
             this.dataProducerId= dataProducerId
+            this.source = source
             this.contentType = contentType
 
             if (contentType.lowercase() == "json") {
@@ -286,22 +291,24 @@ class ReportManager: KoinComponent {
      */
 
     @Throws(BadStateException::class)
-    fun createDeadLetterReport(uploadId: String?,
-                               dataStreamId: String?,
-                               dataStreamRoute: String?,
-                               dexIngestDateTime: Date?,
-                               messageMetadata: MessageMetadata?,
-                               stageInfo: StageInfo?,
-                               tags: Map<String,String>?,
-                               data:Map<String,String>?,
-                               dispositionType: DispositionType,
-                               contentType: String?,
-                               content: Any?,
-                               jurisdiction: String?,
-                               senderId:String?,
-                               dataProducerId: String?,
-                               deadLetterReasons: List<String>,
-                               validationSchemaFileNames:List<String>
+    fun createDeadLetterReport(
+        uploadId: String?,
+        dataStreamId: String?,
+        dataStreamRoute: String?,
+        dexIngestDateTime: Date?,
+        messageMetadata: MessageMetadata?,
+        stageInfo: StageInfo?,
+        tags: Map<String,String>?,
+        data:Map<String,String>?,
+        dispositionType: DispositionType,
+        contentType: String?,
+        content: Any?,
+        jurisdiction: String?,
+        senderId:String?,
+        dataProducerId: String?,
+        source: Source?,
+        deadLetterReasons: List<String>,
+        validationSchemaFileNames:List<String>
     ): String {
 
         val deadLetterReportId = UUID.randomUUID().toString()
@@ -319,6 +326,7 @@ class ReportManager: KoinComponent {
             this.jurisdiction= jurisdiction
             this.senderId= senderId
             this.dataProducerId= dataProducerId
+            this.source = source
             this.dispositionType= dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
@@ -475,6 +483,5 @@ class ReportManager: KoinComponent {
     companion object {
         const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
         const val MAX_RETRY_ATTEMPTS = 100
-        val reportMgrConfig = ReportManagerConfig()
     }
 }

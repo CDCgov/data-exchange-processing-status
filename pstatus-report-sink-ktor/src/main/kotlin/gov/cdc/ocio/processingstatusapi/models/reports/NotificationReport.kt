@@ -38,6 +38,8 @@ data class NotificationReport(
 enum class Source {
 
     HTTP,
-    SERVICEBUS
+    SERVICEBUS,
+    AWS,
+    RABBITMQ
 }
 

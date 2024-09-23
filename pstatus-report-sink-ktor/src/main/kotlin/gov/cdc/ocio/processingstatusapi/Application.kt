@@ -51,6 +51,11 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 }
 
             }
+            MessageSystem.AWS.toString() -> {
+                single(createdAtStart = true) {
+                    AWSSQServiceConfiguration(environment.config, configurationPath = "aws")
+                }
+            }
         }
     }
    return modules(listOf(cosmosModule , configModule))
@@ -87,8 +92,10 @@ fun Application.module() {
             rabbitMQModule()
         }
 
-        MessageSystem.AWS -> TODO()
-        null -> TODO()
+        MessageSystem.AWS -> {
+            awsSQSModule()
+        }
+        else -> log.error("Invalid message system configuration")
     }
 
     install(Koin) {
