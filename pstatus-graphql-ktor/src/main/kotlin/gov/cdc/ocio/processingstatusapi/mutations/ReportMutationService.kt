@@ -48,17 +48,5 @@ class ReportMutationService() : Mutation {
                     + "`replace`: Replace existing report\n"
         )
         action: String
-        ) : Report? {
-        return try {
-            ReportMutation().upsertReport(input, action)
-        } catch (e: BadRequestException) {
-            throw e // Rethrow to inform the GraphQL layer
-        } catch (e: ContentException) {
-            throw e // Rethrow to inform the GraphQL layer
-        } catch (e: Exception) {
-            throw e // Rethrow to inform the GraphQL layer
-        }
-    }
-
-
+        ) = ReportMutation().upsertReport(input, action)
 }
