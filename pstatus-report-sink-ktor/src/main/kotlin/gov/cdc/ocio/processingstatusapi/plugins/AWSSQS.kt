@@ -3,11 +3,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import aws.sdk.kotlin.runtime.AwsServiceException
 import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient
-import aws.sdk.kotlin.services.sqs.model.DeleteMessageRequest
-import aws.sdk.kotlin.services.sqs.model.QueueDoesNotExist
-
-import aws.sdk.kotlin.services.sqs.model.ReceiveMessageRequest
-import aws.sdk.kotlin.services.sqs.model.SqsException
+import aws.sdk.kotlin.services.sqs.model.*
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
@@ -74,33 +70,37 @@ val AWSSQSPlugin = createApplicationPlugin(
         SchemaValidation.logger.info("Consuming messages from AWS SQS")
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
+                var response: ReceiveMessageResponse? = null
                 try {
                     val receiveMessageRequest = ReceiveMessageRequest {
                         this.queueUrl = queueUrl
                         maxNumberOfMessages = 5
                     }
-                    val response = sqsClient.receiveMessage(receiveMessageRequest)
+                    response = sqsClient.receiveMessage(receiveMessageRequest)
                     response.messages?.forEach { message ->
                         SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
-
                         message.body?.let { AWSSQSProcessor().validateMessage(it) }
-                        val deleteMessageRequest = DeleteMessageRequest {
-                            this.queueUrl = queueUrl
-                            this.receiptHandle = message.receiptHandle
-                        }
-                        sqsClient.deleteMessage(deleteMessageRequest)
-                        SchemaValidation.logger.info("Successfully Deleted processed message from AWS SQS")
-
                     }
                 } catch (e: AwsServiceException) {
                     SchemaValidation.logger.error("Something went wrong while processing the request ${e.message}")
                 } catch (e: Exception) {
                     SchemaValidation.logger.error("AWS service exception occurred: ${e.message}")
+                }finally {
+                    response?.messages?.forEach { message ->
+                        try {
+                            val deleteMessageRequest = DeleteMessageRequest {
+                                this.queueUrl = queueUrl
+                                this.receiptHandle = message.receiptHandle
+                            }
+                            sqsClient.deleteMessage(deleteMessageRequest)
+                            SchemaValidation.logger.info("Successfully Deleted processed message from AWS SQS")
+                        }catch (e: Exception) {
+                            SchemaValidation.logger.error("Something went wrong while deleting the report from the queue ${e.message}")
+                        }
+                    }
                 }
             }
         }
-
-
     }
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started successfully.")
