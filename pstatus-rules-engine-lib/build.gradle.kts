@@ -70,7 +70,7 @@ tasks.test {
 
     // Add system property for conditional behavior in tests
     systemProperty("uri", "https://ocio-ede-dev-processingstatus-test-db.documents.azure.com:443/")
-    systemProperty("authKey", "KGGFHTJfeQDx3ovJWC0zSWsr72UmtSoFCdfUoB0X459iL2Vr7YIqmETO3qinfSAUssAqnf7aFmK0ACDbkt1iCw==") // get it from portal
+    systemProperty("authKey", "") // get it from portal
     systemProperty("containerName", "Rules")
     systemProperty("partitionKey", "/ruleId")
     // You can set other classpath or configurations if required
