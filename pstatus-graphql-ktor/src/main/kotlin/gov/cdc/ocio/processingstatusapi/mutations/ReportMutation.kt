@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosItemResponse
 import com.azure.cosmos.models.PartitionKey
+import com.azure.json.implementation.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -67,7 +68,7 @@ class ReportMutation : CosmosLoader() {
             throw e // Re-throwing the ContentException
         } catch (e: Exception) {
             logger.error("Unexpected error while upserting report: ${e.message}", e)
-            throw BadRequestException("Failed to upsert report due to an unexpected error: ${e.message}")
+            throw ContentException("An unexpected error occurred: ${e.message}") // Re-throwing the Exception
         }
     }
 
@@ -153,6 +154,9 @@ class ReportMutation : CosmosLoader() {
                 content = parsedContent,
                 timestamp = input.timestamp
             )
+        } catch (e: JsonProcessingException) {
+            logger.error("JSON processing error mapping input to report: ${e.message}", e)
+            throw ContentException("Failed to map input to report: ${e.message}")
         } catch (e: Exception) {
             logger.error("Error mapping input to report: ${e.message}", e)
             throw ContentException("Failed to map input to report: ${e.message}")
@@ -243,20 +247,23 @@ class ReportMutation : CosmosLoader() {
                 // Parse JSON content into a Map
                 try {
                     objectMapper.readValue<Map<String, Any>>(content)
-                } catch (e: Exception) {
-                    logger.error(e.localizedMessage)
+                } catch (e: JsonProcessingException) {
+                    logger.error("Invalid JSON format: ${e.message}")
                     throw ContentException("Invalid JSON format: ${e.message}")
                 }
             }
             ReportContentType.BASE64 -> {
-                // Decode base64 content into a Map, if expected
-                val decodedBytes = Base64.getDecoder().decode(content)
-                val decodedString = String(decodedBytes)
-                // If the decoded base64 string is in JSON format, parse it
                 try {
+                    // Decode base64 content into a Map, if expected
+                    val decodedBytes = Base64.getDecoder().decode(content)
+                    val decodedString = String(decodedBytes)
+                    // If the decoded base64 string is in JSON format, parse it
                     objectMapper.readValue<Map<String, Any>>(decodedString)
-                } catch (e: Exception) {
-                    logger.error(e.localizedMessage)
+                } catch (e: IllegalArgumentException) {
+                    logger.error("Invalid Base64 string: ${e.message}")
+                    throw ContentException("Invalid Base64 format: ${e.message}")
+                } catch (e: JsonProcessingException) {
+                    logger.error("Invalid JSON format after base64 decode: ${e.message}")
                     throw ContentException("Invalid JSON format after base64 decode: ${e.message}")
                 }
             }
@@ -291,7 +298,7 @@ class ReportMutation : CosmosLoader() {
         when (action) {
             UpsertAction.CREATE -> {
                 if (!input.id.isNullOrBlank()) {
-                    throw BadRequestException("ID should not be provided for create action.")
+                    throw BadRequestException("ID should not be provided for create action.Provided ID: ${input.id}")
                 }
             }
             UpsertAction.REPLACE -> {

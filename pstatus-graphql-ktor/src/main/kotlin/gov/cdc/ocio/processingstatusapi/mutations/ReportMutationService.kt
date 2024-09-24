@@ -2,7 +2,10 @@ package gov.cdc.ocio.processingstatusapi.mutations
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
+import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
+import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
 
 /**
@@ -33,7 +36,7 @@ class ReportMutationService() : Mutation {
      */
     @GraphQLDescription("Create upload")
     @Suppress("unused")
-    @Throws(BadRequestException::class)
+    @Throws(BadRequestException::class, ContentException::class, Exception::class)
     fun upsertReport(
         @GraphQLDescription(
             "*Report Input* to be created or updated:\n"
@@ -44,8 +47,18 @@ class ReportMutationService() : Mutation {
                     + "`create`: Create new report\n"
                     + "`replace`: Replace existing report\n"
         )
-        action: String,
-        ) = ReportMutation().upsertReport(input, action)
+        action: String
+        ) : Report? {
+        return try {
+            ReportMutation().upsertReport(input, action)
+        } catch (e: BadRequestException) {
+            throw e // Rethrow to inform the GraphQL layer
+        } catch (e: ContentException) {
+            throw e // Rethrow to inform the GraphQL layer
+        } catch (e: Exception) {
+            throw e // Rethrow to inform the GraphQL layer
+        }
+    }
 
 
 }
