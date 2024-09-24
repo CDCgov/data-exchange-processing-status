@@ -49,7 +49,7 @@ class CosmosContainerManagerTest {
        val uri= "https://ocio-ede-dev-processingstatus-test-db.documents.azure.com:443/"
        val containerName = "Rules"
        val partitionKey = "/ruleId"
-       val validAuthKey = "KGGFHTJfeQDx3ovJWC0zSWsr72UmtSoFCdfUoB0X459iL2Vr7YIqmETO3qinfSAUssAqnf7aFmK0ACDbkt1iCw==" //Base64.getEncoder().encodeToString("mockauthkey".toByteArray())
+       val validAuthKey = ""  // get from portal
        val container = CosmosContainerManager.initDatabaseContainer(uri, validAuthKey, containerName, partitionKey)
 
         assertNotNull(container)
