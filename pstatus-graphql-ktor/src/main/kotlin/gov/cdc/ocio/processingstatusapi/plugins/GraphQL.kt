@@ -6,7 +6,10 @@ import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
 import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
+import gov.cdc.ocio.processingstatusapi.mutations.DataStreamTopErrorsNotificationSubscriptionMutationService
+import gov.cdc.ocio.processingstatusapi.mutations.DeadlineCheckSubscriptionMutationService
 import gov.cdc.ocio.processingstatusapi.mutations.NotificationsMutationService
+import gov.cdc.ocio.processingstatusapi.mutations.UploadErrorsNotificationSubscriptionMutationService
 import gov.cdc.ocio.processingstatusapi.mutations.ReportMutation
 import gov.cdc.ocio.processingstatusapi.queries.*
 import io.ktor.http.*
@@ -97,7 +100,11 @@ fun Application.graphQLModule() {
             )
             mutations= listOf(
                 NotificationsMutationService(),
+                DataStreamTopErrorsNotificationSubscriptionMutationService(),
+                DeadlineCheckSubscriptionMutationService(),
+                UploadErrorsNotificationSubscriptionMutationService()
                 ReportMutation()
+
             )
 //            subscriptions = listOf(
 //                ErrorSubscriptionService()
