@@ -2,9 +2,7 @@ package gov.cdc.ocio.processingstatusapi.loaders
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.query.DuplicateFilenameCounts
-import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
-import gov.cdc.ocio.processingstatusapi.models.query.UploadStats
+import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.util.*
 
@@ -15,7 +13,8 @@ class UploadStatsLoader: CosmosLoader() {
                        dataStreamRoute: String,
                        dateStart: String?,
                        dateEnd: String?,
-                       daysInterval: Int?): UploadStats {
+                       daysInterval: Int?
+                       ): UploadStats {
 
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
             daysInterval,
@@ -72,6 +71,18 @@ class UploadStatsLoader: CosmosLoader() {
                         + ") r where r.totalCount > 1"
                 )
 
+        val unDeliveredUploadsQuery = (
+                "select r.uploadId, r.content.metadata.received_filename "
+                        + "from r "
+                        + "where IS_DEFINED(r.content.content_schema_name) and "
+                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
+                        + "r.content.content_schema_name = 'blob-file-copy' and "
+                        + "r.stageInfo.status = 'FAILURE' and "
+                        + "$timeRangeWhereClause "
+                )
+
+
+
         val uniqueUploadIdsResult = reportsContainer?.queryItems(
             numUniqueUploadsQuery, CosmosQueryRequestOptions(),
             UploadCounts::class.java
@@ -100,13 +111,6 @@ class UploadStatsLoader: CosmosLoader() {
 
         val inProgressUploadsCount = inProgressUploadCountResult?.firstOrNull() ?: 0
 
-        val completedUploadsCountResult = reportsContainer?.queryItems(
-            completedUploadsCountQuery, CosmosQueryRequestOptions(),
-            Float::class.java
-        )
-
-        val completedUploadsCount = completedUploadsCountResult?.firstOrNull() ?: 0
-
         val duplicateFilenameCountResult = reportsContainer?.queryItems(
             duplicateFilenameCountQuery, CosmosQueryRequestOptions(),
             DuplicateFilenameCounts::class.java
@@ -118,6 +122,24 @@ class UploadStatsLoader: CosmosLoader() {
             else
                 listOf()
 
+        val completedUploadsCountResult = reportsContainer?.queryItems(
+            completedUploadsCountQuery, CosmosQueryRequestOptions(),
+            Float::class.java
+        )
+
+        val completedUploadsCount = completedUploadsCountResult?.firstOrNull() ?: 0
+
+        val unDeliveredUploadsCountResult = reportsContainer?.queryItems(
+            unDeliveredUploadsQuery, CosmosQueryRequestOptions(),
+            UnDeliveredUpload::class.java
+        )
+
+        val undeliveredUploads =
+            if (unDeliveredUploadsCountResult != null && unDeliveredUploadsCountResult.count() > 0)
+                unDeliveredUploadsCountResult.toList()
+            else
+                listOf()
+
         return UploadStats().apply {
             this.uniqueUploadIdsCount = uniqueUploadIdsCount.toLong()
             this.uploadsWithStatusCount = uploadsWithStatusCount.toLong()
@@ -125,6 +147,8 @@ class UploadStatsLoader: CosmosLoader() {
             this.inProgressUploadsCount = inProgressUploadsCount.toLong()
             this.completedUploadsCount = completedUploadsCount.toLong()
             this.duplicateFilenames = duplicateFilenames
+            this.unDeliveredUploads.totalCount = undeliveredUploads.count().toLong()
+            this.unDeliveredUploads.unDeliveredUploads = undeliveredUploads
         }
     }
 }
