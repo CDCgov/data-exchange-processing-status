@@ -71,7 +71,7 @@ class UploadErrorsNotificationSubscriptionMutationService : Mutation {
      * @param deliveryReference String
      */
 
-    @GraphQLDescription("Subscribe Deadline Check")
+    @GraphQLDescription("Subscribe upload errors lets you get notifications when there are errors in an upload")
     @Suppress("unused")
     fun subscribeUploadErrorsNotification(
         dataStreamId: String,
@@ -113,7 +113,7 @@ class UploadErrorsNotificationSubscriptionMutationService : Mutation {
      * @param subscriptionId String
      */
 
-    @GraphQLDescription("UnSubscribe Deadline Check")
+    @GraphQLDescription("UnSubscribe upload errors lets you unsubscribe from getting notifications when there are errors during an upload")
     @Suppress("unused")
     fun unsubscribeUploadErrorsNotification(
         subscriptionId: String
