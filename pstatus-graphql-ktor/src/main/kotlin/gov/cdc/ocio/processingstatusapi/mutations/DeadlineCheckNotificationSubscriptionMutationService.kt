@@ -70,7 +70,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
      * @param deliveryReference String
      */
 
-    @GraphQLDescription("Subscribe Deadline Check")
+    @GraphQLDescription("Subscribe Deadline Check which lets you subscribe to notifications if upload from jurisdictions doesn't occur within a stipulated time")
     @Suppress("unused")
     fun subscribeDeadlineCheck(
         dataStreamId: String,
@@ -112,7 +112,7 @@ class DeadlineCheckSubscriptionMutationService : Mutation {
      * @param subscriptionId String
      */
 
-    @GraphQLDescription("UnSubscribe Deadline Check")
+    @GraphQLDescription("UnSubscribe Deadline Check which lets you unsubscribe from getting notifications if upload from jurisdictions doesn't occur within a stipulated time")
     @Suppress("unused")
     fun unsubscribeDeadlineCheck(
         subscriptionId: String
