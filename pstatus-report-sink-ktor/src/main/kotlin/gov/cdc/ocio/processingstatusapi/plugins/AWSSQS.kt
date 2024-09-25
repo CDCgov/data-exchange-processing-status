@@ -83,8 +83,10 @@ val AWSSQSPlugin = createApplicationPlugin(
                     }
                 } catch (e: AwsServiceException) {
                     SchemaValidation.logger.error("Something went wrong while processing the request ${e.message}")
+                    throw e
                 } catch (e: Exception) {
                     SchemaValidation.logger.error("AWS service exception occurred: ${e.message}")
+                    throw e
                 }finally {
                     response?.messages?.forEach { message ->
                         try {
