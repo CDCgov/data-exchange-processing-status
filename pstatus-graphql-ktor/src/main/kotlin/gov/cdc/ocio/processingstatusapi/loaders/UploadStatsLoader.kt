@@ -2,6 +2,8 @@ package gov.cdc.ocio.processingstatusapi.loaders
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
+import gov.cdc.ocio.processingstatusapi.models.dao.ReportDeadLetterDao
 import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.util.*
@@ -71,18 +73,6 @@ class UploadStatsLoader: CosmosLoader() {
                         + ") r where r.totalCount > 1"
                 )
 
-        val unDeliveredUploadsQuery = (
-                "select r.uploadId, r.content.metadata.received_filename "
-                        + "from r "
-                        + "where IS_DEFINED(r.content.content_schema_name) and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
-                        + "r.content.content_schema_name = 'blob-file-copy' and "
-                        + "r.stageInfo.status = 'FAILURE' and "
-                        + "$timeRangeWhereClause "
-                )
-
-
-
         val uniqueUploadIdsResult = reportsContainer?.queryItems(
             numUniqueUploadsQuery, CosmosQueryRequestOptions(),
             UploadCounts::class.java
@@ -129,16 +119,7 @@ class UploadStatsLoader: CosmosLoader() {
 
         val completedUploadsCount = completedUploadsCountResult?.firstOrNull() ?: 0
 
-        val unDeliveredUploadsCountResult = reportsContainer?.queryItems(
-            unDeliveredUploadsQuery, CosmosQueryRequestOptions(),
-            UnDeliveredUpload::class.java
-        )
-
-        val undeliveredUploads =
-            if (unDeliveredUploadsCountResult != null && unDeliveredUploadsCountResult.count() > 0)
-                unDeliveredUploadsCountResult.toList()
-            else
-                listOf()
+        val undeliveredUploads = getUndeliveredUploads(dataStreamId, dataStreamRoute, timeRangeWhereClause)
 
         return UploadStats().apply {
             this.uniqueUploadIdsCount = uniqueUploadIdsCount.toLong()
@@ -150,5 +131,62 @@ class UploadStatsLoader: CosmosLoader() {
             this.unDeliveredUploads.totalCount = undeliveredUploads.count().toLong()
             this.unDeliveredUploads.unDeliveredUploads = undeliveredUploads
         }
+    }
+
+    /**
+     * Search the reports by uploadId for unDelivered Uploads.
+     *
+     * @param dataStreamId
+     * @param dataStreamRoute
+     * @param timeRangeWhereClause
+     * @return List<UnDeliveredUpload>
+     */
+    private fun getUndeliveredUploads(dataStreamId: String, dataStreamRoute: String, timeRangeWhereClause: String): List<UnDeliveredUpload> {
+
+        //Query to get the upload Ids for the given criteria
+        val unDeliveredUploadIdsQuery = (
+                "select r.uploadId "
+                        + "from r "
+                        + "where IS_DEFINED(r.content.content_schema_name) and "
+                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
+                        + "r.content.content_schema_name = 'blob-file-copy' and "
+                        + "r.stageInfo.status = 'FAILURE' and "
+                        + "$timeRangeWhereClause "
+                        + "group by r.uploadId"
+                )
+
+
+        val unDeliveredUploadIdsResult = reportsContainer?.queryItems(
+            unDeliveredUploadIdsQuery, CosmosQueryRequestOptions(),
+            UnDeliveredUpload::class.java
+        )
+
+        // Extract uploadIds from the result
+        val uploadIds = unDeliveredUploadIdsResult?.mapNotNull { it.uploadId } ?: emptyList()
+        val quotedIds = uploadIds.joinToString("\",\"", "\"", "\"")
+
+        //Query to get the respective filenames for the above uploadIds with the select criteria
+        val unDeliveredUploadsQuery = (
+                "select r.uploadId, r.content.filename "
+                        + "from r "
+                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
+                        + "r.stageInfo.action = 'metadata-verify' and "
+                        + "r.uploadId in ($quotedIds) "
+                )
+
+
+        val unDeliveredUploadsResult = reportsContainer?.queryItems(
+            unDeliveredUploadsQuery, CosmosQueryRequestOptions(),
+            UnDeliveredUpload::class.java
+        )
+
+        val undeliveredUploads =
+            if (unDeliveredUploadsResult != null && unDeliveredUploadsResult.count() > 0)
+                unDeliveredUploadsResult.toList()
+            else
+                listOf()
+
+        return undeliveredUploads
+
     }
 }
