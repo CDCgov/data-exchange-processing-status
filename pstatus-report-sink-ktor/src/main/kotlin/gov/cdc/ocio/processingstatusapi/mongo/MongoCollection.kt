@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import gov.cdc.ocio.processingstatusapi.persistence.Collection
 import org.bson.Document
 
+
 /**
  * MongoDB Collection implementation
  *
@@ -25,5 +26,13 @@ class MongoCollection(private val mongoCollection: com.mongodb.client.MongoColle
     override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
         TODO("Not yet implemented")
     }
+
+    override val collectionVariable = TODO("Not yet implemented")
+
+    override val collectionVariablePrefix = TODO("Not yet implemented")
+
+    override val collectionNameForQuery = TODO("Not yet implemented")
+
+    override val collectionElementForQuery = TODO("Not yet implemented")
 
 }

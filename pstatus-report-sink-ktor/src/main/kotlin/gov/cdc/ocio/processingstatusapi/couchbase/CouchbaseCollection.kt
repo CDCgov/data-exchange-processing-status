@@ -15,6 +15,7 @@ import java.util.*
  * @constructor
  */
 class CouchbaseCollection(
+    collectionName: String,
     private val couchbaseScope: Scope,
     private val couchbaseCollection: com.couchbase.client.java.Collection
 ): Collection {
@@ -50,5 +51,13 @@ class CouchbaseCollection(
         val removeResult = couchbaseCollection.remove(itemId)
         return removeResult != null
     }
+
+    override val collectionVariable = "r"
+
+    override val collectionVariablePrefix = "r."
+
+    override val collectionNameForQuery = collectionName
+
+    override val collectionElementForQuery = { name: String -> name }
 
 }

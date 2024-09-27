@@ -111,4 +111,16 @@ class DynamoCollection<R>(
         return result != null
     }
 
+    // dynamodb does not use variables (implicit)
+    override val collectionVariable = ""
+
+    // dynamodb does not use variables (implicit)
+    override val collectionVariablePrefix = ""
+
+    // The table name must be surrounded by quotes for dynamodb.
+    override val collectionNameForQuery = "\"$dynamoTableName\""
+
+    // Elements "sometimes" need to be surrounded by quotes for dynamodb, so do it always.
+    override val collectionElementForQuery = { name: String -> "\"$name\"" }
+
 }

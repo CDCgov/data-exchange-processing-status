@@ -46,4 +46,11 @@ interface Collection {
         partitionKey: String?
     ): Boolean
 
+    val collectionVariable: String
+
+    val collectionVariablePrefix: String
+
+    val collectionNameForQuery: String
+
+    val collectionElementForQuery: (String) -> String
 }

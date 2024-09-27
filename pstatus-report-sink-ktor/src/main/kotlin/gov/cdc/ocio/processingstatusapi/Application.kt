@@ -49,7 +49,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
                 val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
-                    CosmosRepository(uri, authKey, "Reports", "/uploadId")
+                    CosmosRepository(uri, authKey, "/uploadId")
                 }
 
                 //  Create a CosmosDB config that can be dependency injected (for health checks)
