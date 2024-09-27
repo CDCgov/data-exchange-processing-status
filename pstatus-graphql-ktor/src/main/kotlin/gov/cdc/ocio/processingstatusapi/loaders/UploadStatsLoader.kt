@@ -152,9 +152,8 @@ class UploadStatsLoader: CosmosLoader() {
                         + "r.content.content_schema_name = 'blob-file-copy' and "
                         + "r.stageInfo.status = 'FAILURE' and "
                         + "$timeRangeWhereClause "
-                        + "group by r.uploadId"
                 )
-
+        logger.info("UploadsStats, fetch uploadIds query = $unDeliveredUploadIdsQuery")
 
         val unDeliveredUploadIdsResult = reportsContainer?.queryItems(
             unDeliveredUploadIdsQuery, CosmosQueryRequestOptions(),
@@ -171,9 +170,10 @@ class UploadStatsLoader: CosmosLoader() {
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
                         + "r.stageInfo.action = 'metadata-verify' and "
-                        + "r.uploadId in ($quotedIds) "
+                        + "r.uploadId in ($quotedIds) and "
+                        + "$timeRangeWhereClause "
                 )
-
+        logger.info("UploadsStats, fetch undelivered uploads query = $unDeliveredUploadsQuery")
 
         val unDeliveredUploadsResult = reportsContainer?.queryItems(
             unDeliveredUploadsQuery, CosmosQueryRequestOptions(),
