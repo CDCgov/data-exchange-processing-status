@@ -46,6 +46,11 @@ class DynamoRepository(dbPrefix: String): ProcessingStatusRepository() {
         ReportDeadLetter::class.java
     ) as Collection
 
+    /**
+     * Obtain a dynamodb client using the environment variable credentials provider.
+     *
+     * @return DynamoDbClient
+     */
     private fun getDynamoDbClient() : DynamoDbClient {
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return DynamoDbClient.builder()
@@ -54,6 +59,11 @@ class DynamoRepository(dbPrefix: String): ProcessingStatusRepository() {
             .build()
     }
 
+    /**
+     * Obtain an "enhanced" dynamodb client from the standard dynamodb client.
+     *
+     * @return DynamoDbEnhancedClient
+     */
     private fun getDynamoDbEnhancedClient(): DynamoDbEnhancedClient {
         return DynamoDbEnhancedClient.builder()
             .dynamoDbClient(ddbClient)
