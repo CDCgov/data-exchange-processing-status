@@ -33,16 +33,15 @@ class DynamoCollection<R>(
      * @return DynamoDbTable<R>?
      */
     private fun <R> collectionForClass(classType: Class<R>): DynamoDbTable<R>? {
-        try {
-            val table = enhancedClient.table(
+        return try {
+            enhancedClient.table(
                 dynamoTableName,
                 TableSchema.fromClass(classType)
             )
-            return table
         } catch (e: Exception) {
             logger.error("Unable to establish the dynamodb enhanced client for table: ${classType.name} with exception: $e")
+            null
         }
-        return null
     }
 
     /**
