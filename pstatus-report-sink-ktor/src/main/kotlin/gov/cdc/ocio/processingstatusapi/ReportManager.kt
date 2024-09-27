@@ -135,7 +135,8 @@ class ReportManager: KoinComponent {
             DispositionType.REPLACE -> {
                 logger.info("Replacing report(s) with service = '${stageInfo?.service}', action = '${stageInfo?.action}'")
                 // Delete all stages matching the report ID with the same service and action name
-                val sqlQuery = "select * from ProcessingStatus.data.Reports r where r.uploadId = '$uploadId' and r.stageInfo.service = '${stageInfo?.service}' and r.stageInfo.action = '${stageInfo?.action}'"
+//                val sqlQuery = "select * from ProcessingStatus.data.Reports r where r.uploadId = '$uploadId' and r.stageInfo.service = '${stageInfo?.service}' and r.stageInfo.action = '${stageInfo?.action}'"
+                val sqlQuery = "select * from \"ocio-ede-dev-pstatus-reports\" where uploadId = '$uploadId' and stageInfo.\"service\" = '${stageInfo?.service}' and stageInfo.\"action\" = '${stageInfo?.action}'"
                 val items = repository.reportsCollection.queryItems(
                     sqlQuery,
                     Report::class.java

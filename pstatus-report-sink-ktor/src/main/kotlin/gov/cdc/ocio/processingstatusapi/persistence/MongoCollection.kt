@@ -21,7 +21,7 @@ class MongoCollection(private val mongoCollection: com.mongodb.client.MongoColle
         return result.wasAcknowledged()
     }
 
-    override fun deleteItem(itemId: String?, partitionKey: String?): Any {
+    override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
         TODO("Not yet implemented")
     }
 

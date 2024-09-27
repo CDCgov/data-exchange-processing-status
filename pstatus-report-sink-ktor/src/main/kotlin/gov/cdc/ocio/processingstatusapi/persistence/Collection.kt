@@ -39,11 +39,11 @@ interface Collection {
      *
      * @param itemId String?
      * @param partitionKey String?
-     * @return Any
+     * @return Boolean - true if successful, false otherwise
      */
     fun deleteItem(
         itemId: String?,
         partitionKey: String?
-    ): Any
+    ): Boolean
 
 }
