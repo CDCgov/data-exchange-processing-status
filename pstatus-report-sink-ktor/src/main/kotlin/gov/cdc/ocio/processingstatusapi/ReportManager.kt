@@ -1,8 +1,6 @@
 package gov.cdc.ocio.processingstatusapi
 
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
@@ -11,7 +9,6 @@ import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.models.reports.*
 import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
-import io.netty.handler.codec.http.HttpResponseStatus
 import mu.KotlinLogging
 import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
@@ -31,11 +28,6 @@ class ReportManager: KoinComponent {
     private val repository by inject<ProcessingStatusRepository>()
 
     private val logger = KotlinLogging.logger {}
-
-    // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
-    private val gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .create()
 
     /**
      * Create a report located with the provided upload ID.
@@ -217,7 +209,7 @@ class ReportManager: KoinComponent {
      * @param jurisdiction String?
      * @param senderId String?
      * @param source Source
-     * @return String
+     * @return String - report identifier
      * @throws BadStateException
      */
     @Throws(BadStateException::class)
@@ -265,7 +257,7 @@ class ReportManager: KoinComponent {
 //                this.content = mapOf("base64Encoded" to base64Encoded) as Content
             }
         }
-       return createReportItem(uploadId,stageReportId,stageReport)
+       return createReportItem(uploadId, stageReportId, stageReport)
     }
 
     /**
@@ -344,7 +336,6 @@ class ReportManager: KoinComponent {
      * @return String
      * @throws BadStateException
      */
-
     @Throws(BadStateException::class)
     fun createDeadLetterReport(deadLetterReason: String): String {
         val deadLetterReportId = UUID.randomUUID().toString()
@@ -352,16 +343,9 @@ class ReportManager: KoinComponent {
             this.id = deadLetterReportId
             this.deadLetterReasons = listOf(deadLetterReason)
         }
-        return  createReportItem(null,deadLetterReportId,deadLetterReport)
+        return createReportItem(null, deadLetterReportId, deadLetterReport)
     }
 
-    /**
-     * The function which calculates the interval after which the retry should occur
-     * @param attempt Int
-     */
-    private fun getCalculatedRetryDuration(attempt: Int): Long {
-        return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
-    }
     /** Function to check whether the value is null or empty based on its type
      * @param value Any
      */
@@ -390,98 +374,35 @@ class ReportManager: KoinComponent {
      * @param uploadId String?
      * @param reportId String
      * @param reportType Any
-     * @return String
+     * @return String - report identifier
      */
     private fun createReportItem(uploadId: String?, reportId: String, reportType: Any): String {
-        var responseReportId = ""
-        var reportTypeName = "Report"
-        var statusCode: Int? = null
-        var isValidResponse = false
-        var recommendedDuration: String? = null
-        var attempts = 0
+        var success = false
 
-        do {
-            try {
-                // Determine whether report type is Report or ReportDeadLetter
-                when (reportType) {
-                    is ReportDeadLetter -> {
-//                        val response = cosmosDeadLetterRepository.reportsDeadLetterContainer?.createItem(
-//                            reportType,
-//                            PartitionKey(uploadId),
-//                            CosmosItemRequestOptions()
-//                        )
-//
-//                        isValidResponse = response != null
-                        isValidResponse = true
-                        statusCode = HttpResponseStatus.CREATED.code()
-//                        reportTypeName = "dead-letter report"
-//                        responseReportId = response?.item?.reportId ?: "0"
-//                        statusCode = response?.statusCode
-//                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
-                    }
-
-                    is Report -> {
-                        val response = repository.reportsCollection.createItem(
-                            reportType.id!!,
-                            reportType,
-                            Report::class.java,
-                            uploadId
-                        )
-
-                        isValidResponse = response == true
-                        statusCode = if (response) HttpResponseStatus.CREATED.code() else 500
-//                        isValidResponse = response != null
-//                        responseReportId = response?.item?.reportId ?: "0"
-//                        statusCode = response?.statusCode
-//                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
-                    }
-
-                }
-                logger.info("Creating ${reportTypeName}, response http status code = ${statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
-                if (isValidResponse) {
-
-                    when (statusCode) {
-                        HttpResponseStatus.OK.code(), HttpResponseStatus.CREATED.code() -> {
-                            logger.info("Created report with reportId = ${responseReportId}, uploadId = $uploadId")
-                            return reportId
-                        }
-
-                        HttpResponseStatus.TOO_MANY_REQUESTS.code() -> {
-                            // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
-                            // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
-                            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
-
-                            logger.warn("Received 429 (too many requests) from cosmosdb, attempt ${attempts + 1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
-                            val waitMillis = recommendedDuration?.toLong()
-                            Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
-                        }
-
-                        else -> {
-                            // Need to retry regardless
-                            val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                            logger.warn("Received response code ${statusCode}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                            Thread.sleep(retryAfterDurationMillis)
-                        }
-                    }
-                } else {
-                    val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                    logger.warn("Received null response from cosmosdb, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                    Thread.sleep(retryAfterDurationMillis)
-                }
-            } catch (e: Exception) {
-                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                logger.error("CreateReport: Exception: ${e.localizedMessage}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                Thread.sleep(retryAfterDurationMillis)
+        // Determine whether report type is Report or ReportDeadLetter
+        when (reportType) {
+            is ReportDeadLetter -> {
+                success = repository.reportsDeadLetterCollection.createItem(
+                    reportId,
+                    reportType,
+                    Report::class.java,
+                    uploadId
+                )
             }
 
-        } while (attempts++ < MAX_RETRY_ATTEMPTS)
+            is Report -> {
+                success = repository.reportsCollection.createItem(
+                    reportId,
+                    reportType,
+                    Report::class.java,
+                    uploadId
+                )
+            }
+        }
 
-        throw BadStateException("Failed to create dead-letterReport reportId = ${responseReportId}, uploadId = $uploadId")
-    }
+        if (success)
+            return reportId
 
-    companion object {
-        const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
-        const val MAX_RETRY_ATTEMPTS = 100
-        val reportMgrConfig = ReportManagerConfig()
+        throw BadStateException("Failed to create ${reportType::class.simpleName} with reportId = reportId, uploadId = $uploadId")
     }
 }
