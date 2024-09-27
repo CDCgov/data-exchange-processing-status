@@ -95,15 +95,17 @@ val AWSSQSPlugin = createApplicationPlugin(
                                 this.receiptHandle = message.receiptHandle
                             }
                             sqsClient.deleteMessage(deleteMessageRequest)
-                            SchemaValidation.logger.info("Successfully Deleted processed message from AWS SQS")
+                            SchemaValidation.logger.info("Successfully Deleted processed report from AWS SQS")
                         }catch (e: Exception) {
                             SchemaValidation.logger.error("Something went wrong while deleting the report from the queue ${e.message}")
+                            throw e
                         }
                     }
                 }
             }
         }
     }
+
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started successfully.")
         consumeMessages()
