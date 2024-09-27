@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.persistence
+package gov.cdc.ocio.processingstatusapi.mongo
 
 import com.google.gson.Gson
+import gov.cdc.ocio.processingstatusapi.persistence.Collection
 import org.bson.Document
 
 /**

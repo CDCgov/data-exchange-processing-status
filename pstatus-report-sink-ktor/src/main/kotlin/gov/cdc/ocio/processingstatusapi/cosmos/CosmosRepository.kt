@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.cosmos
 
 import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.persistence.Collection
-import gov.cdc.ocio.processingstatusapi.persistence.CosmosCollection
 
 
 /**

@@ -4,7 +4,6 @@ import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.Scope
 import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.persistence.Collection
-import gov.cdc.ocio.processingstatusapi.persistence.CouchbaseCollection
 import java.time.Duration
 
 

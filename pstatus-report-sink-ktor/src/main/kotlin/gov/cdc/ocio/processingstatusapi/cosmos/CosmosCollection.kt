@@ -1,9 +1,10 @@
-package gov.cdc.ocio.processingstatusapi.persistence
+package gov.cdc.ocio.processingstatusapi.cosmos
 
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
+import gov.cdc.ocio.processingstatusapi.persistence.Collection
 
 /**
  * Cosmos Collection implementation

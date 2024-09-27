@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.dynamo
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.persistence.Collection
-import gov.cdc.ocio.processingstatusapi.persistence.DynamoCollection
 import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient

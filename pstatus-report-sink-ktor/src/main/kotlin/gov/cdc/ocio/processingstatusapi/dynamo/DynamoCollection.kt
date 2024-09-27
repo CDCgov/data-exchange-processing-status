@@ -1,5 +1,6 @@
-package gov.cdc.ocio.processingstatusapi.persistence
+package gov.cdc.ocio.processingstatusapi.dynamo
 
+import gov.cdc.ocio.processingstatusapi.persistence.Collection
 import mu.KotlinLogging
 import software.amazon.awssdk.enhanced.dynamodb.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient

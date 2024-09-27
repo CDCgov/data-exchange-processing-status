@@ -1,8 +1,9 @@
-package gov.cdc.ocio.processingstatusapi.persistence
+package gov.cdc.ocio.processingstatusapi.couchbase
 
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
 import com.google.gson.GsonBuilder
+import gov.cdc.ocio.processingstatusapi.persistence.Collection
 import gov.cdc.ocio.processingstatusapi.utils.DateLongFormatTypeAdapter
 import java.util.*
 
