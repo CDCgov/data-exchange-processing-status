@@ -24,8 +24,14 @@ class DynamoCollection<R>(
 
     private val logger = KotlinLogging.logger {}
 
-    private val dynamoTable: DynamoDbTable<R>? = collectionForClass(tableClassType)
+    private val dynamoTable = collectionForClass(tableClassType)
 
+    /**
+     * Builds a dynamodb table schema from the provided class type.
+     *
+     * @param classType Class<R>
+     * @return DynamoDbTable<R>?
+     */
     private fun <R> collectionForClass(classType: Class<R>): DynamoDbTable<R>? {
         try {
             val table = enhancedClient.table(
@@ -39,21 +45,39 @@ class DynamoCollection<R>(
         return null
     }
 
+    /**
+     * Execute the provided dynamodb query and return the results as POJOs.
+     *
+     * @param query String?
+     * @param classType Class<T>?
+     * @return List<T>
+     */
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
         return try {
             val request = ExecuteStatementRequest.builder()
                 .statement(query)
                 .build()
             val response = dynamoDbClient.executeStatement(request)
+            // Build a table schema for the provided class type
             val tableSchema = TableSchema.fromClass(classType)
-            val reports = response.items().map { tableSchema.mapToItem(it) }
-            reports
+            // Map each resultant from the query response to POJO items
+            val items = response.items().map { tableSchema.mapToItem(it) }
+            items
         } catch (exception: Exception) {
             logger.error("Exception executing query: $exception")
             listOf()
         }
     }
 
+    /**
+     * Create a dynamodb item from the provided data.
+     *
+     * @param id String
+     * @param item T
+     * @param classType Class<T>
+     * @param partitionKey String?
+     * @return Boolean
+     */
     @Suppress("UNCHECKED_CAST")
     override fun <T> createItem(id: String, item: T, classType: Class<T>, partitionKey: String?): Boolean {
         val result = runCatching {
@@ -69,6 +93,13 @@ class DynamoCollection<R>(
         return result.isSuccess
     }
 
+    /**
+     * Delete the specified item id from dynamodb.
+     *
+     * @param itemId String?
+     * @param partitionKey String?
+     * @return Boolean
+     */
     override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
         val key = Key.builder()
             .partitionValue(itemId)
@@ -76,6 +107,7 @@ class DynamoCollection<R>(
 
         val result = dynamoTable?.deleteItem(key)
 
+        // We know the deletion was successful if the result is non-null
         return result != null
     }
 
