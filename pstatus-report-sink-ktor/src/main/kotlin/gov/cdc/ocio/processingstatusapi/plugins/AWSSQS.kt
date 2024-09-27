@@ -98,7 +98,6 @@ val AWSSQSPlugin = createApplicationPlugin(
                             SchemaValidation.logger.info("Successfully Deleted processed report from AWS SQS")
                         }catch (e: Exception) {
                             SchemaValidation.logger.error("Something went wrong while deleting the report from the queue ${e.message}")
-                            throw e
                         }
                     }
                 }
