@@ -1,4 +1,4 @@
-package gov.cdc.ocio.gov.cdc.ocio.database.cosmos
+package gov.cdc.ocio.database
 
 enum class DatabaseType(val value: String) {
     MONGO("mongo"),

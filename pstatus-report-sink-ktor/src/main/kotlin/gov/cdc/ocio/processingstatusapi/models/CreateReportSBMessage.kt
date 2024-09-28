@@ -1,11 +1,12 @@
-package gov.cdc.ocio.processingstatusapi.models.reports
+package gov.cdc.ocio.processingstatusapi.models
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.processingstatusapi.models.ServiceBusMessage
 import gov.cdc.ocio.database.models.Issue
 import gov.cdc.ocio.database.models.StageInfo
 import gov.cdc.ocio.database.models.Status
+import gov.cdc.ocio.processingstatusapi.models.reports.Aggregation
+import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
 import java.time.Instant
 
 

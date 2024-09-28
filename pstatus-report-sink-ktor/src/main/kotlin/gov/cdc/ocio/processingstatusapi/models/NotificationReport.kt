@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.models.reports
+package gov.cdc.ocio.processingstatusapi.models
 
 /**
  * NotificationReport to be sent for Notifications Queue

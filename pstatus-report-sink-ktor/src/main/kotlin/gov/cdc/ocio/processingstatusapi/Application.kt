@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi
 
+import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.database.couchbase.CouchbaseRepository

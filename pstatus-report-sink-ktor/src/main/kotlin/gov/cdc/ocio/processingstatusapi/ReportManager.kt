@@ -7,8 +7,11 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
+import gov.cdc.ocio.processingstatusapi.models.MessageMetadataSB
+import gov.cdc.ocio.processingstatusapi.models.Source
+import gov.cdc.ocio.processingstatusapi.models.StageInfoSB
 import gov.cdc.ocio.processingstatusapi.models.reports.*
-import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import mu.KotlinLogging
 import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
@@ -121,7 +124,8 @@ class ReportManager: KoinComponent {
                              jurisdiction: String?,
                              senderId:String?,
                              dispositionType: DispositionType,
-                             source: Source): String {
+                             source: Source
+    ): String {
 
         when (dispositionType) {
             DispositionType.REPLACE -> {
@@ -225,7 +229,8 @@ class ReportManager: KoinComponent {
                                   content: Any?,
                                   jurisdiction: String?,
                                   senderId: String?,
-                                  source: Source): String {
+                                  source: Source
+    ): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
             this.id = stageReportId
