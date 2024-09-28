@@ -1,0 +1,2 @@
+rootProject.name = 'data-exchange-processing-status'
+include 'libs:commons-database', 'pstatus-report-sink-ktor'

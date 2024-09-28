@@ -1,7 +1,6 @@
-package gov.cdc.ocio.processingstatusapi.models
+package gov.cdc.ocio.database.models
 
-import gov.cdc.ocio.database.models.Report
-import gov.cdc.ocio.processingstatusapi.dynamo.JsonNodeConverterProvider
+import gov.cdc.ocio.database.dynamo.JsonNodeConverterProvider
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 

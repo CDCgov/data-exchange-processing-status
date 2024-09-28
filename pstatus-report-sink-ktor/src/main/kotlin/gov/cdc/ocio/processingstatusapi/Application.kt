@@ -1,11 +1,11 @@
 package gov.cdc.ocio.processingstatusapi
 
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
-import gov.cdc.ocio.processingstatusapi.couchbase.CouchbaseRepository
-import gov.cdc.ocio.processingstatusapi.dynamo.DynamoRepository
-import gov.cdc.ocio.processingstatusapi.mongo.MongoRepository
-import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.cosmos.CosmosConfiguration
+import gov.cdc.ocio.database.cosmos.CosmosRepository
+import gov.cdc.ocio.database.couchbase.CouchbaseRepository
+import gov.cdc.ocio.database.dynamo.DynamoRepository
+import gov.cdc.ocio.database.mongo.MongoRepository
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.serviceBusModule

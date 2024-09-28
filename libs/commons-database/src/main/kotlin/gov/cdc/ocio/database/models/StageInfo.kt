@@ -1,9 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.models.reports
+package gov.cdc.ocio.database.models
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.database.models.Issue
-import gov.cdc.ocio.database.models.Status
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 

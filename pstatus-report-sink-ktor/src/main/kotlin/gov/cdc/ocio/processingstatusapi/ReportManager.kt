@@ -5,8 +5,8 @@ import com.google.gson.reflect.TypeToken
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
-import gov.cdc.ocio.processingstatusapi.models.Report
-import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
+import gov.cdc.ocio.database.models.Report
+import gov.cdc.ocio.database.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.models.reports.*
 import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
 import mu.KotlinLogging

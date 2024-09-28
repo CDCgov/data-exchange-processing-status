@@ -23,6 +23,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         jvmTarget = "17"
     }
 }
+tasks.register("prepareKotlinBuildScriptModel") { }
 
 group "gov.cdc.ocio"
 version "0.0.1"
@@ -88,6 +89,8 @@ dependencies {
     implementation 'org.owasp.encoder:encoder:1.2.3'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'
 
+    implementation project(':libs:commons-database')
+
     agent "io.opentelemetry.javaagent:opentelemetry-javaagent:1.29.0"
 
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
@@ -95,9 +98,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     testImplementation "org.mockito:mockito-inline:3.11.2"
     testImplementation "io.mockk:mockk:1.13.9"
-
-
 }
+
 test {
     useTestNG()
     testLogging {

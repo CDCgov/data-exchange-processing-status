@@ -3,8 +3,8 @@ package gov.cdc.ocio.processingstatusapi
 import com.azure.core.exception.ResourceNotFoundException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.microsoft.azure.servicebus.primitives.ServiceBusException
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosClientManager
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
+import gov.cdc.ocio.database.cosmos.CosmosClientManager
+import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent

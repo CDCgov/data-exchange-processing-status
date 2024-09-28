@@ -1,12 +1,11 @@
-package gov.cdc.ocio.processingstatusapi.mongo
+package gov.cdc.ocio.database.mongo
 
+import gov.cdc.ocio.database.persistence.Collection
 import com.mongodb.*
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoDatabase
-import gov.cdc.ocio.database.mongo.MongoCollection
-import gov.cdc.ocio.processingstatusapi.persistence.Collection
-import gov.cdc.ocio.processingstatusapi.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import org.bson.BsonDocument
 import org.bson.BsonInt64
 
