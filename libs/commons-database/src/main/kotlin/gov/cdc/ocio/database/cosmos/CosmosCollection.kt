@@ -39,7 +39,7 @@ class CosmosCollection(
     }
 
     /**
-     * Create a cosmosdb item from the provided data.
+     * Create an item from the provided data.
      *
      * @param id String
      * @param item T
@@ -102,7 +102,7 @@ class CosmosCollection(
     }
 
     /**
-     * Delete the specified item id from cosmosdb.
+     * Delete the specified item from the container.
      *
      * @param itemId String?
      * @param partitionKey String?

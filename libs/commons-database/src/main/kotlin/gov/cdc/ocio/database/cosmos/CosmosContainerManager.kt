@@ -8,7 +8,9 @@ import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.ThroughputProperties
 import mu.KotlinLogging
 
-
+/**
+ * Manages the cosmosdb containers, with the ability to connect to a database and create it if it doesn't exist.
+ */
 class CosmosContainerManager {
 
     companion object {

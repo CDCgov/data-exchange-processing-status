@@ -46,11 +46,21 @@ interface Collection {
         partitionKey: String?
     ): Boolean
 
+    // The collection variable is the container/collection name referenced when making queries.  For example, with
+    // cosmosdb this is the container reference name.  However, with dynamodb this will be empty since dynamodb
+    // doesn't use this.
     val collectionVariable: String
 
+    // The collection variable prefix is used to proceed clauses in queries.  For example, with cosmosdb this will
+    // be the referenced collection variable name followed by a dot.
     val collectionVariablePrefix: String
 
+    // The collection name used for queries.  For example, with cosmosdb this will simply be the collection name.
+    // With dynamodb this will be the table name surrounded by quotes.
     val collectionNameForQuery: String
 
+    // The collection element for query is a function that transforms the element name used for the query.  For
+    // example, with cosmosdb it's a straight pass-through.  For dynamodb, the element name will be surrounded by
+    // quotation marks.
     val collectionElementForQuery: (String) -> String
 }

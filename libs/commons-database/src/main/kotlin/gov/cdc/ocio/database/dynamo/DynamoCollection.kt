@@ -46,7 +46,7 @@ class DynamoCollection<R>(
     }
 
     /**
-     * Execute the provided dynamodb query and return the results as POJOs.
+     * Execute the provided query and return the results as POJOs.
      *
      * @param query String?
      * @param classType Class<T>?

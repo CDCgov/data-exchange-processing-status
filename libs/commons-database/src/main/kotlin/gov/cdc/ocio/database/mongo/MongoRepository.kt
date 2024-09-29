@@ -38,6 +38,13 @@ class MongoRepository(uri: String, databaseName: String): ProcessingStatusReposi
         MongoCollection(it)
     } as Collection
 
+    /**
+     * Connect to monogodb with the provided URI and database name.
+     *
+     * @param uri String
+     * @param databaseName String
+     * @return MongoDatabase?
+     */
     private fun connectToDatabase(uri: String, databaseName: String): MongoDatabase? {
 
         // Construct a ServerApi instance using the ServerApi.builder() method

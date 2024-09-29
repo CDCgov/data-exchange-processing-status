@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.models.reports
+package gov.cdc.ocio.database.models
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
