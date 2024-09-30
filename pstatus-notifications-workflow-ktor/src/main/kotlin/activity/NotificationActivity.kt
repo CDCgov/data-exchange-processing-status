@@ -11,7 +11,7 @@ interface NotificationActivities {
     @ActivityMethod
     fun sendNotification(
         dataStreamId: String,
-        dataStreamRoute: String,
+        //dataStreamRoute: String,
         jurisdiction: String,
         deliveryReference: String
     )
