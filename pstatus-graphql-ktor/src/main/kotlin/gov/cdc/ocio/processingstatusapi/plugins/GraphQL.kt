@@ -102,7 +102,7 @@ fun Application.graphQLModule() {
                 NotificationsMutationService(),
                 DataStreamTopErrorsNotificationSubscriptionMutationService(),
                 DeadlineCheckSubscriptionMutationService(),
-                UploadErrorsNotificationSubscriptionMutationService()
+                UploadErrorsNotificationSubscriptionMutationService(),
                 ReportMutation()
 
             )
