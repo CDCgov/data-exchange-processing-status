@@ -3,15 +3,13 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDeadLetterDao
 import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.util.*
 
 class UploadStatsLoader: CosmosLoader() {
 
-    @Throws(BadRequestException::class)
+    @Throws(BadRequestException::class, ContentException::class)
     fun getUploadStats(dataStreamId: String,
                        dataStreamRoute: String,
                        dateStart: String?,
@@ -143,7 +141,7 @@ class UploadStatsLoader: CosmosLoader() {
      * @return A list of [UnDeliveredUpload] objects representing the undelivered uploads.
      * @throws BadRequestException If an error occurs while fetching the undelivered uploads.
      */
-    @Throws(ContentException::class, BadRequestException :: class, Exception:: class)
+    @Throws(ContentException::class, BadRequestException :: class)
     private fun getUndeliveredUploads(dataStreamId: String, dataStreamRoute: String, timeRangeWhereClause: String): List<UnDeliveredUpload> {
         try{
             //Get the unmatched uploadIds for all the items without an associated item for blob-file-copy
@@ -167,7 +165,7 @@ class UploadStatsLoader: CosmosLoader() {
                             + "r.uploadId in ($quotedIds) and "
                             + "$timeRangeWhereClause "
                     )
-            logger.info("UploadsStats, fetch undelivered uploads query = $unDeliveredUploadsQuery")
+            logger.info("UploadsStats, fetch all undelivered uploads query = $unDeliveredUploadsQuery")
 
             val unDeliveredUploadsResult = reportsContainer?.queryItems(
                 unDeliveredUploadsQuery, CosmosQueryRequestOptions(),
@@ -232,6 +230,7 @@ class UploadStatsLoader: CosmosLoader() {
                 val blobFileCopyIds = executeUndeliveredUploadsQuery(uploadsWithBlobFileCopyQuery)
 
                 val finalResults = (metadataVerifyIds - blobFileCopyIds).toList()
+                logger.info("Total number of undelivered uploads for stage, 'blob-file-copy' without any associated reports: " + finalResults.count())
                 return finalResults
 
             }else {
