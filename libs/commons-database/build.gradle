@@ -26,7 +26,7 @@ dependencies {
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
 
     // CosmosDB
-    implementation 'com.azure:azure-cosmos:4.55.0'
+    implementation 'com.azure:azure-cosmos:4.63.3'
 
     // MongoDB
     implementation 'org.mongodb:mongodb-driver-sync:5.1.3'
