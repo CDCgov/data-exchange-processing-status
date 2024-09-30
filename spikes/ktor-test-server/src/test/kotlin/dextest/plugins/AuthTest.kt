@@ -1,17 +1,25 @@
 package dextest.plugins
 
 import io.mockk.every
-import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
-// Custom exception used in checkScopes
-class InsufficientScopesException(message: String) : RuntimeException(message)
-
-// Mock authConfig object
-val authConfig = mockk<AuthConfig>()
 
 class AuthTest {
+
+    @BeforeTest
+    fun setup() {
+        mockkObject(authConfig)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        unmockkObject(authConfig)
+    }
 
     @Test
     fun `should not throw exception if requiredScopes is empty`() {
