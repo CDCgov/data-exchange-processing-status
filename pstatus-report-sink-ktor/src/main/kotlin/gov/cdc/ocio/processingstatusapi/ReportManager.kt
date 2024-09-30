@@ -250,8 +250,10 @@ class ReportManager: KoinComponent {
 
             if (contentType.lowercase() == "application/json" || contentType.lowercase() == "json") {
                 try {
-                    val json = Gson().toJson(content, MutableMap::class.java).toString()
-                    this.content = JsonNode.parser().parse(json)
+                    if (content is Map<*, *>)
+                        this.content = repository.contentTransformer(content)
+                    else
+                        throw BadStateException("Failed to interpret provided content as a JSON string")
                 } catch (e: Exception) {
                     logger.error { e.localizedMessage }
                 }

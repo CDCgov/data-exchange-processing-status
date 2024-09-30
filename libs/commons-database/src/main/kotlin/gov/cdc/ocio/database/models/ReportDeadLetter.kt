@@ -1,6 +1,6 @@
 package gov.cdc.ocio.database.models
 
-import gov.cdc.ocio.database.dynamo.JsonNodeConverterProvider
+import gov.cdc.ocio.database.dynamo.ReportConverterProvider
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 
@@ -12,7 +12,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
  * @property validationSchemas List<String>?
  */
 @DynamoDbBean(converterProviders = [
-    JsonNodeConverterProvider::class
+    ReportConverterProvider::class
 ])
 class ReportDeadLetter : Report() {
 

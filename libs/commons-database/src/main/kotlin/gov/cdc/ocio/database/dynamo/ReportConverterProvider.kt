@@ -1,21 +1,20 @@
 package gov.cdc.ocio.database.dynamo
 
 import software.amazon.awssdk.enhanced.dynamodb.*
-import software.amazon.awssdk.enhanced.dynamodb.internal.converter.attribute.JsonItemAttributeConverter
 import java.util.stream.Collectors
 
 
 /**
- * Attribute converter provider for JsonNode attributes.  Note, this is only used by dynamodb.
+ * Attribute converter provider for Report attributes.  Note, this is only used by dynamodb.
  *
  * @property customConverters List<AttributeConverter<*>>
  * @property customConvertersMap MutableMap<EnhancedType<*>, AttributeConverter<*>>
  * @property defaultProvider AttributeConverterProvider
  */
-class JsonNodeConverterProvider : AttributeConverterProvider {
+class ReportConverterProvider : AttributeConverterProvider {
 
     private val customConverters = listOf<AttributeConverter<*>>(
-        JsonItemAttributeConverter.create()
+        AnyAttributeConverter()
     )
 
     private val customConvertersMap =
@@ -44,3 +43,4 @@ class JsonNodeConverterProvider : AttributeConverterProvider {
         } as AttributeConverter<T>
     }
 }
+

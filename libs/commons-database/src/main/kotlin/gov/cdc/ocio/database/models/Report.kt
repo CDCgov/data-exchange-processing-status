@@ -1,9 +1,8 @@
 package gov.cdc.ocio.database.models
 
-import gov.cdc.ocio.database.dynamo.JsonNodeConverterProvider
+import gov.cdc.ocio.database.dynamo.ReportConverterProvider
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
-import software.amazon.awssdk.protocols.jsoncore.JsonNode
 import java.time.Instant
 
 
@@ -28,7 +27,7 @@ import java.time.Instant
  * @constructor
  */
 @DynamoDbBean(converterProviders = [
-    JsonNodeConverterProvider::class
+    ReportConverterProvider::class
 ])
 open class Report(
 
@@ -59,7 +58,7 @@ open class Report(
 
     var senderId: String? = null,
 
-    var content: JsonNode? = null,
+    var content: Any? = null,
 
     val timestamp: Instant = Instant.now()
 )
