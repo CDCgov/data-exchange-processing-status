@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi
 
-import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
@@ -15,7 +14,6 @@ import mu.KotlinLogging
 import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import software.amazon.awssdk.protocols.jsoncore.JsonNode
 import java.time.Instant
 import java.util.*
 
@@ -247,21 +245,7 @@ class ReportManager: KoinComponent {
             this.jurisdiction = jurisdiction
             this.senderId = senderId
             this.contentType = contentType
-
-            if (contentType.lowercase() == "application/json" || contentType.lowercase() == "json") {
-                try {
-                    if (content is Map<*, *>)
-                        this.content = repository.contentTransformer(content)
-                    else
-                        throw BadStateException("Failed to interpret provided content as a JSON string")
-                } catch (e: Exception) {
-                    logger.error { e.localizedMessage }
-                }
-            } else {
-                val bytesArray = SerializationUtils.serialize(content as String)
-                val base64Encoded = Base64.getEncoder().encodeToString(bytesArray)
-//                this.content = mapOf("base64Encoded" to base64Encoded) as Content
-            }
+            this.content = getContent(contentType, content)
         }
        return createReportItem(uploadId, stageReportId, stageReport)
     }
@@ -313,26 +297,47 @@ class ReportManager: KoinComponent {
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.dexIngestDateTime = dexIngestDateTime
-            this.jurisdiction= jurisdiction
-            this.senderId= senderId
-            this.messageMetadata= messageMetadata?.toMessageMetadata()
-            this.stageInfo= stageInfo?.toStageInfo()
-            this.tags= tags
-            this.data= data
-            this.jurisdiction= jurisdiction
-            this.senderId= senderId
-            this.dispositionType= dispositionType.toString()
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
+            this.messageMetadata = messageMetadata?.toMessageMetadata()
+            this.stageInfo = stageInfo?.toStageInfo()
+            this.tags = tags
+            this.data = data
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
+            this.dispositionType = dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
             this.validationSchemas= validationSchemaFileNames
-            if (contentType?.lowercase() == "json" && !isNullOrEmpty(content) && !isBase64Encoded(content.toString())) {
-                val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-//                val jsonMap: Content = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
-//                this.content = jsonMap
-            } //else
-                //this.content = content
+            this.content = getContent(contentType, content)
         }
-        return createReportItem(uploadId,deadLetterReportId,deadLetterReport)
+
+        return createReportItem(uploadId, deadLetterReportId, deadLetterReport)
+    }
+
+    /**
+     * Attempt to determine the content and transform it to the type needed by the database.  If the content is not
+     * JSON then it will be persisted as a base64 encoded string.
+     *
+     * @param contentType String?
+     * @param content Any?
+     * @return Any?
+     */
+    private fun getContent(contentType: String?, content: Any?): Any? {
+        if (contentType?.lowercase() == "application/json" || contentType?.lowercase() == "json") {
+            try {
+                if (content is Map<*, *>)
+                    return repository.contentTransformer(content)
+                else
+                    throw BadStateException("Failed to interpret provided content as a JSON string")
+            } catch (e: Exception) {
+                logger.error { e.localizedMessage }
+                return null
+            }
+        } else {
+            val bytesArray = SerializationUtils.serialize(content as String)
+            return Base64.getEncoder().encodeToString(bytesArray)
+        }
     }
 
     /**
