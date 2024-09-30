@@ -6,18 +6,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 
 
-/*
-   Status of whether the report is a SUCCESS OR FAILURE
- */
-enum class Status {
-
-    @SerializedName("SUCCESS")
-    SUCCESS,
-
-    @SerializedName("FAILURE")
-    FAILURE
-}
-
 /**
  * Get StageInfo from the report message.
  *

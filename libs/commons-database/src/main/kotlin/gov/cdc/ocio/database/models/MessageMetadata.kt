@@ -6,16 +6,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 
 /**
- * Issue leve; of Report-ERROR OR WARNING
- */
-enum class Aggregation {
-    @SerializedName("SINGLE")
-    SINGLE,
-    @SerializedName("BATCH")
-    BATCH
-}
-
-/**
  * Get MessageMetadata.
  *
  * @property messageUUID String?

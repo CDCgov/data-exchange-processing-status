@@ -6,7 +6,7 @@ import java.util.stream.Collectors
 
 
 /**
- * Attribute converter provider for JsonNode attributes.
+ * Attribute converter provider for JsonNode attributes.  Note, this is only used by dynamodb.
  *
  * @property customConverters List<AttributeConverter<*>>
  * @property customConvertersMap MutableMap<EnhancedType<*>, AttributeConverter<*>>

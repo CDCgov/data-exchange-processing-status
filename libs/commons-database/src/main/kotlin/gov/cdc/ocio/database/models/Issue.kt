@@ -5,20 +5,10 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 
 /**
- * Issue leve; of Report-ERROR OR WARNING
- */
-enum class Level {
-    @SerializedName("ERROR")
-    ERROR,
-    @SerializedName("WARNING")
-    WARNING
-}
-/**
  * Get issues array in report message.
  *
  * @property level String?
  * @property message String?
-
  */
 @DynamoDbBean
 class Issue {
