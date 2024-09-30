@@ -8,6 +8,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
+// Custom exception used in checkScopes
+class InsufficientScopesException(message: String) : RuntimeException(message)
 
 class AuthTest {
 
