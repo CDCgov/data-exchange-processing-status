@@ -63,10 +63,10 @@ object InMemoryCache {
      */
     private fun updateSubscriptionRuleCache(subscriptionRule: String): String {
         // Try to read from existing cache to see an existing subscription rule
-        var existingSubscriptionId: String? = null
+        val existingSubscriptionId: String?
         readWriteLock.readLock().lock()
         try {
-            existingSubscriptionId = subscriptionRuleCache.get(subscriptionRule)
+            existingSubscriptionId = subscriptionRuleCache[subscriptionRule]
         } finally {
             readWriteLock.readLock().unlock()
         }
@@ -81,7 +81,7 @@ object InMemoryCache {
             logger.debug("Subscription Id for this new rule has been generated $subscriptionId")
             readWriteLock.writeLock().lock()
             try {
-                subscriptionRuleCache.put(subscriptionRule, subscriptionId)
+                subscriptionRuleCache[subscriptionRule] = subscriptionId
             } finally {
                 readWriteLock.writeLock().unlock()
             }
@@ -115,9 +115,16 @@ object InMemoryCache {
         readWriteLock.writeLock().lock()
         try {
             subscriberCache.putIfAbsent(subscriptionId, mutableListOf())
-            subscriberCache[subscriptionId]?.add(notificationSubscriber)
+            //subscriberCache[subscriptionId]?.add(notificationSubscriber)
         } finally {
             readWriteLock.writeLock().unlock()
+        }
+
+        subscriberCache[subscriptionId]?.let {
+            list ->
+            synchronized(list) {
+                list.add(notificationSubscriber)
+            }
         }
     }
 
