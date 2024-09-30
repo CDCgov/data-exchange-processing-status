@@ -59,7 +59,7 @@ data class SubscriptionResult(
  */
 
 class NotificationsMutationService : Mutation {
-    private val notificationsRouteBaseUrl: String =System.getenv("PSTATUS_NOTIFICATIONS_BASE_URL")
+    private val notificationsRouteBaseUrl: String =System.getenv("PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL")
     private val serviceUnavailable ="Notification service is unavailable and no connection has been established. Make sure the service is running"
     private val client = HttpClient {
         install(ContentNegotiation) {
