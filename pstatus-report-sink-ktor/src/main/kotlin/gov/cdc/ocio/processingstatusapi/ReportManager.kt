@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi
 
-import com.google.gson.reflect.TypeToken
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
