@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi
 import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.database.cosmos.CosmosRepository
+import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
 import gov.cdc.ocio.database.couchbase.CouchbaseRepository
 import gov.cdc.ocio.database.dynamo.DynamoRepository
 import gov.cdc.ocio.database.mongo.MongoRepository
@@ -49,9 +50,14 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
             DatabaseType.COUCHBASE.value -> {
                 val connectionString = environment.config.property("couchbase.connection_string").getString()
+                val username = environment.config.property("couchbase.username").getString()
+                val password = environment.config.property("couchbase.password").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
-                    CouchbaseRepository(connectionString, "admin", "password")
+                    CouchbaseRepository(connectionString, username, password)
                 }
+
+                //  Create a CosmosDB config that can be dependency injected (for health checks)
+                single(createdAtStart = true) { CouchbaseConfiguration(connectionString, username, password) }
                 databaseType = DatabaseType.COUCHBASE
             }
             DatabaseType.COSMOS.value -> {
