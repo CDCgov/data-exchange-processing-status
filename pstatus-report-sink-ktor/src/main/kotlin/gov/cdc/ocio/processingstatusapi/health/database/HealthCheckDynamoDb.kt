@@ -1,16 +1,40 @@
 package gov.cdc.ocio.processingstatusapi.health.database
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import gov.cdc.ocio.processingstatusapi.health.HealthCheck
 import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
-import org.koin.core.component.KoinComponent
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 
 /**
  * Concrete implementation of the dynamodb health check.
  */
-@JsonIgnoreProperties("koin")
-class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB"), KoinComponent {
+class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB") {
+
+    /**
+     * Perform the dynamodb health check operations.
+     */
     override fun doHealthCheck() {
-        TODO("Not yet implemented")
+        val result = runCatching {
+            getDynamoDbClient().listTables()
+        }
+        if (result.isSuccess)
+            status = HealthCheck.STATUS_UP
+        else
+            healthIssues = result.exceptionOrNull()?.message
+    }
+
+    /**
+     * Return a dynamodb client from the environment variables.
+     *
+     * @return DynamoDbClient
+     */
+    private fun getDynamoDbClient() : DynamoDbClient {
+        // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
+        return DynamoDbClient.builder()
+            .region(Region.US_EAST_1)
+            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+            .build()
     }
 }
