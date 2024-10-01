@@ -10,6 +10,7 @@ class CosmosDBDeleter:
         endpoint = os.getenv('COSMOS_ENDPOINT')
         key = os.getenv('COSMOS_KEY')
 
+
         if not endpoint or not key:
             raise ValueError("Please set the COSMOS_ENDPOINT and COSMOS_KEY environment variables.")
 
@@ -46,16 +47,46 @@ class CosmosDBDeleter:
         except Exception as e:
             print(f"An unexpected error occurred: {str(e)}")
 
+    def dry_run_delete(self, item_id):
+        """
+        Simulates deletion of items from the container with the specified id.
+
+        :param item_id: The id of the items to simulate deletion.
+        """
+        try:
+            # Query items with the specified id
+            query = f"SELECT c.id, c.uploadId FROM c WHERE c.dataStreamId = @dataStreamId"
+            parameters = [{"name": "@dataStreamId", "value": item_id}]
+            items = list(self.container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+            deleted_count = 0
+
+            for item in items:
+                print(f"[DRY RUN] Would delete item with id: {item['id']}")
+                deleted_count += 1  # Increment the counter
+
+            if deleted_count > 0:
+                print(f"Would delete {deleted_count} item(s) with id: {item_id}")
+            else:
+                print(f"No items found with id: {item_id}")
+
+        except exceptions.CosmosHttpResponseError as e:
+            print(f"An error occurred: {e.message}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {str(e)}")
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
         # Example usage
-        print("Usage: python delete.py <item_id>")
+        print("Usage: python delete.py <item_id> [dry-run]")
     else:
-      database_name ="ProcessingStatus"
-      container_name = "Reports"
-      item_id = sys.argv[1]
-      deleter = CosmosDBDeleter(database_name, container_name)
+        database_name ="ProcessingStatus"
+        container_name = "Reports"
+        item_id = sys.argv[1]
+        dry_run = "dry-run" in sys.argv  # Check if dry run flag is provided
+        deleter = CosmosDBDeleter(database_name, container_name)
 
-      deleter.delete_by_id(item_id)
+        if dry_run:
+            deleter.dry_run_delete(item_id)
+        else:
+            deleter.delete_by_id(item_id)
