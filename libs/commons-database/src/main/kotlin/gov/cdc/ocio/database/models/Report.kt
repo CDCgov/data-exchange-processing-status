@@ -14,7 +14,7 @@ import java.time.Instant
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
- * @property dexIngestDateTime Date?
+ * @property dexIngestDateTime Instant?
  * @property messageMetadata MessageMetadata?
  * @property stageInfo StageInfo?
  * @property tags Map<String, String>?
@@ -22,8 +22,10 @@ import java.time.Instant
  * @property contentType String?
  * @property jurisdiction String?
  * @property senderId String?
+ * @property dataProducerId String?
+ * @property source Source?
  * @property content Any?
- * @property timestamp Date
+ * @property timestamp Instant
  * @constructor
  */
 @DynamoDbBean(converterProviders = [
@@ -57,6 +59,10 @@ open class Report(
     var jurisdiction: String? = null,
 
     var senderId: String? = null,
+
+    var dataProducerId: String? = null,
+
+    var source: String? = null,
 
     var content: Any? = null,
 

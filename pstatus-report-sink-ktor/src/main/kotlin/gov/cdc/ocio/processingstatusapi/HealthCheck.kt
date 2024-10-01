@@ -1,11 +1,16 @@
 package gov.cdc.ocio.processingstatusapi
 
+import aws.sdk.kotlin.services.sqs.SqsClient
 import com.azure.core.exception.ResourceNotFoundException
+import com.azure.messaging.servicebus.ServiceBusException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
-import com.microsoft.azure.servicebus.primitives.ServiceBusException
+import com.rabbitmq.client.Connection
 import gov.cdc.ocio.database.cosmos.CosmosClientManager
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
+import gov.cdc.ocio.processingstatusapi.plugins.AWSSQServiceConfiguration
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -23,7 +28,7 @@ abstract class HealthCheckSystem {
 
     var status: String = "DOWN"
 
-    var healthIssues: String? = ""
+    private var healthIssues: String? = ""
 
     open val service: String = ""
 }
@@ -45,6 +50,30 @@ class HealthCheckCosmosDb: HealthCheckSystem() {
 class HealthCheckServiceBus: HealthCheckSystem() {
     override val service: String = "Azure Service Bus"
 }
+/**
+ * Concrete implementation of the RabbitMQ health check.
+ *
+ * @property service String
+ */
+class HealthCheckRabbitMQ: HealthCheckSystem() {
+    override val service: String = "RabbitMQ"
+}
+/**
+ * Concrete implementation of the AWS SQS health check.
+ *
+ * @property service String
+ */
+class HealthCheckAWSSQS: HealthCheckSystem() {
+    override val service: String = "AWS SQS"
+}
+
+
+/**
+ * Concrete implementation of the Unsupported message system
+ */
+class HealthCheckUnsupportedMessageSystem: HealthCheckSystem() {
+    override  val service: String = "Messaging Service"
+}
 
 /**
  * Run health checks for the service.
@@ -55,7 +84,13 @@ class HealthCheckServiceBus: HealthCheckSystem() {
  */
 class HealthCheck {
 
-    var status: String = "DOWN"
+    companion object{
+        const val STATUS_UP = "UP"
+        const val STATUS_DOWN = "DOWN"
+        const val STATUS_UNSUPPORTED = "UNSUPPORTED"
+    }
+
+    var status: String = STATUS_DOWN
 
     var totalChecksDuration: String? = null
 
@@ -68,7 +103,10 @@ class HealthCheck {
  * @property logger KLogger
  * @property cosmosConfiguration CosmosConfiguration
  * @property azureServiceBusConfiguration AzureServiceBusConfiguration
+ * @property rabbitMQServiceConfiguration RabbitMQServiceConfiguration
+ * @property awsSqsServiceConfiguration AWSSQServiceConfiguration
  */
+
 class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
@@ -77,40 +115,47 @@ class HealthQueryService: KoinComponent {
 
     private val azureServiceBusConfiguration by inject<AzureServiceBusConfiguration>()
 
+    private val rabbitMQServiceConfiguration by inject<RabbitMQServiceConfiguration>()
+
+    private val awsSqsServiceConfiguration by inject<AWSSQServiceConfiguration>()
+
+    private val msgType: String by inject()
+
+
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
      *
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
-        var cosmosDBHealthy = false
-        var serviceBusHealthy = false
         val cosmosDBHealth = HealthCheckCosmosDb()
-        val serviceBusHealth = HealthCheckServiceBus()
+        var rabbitMQHealth: HealthCheckRabbitMQ? = null
+        var serviceBusHealth: HealthCheckServiceBus? = null
+        var awsSQSHealth:HealthCheckAWSSQS? = null
+        var unsupportedMessageSystem: HealthCheckUnsupportedMessageSystem? = null
+
         val time = measureTimeMillis {
-            try {
-                cosmosDBHealthy = isCosmosDBHealthy(config = cosmosConfiguration)
-                cosmosDBHealth.status = "UP"
-            } catch (ex: Exception) {
-                cosmosDBHealth.healthIssues = ex.message
-                logger.error("CosmosDB is not healthy: ${ex.message}")
-            }
+            checkCosmosDBHealth(cosmosDBHealth)
+            // selectively check health of the messaging service based on msgType
+            when (msgType) {
+                MessageSystem.AZURE_SERVICE_BUS.toString() -> {
+                   serviceBusHealth = checkAzureServiceBusHealth()
+                }
 
-            try {
-                serviceBusHealthy = isServiceBusHealthy(config = azureServiceBusConfiguration)
-                serviceBusHealth.status = "UP"
-            } catch (ex: Exception) {
-                serviceBusHealth.healthIssues = ex.message
-                logger.error("Azure Service Bus is not healthy: ${ex.message}")
+                MessageSystem.RABBITMQ.toString() -> {
+                    rabbitMQHealth = checkRabbitMQHealth()
+                }
+
+                MessageSystem.AWS.toString() -> {
+                    awsSQSHealth = checkAWSSQSHealth()
+                }
+
+                else -> {
+                    unsupportedMessageSystem = checkUnsupportedMessageSystem()
+                }
             }
         }
-
-        return HealthCheck().apply {
-            status = if (cosmosDBHealthy && serviceBusHealthy) "UP" else "DOWN"
-            totalChecksDuration = formatMillisToHMS(time)
-            dependencyHealthChecks.add(cosmosDBHealth)
-            dependencyHealthChecks.add(serviceBusHealth)
-        }
+        return compileHealthChecks(cosmosDBHealth, serviceBusHealth, rabbitMQHealth, awsSQSHealth, unsupportedMessageSystem,time)
     }
 
     /**
@@ -124,6 +169,111 @@ class HealthQueryService: KoinComponent {
             throw Exception("Failed to establish a CosmosDB client.")
         else
             true
+    }
+
+    /**
+     * Checks and sets cosmosDBHealth status
+     *
+     * @param cosmosDBHealth The health check object for CosmosDB to update the status
+     */
+    private fun checkCosmosDBHealth(cosmosDBHealth: HealthCheckCosmosDb){
+        try {
+            if (isCosmosDBHealthy(cosmosConfiguration)) {
+                cosmosDBHealth.status = HealthCheck.STATUS_UP
+            }
+        }catch (ex: Exception){
+            logger.error("Cosmos DB is not healthy $ex.message")
+        }
+    }
+
+    /**
+     * Checks and sets azureServiceBusHealth status
+     *
+     * @return HealthCheckServiceBus object with updated status
+     */
+    private fun checkAzureServiceBusHealth():HealthCheckServiceBus{
+        val serviceBusHealth = HealthCheckServiceBus()
+        try {
+            if (isServiceBusHealthy(azureServiceBusConfiguration)) {
+                serviceBusHealth.status = HealthCheck.STATUS_UP
+            }
+        }catch (ex: Exception){
+            logger.error("Azure Service Bus is not healthy $ex.message")
+        }
+        return serviceBusHealth
+    }
+
+    /**
+     * Checks and sets rabbitMQHealth status
+     *
+     * @return HealthCheckRabbitMQ object with updated status
+     */
+    private fun checkRabbitMQHealth():HealthCheckRabbitMQ {
+        val rabbitMQHealth = HealthCheckRabbitMQ()
+        try {
+            if (isRabbitMQHealthy(rabbitMQServiceConfiguration)) {
+                rabbitMQHealth.status = HealthCheck.STATUS_UP
+            }
+        }catch (ex: Exception){
+            logger.error("RabbitMQ is not healthy $ex.message")
+        }
+        return rabbitMQHealth
+    }
+
+    /**
+     * Checks and sets AWSSQSHealth status
+     *
+     * @return HealthCheckAWSSQS object with updated status
+     */
+    private fun checkAWSSQSHealth(): HealthCheckAWSSQS {
+        val awSSQSHealth = HealthCheckAWSSQS()
+        try {
+            if (isAWSSQSHealthy(awsSqsServiceConfiguration)) {
+                awSSQSHealth.status = HealthCheck.STATUS_UP
+            }
+
+        }catch (ex: Exception){
+            logger.error("AWS SQS is not healthy $ex.message")
+        }
+        return awSSQSHealth
+    }
+
+    /**
+     * Creates a `HealthCheckUnsupportedMessageSystem` object indicating that the provided message system is unsupported.
+     * This function is used to handle cases where unsupported `MSG_SYSTEM` is configured
+     *
+     * @return HealthCheckUnsupportedMessageSystem object with status and service for unsupported message service
+     */
+    private fun checkUnsupportedMessageSystem(): HealthCheckUnsupportedMessageSystem {
+        val unsupportedMessageSystem = HealthCheckUnsupportedMessageSystem()
+        unsupportedMessageSystem.status = HealthCheck.STATUS_UNSUPPORTED
+        return unsupportedMessageSystem
+    }
+
+    /**
+     * Compiles health checks for supported services
+     * @param cosmosDBHealth Health check status for Cosmos DB
+     * @param azureServiceBusHealth Health check status for Azure Service Bus Health
+     * @param rabbitMQHealth Health check status for RabbitMQ health
+     * @param unsupportedMessageSystem Health check status for unsupported message system
+     * @param totalTime Total duration in milliseconds it took to retrieve health check statuses
+     * @return HealthCheck compiled Health check object with aggregated health check results
+     */
+    private fun compileHealthChecks(cosmosDBHealth: HealthCheckCosmosDb,
+                                    azureServiceBusHealth: HealthCheckServiceBus?,
+                                    rabbitMQHealth: HealthCheckRabbitMQ?,
+                                    awsSQSHealth: HealthCheckAWSSQS?,
+                                    unsupportedMessageSystem: HealthCheckUnsupportedMessageSystem?,
+                                    totalTime:Long):HealthCheck{
+        return HealthCheck().apply {
+            status = if (cosmosDBHealth.status == HealthCheck.STATUS_UP && (azureServiceBusHealth?.status == HealthCheck.STATUS_UP || rabbitMQHealth?.status == HealthCheck.STATUS_UP || awsSQSHealth?.status == HealthCheck.STATUS_UP)) HealthCheck.STATUS_UP else HealthCheck.STATUS_DOWN
+            totalChecksDuration = formatMillisToHMS(totalTime)
+            dependencyHealthChecks.add(cosmosDBHealth)
+            azureServiceBusHealth?.let { dependencyHealthChecks.add(it) }
+            rabbitMQHealth?.let { dependencyHealthChecks.add(it) }
+            awsSQSHealth?.let { dependencyHealthChecks.add(it) }
+            unsupportedMessageSystem?.let { dependencyHealthChecks.add(it) }
+        }
     }
 
     /**
@@ -142,6 +292,41 @@ class HealthQueryService: KoinComponent {
         adminClient.getTopic(config.topicName)
 
         return true
+    }
+
+    /**
+     * Check whether rabbitMQ is healthy.
+     *
+     * @return Boolean
+     */
+    @Throws(BadStateException::class)
+    private fun isRabbitMQHealthy(config: RabbitMQServiceConfiguration): Boolean {
+        var rabbitMQConnection: Connection? = null
+        return try {
+            rabbitMQConnection = config.getConnectionFactory().newConnection()
+            rabbitMQConnection.isOpen
+        }catch (e: Exception) {
+            throw Exception("Failed to establish connection to RabbitMQ server.")
+        } finally {
+            rabbitMQConnection?.close()
+        }
+    }
+
+    /**
+     * Check whether AWS SQS is healthy.
+     *
+     * @return Boolean
+     */
+    @Throws(BadStateException::class)
+    private  fun isAWSSQSHealthy(config: AWSSQServiceConfiguration): Boolean {
+        val sqsClient: SqsClient?
+        return try {
+           sqsClient = config.createSQSClient()
+            sqsClient.close()
+            true
+        }catch (e: Exception){
+            throw Exception("Failed to establish connection to AWS SQS service.")
+        }
     }
 
     /**

@@ -27,8 +27,8 @@ data class PageSummary(
     var totalItems: Int = 0,
 
     @GraphQLDescription("List of all the senderIds in the entire dataset matching the search criteria, not just this page.")
-    var senderIds: List<String> = listOf(),
+    var senderIds: MutableList<String> = mutableListOf(),
 
     @GraphQLDescription("List of all the jurisdictions in the entire dataset matching the search criteria, not just this page.")
-    var jurisdictions: List<String> = listOf()
+    var jurisdictions: MutableList<String> = mutableListOf()
 )

@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import reports
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
@@ -16,7 +16,7 @@ from azure.servicebus import TransportType
 # Queue name is always the same regardless of environment
 QUEUE_NAME = "processing-status-cosmos-db-report-sink-queue"
 TOPIC_NAME = "processing-status-cosmos-db-report-sink-topics"
-USE_QUEUE = True
+USE_QUEUE = False
 
 env = {}
 with open("../.env") as envfile:
@@ -35,7 +35,7 @@ async def send_single_message(sender, message):
 async def run():
     # Generate a unqiue upload ID
     upload_id = str(uuid.uuid4())
-    dex_ingest_datetime = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+    dex_ingest_datetime = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     print("Upload ID = " + upload_id)
     print("Sending simulated messages via the service bus...")
 
@@ -56,38 +56,39 @@ async def run():
                 await simulate(sender, upload_id, dex_ingest_datetime)
 
 async def simulate(sender, upload_id, dex_ingest_datetime):
-        # Send upload messages
-        print("Sending simulated UPLOAD reports...")
-        num_chunks = 4
-        size = 27472691
-        for index in range(num_chunks):
-            offset = (index+1) * size / num_chunks
-            message = reports.create_upload(upload_id, dex_ingest_datetime, offset, size)
-            #print(f"Sending: {message}")
-            await send_single_message(sender, message)
-            time.sleep(1)
+    print("Sending simulated UPLOAD reports...")
+    
+    # Send metadata verify message
+    print("Sending METADATA-VERIFY report...")
+    message = reports.create_metadata_verify(upload_id, dex_ingest_datetime)
+    await send_single_message(sender, message)
 
-        # Send routing message
-        print("Sending simulated ROUTING report...")
-        message = reports.create_routing(upload_id, dex_ingest_datetime)
+    # Send upload started message
+    print("Sending UPLOAD-STARTED report...")
+    message = reports.create_upload_started(upload_id, dex_ingest_datetime)
+    await send_single_message(sender, message)
+
+    # Send upload status messages
+    num_chunks = 4
+    size = 27472691
+    for index in range(num_chunks):
+        offset = int((index+1) * size / num_chunks)
+        print(f"Sending UPLOAD-STATUS ({offset} of {size} bytes) report...")
+        message = reports.create_upload_status(upload_id, dex_ingest_datetime, offset, size)
         #print(f"Sending: {message}")
         await send_single_message(sender, message)
+        time.sleep(1)
 
-        print("Sending simulated HL7 DEBATCH report...")
-        message = reports.create_hl7_debatch_report(upload_id, dex_ingest_datetime)
-        # print("Sending message: " + message)
-        await send_single_message(sender, message)
+    # Send upload completed message
+    print("Sending UPLOAD-COMPLETED report...")
+    message = reports.create_upload_completed(upload_id, dex_ingest_datetime)
+    await send_single_message(sender, message)
 
-        # Send hl7 validation messages
-        print("Sending simulated HL7-VALIDATION reports...")
-        batch_message = await sender.create_message_batch()
-        num_lines = 1
-        for index in range(num_lines):
-            line = index + 1
-            message = reports.create_hl7_validation(upload_id, dex_ingest_datetime, line)
-            #print(f"Sending: {message}")
-            batch_message.add_message(ServiceBusMessage(message))
-        await sender.send_messages(batch_message)
+    # Send upload routing message
+    print("Sending UPLOAD-ROUTED report...")
+    message = reports.create_routing(upload_id, dex_ingest_datetime)
+    #print(f"Sending: {message}")
+    await send_single_message(sender, message)
 
 asyncio.run(run())
 print("Done sending messages")

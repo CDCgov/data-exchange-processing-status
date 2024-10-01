@@ -2,12 +2,42 @@
 Reports are an essential component of the data observability aspect of the CDC Data Exchange (DEX).  In DEX, data is ingested to the system typically through a file upload.  As the upload progresses through the service line processing occurs.  The processing in the service line is made up stages, which can be the upload, routing, data validation, data transformations, etc.  Within each of those stages one or more actions may occur.  Taking the example of upload, one action within the stage may be to first verify that all the required metadata associated with the uploaded file is provided and reject it if not.  Other upload actions may include the file upload itself or the disposition of the upload for further downstream processing.  Reports are provided by both services internal to DEX and downstream of DEX as data moves through CDC systems.  Those services indicate the processing status of these stages through Reports.
 
 ## Report Sinking
-This project is the processing status report sink.  It listens for messages on an Azure Service bus queues and topics, validates the messages, and if validated persists them to CosmosDB. If the validation fails due to missing fields or malformed data, then the message is persisted in cosmosdb under a new dead-letter container and the message is also sent to the dead-letter queue under the configured topic subscription(if the message was processed using the topic listener) 
+This project is the processing status report sink.  It listens for messages on an Azure Service bus queues and topics or RabbitMQ queues(for local runs) validates the messages, and if validated persists them to CosmosDB. If the validation fails due to missing fields or malformed data, then the message is persisted in cosmosdb under a new dead-letter container and the message is also sent to the dead-letter queue under the configured topic subscription(if the message was processed using the topic listener) 
 
-This is a microservice built using Ktor that can be built as a docker container image.
+This microservice is built using Ktor and can be built as a docker container image.
+
+### Environment Variable Setup for Messaging System selection
+The `MSG_SYSTEM` environment variable is used to determine which system will be loaded dynamically.
+Set this variable to one of the following values:
+- `AZURE_SERVICE_BUS`
+- `RABBITMQ`
+- `AWS`
+
+These environment variables are common to all messaging systems:
+- `COSMOS_DB_CLIENT_ENDPOINT` - your Cosmos DB client endpoint.
+- `COSMOS_DB_CLIENT_KEY` - Your Cosmos DB client key.
+
+For Azure Service Bus only, set the following environment variables:
+- `SERVICE_BUS_CONNECTION_STRING` - Your service bus connection string.
+- `SERVICE_BUS_REPORT_QUEUE_NAME/SERVICE_BUS_REPORT_TOPIC_NAME` - Your service bus queue or topic name.
+- `SERVICE_BUS_REPORT_TOPIC_SUBSCRIPTION_NAME` - Your service bus topic subscription.
+
+For RabbitMQ(Local Runs) only,  set the following environment variables:
+- `RABBITMQ_HOST` - if not provided, `localhost` will be used.
+- `RABBITMQ_PORT` - If not provided, default port `5672` will be used.
+- `RABBITMQ_USERNAME` - if not provided, default `guest` will be used.
+- `RABBITMQ_PASSWORD` - if not provided, default `guest` will be used.
+- `RABBITMQ_REPORT_QUEUE_NAME` - Your RabbitMQ queue name bound to the desired exchange topic.
+- `RABBITMQ_VIRTUAL_HOST` - if not provided, default virtual host `/` will be used.
+
+For AWS SNS/SQS only, set the following environment variables:
+- `AWS_SQS_URL` - URL of the Amazon Simple Queue Service(SQS) queue that the Ktor module will interact with to receive, process and delete messages.
+- `AWS_ACCESS_KEY_ID` - The Access Key ID for an IAM user with permissions to receive and delete messages from specified SQS queue.
+- `AWS_SECRET_ACCESS_KEY` - The secret access key for an IAM user with permissions to receive and delete messages from the specified SQS queue. This key is used for authentication and secure access to the queue.
+- `AWS_REGION` (Optional) - The AWS region where your SQS queue is located, if not provided, default region `us-east-1` will be used
 
 # Publish to CDC's ImageHub
-With one gradle command you can builds and publish the project's Docker container image to the external container registry, imagehub, which is a nexus repository.
+With one gradle command you can build and publish the project's Docker container image to the external container registry, imagehub, which is a nexus repository.
 
 To do this, we use Google [jib](https://cloud.google.com/java/getting-started/jib), which vastly simplifies the build process as you don't need a docker daemon running in order to build the Docker container image.
 
@@ -18,14 +48,15 @@ gradle jib
 The location of the deployment will be to the `docker-dev2` repository under the folder `/v2/dex/pstatus`.
 
 # Report Delivery Mechanisms
-Reports may be provided in one of two ways - either through calls into the Processing Status (PS) API as GraphQL mutations or by way of an Azure Service Bus.  There are pros and cons of each summarized below.
+Reports may be provided in one of four ways - either through calls into the Processing Status (PS) API as GraphQL mutations, by way of an Azure Service Bus, AWS SNS/SQS or using RabbitMQ.  There are pros and cons of each summarized below.
 
-| Azure Service Bus   | GraphQL                  |
-|---------------------|--------------------------|
-| Fire and forget [1] | Confirmation of delivery |
-| Fast                | Slower                   |
+| Azure Service Bus   | AWS SQS            | GraphQL                  | RabbitMQ(Local Runs)                        |
+|---------------------|--------------------|--------------------------|---------------------------------------------|
+| Fire and forget [1] | Fire and forget[1] | Confirmation of delivery | Fire and forget [1], publisher confirms [2] |
+| Fast                | Fast               | Slower                   | Fast and lightweight                        |
 
-[1] Failed reports are sent to a Report deadletter that can be queried to find out the reason(s) for its rejection.  When using ASB there is no direct feedback mechanism to the report provider of the rejection.
+[1] Failed reports are sent to a Report dead-letter that can be queried to find out the reason(s) for its rejection.  When using Azure Service Bus or AWS SNS/SQS there is no direct feedback mechanism to the report provider of the rejection.
+[2] Publisher confirms mode can be enabled, which provides asynchronous way to confirm that message has been received.
 
 ### GraphQL Mutations
 GraphQL mutations are writes to a persisted object.  In the case of PS API, reports are written to PS API as GraphQL mutations.
@@ -98,6 +129,73 @@ senderClient.sendMessage(ServiceBusMessage(report))
 
 In order to access the ASB from your DEX service there may need be a firewall rule put in place.  If your service is running in Kubernetes then no firewall rule should be necessary.
 
+### RabbitMQ
+The reports maybe sent to RabbitMQ queue running locally.
+
+#### How to Start RabbitMQ Server  With Docker Compose
+1. Ensure that you have `Docker` and `Docker Compose` installed on your local system.
+2. Navigate to root directory of `pstatus-report-sink-ktor`
+3. Run the following command to start RabbitMQ server in detached mode:
+```bash
+   docker-compose up -d 
+   ```
+#### How to send reports to RabbitMQ Server
+There are two ways reports can be sent  through management UI and programmatically.
+1. Navigate to `http://localhost:15672` in your browser to access RabbitMQ Management UI. This interface allows you create and manage exchanges, define topics, set up and bind queues to exchanges. Additionally, You can publish messages directly to queues through this UI.
+2. Sending reports programmatically:
+
+```kotlin
+val report = MyDEXReport().apply {
+    // set the report fields
+
+}
+val factory = connectionFactory()
+    // configure factory further with RabbitMQ server
+
+factory.newConnection().use { connection: com.rabbitmq.client.ConnectionFactory  ->
+    connection.createChannel().use { channel: com.rabbitmq.client.Connection ->
+        val queueName = "your queue name"
+        //convert the report to ByteArray
+        val message = report.toByteArray()
+        //publish message to existing queue
+        channel.basicPublish("", queueName, null, message)
+        //RabbitMQ supports more sophisticated publishing mechanisms as well
+    }
+}
+```
+### AWS SNS/SQS
+The reports may be sent to PS API AWS SQS queue.
+#### How to send reports to AWS SNS/SQS
+There are two ways reports can be sent  through AWS Console and programmatically.
+1. Using AWS Console:
+    - Navigate to AWS Management Console in your browser.
+    - Access the SNS Topic Subscription page, where you can view and manage SNS topics and their associated subscriptions.
+    - Select the desired SNS topic that is configured to send messages to your queue. You can directly `publish messages` to a topic.
+2. Sending reports programmatically:
+
+```kotlin
+val report = MyDEXReport().apply {
+    // set the report fields
+}
+suspend fun createSQSClient(): SqsClient{
+    return SqsClient{}
+}
+suspend fun sendReportsToSQS(queueURL: String, report: String){
+    val sqsClient = createSQSClient()
+    try {
+        val requestToSendReport = SendMessageRequest{
+            message = report
+           this.queueURL = queueURL
+        }
+       val response = sqsClient.sendMessage(requestToSendReport)
+       logger.infor("The report sent, response received: $response")
+    }catch (ex:SqsException){
+        logger.error("Failed to send the message: $ex.message")
+    }finally {
+        sqsClient.close()
+    }
+}
+```
 # Checking on Reports
 GraphQL queries are available to look for reports, whether they were accepted by PS API or not.  If a report can't be ingested, typically due to failed validations, then it will go to deadletter.  The deadletter'd reports can be searched for and the reason(s) for its failure examined.   
 

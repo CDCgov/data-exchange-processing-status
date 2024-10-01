@@ -5,10 +5,10 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
-import gov.cdc.ocio.processingstatusapi.models.MessageMetadataSB
 import gov.cdc.ocio.processingstatusapi.models.Source
-import gov.cdc.ocio.processingstatusapi.models.StageInfoSB
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.processingstatusapi.models.MessageMetadataSB
+import gov.cdc.ocio.processingstatusapi.models.StageInfoSB
 import mu.KotlinLogging
 import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
@@ -43,6 +43,7 @@ class ReportManager: KoinComponent {
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @param dispositionType DispositionType
      * @param source Source
      * @return String
@@ -62,9 +63,10 @@ class ReportManager: KoinComponent {
         contentType: String,
         content: Any?,
         jurisdiction: String?,
-        senderId: String?,
+        senderId:String?,
+        dataProducerId: String?,
         dispositionType: DispositionType,
-        source: Source
+        source: Source?
     ): String {
         if (System.getProperty("isTestEnvironment") != "true") {
             return createReport(
@@ -80,6 +82,7 @@ class ReportManager: KoinComponent {
                 content,
                 jurisdiction,
                 senderId,
+                dataProducerId,
                 dispositionType,
                 source
             )
@@ -103,24 +106,27 @@ class ReportManager: KoinComponent {
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @param dispositionType DispositionType - indicates whether to add or replace any existing reports for the given stageName.
      * @param source Source
      * @return String - report identifier
      */
-    private fun createReport(uploadId: String,
-                             dataStreamId: String,
-                             dataStreamRoute: String,
-                             dexIngestDateTime: Instant,
-                             messageMetadata: MessageMetadataSB?,
-                             stageInfo: StageInfoSB?,
-                             tags: Map<String, String>?,
-                             data: Map<String, String>?,
-                             contentType: String,
-                             content: Any?,
-                             jurisdiction: String?,
-                             senderId:String?,
-                             dispositionType: DispositionType,
-                             source: Source
+    private fun createReport(
+        uploadId: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
+        dexIngestDateTime: Instant,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
+        tags: Map<String,String>?,
+        data:Map<String,String>?,
+        contentType: String,
+        content: Any?,
+        jurisdiction: String?,
+        senderId:String?,
+        dataProducerId: String?,
+        dispositionType: DispositionType,
+        source: Source?
     ): String {
 
         when (dispositionType) {
@@ -169,6 +175,7 @@ class ReportManager: KoinComponent {
                     content,
                     jurisdiction,
                     senderId,
+                    dataProducerId,
                     source
                 )
             }
@@ -187,6 +194,7 @@ class ReportManager: KoinComponent {
                     content,
                     jurisdiction,
                     senderId,
+                    dataProducerId,
                     source
                 )
             }
@@ -208,24 +216,27 @@ class ReportManager: KoinComponent {
      * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param dataProducerId String?
      * @param source Source
      * @return String - report identifier
      * @throws BadStateException
      */
     @Throws(BadStateException::class)
-    private fun createStageReport(uploadId: String,
-                                  dataStreamId: String,
-                                  dataStreamRoute: String,
-                                  dexIngestDateTime: Instant,
-                                  messageMetadata: MessageMetadataSB?,
-                                  stageInfo: StageInfoSB?,
-                                  tags: Map<String, String>?,
-                                  data: Map<String, String>?,
-                                  contentType: String,
-                                  content: Any?,
-                                  jurisdiction: String?,
-                                  senderId: String?,
-                                  source: Source
+    private fun createStageReport(
+        uploadId: String,
+        dataStreamId: String,
+        dataStreamRoute: String,
+        dexIngestDateTime: Instant,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
+        tags: Map<String,String>?,
+        data:Map<String,String>?,
+        contentType: String,
+        content: Any?,
+        jurisdiction: String?,
+        senderId:String?,
+        dataProducerId: String?,
+        source: Source?
     ): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
@@ -243,6 +254,8 @@ class ReportManager: KoinComponent {
             this.data = data
             this.jurisdiction = jurisdiction
             this.senderId = senderId
+            this.dataProducerId= dataProducerId
+            this.source = source.toString()
             this.contentType = contentType
             this.content = getContent(contentType, content)
         }
@@ -267,25 +280,29 @@ class ReportManager: KoinComponent {
      * @param senderId String?
      * @param deadLetterReasons List<String>
      * @param validationSchemaFileNames List<String>
+     * @param dataProducerId String?
      * @return String
      * @throws BadStateException
      */
     @Throws(BadStateException::class)
-    fun createDeadLetterReport(uploadId: String?,
-                               dataStreamId: String?,
-                               dataStreamRoute: String?,
-                               dexIngestDateTime: Instant?,
-                               messageMetadata: MessageMetadataSB?,
-                               stageInfo: StageInfoSB?,
-                               tags: Map<String,String>?,
-                               data: Map<String,String>?,
-                               dispositionType: DispositionType,
-                               contentType: String?,
-                               content: Any?,
-                               jurisdiction: String?,
-                               senderId:String?,
-                               deadLetterReasons: List<String>,
-                               validationSchemaFileNames: List<String>
+    fun createDeadLetterReport(
+        uploadId: String?,
+        dataStreamId: String?,
+        dataStreamRoute: String?,
+        dexIngestDateTime: Instant?,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
+        tags: Map<String,String>?,
+        data:Map<String,String>?,
+        dispositionType: DispositionType,
+        contentType: String?,
+        content: Any?,
+        jurisdiction: String?,
+        senderId:String?,
+        dataProducerId: String?,
+        source: Source?,
+        deadLetterReasons: List<String>,
+        validationSchemaFileNames:List<String>
     ): String {
 
         val deadLetterReportId = UUID.randomUUID().toString()
@@ -304,6 +321,8 @@ class ReportManager: KoinComponent {
             this.data = data
             this.jurisdiction = jurisdiction
             this.senderId = senderId
+            this.dataProducerId = dataProducerId
+            this.source = source.toString()
             this.dispositionType = dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons

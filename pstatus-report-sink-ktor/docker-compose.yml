@@ -1,0 +1,9 @@
+services:
+  rabbitmq:
+    image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+    ports:
+      - "5672:5672" #AMQP protocol port
+      - "15672:15672" # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}

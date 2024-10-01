@@ -10,6 +10,7 @@ import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
+import gov.cdc.ocio.processingstatusapi.utils.SortUtils
 
 class UploadStatusLoader: CosmosLoader() {
 
@@ -38,8 +39,7 @@ class UploadStatusLoader: CosmosLoader() {
                         pageNumber: Int,
                         sortBy: String?,
                         sortOrder: String?,
-                        fileName:String?,
-                        status: String?
+                        fileName:String?
     ): UploadsStatus {
 
         logger.info("dataStreamId = $dataStreamId")
@@ -63,10 +63,6 @@ class UploadStatusLoader: CosmosLoader() {
             sqlQuery.append(" and r.content.filename = '$fileName'")
         }
 
-        status?.run {
-            sqlQuery.append(" and r.stageInfo.status = '$status'")
-        }
-
         dateStart?.run {
             val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
             sqlQuery.append(" and r.dexIngestDateTime >= $dateStartEpochSecs")
@@ -76,39 +72,48 @@ class UploadStatusLoader: CosmosLoader() {
             sqlQuery.append(" and r.dexIngestDateTime < $dateEndEpochSecs")
         }
 
-        sqlQuery.append(" group by r.uploadId")
+        sqlQuery.append(" group by r.uploadId, r.jurisdiction, r.senderId")
 
         // Check the sort field as well to add them to the group by clause
         var sortByQueryStr = StringBuilder()
         sortBy.run {
-            val sortField = when (sortBy) {
-                "date" -> "dexIngestDateTime" // "group  by _ts" is already added by default above
-                "fileName" -> "content.filename"
-                "dataStreamId" -> "dataStreamId"
-                "dataStreamRoute" -> "dataStreamRoute"
-                "service" -> "stageInfo.service"
-                "action" -> "stageInfo.action"
-                "jurisdiction" -> "jurisdiction"
-                "status" -> "stageInfo.status"
-                else -> {
-                    return@run
-                }
-            }
-            //Add the sort by fields to grouping
-            sqlQuery.append(" , r.$sortField, r.jurisdiction, r.senderId")
-
-            var sortOrderVal = DEFAULT_SORT_ORDER
-            sortOrder?.run {
-                sortOrderVal = when (sortOrder) {
-                    "ascending" -> "asc"
-                    "descending" -> "desc"
-                    else -> {
-                        return@run
+            if (sortBy != null) {
+                if (sortBy.isNotEmpty()) {
+                    val sortField = when (sortBy) {
+                        "date" -> "dexIngestDateTime" // "group  by _ts" is already added by default above
+                        "fileName" -> "content.filename"
+                        "dataStreamId" -> "dataStreamId"
+                        "dataStreamRoute" -> "dataStreamRoute"
+                        "service" -> "stageInfo.service"
+                        "action" -> "stageInfo.action"
+                        "jurisdiction" -> "jurisdiction"
+                        "status" -> "stageInfo.status"
+                        else -> {
+                            throw BadRequestException("Invalid sort field: $sortBy")
+                        }
                     }
+                    //Add the sort by fields to grouping
+                    sqlQuery.append(" , r.$sortField")
+
+                    var sortOrderVal = DEFAULT_SORT_ORDER
+
+                    sortOrder?.run {
+                        if (sortOrder.isNotEmpty()) {
+                            sortOrderVal = when (sortOrder.lowercase()) {
+                                "asc", "ascending" -> "asc"
+                                "desc", "descending" -> "desc"
+                                else -> {
+                                    throw BadRequestException("Invalid sort order: $sortOrder")
+                                }
+                            }
+                        }
+
+                    }
+                    //Sort By/ Order By the given sort field
+                    sortByQueryStr.append(" order by r.$sortField $sortOrderVal")
                 }
             }
-            //Sort By/ Order By the given sort field
-            sortByQueryStr.append(" order by r.$sortField $sortOrderVal")
+
 
         }
 
@@ -186,8 +191,14 @@ class UploadStatusLoader: CosmosLoader() {
         uploadsStatus.summary.pageSize = pageSize
         uploadsStatus.summary.numberOfPages = numberOfPages
         uploadsStatus.summary.totalItems = totalItems
-        uploadsStatus.summary.senderIds = senderIds
-        uploadsStatus.summary.jurisdictions = jurisdictions
+        uploadsStatus.summary.senderIds = senderIds.toMutableList()
+        uploadsStatus.summary.jurisdictions = jurisdictions.toMutableList()
+
+        if(sortOrder.isNullOrEmpty()){
+            SortUtils.sortByField(uploadsStatus, sortBy.toString(), DEFAULT_SORT_ORDER)
+        }else{
+            SortUtils.sortByField(uploadsStatus, sortBy.toString(), sortOrder.toString())
+        }
 
         return uploadsStatus
     }
@@ -197,6 +208,6 @@ class UploadStatusLoader: CosmosLoader() {
         private const val MAX_PAGE_SIZE = 10000
         const val DEFAULT_PAGE_SIZE = 100
 
-        private const val DEFAULT_SORT_ORDER = "asc"
+        private const val DEFAULT_SORT_ORDER = "desc"
     }
 }
