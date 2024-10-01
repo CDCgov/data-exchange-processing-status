@@ -78,7 +78,7 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
-        val dateEnd = today.atTime(23, 59, 59).atZone(ZoneOffset.UTC).format(formatter)
+        val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
 
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd)
         val notificationQuery = (
