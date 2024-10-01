@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.health.messagesystem
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.rabbitmq.client.Connection
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.health.HealthCheck
@@ -8,9 +9,11 @@ import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+
 /**
  * Concrete implementation of the RabbitMQ messaging service health checks.
  */
+@JsonIgnoreProperties("koin")
 class HealthCheckRabbitMQ : HealthCheckSystem("RabbitMQ"), KoinComponent {
 
     private val rabbitMQServiceConfiguration by inject<RabbitMQServiceConfiguration>()

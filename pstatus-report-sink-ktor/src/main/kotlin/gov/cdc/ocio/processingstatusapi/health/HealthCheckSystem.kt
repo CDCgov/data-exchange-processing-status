@@ -16,7 +16,8 @@ abstract class HealthCheckSystem(val service: String) {
     var status: String = "DOWN"
         protected set
 
-    private var healthIssues: String? = ""
+    var healthIssues: String? = null
+        protected set
 
     abstract fun doHealthCheck()
 }

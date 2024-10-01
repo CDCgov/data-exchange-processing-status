@@ -10,7 +10,6 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.plugins.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
-import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -37,18 +36,23 @@ private val logger = KotlinLogging.logger {}
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = module {
-        when (val database = environment.config.tryGetString("ktor.database")) {
+        val database = environment.config.property("ktor.database").getString()
+        var databaseType = DatabaseType.UNKNOWN
+
+        when (database.lowercase()) {
             DatabaseType.MONGO.value -> {
                 val connectionString = environment.config.property("mongo.connection_string").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
                     MongoRepository(connectionString, "ProcessingStatus")
                 }
+                databaseType = DatabaseType.MONGO
             }
             DatabaseType.COUCHBASE.value -> {
                 val connectionString = environment.config.property("couchbase.connection_string").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
                     CouchbaseRepository(connectionString, "admin", "password")
                 }
+                databaseType = DatabaseType.COUCHBASE
             }
             DatabaseType.COSMOS.value -> {
                 val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
@@ -59,15 +63,18 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
 
                 //  Create a CosmosDB config that can be dependency injected (for health checks)
                 single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
+                databaseType = DatabaseType.COSMOS
             }
             DatabaseType.DYNAMO.value -> {
                 val dynamoDbPrefix = environment.config.property("dynamo.db_prefix").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
                     DynamoRepository(dynamoDbPrefix)
                 }
+                databaseType = DatabaseType.DYNAMO
             }
-            else -> logger.error("Unsupported database requested: $database")
+            else -> logger.error("Unsupported database requested: $databaseType")
         }
+        single { databaseType } // add databaseType to Koin Modules
     }
 
     val messageSystemModule = module {

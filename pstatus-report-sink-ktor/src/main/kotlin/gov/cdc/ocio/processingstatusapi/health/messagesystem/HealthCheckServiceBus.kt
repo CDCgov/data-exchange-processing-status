@@ -3,15 +3,18 @@ package gov.cdc.ocio.processingstatusapi.health.messagesystem
 import com.azure.core.exception.ResourceNotFoundException
 import com.azure.messaging.servicebus.ServiceBusException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import gov.cdc.ocio.processingstatusapi.health.HealthCheck
 import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+
 /**
  * Concrete implementation of the ASB messaging service health checks.
  */
+@JsonIgnoreProperties("koin")
 class HealthCheckServiceBus : HealthCheckSystem("Azure Service Bus"), KoinComponent {
 
     private val azureServiceBusConfiguration by inject<AzureServiceBusConfiguration>()
@@ -28,6 +31,7 @@ class HealthCheckServiceBus : HealthCheckSystem("Azure Service Bus"), KoinCompon
             }
         } catch (ex: Exception) {
             logger.error("Azure Service Bus is not healthy $ex.message")
+            healthIssues = ex.message
         }
     }
 
