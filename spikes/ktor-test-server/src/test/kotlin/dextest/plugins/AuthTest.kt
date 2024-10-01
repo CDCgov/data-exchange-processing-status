@@ -1,12 +1,65 @@
 package dextest.plugins
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.interfaces.DecodedJWT
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
-// Custom exception used in checkScopes
-class InsufficientScopesException(message: String) : RuntimeException(message)
-
 class AuthTest {
+    private val mockConfig = AuthConfig(
+        authEnabled = true,
+        issuerUrl = "issuer.com",
+        introspectionUrl = "",
+        requiredScopes = "read write"
+    )
+
+    @BeforeTest
+    fun setup() {
+        mockkStatic(JWT::class)
+        mockkStatic(::getIssuerPublicKey)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        unmockkAll()
+    }
+
+    @Test
+    fun `should throw InvalidTokenException for invalid JWT`() {
+        val invalidToken = "invalid.jwt.token"
+
+        every { JWT.decode(invalidToken) } throws InvalidTokenException("Invalid Token")
+
+        assertFailsWith<InvalidTokenException> {
+            validateJWT(invalidToken, mockConfig)
+        }
+    }
+
+    @Ignore
+    @Test
+    fun `should throw PublicKeyNotFound exception when getIssuerPublicKey fails`() {
+        val validToken = "valid.jwt.token"
+        val mockDecodedJWT = mockk<DecodedJWT>()
+        val mockKeyId = "keyId"
+
+        every { JWT.decode(validToken) } returns mockDecodedJWT
+        every { mockDecodedJWT.keyId } returns mockKeyId
+        // TODO: figure out why this function is not being mocked properly
+        every {
+            getIssuerPublicKey(any(), any())
+        } throws PublicKeyNotFoundException("Public key not found")
+
+        assertFailsWith<PublicKeyNotFoundException> {
+            validateJWT(validToken, mockConfig)
+        }
+    }
 
     // Tests for checkScopes function
     @Test
