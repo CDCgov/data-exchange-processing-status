@@ -45,7 +45,7 @@ fun Application.configureAuth() {
                 try {
                     if (token.count { it == '.' } == 2) {
                         // Token is JWT, validate using OIDC verifier
-                        validateJWT(token)
+                        validateJWT(token, authConfig)
                     } else {
                         // Token is opaque, validate using introspection
                         validateOpaqueToken(token)
@@ -71,25 +71,8 @@ fun Application.configureAuth() {
     }
 }
 
-fun getIssuerPublicKey(issuer: String, keyId: String): RSAPublicKey? {
-    try {
-        val oidcConfigUrl = "$issuer/.well-known/openid-configuration"
-        val oidcConfigJson = URL(oidcConfigUrl).readText()
-
-        val jsonObject = JSONObject(oidcConfigJson)
-        val jwksUri = jsonObject.getString("jwks_uri")
-
-        val provider = JwkProviderBuilder(URL(jwksUri)).build()
-        val jwk = provider.get(keyId)
-
-        return jwk.publicKey as? RSAPublicKey
-    } catch (e: Exception) {
-        throw PublicKeyNotFoundException("There was an issue retrieving the public key for issuer: $issuer and keyId: $keyId.")
-    }
-}
-
-fun validateJWT(token: String) {
-    val issuer = authConfig.issuerUrl
+fun validateJWT(token: String, config: AuthConfig) {
+    val issuer = config.issuerUrl
 
     val decodedJWT = JWT.decode(token)
     val keyId = decodedJWT.keyId
@@ -110,13 +93,30 @@ fun validateJWT(token: String) {
         decodedJWT.getClaim("scope").asString() ?: throw InsufficientScopesException("Failed to parse token claims")
     val actualScopes = claims.split(" ")
 
-    checkScopes(actualScopes)
+    checkScopes(actualScopes, config.requiredScopes)
 }
 
 fun validateOpaqueToken(token: String) {}
 
-fun checkScopes(actualScopes: List<String>) {
-    val requiredScopes = authConfig.requiredScopes?.takeIf { it.isNotBlank() }?.split(" ") ?: return
+fun getIssuerPublicKey(issuer: String, keyId: String): RSAPublicKey? {
+    try {
+        val oidcConfigUrl = "$issuer/.well-known/openid-configuration"
+        val oidcConfigJson = URL(oidcConfigUrl).readText()
+
+        val jsonObject = JSONObject(oidcConfigJson)
+        val jwksUri = jsonObject.getString("jwks_uri")
+
+        val provider = JwkProviderBuilder(URL(jwksUri)).build()
+        val jwk = provider.get(keyId)
+
+        return jwk.publicKey as? RSAPublicKey
+    } catch (e: Exception) {
+        throw PublicKeyNotFoundException("There was an issue retrieving the public key for issuer: $issuer and keyId: $keyId.")
+    }
+}
+
+fun checkScopes(actualScopes: List<String>, requiredScopesList: String? = "") {
+    val requiredScopes = requiredScopesList?.takeIf { it.isNotBlank() }?.split(" ") ?: return
 
     if (!requiredScopes.all { it in actualScopes }) {
         throw InsufficientScopesException("One or more required scopes not found")
