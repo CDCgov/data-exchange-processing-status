@@ -71,6 +71,8 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      *  The actual function which checks for whether the upload has occurred or not within a specified time
      *   @param dataStreamId String
      *   @param jurisdiction String
+     *   @return int - The count of uploads for the specified data stream ID and jurisdiction for today.
+     *  * Returns -1 if an error occurred during the query.
      */
     private fun checkUpload(dataStreamId: String, jurisdiction: String): Int {
         /** Get today's date in UTC **/
@@ -92,7 +94,7 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             Integer::class.java
         )
 
-        return results?.firstOrNull()?.toInt() ?: 0
+        return results?.firstOrNull()?.toInt() ?: -1
     }
 
 
