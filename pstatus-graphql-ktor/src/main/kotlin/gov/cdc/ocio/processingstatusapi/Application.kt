@@ -26,6 +26,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         // Create a CosmosDB config that can be dependency injected (for health checks)
         single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
     }
+
     return modules(listOf(cosmosModule))
 }
 
@@ -34,14 +35,19 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    graphQLModule()
-    configureRouting()
+
     install(Koin) {
         loadKoinModules(environment)
     }
+    graphQLModule()
+    configureRouting()
+
     install(ContentNegotiation) {
         jackson()
     }
+
+
+
 
     // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
