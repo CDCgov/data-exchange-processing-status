@@ -6,6 +6,7 @@ import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
 import gov.cdc.ocio.database.couchbase.CouchbaseRepository
 import gov.cdc.ocio.database.dynamo.DynamoRepository
+import gov.cdc.ocio.database.mongo.MongoConfiguration
 import gov.cdc.ocio.database.mongo.MongoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.plugins.*
@@ -43,9 +44,13 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         when (database.lowercase()) {
             DatabaseType.MONGO.value -> {
                 val connectionString = environment.config.property("mongo.connection_string").getString()
+                val databaseName = environment.config.property("mongo.database_name").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
                     MongoRepository(connectionString, "ProcessingStatus")
                 }
+
+                //  Create a MongoDB config that can be dependency injected (for health checks)
+                single(createdAtStart = true) { MongoConfiguration(connectionString, databaseName) }
                 databaseType = DatabaseType.MONGO
             }
             DatabaseType.COUCHBASE.value -> {
@@ -72,9 +77,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 databaseType = DatabaseType.COSMOS
             }
             DatabaseType.DYNAMO.value -> {
-                val dynamoDbPrefix = environment.config.property("dynamo.db_prefix").getString()
+                val dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
-                    DynamoRepository(dynamoDbPrefix)
+                    DynamoRepository(dynamoTablePrefix)
                 }
                 databaseType = DatabaseType.DYNAMO
             }

@@ -46,9 +46,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 }
             }
             DatabaseType.DYNAMO.value -> {
-                val dynamoDbPrefix = environment.config.property("dynamo.db_prefix").getString()
+                val dynamoTablePrefix = environment.config.property("dynamo.table_prefix").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
-                    DynamoRepository(dynamoDbPrefix)
+                    DynamoRepository(dynamoTablePrefix)
                 }
             }
             else -> logger.error("Unsupported database requested: $database")

@@ -15,6 +15,7 @@ import software.amazon.awssdk.protocols.jsoncore.JsonNode
 /**
  * DynamoDB repository implementation
  *
+ * @property ddbClient DynamoDbClient
  * @property ddbEnhancedClient DynamoDbEnhancedClient
  * @property reportsTableName String
  * @property reportsDeadLetterTableName String
@@ -22,15 +23,15 @@ import software.amazon.awssdk.protocols.jsoncore.JsonNode
  * @property reportsDeadLetterCollection Collection
  * @constructor
  */
-class DynamoRepository(dbPrefix: String): ProcessingStatusRepository() {
+class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
 
     private val ddbClient = getDynamoDbClient()
 
     private val ddbEnhancedClient = getDynamoDbEnhancedClient()
 
-    private val reportsTableName = "$dbPrefix-reports".lowercase()
+    private val reportsTableName = "$tablePrefix-reports".lowercase()
 
-    private val reportsDeadLetterTableName = "$dbPrefix-reports-deadletter".lowercase()
+    private val reportsDeadLetterTableName = "$tablePrefix-reports-deadletter".lowercase()
 
     override var reportsCollection =
         DynamoCollection(
