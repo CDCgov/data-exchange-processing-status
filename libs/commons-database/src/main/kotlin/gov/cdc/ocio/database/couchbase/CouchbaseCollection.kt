@@ -3,8 +3,10 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
-import com.google.gson.GsonBuilder
+import com.google.gson.*
 import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
+import gov.cdc.ocio.database.utils.InstantTypeAdapter
+import java.time.Instant
 import java.util.*
 
 
@@ -21,7 +23,9 @@ class CouchbaseCollection(
 ): Collection {
 
     private val gson = GsonBuilder()
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+        .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
         .create()
 
     /**
@@ -58,7 +62,7 @@ class CouchbaseCollection(
     override fun <T> createItem(id: String, item: T, classType: Class<T>, partitionKey: String?): Boolean {
         val upsertResult = couchbaseCollection.upsert(
             id,
-            item
+            JsonObject.fromJson(gson.toJson(item, classType))
         )
         return upsertResult != null
     }

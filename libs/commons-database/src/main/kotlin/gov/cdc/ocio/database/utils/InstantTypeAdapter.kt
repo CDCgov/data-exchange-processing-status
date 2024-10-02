@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.utils
+package gov.cdc.ocio.database.utils
 
 import com.google.gson.*
 import java.lang.reflect.Type
@@ -25,7 +25,7 @@ class InstantTypeAdapter :
     }
 
     /**
-     * Deserialize implemenation for the Instant type.
+     * Deserialize implementation for the Instant type.
      *
      * @param json JsonElement
      * @param typeOfT Type
