@@ -50,7 +50,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 }
 
                 //  Create a MongoDB config that can be dependency injected (for health checks)
-                single(createdAtStart = true) { MongoConfiguration(connectionString, databaseName) }
+                single { MongoConfiguration(connectionString, databaseName) }
                 databaseType = DatabaseType.MONGO
             }
             DatabaseType.COUCHBASE.value -> {
@@ -62,7 +62,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 }
 
                 //  Create a CosmosDB config that can be dependency injected (for health checks)
-                single(createdAtStart = true) { CouchbaseConfiguration(connectionString, username, password) }
+                single { CouchbaseConfiguration(connectionString, username, password) }
                 databaseType = DatabaseType.COUCHBASE
             }
             DatabaseType.COSMOS.value -> {
@@ -73,7 +73,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 }
 
                 //  Create a CosmosDB config that can be dependency injected (for health checks)
-                single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
+                single { CosmosConfiguration(uri, authKey) }
                 databaseType = DatabaseType.COSMOS
             }
             DatabaseType.DYNAMO.value -> {
