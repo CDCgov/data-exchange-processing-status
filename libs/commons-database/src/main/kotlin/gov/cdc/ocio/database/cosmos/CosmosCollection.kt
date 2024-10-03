@@ -10,10 +10,14 @@ import mu.KotlinLogging
 
 
 /**
- * Cosmos Collection implementation
+ * Cosmos Collection implementation.
  *
- * @property cosmosContainer CosmosContainer?
- * @constructor
+ * @param containerName[String] Name of the container used for this collection.
+ * @property cosmosContainer[CosmosContainer] Cosmos container associated with this collection.
+ * @constructor Creates a couchbase collection for use with the [Collection] interface.
+ *
+ * @see [CosmosRepository]
+ * @see [Collection]
  */
 class CosmosCollection(
     containerName: String,

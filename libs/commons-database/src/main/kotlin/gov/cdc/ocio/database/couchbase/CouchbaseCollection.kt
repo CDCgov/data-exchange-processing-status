@@ -11,10 +11,15 @@ import java.util.*
 
 
 /**
- * Couchbase Collection implementation
+ * Couchbase Collection implementation.
  *
- * @property couchbaseCollection Collection
- * @constructor
+ * @param collectionName[String] Collection name associated with this couchbase collection.
+ * @property couchbaseScope[Scope] Scope for the couchbase collection, which is defined by the bucket and collection name.
+ * @property couchbaseCollection[com.couchbase.client.java.Collection] Couchbase collection associated with this collection.
+ * @constructor Creates a couchbase collection for use with the [Collection] interface.
+ *
+ * @see [CouchbaseRepository]
+ * @see [Collection]
  */
 class CouchbaseCollection(
     collectionName: String,
@@ -31,7 +36,7 @@ class CouchbaseCollection(
     /**
      * Execute the provided query and return the results as POJOs.
      *
-     * @param query String?
+     * @param query[String]
      * @param classType Class<T>?
      * @return List<T>
      */

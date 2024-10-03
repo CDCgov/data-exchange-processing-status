@@ -10,6 +10,9 @@ import java.time.Duration
 /**
  * Couchbase implementation of the processing status repository.
  *
+ * @param connectionString[String] Connection string for the couchbase database.
+ * @param username[String] Username to use when connecting to the database.
+ * @param password[String] Password to use when connecting to the database.
  * @property cluster (Cluster..Cluster?)
  * @property processingStatusBucket (Bucket..Bucket?)
  * @property scope Scope
@@ -19,9 +22,15 @@ import java.time.Duration
  * @property reportsDeadLetterCollectionName String
  * @property reportsCollection Collection
  * @property reportsDeadLetterCollection Collection
- * @constructor
+ * @constructor Provides a Couchbase repository, which is a concrete implementation of the [ProcessingStatusRepository]
+ *
+ * @see [ProcessingStatusRepository]
  */
-class CouchbaseRepository(connectionString: String, username: String, password: String) : ProcessingStatusRepository() {
+class CouchbaseRepository(
+    connectionString: String,
+    username: String,
+    password: String
+) : ProcessingStatusRepository() {
 
     // Connect without customizing the cluster environment
     private var cluster = Cluster.connect(connectionString, username, password)
