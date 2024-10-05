@@ -283,7 +283,7 @@ class SchemaValidation {
         }
     }
     /**
-     * Checks for depreciated fields within message that are still accepted for backward compatability.
+     * Checks for depreciated fields within message that are still accepted for backward compatibility.
      * If any depreciated fields are found, they are replaced with their corresponding new fields.
      *
      * @param messageAsString message to be checked against depreciated fields.
