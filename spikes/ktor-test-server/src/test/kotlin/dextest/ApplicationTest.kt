@@ -70,7 +70,6 @@ data class TestCase(
     val authHeader: String,
     val expectStatus: Int,
     val expectMesg: String,
-    val expectNext: Boolean,
     val requiredScopes: String,
 )
 
@@ -84,7 +83,6 @@ val testCases =
             authHeader = "",
             expectStatus = HttpStatusCode.Unauthorized.value,
             expectMesg = "Unauthorized you need to provide valid credentials",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -94,7 +92,6 @@ val testCases =
             authHeader = "Bearer",
             expectStatus = HttpStatusCode.Unauthorized.value,
             expectMesg = "Unauthorized you need to provide valid credentials",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -104,7 +101,6 @@ val testCases =
             authHeader = "Bearer invalid.jwt.token",
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "doesn't have a valid JSON format",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -114,7 +110,6 @@ val testCases =
             authHeader = "Bearer",
             expectStatus = HttpStatusCode.Unauthorized.value,
             expectMesg = "Unauthorized you need to provide valid credentials",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -124,7 +119,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenExpired,
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "The Token has expired on",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -134,7 +128,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenInvalidSignature,
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "Token's Signature resulted invalid when verified using the Algorithm",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -144,7 +137,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenWrongIssuer,
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "value doesn't match the required issuer",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -154,7 +146,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenValid,
             expectStatus = HttpStatusCode.OK.value,
             expectMesg = "You have reached a protected route, valid-user",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -164,7 +155,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenValidWithScope,
             expectStatus = HttpStatusCode.OK.value,
             expectMesg = "You have reached a protected route, valid-user",
-            expectNext = false,
             requiredScopes = "",
         ),
         TestCase(
@@ -174,7 +164,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenValidWithScope,
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "There was an issue retrieving the public key for issuer",
-            expectNext = false,
             requiredScopes = "",
         ),
         // RequiredScopes related tests
@@ -185,7 +174,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenValid,
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "One or more required scopes not found",
-            expectNext = false,
             requiredScopes = "read:scope1",
         ),
         TestCase(
@@ -195,7 +183,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenValidIncludesReqScopes,
             expectStatus = HttpStatusCode.Forbidden.value,
             expectMesg = "One or more required scopes not found",
-            expectNext = false,
             requiredScopes = "read:scope1 write:scope1 read:scope2",
         ),
         TestCase(
@@ -205,7 +192,6 @@ val testCases =
             authHeader = "Bearer " + mockTokenValidIncludesReqScopes,
             expectStatus = HttpStatusCode.OK.value,
             expectMesg = "You have reached a protected route, valid-user",
-            expectNext = false,
             requiredScopes = "read:scope1 write:scope1",
         ),
     )
