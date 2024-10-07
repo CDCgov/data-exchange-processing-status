@@ -1,4 +1,4 @@
-package gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.exceptions
+package gov.cdc.ocio.reportschemavalidator.exceptions
 
 /**
  * Intended use of this exception is for bad requests, such as a record could not be located because an invalid

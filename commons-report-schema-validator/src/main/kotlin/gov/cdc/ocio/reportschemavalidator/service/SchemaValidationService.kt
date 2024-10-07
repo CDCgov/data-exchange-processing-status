@@ -1,17 +1,28 @@
-package gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.service
+package gov.cdc.ocio.reportschemavalidator.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.exceptions.BadRequestException
-import gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.exceptions.MalformedException
-import gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
-import gov.cdc.ocio.reportschemavalidator.schema.SchemaLoader
-import gov.cdc.ocio.reportschemavalidator.schema.SchemaValidator
+import gov.cdc.ocio.reportschemavalidator.errors.ErrorProcessor
+import gov.cdc.ocio.reportschemavalidator.exceptions.BadRequestException
+import gov.cdc.ocio.reportschemavalidator.exceptions.MalformedException
+import gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
+import gov.cdc.ocio.reportschemavalidator.validators.SchemaValidator
 import mu.KLogger
-import org.example.gov.cdc.ocio.reportschemavalidator.errors.ErrorProcessor
-import org.example.gov.cdc.ocio.reportschemavalidator.utils.JsonUtils
+import gov.cdc.ocio.reportschemavalidator.utils.JsonUtils
 import java.io.File
+
+
+/**
+The core service class that uses the below interfaces to perform validation and processing.
+ * @param schemaLoader SchemaLoader
+ * @param schemaValidator SchemaValidator
+ * @param errorProcessor ErrorProcessor
+ * @param jsonUtils JsonUtils
+ * @param logger KLogger
+
+ */
 
 class SchemaValidationService(
     private val schemaLoader: SchemaLoader,
@@ -21,7 +32,12 @@ class SchemaValidationService(
     private val logger: KLogger
 ) {
 
-    fun validateJsonSchema(message: String, nodeText:String) : ValidationSchemaResult{
+    /**
+     * The core function which performs the report schema processing and validations
+     * @param message String
+     * @return ValidationSchemaResult
+     */
+    fun validateJsonSchema(message: String) : ValidationSchemaResult{
         val invalidData = mutableListOf<String>()
         val schemaFileNames = mutableListOf<String>()
         val objectMapper: ObjectMapper = jacksonObjectMapper()
@@ -31,8 +47,8 @@ class SchemaValidationService(
 
             val reportJsonNode = objectMapper.readTree(message)
             // validate and load base schema file
-           val result  = loadAndVerifyBaseSchema(message,nodeText,invalidData)
-           if(result.first == null && result.second!=null) return result.second!!
+            val result  = validateBaseSchema(message,invalidData)
+            if(result.first == null && result.second!=null) return result.second!!
             val schemaFile = result.first!!
             schemaFileNames.add(schemaFile.name)
             // validate base schema
@@ -47,9 +63,9 @@ class SchemaValidationService(
             // validate content schema node and content schema version
             validationSchemaResult= validateContentSchemaNodeVersion(reportJsonNode,invalidData)
             if(!validationSchemaResult.status) return  validationSchemaResult
-           //validate content file based on the content schema name and content schema node
+            //validate content file based on the content schema name and content schema node
             val contentValidationResult= validateContentSchemaFile(reportJsonNode,invalidData)
-            if(!contentValidationResult.second.status) return  validationSchemaResult
+            if(!contentValidationResult.second.status) return  contentValidationResult.second
             val contentSchemaFile = contentValidationResult.first
             val contentSchemaFileName =contentSchemaFile!!.name
             schemaFileNames.add(contentSchemaFileName)
@@ -61,42 +77,55 @@ class SchemaValidationService(
             logger.error("The report validation failed ${e.message}")
             throw e
         }catch (e: MalformedException){
-           val reason = "Report rejected: Malformed JSON or error processing the report"
+            val reason = "Report rejected: Malformed JSON or error processing the report"
             e.message?.let { invalidData.add(it) }
             //TODO :This should be done in the calling code
-           // val malformedReportMessage = safeParseMessageAsReport(message)
-           return errorProcessor.processError(
+            // val malformedReportMessage = safeParseMessageAsReport(message)
+            return errorProcessor.processError(
                 reason,
                 invalidData)
         }
-       return ValidationSchemaResult("Successfully validated the report schema", true, mutableListOf())
+        return ValidationSchemaResult("Successfully validated the report schema", true, mutableListOf())
     }
 
-    private fun loadAndVerifyBaseSchema(message:String, nodeText: String, invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult?>{
+    /**
+     * The function which loads and verifies the base schema and returns a pair in the form of file and validation schema result
+     * If file not found then the File object would be null
+     * @param message String
+     * @param invalidData MutableList<String>
+     * @return Pair<File?,ValidationSchemaResult>
+     */
+
+    private fun validateBaseSchema(message:String, invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult?>{
         //for backward compatibility following schema version will be loaded if report_schema_version is not found
         val defaultSchemaVersion = "0.0.1"
         var validationSchemaResult:ValidationSchemaResult? = null
         // get schema version, and use appropriate base schema version
-        val reportSchemaVersion = jsonUtils.getSchemaVersion(message,nodeText) ?: defaultSchemaVersion
+        val reportSchemaVersion = jsonUtils.getReportSchemaVersion(message)  ?: defaultSchemaVersion
         logger.info("The version of schema report $reportSchemaVersion")
         val baseSchemaFileName = "base.$reportSchemaVersion.schema.json"
         // load schema file
         val schemaFile = schemaLoader.loadSchemaFile(baseSchemaFileName)
-         if(schemaFile == null){
-             validationSchemaResult=  errorProcessor.processError(
-                 "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
-                 invalidData)
-         }
-             return Pair(schemaFile, validationSchemaResult)
+        if(schemaFile == null){
+            validationSchemaResult=  errorProcessor.processError(
+                "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
+                invalidData)
+        }
+        return Pair(schemaFile, validationSchemaResult)
 
     }
-
+    /**
+     * The function which validated the content type node and returns the validation schema result
+     * @param reportJsonNode JsonNode
+     * @param invalidData MutableList<String>
+     * @return ValidationSchemaResult
+     */
     private fun validateContentType(reportJsonNode: JsonNode, invalidData:MutableList<String>):ValidationSchemaResult{
         //check for content type node
         val contentTypeNode = reportJsonNode.get("content_type")
         var reason="Content Type node is valid"
         if (contentTypeNode == null) {
-           reason = "Report rejected: `content_type` is not JSON or is missing"
+            reason = "Report rejected: `content_type` is not JSON or is missing"
 
         } else {
             if (!jsonUtils.isJsonMimeType(contentTypeNode.asText())) {
@@ -111,7 +140,12 @@ class SchemaValidationService(
             reason,
             invalidData)
     }
-
+    /**
+     * The function which validated the content node and returns the validation schema result
+     * @param reportJsonNode JsonNode
+     * @param invalidData MutableList<String>
+     * @return ValidationSchemaResult
+     */
 
     private fun validateContent(reportJsonNode: JsonNode, invalidData:MutableList<String>):ValidationSchemaResult{
         //check for content node
@@ -125,7 +159,12 @@ class SchemaValidationService(
         }
         return ValidationSchemaResult(reason,true, invalidData)
     }
-
+    /**
+     * The function which validates the content schema node version and returns the validation schema result
+     * @param reportJsonNode JsonNode
+     * @param invalidData MutableList<String>
+     * @return ValidationSchemaResult
+     */
     private fun validateContentSchemaNodeVersion(reportJsonNode: JsonNode, invalidData:MutableList<String>):ValidationSchemaResult{
         //check for `content_schema_name` and `content_schema_version`
         var reason="Content Schema Name and Content Schema Version are valid"
@@ -142,7 +181,12 @@ class SchemaValidationService(
         }
         return ValidationSchemaResult(reason,true, invalidData)
     }
-
+    /**
+     * The function which validates the content schema file name,path, version and returns the schema file and validation schema result
+     * @param reportJsonNode JsonNode
+     * @param invalidData MutableList<String>
+     *@return Pair<File?,ValidationSchemaResult>
+     */
     private fun validateContentSchemaFile(reportJsonNode: JsonNode, invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult>{
         val reason: String
         var status = false
@@ -169,15 +213,27 @@ class SchemaValidationService(
         }
         return Pair(contentSchemaFile,ValidationSchemaResult(reason,status, invalidData))
     }
-
+    /**
+     * The function gets the content node
+     * @param reportJsonNode JsonNode
+     * @return JsonNode
+     */
     private fun getContentNode(reportJsonNode:JsonNode):JsonNode{
         return reportJsonNode.get("content")
     }
-
+    /**
+     * The function gets the content schema name node
+     * @param contentNode JsonNode
+     * @return JsonNode?
+     */
     private fun getContentSchemaNameNode(contentNode: JsonNode):JsonNode?{
-       return contentNode.get("content_schema_name")
+        return contentNode.get("content_schema_name")
     }
-
+    /**
+     * The function gets the content schema version node
+     * @param contentNode JsonNode
+     * @return JsonNode?
+     */
     private fun getContentSchemaVersionNode(contentNode: JsonNode):JsonNode?{
         return contentNode.get("content_schema_version")
     }

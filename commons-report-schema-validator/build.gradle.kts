@@ -1,5 +1,9 @@
+
+
 plugins {
     kotlin("jvm") version "1.9.23"
+   // id ("org.jetbrains.kotlin.jvm") version "1.9.24"
+    id ("io.ktor.plugin") version "2.3.11"
 }
 
 group = "gov.cdc.ocio"
@@ -8,6 +12,7 @@ version = "0.0.1"
 repositories {
     mavenCentral()
 }
+
 
 dependencies {
     // JSON validations
@@ -23,11 +28,26 @@ dependencies {
     implementation ("com.google.code.gson:gson:2.10.1")
     implementation ("com.sun.activation:javax.activation:1.2.0")
     testImplementation(kotlin("test"))
+   // testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.23")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation ("org.testng:testng:7.7.0")
+    testImplementation ("org.mockito:mockito-inline:3.11.2")
+    testImplementation ("io.mockk:mockk:1.13.9")
+    testImplementation("io.ktor:ktor-server-tests-jvm")
+
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useTestNG()
+    testLogging {
+        events ("passed", "skipped", "failed")
+    }
+    //Change this to "true" if we want to execute unit tests
+    systemProperty("isTestEnvironment", "false")
+
+    // Set the test classpath, if required
 }
 kotlin {
     jvmToolchain(20)
 }
+

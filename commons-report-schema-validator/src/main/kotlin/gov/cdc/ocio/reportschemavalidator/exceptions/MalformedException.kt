@@ -1,4 +1,4 @@
-package gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.exceptions
+package gov.cdc.ocio.reportschemavalidator.exceptions
 
 /**
  * Intended use of this exception is for bad requests, such as a malformed JSON or error processing the report
@@ -6,5 +6,6 @@ package gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.ex
  * content may be malformed, such as the structure not being valid JSON or elements not of the expected type.
  *
  * @constructor
+ * @param message String
  */
 class MalformedException(message: String): Exception(message)

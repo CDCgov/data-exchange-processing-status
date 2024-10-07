@@ -1,14 +1,21 @@
-package gov.cdc.ocio.gov.cdc.ocio.reportschemavalidator.errors
+package gov.cdc.ocio.reportschemavalidator.errors
 
-import gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
-import mu.KotlinLogging
-import org.example.gov.cdc.ocio.reportschemavalidator.errors.ErrorProcessor
+import gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
+import mu.KLogger
 
-class ErrorLoggerProcessor : ErrorProcessor {
+/**
+ * The class for processing and handling of errors
+ * @param logger KLogger
+ */
 
-    companion object {
-         val logger = KotlinLogging.logger {}
-   }
+class ErrorLoggerProcessor(private val logger:KLogger) : ErrorProcessor {
+
+    /**
+     * Function that processes the error and returns the validation result
+     * @param reason String
+     * @param invalidData MutableList<String>
+     * @return ValidationSchemaResult
+     */
     override fun processError(reason: String, invalidData: MutableList<String>):ValidationSchemaResult {
         logger.error(reason)
         invalidData.add(reason)

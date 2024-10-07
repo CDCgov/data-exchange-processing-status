@@ -1,7 +1,10 @@
-package org.example.gov.cdc.ocio.reportschemavalidator.errors
+package gov.cdc.ocio.reportschemavalidator.errors
 
-import gov.cdc.ocio.reportschemavalidator.gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
+import gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
 
+/**
+ * The interface for processing and handling of errors
+ */
 interface ErrorProcessor {
     fun processError(reason: String, invalidData: MutableList<String>):ValidationSchemaResult
 }
