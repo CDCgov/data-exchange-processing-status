@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import aws.sdk.kotlin.runtime.AwsServiceException
+
 import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
@@ -11,6 +12,7 @@ import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.qpid.proton.TimeoutException
 
@@ -29,7 +31,6 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
 
     fun createSQSClient(): SqsClient{
-
         return SqsClient{ credentialsProvider = StaticCredentialsProvider {
             accessKeyId = this@AWSSQServiceConfiguration.accessKeyID
             secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
@@ -58,6 +59,7 @@ val AWSSQSPlugin = createApplicationPlugin(
     } catch (e: Exception) {
         SchemaValidation.logger.error("Unexpected error occurred ${e.message}")
     }
+
     /**
      * The `consumeMessages` function continuously listens for and processes messages from an AWS SQS queue.
      * This function runs in a non-blocking coroutine, retrieving messages from the queue, validating them using
@@ -72,11 +74,13 @@ val AWSSQSPlugin = createApplicationPlugin(
             while (true) {
                 var response: ReceiveMessageResponse? = null
                 try {
-                    val receiveMessageRequest = ReceiveMessageRequest {
-                        this.queueUrl = queueUrl
-                        maxNumberOfMessages = 5
+                    response = retryWithBackoff(numOfRetries = 5){
+                        val receiveMessageRequest = ReceiveMessageRequest {
+                            this.queueUrl = queueUrl
+                            maxNumberOfMessages = 5
+                        }
+                        sqsClient.receiveMessage(receiveMessageRequest)
                     }
-                    response = sqsClient.receiveMessage(receiveMessageRequest)
                     response.messages?.forEach { message ->
                         SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
                         message.body?.let { AWSSQSProcessor().validateMessage(it) }
@@ -90,11 +94,13 @@ val AWSSQSPlugin = createApplicationPlugin(
                 }finally {
                     response?.messages?.forEach { message ->
                         try {
-                            val deleteMessageRequest = DeleteMessageRequest {
-                                this.queueUrl = queueUrl
-                                this.receiptHandle = message.receiptHandle
+                            retryWithBackoff(numOfRetries = 5) {
+                                val deleteMessageRequest = DeleteMessageRequest {
+                                    this.queueUrl = queueUrl
+                                    this.receiptHandle = message.receiptHandle
+                                }
+                                sqsClient.deleteMessage(deleteMessageRequest)
                             }
-                            sqsClient.deleteMessage(deleteMessageRequest)
                             SchemaValidation.logger.info("Successfully Deleted processed report from AWS SQS")
                         }catch (e: Exception) {
                             SchemaValidation.logger.error("Something went wrong while deleting the report from the queue ${e.message}")
@@ -135,4 +141,34 @@ private fun cleanupResourcesAndUnsubscribe(application: Application, sqsClient: 
  */
 fun Application.awsSQSModule() {
     install(AWSSQSPlugin)
+}
+
+/**
+ * The `retryWithBackoff` retries block of code with exponential backoff, doubling the delay before each retry
+ * until `maxDelay` is reached or specified number of retries is exhausted.
+ *
+ * @param numOfRetries The number of times to retry attempts. Default is 3.
+ * @param initialDelay The initial delay between retries in milliseconds. Default is 1000 ms.
+ * @param maxDelay The maximum delay between retries, in milliseconds. Default is 1700 ms.
+ * @param block The block of code to be executed.
+ *
+ */
+suspend fun<P> retryWithBackoff(
+    numOfRetries: Int = 3,
+    initialDelay:Long = 1000,
+    maxDelay: Long=1600,
+    block:suspend()-> P
+): P{
+    var currentDelay = initialDelay
+    repeat(numOfRetries) {
+        try{
+            return block()
+        }catch (e:Exception){
+            SchemaValidation.logger.error("Attempt failed with exception: ${e.message}. Retrying again in $currentDelay")
+            delay(currentDelay)
+            currentDelay = (currentDelay *2).coerceAtMost(maxDelay)
+        }
+    }
+    //This is the last attempt, and if it fails again will throw an exception
+    return block()
 }
