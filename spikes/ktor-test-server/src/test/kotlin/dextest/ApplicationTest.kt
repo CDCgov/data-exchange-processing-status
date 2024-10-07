@@ -42,12 +42,13 @@ val publicKey = keyPair.public as RSAPublicKey // access the public key
 
 var MOCK_OIDC_PORT = 8090
 var testCaseMockOidcBaseUrl = "http://localhost:${MOCK_OIDC_PORT}"
+var testCaseIssuerUrl = testCaseMockOidcBaseUrl
 
 // Mock tokens
-val mockTokenValid = createMockJWT(testCaseMockOidcBaseUrl, 1, "")
+val mockTokenValid = createMockJWT(testCaseIssuerUrl, 1, "")
 
 // create EXPIRED mock token w/ -1-hour expire offset
-val mockTokenExpired = createMockJWT(testCaseMockOidcBaseUrl, -1, "")
+val mockTokenExpired = createMockJWT(testCaseIssuerUrl, -1, "")
 
 // create mock token by concat a Z to make an invalid signature
 val mockTokenInvalidSignature = mockTokenValid + "Z"
@@ -56,10 +57,10 @@ val mockTokenInvalidSignature = mockTokenValid + "Z"
 val mockTokenWrongIssuer = createMockJWT("http://wrong-issuer.com", 1, "")
 
 // create VALID mock token w/ +1-hour expire offset with scope
-val mockTokenValidWithScope = createMockJWT(testCaseMockOidcBaseUrl, 1, "testscope1 testscope2")
+val mockTokenValidWithScope = createMockJWT(testCaseIssuerUrl, 1, "testscope1 testscope2")
 
 // setup up VALID mock token w/ +1-hour expire offset that includes the scopes
-val mockTokenValidIncludesReqScopes = createMockJWT(testCaseMockOidcBaseUrl, 1, "read:scope1 read:custom1 write:scope1 write:custom1")
+val mockTokenValidIncludesReqScopes = createMockJWT(testCaseIssuerUrl, 1, "read:scope1 read:custom1 write:scope1 write:custom1")
 
 
 // Test case for testing OAuth auth middleware
@@ -79,7 +80,7 @@ val testCases =
     listOf(
         TestCase(
             name = "Missing Authorization Header",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "",
             expectStatus = HttpStatusCode.Unauthorized.value,
@@ -89,7 +90,7 @@ val testCases =
         ),
         TestCase(
             name = "Empty Auth Header Token",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer",
             expectStatus = HttpStatusCode.Unauthorized.value,
@@ -99,7 +100,7 @@ val testCases =
         ),
         TestCase(
             name = "Invalid JSON Auth Header Format",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer invalid.jwt.token",
             expectStatus = HttpStatusCode.Forbidden.value,
@@ -109,7 +110,7 @@ val testCases =
         ),
         TestCase(
             name = "Invalid EMPTY Auth Header Format",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer",
             expectStatus = HttpStatusCode.Unauthorized.value,
@@ -119,7 +120,7 @@ val testCases =
         ),
         TestCase(
             name = "Expired JWT Token",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenExpired,
             expectStatus = HttpStatusCode.Forbidden.value,
@@ -129,7 +130,7 @@ val testCases =
         ),
         TestCase(
             name = "Invalid JWT Signature",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenInvalidSignature,
             expectStatus = HttpStatusCode.Forbidden.value,
@@ -139,7 +140,7 @@ val testCases =
         ),
         TestCase(
             name = "Invalid Issuer",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenWrongIssuer,
             expectStatus = HttpStatusCode.Forbidden.value,
@@ -149,7 +150,7 @@ val testCases =
         ),
         TestCase(
             name = "Valid Auth Token with empty Scopes Server Does Not Require",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenValid,
             expectStatus = HttpStatusCode.OK.value,
@@ -159,7 +160,7 @@ val testCases =
         ),
         TestCase(
             name = "Valid JWT Has Scope Claim Server Does Not Require",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenValidWithScope,
             expectStatus = HttpStatusCode.OK.value,
@@ -167,10 +168,20 @@ val testCases =
             expectNext = false,
             requiredScopes = "",
         ),
+        TestCase(
+            name = "Valid JWT bad issuerURL",
+            issuerURL = "http://bad-issuer.com",
+            authEnabled = true,
+            authHeader = "Bearer " + mockTokenValidWithScope,
+            expectStatus = HttpStatusCode.Forbidden.value,
+            expectMesg = "There was an issue retrieving the public key for issuer",
+            expectNext = false,
+            requiredScopes = "",
+        ),
         // RequiredScopes related tests
         TestCase(
             name = "JWT Has No Scope Claim Server Does Require Scopes",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenValid,
             expectStatus = HttpStatusCode.Forbidden.value,
@@ -180,7 +191,7 @@ val testCases =
         ),
         TestCase(
             name = "JWT Has Custom and One Scope and One Missing Claim Server Does Require Scopes",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenValidIncludesReqScopes,
             expectStatus = HttpStatusCode.Forbidden.value,
@@ -190,7 +201,7 @@ val testCases =
         ),
         TestCase(
             name = "Valid JWT Token includes custom and both required scopes",
-            issuerURL = "http://localhost",
+            issuerURL = testCaseIssuerUrl,
             authEnabled = true,
             authHeader = "Bearer " + mockTokenValidIncludesReqScopes,
             expectStatus = HttpStatusCode.OK.value,
@@ -246,7 +257,7 @@ class ApplicationTest {
 
         // Loop over each test case
         testCases.forEach { testCase ->
-            println("RUNNING TEST: ${testCase.name}")
+            println("RUNNING TEST CASE: ${testCase.name}")
 
             // Setup mock server for OIDC endpoints
             val mockOidcServer = MockWebServer()
@@ -298,7 +309,7 @@ class ApplicationTest {
             mockkObject(authConfig)
 
             every { authConfig.authEnabled } returns testCase.authEnabled
-            every { authConfig.issuerUrl } returns baseUrl
+            every { authConfig.issuerUrl } returns testCase.issuerURL
             every { authConfig.introspectionUrl } returns "http://mock-introspection-url"
             every { authConfig.requiredScopes } returns testCase.requiredScopes
 
