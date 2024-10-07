@@ -10,7 +10,14 @@ fun Application.configureRouting() {
         get("/") {
             call.respondText("Hello World!")
         }
-        authenticate("oauth") {
+        if (authConfig.authEnabled) {
+            authenticate("oauth") {
+                get("/protected") {
+                    call.respondText("You have reached a protected route, ${call.principal<UserIdPrincipal>()?.name}")
+                }
+            }
+        }
+        else {
             get("/protected") {
                 call.respondText("You have reached a protected route, ${call.principal<UserIdPrincipal>()?.name}")
             }
