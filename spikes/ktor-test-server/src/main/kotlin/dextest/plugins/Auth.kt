@@ -68,6 +68,19 @@ fun Application.configureAuth() {
         exception<PublicKeyNotFoundException> { call, cause ->
             call.respond(HttpStatusCode.InternalServerError, cause.message ?: "Public key could not be retrieved")
         }
+
+        status(HttpStatusCode.Unauthorized) { call, status ->
+            call.respondText(
+                text = "Unauthorized you need to provide valid credentials.",
+                status = status
+            )
+        }
+        status(HttpStatusCode.Forbidden) { call, status ->
+            call.respondText(
+                text = "Forbidden you don't have access to this resource.",
+                status = status
+            )
+        }
     }
 }
 
