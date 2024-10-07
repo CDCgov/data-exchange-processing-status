@@ -77,36 +77,26 @@ data class TestCase(
 // List of test cases
 val testCases =
     listOf(
-//        TestCase(
-//            name = "Auth Disabled",
-//            issuerURL = "http://localhost",
-//            authEnabled = false,
-//            authHeader = "",
-//            expectStatus = HttpStatusCode.OK.value, // Should be HttpStatusCode.OK when disabled?  
-//            expectMesg = "You have reached a protected route, valid-user",
-//            expectNext = true,
-//            requiredScopes = "",
-//        ),
-//        TestCase(
-//            name = "Missing Authorization Header",
-//            issuerURL = "http://localhost",
-//            authEnabled = true,
-//            authHeader = "",
-//            expectStatus = HttpStatusCode.Unauthorized.value,
-//            expectMesg = "xxx", // Should have message, but is ""
-//            expectNext = false,
-//            requiredScopes = "",
-//        ),
-//        TestCase(
-//            name = "Empty Auth Header Token",
-//            issuerURL = "http://localhost",
-//            authEnabled = true,
-//            authHeader = "Bearer",
-//            expectStatus = HttpStatusCode.Unauthorized.value,
-//            expectMesg = "xxx", // Should have message, but is ""
-//            expectNext = false,
-//            requiredScopes = "",
-//        ),
+        TestCase(
+            name = "Missing Authorization Header",
+            issuerURL = "http://localhost",
+            authEnabled = true,
+            authHeader = "",
+            expectStatus = HttpStatusCode.Unauthorized.value,
+            expectMesg = "Unauthorized you need to provide valid credentials",
+            expectNext = false,
+            requiredScopes = "",
+        ),
+        TestCase(
+            name = "Empty Auth Header Token",
+            issuerURL = "http://localhost",
+            authEnabled = true,
+            authHeader = "Bearer",
+            expectStatus = HttpStatusCode.Unauthorized.value,
+            expectMesg = "Unauthorized you need to provide valid credentials",
+            expectNext = false,
+            requiredScopes = "",
+        ),
         TestCase(
             name = "Invalid JSON Auth Header Format",
             issuerURL = "http://localhost",
@@ -117,16 +107,16 @@ val testCases =
             expectNext = false,
             requiredScopes = "",
         ),
-//        TestCase(
-//            name = "Invalid EMPTY Auth Header Format",
-//            issuerURL = "http://localhost",
-//            authEnabled = true,
-//            authHeader = "Bearer",
-//            expectStatus = HttpStatusCode.Unauthorized.value,
-//            expectMesg = "xxx", // Should have message here?
-//            expectNext = false,
-//            requiredScopes = "",
-//        ),
+        TestCase(
+            name = "Invalid EMPTY Auth Header Format",
+            issuerURL = "http://localhost",
+            authEnabled = true,
+            authHeader = "Bearer",
+            expectStatus = HttpStatusCode.Unauthorized.value,
+            expectMesg = "Unauthorized you need to provide valid credentials",
+            expectNext = false,
+            requiredScopes = "",
+        ),
         TestCase(
             name = "Expired JWT Token",
             issuerURL = "http://localhost",
@@ -227,6 +217,22 @@ class ApplicationTest {
         client.get("/").apply {
             assertEquals(HttpStatusCode.OK, status)
             assertEquals("Hello World!", bodyAsText())
+        }
+    }
+
+    @Test
+    fun testProtected() = testApplication {
+        mockkObject(authConfig)
+        every { authConfig.authEnabled } returns true
+
+        application {
+            configureAuth()
+            configureRouting()
+        }
+
+        client.get("/protected").apply {
+            assertEquals(HttpStatusCode.Unauthorized, status)
+            assertEquals("Unauthorized you need to provide valid credentials", bodyAsText())
         }
     }
 

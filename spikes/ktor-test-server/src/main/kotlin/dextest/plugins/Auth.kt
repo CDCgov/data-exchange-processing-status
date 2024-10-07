@@ -71,13 +71,13 @@ fun Application.configureAuth() {
 
         status(HttpStatusCode.Unauthorized) { call, status ->
             call.respondText(
-                text = "Unauthorized you need to provide valid credentials.",
+                text = "Unauthorized you need to provide valid credentials",
                 status = status
             )
         }
         status(HttpStatusCode.Forbidden) { call, status ->
             call.respondText(
-                text = "Forbidden you don't have access to this resource.",
+                text = "Forbidden you don't have access to this resource",
                 status = status
             )
         }
