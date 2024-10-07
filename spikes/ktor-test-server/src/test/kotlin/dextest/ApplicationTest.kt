@@ -5,17 +5,16 @@ import com.auth0.jwt.JWT
 import dextest.plugins.authConfig
 import dextest.plugins.configureAuth
 import dextest.plugins.configureRouting
-import io.ktor.client.request.*
+import io.ktor.client.request.header
 import io.ktor.client.request.get
-import io.ktor.client.statement.*
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.*
-import io.ktor.server.testing.*
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import java.math.BigInteger
+import java.net.ServerSocket
 import java.net.URL
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
@@ -40,7 +39,7 @@ val keyId = "test-key-id"
 var keyPair = generateRSAKeyPair()
 val publicKey = keyPair.public as RSAPublicKey // access the public key
 
-var MOCK_OIDC_PORT = 8090
+var MOCK_OIDC_PORT = findFreeListenPort()
 var testCaseMockOidcBaseUrl = "http://localhost:${MOCK_OIDC_PORT}"
 var testCaseIssuerUrl = testCaseMockOidcBaseUrl
 
@@ -371,4 +370,10 @@ fun generateRSAKeyPair(): KeyPair {
     val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
     keyPairGenerator.initialize(2048)
     return keyPairGenerator.generateKeyPair()
+}
+
+fun findFreeListenPort(): Int {
+    ServerSocket(0).use { socket ->
+        return socket.localPort
+    }
 }
