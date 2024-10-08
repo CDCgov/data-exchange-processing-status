@@ -217,7 +217,7 @@ class ApplicationTest {
     }
 
     @Test
-    fun testProtected() = testApplication {
+    fun testProtectedAuthEnabled() = testApplication {
         mockkObject(authConfig)
         every { authConfig.authEnabled } returns true
 
@@ -229,6 +229,22 @@ class ApplicationTest {
         client.get("/protected").apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
             assertEquals("Unauthorized you need to provide valid credentials", bodyAsText())
+        }
+    }
+
+    @Test
+    fun testProtectedAuthDisabled() = testApplication {
+        mockkObject(authConfig)
+        every { authConfig.authEnabled } returns false 
+
+        application {
+            configureAuth()
+            configureRouting()
+        }
+
+        client.get("/protected").apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals("You have reached a protected route, null", bodyAsText())
         }
     }
 
@@ -308,8 +324,6 @@ class ApplicationTest {
 
             // Assert the status code
             assertEquals(testCase.expectStatus, response.status.value, "Expected status code for ${testCase.name}")
-
-            println("--------- bodyAsText: ${response.bodyAsText()}")
 
             // Assert the response message contains the expected message
             if (testCase.expectMesg != "") {
