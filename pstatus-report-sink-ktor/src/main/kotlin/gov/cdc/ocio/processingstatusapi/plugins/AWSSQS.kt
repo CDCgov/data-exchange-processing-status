@@ -148,18 +148,18 @@ fun Application.awsSQSModule() {
  * until `maxDelay` is reached or specified number of retries is exhausted.
  *
  * @param numOfRetries The number of times to retry attempts. Default is 3.
- * @param initialDelay The initial delay between retries in milliseconds. Default is 1000 ms.
+ * @param baseDelay The initial delay between retries in milliseconds. Default is 1000 ms.
  * @param maxDelay The maximum delay between retries, in milliseconds. Default is 1700 ms.
  * @param block The block of code to be executed.
  *
  */
 suspend fun<P> retryWithBackoff(
     numOfRetries: Int = 3,
-    initialDelay:Long = 1000,
-    maxDelay: Long=1600,
+    baseDelay:Long = 1000,
+    maxDelay: Long = 6000,
     block:suspend()-> P
 ): P{
-    var currentDelay = initialDelay
+    var currentDelay = baseDelay
     repeat(numOfRetries) {
         try{
             return block()
