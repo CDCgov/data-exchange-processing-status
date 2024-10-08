@@ -1,0 +1,22 @@
+name: DEV - Notifications Workflow
+on:
+  workflow_dispatch:
+    inputs:
+      REF:
+        description: Branch from CDCgov/data-exchange-processing-status that you want to deploy to the dev environment.
+        default: develop
+        required: true
+        type: string
+  push:
+    branches:
+        - develop
+    paths:
+        - pstatus-notifications-workflow-ktor/**
+
+jobs:
+  remote-trigger:
+    uses: ./.github/workflows/remote-cd-trigger-template.yml
+    with:
+      WORKFLOW: notifications-workflow-build-pushImage-dev.yml 
+      REF: ${{ inputs.REF }}
+    secrets: inherit
