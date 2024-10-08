@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.health.database
 import gov.cdc.ocio.processingstatusapi.health.HealthCheck
 import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
-import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 
@@ -33,7 +32,6 @@ class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB") {
     private fun getDynamoDbClient() : DynamoDbClient {
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return DynamoDbClient.builder()
-            .region(Region.US_EAST_1)
             .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
             .build()
     }

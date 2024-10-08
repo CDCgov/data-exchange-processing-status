@@ -7,7 +7,6 @@ import gov.cdc.ocio.database.models.ReportDeadLetter
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
-import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.protocols.jsoncore.JsonNode
 
@@ -73,7 +72,6 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
     private fun getDynamoDbClient() : DynamoDbClient {
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return DynamoDbClient.builder()
-            .region(Region.US_EAST_1)
             .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
             .build()
     }
