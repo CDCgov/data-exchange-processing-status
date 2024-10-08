@@ -149,7 +149,7 @@ fun Application.awsSQSModule() {
  *
  * @param numOfRetries The number of times to retry attempts. Default is 3.
  * @param baseDelay The initial delay between retries in milliseconds. Default is 1000 ms.
- * @param maxDelay The maximum delay between retries, in milliseconds. Default is 1700 ms.
+ * @param maxDelay The maximum delay between retries, in milliseconds. Default is 6000 ms.
  * @param block The block of code to be executed.
  *
  */
@@ -170,5 +170,6 @@ suspend fun<P> retryWithBackoff(
         }
     }
     //This is the last attempt, and if it fails again will throw an exception
+    SchemaValidation.logger.error("Last Attempt, if it fails again exception will be thrown")
     return block()
 }
