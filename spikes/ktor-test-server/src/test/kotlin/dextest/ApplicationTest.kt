@@ -1,46 +1,44 @@
 package dextest
 
-import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import dextest.plugins.authConfig
 import dextest.plugins.configureAuth
 import dextest.plugins.configureRouting
-import io.ktor.client.request.header
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import java.math.BigInteger
-import java.net.ServerSocket
-import java.net.URL
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.time.Instant
-import java.util.Base64
-import java.util.Date
-import kotlin.test.*
-import kotlin.test.assertEquals
-import kotlin.test.fail
-import kotlin.test.Test
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.Assert.assertNotNull
-
+import java.math.BigInteger
+import java.net.ServerSocket
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
+import java.time.Instant
+import java.util.Base64
+import java.util.Date
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 // Global for the RSA key pair
 val keyId = "test-key-id"
 var keyPair = generateRSAKeyPair()
 val publicKey = keyPair.public as RSAPublicKey // access the public key
 
-var MOCK_OIDC_PORT = findFreeListenPort()
-var testCaseMockOidcBaseUrl = "http://localhost:${MOCK_OIDC_PORT}"
+var mockOidcServerPort = findFreeListenPort()
+var testCaseMockOidcBaseUrl = "http://localhost:$mockOidcServerPort"
 var testCaseIssuerUrl = testCaseMockOidcBaseUrl
 
 // Mock tokens
@@ -61,8 +59,7 @@ val mockTokenValidWithScope = createMockJWT(testCaseIssuerUrl, 1, "testscope1 te
 // setup up VALID mock token w/ +1-hour expire offset that includes the scopes
 val mockTokenValidIncludesReqScopes = createMockJWT(testCaseIssuerUrl, 1, "read:scope1 read:custom1 write:scope1 write:custom1")
 
-
-// Test case for testing OAuth auth middleware
+// Test case for testing auth middleware
 data class TestCase(
     val name: String,
     val issuerURL: String,
@@ -200,144 +197,147 @@ class ApplicationTest {
     @Test
     fun testKeyPairIsInitialized() {
         // Test that global keyPair is setup
-        assertNotNull(keyPair.private, "Private key not set") 
-        assertNotNull(keyPair.public, "Public key not set")
+        assertTrue(keyPair.private is PrivateKey, "Private key is not setup")
+        assertTrue(keyPair.public is PublicKey, "Public key is not setup")
     }
 
     @Test
-    fun testRoot() = testApplication {
-        application {
-            configureAuth()
-            configureRouting()
+    fun testAuthEnabled() =
+        testApplication {
+            mockkObject(authConfig)
+            every { authConfig.authEnabled } returns true
+
+            application {
+                configureAuth()
+                configureRouting()
+            }
+            client.get("/").apply {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals("Hello World!", bodyAsText())
+            }
+
+            client.get("/protected").apply {
+                assertEquals(HttpStatusCode.Unauthorized, status)
+                assertEquals("Unauthorized you need to provide valid credentials", bodyAsText())
+            }
         }
-        client.get("/").apply {
-            assertEquals(HttpStatusCode.OK, status)
-            assertEquals("Hello World!", bodyAsText())
-        }
-    }
 
     @Test
-    fun testProtectedAuthEnabled() = testApplication {
-        mockkObject(authConfig)
-        every { authConfig.authEnabled } returns true
+    fun testAuthDisabled() =
+        testApplication {
+            mockkObject(authConfig)
+            every { authConfig.authEnabled } returns false
 
-        application {
-            configureAuth()
-            configureRouting()
+            application {
+                configureAuth()
+                configureRouting()
+            }
+            client.get("/").apply {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals("Hello World!", bodyAsText())
+            }
+
+            client.get("/protected").apply {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals("You have reached a protected route, null", bodyAsText())
+            }
         }
-
-        client.get("/protected").apply {
-            assertEquals(HttpStatusCode.Unauthorized, status)
-            assertEquals("Unauthorized you need to provide valid credentials", bodyAsText())
-        }
-    }
-
-    @Test
-    fun testProtectedAuthDisabled() = testApplication {
-        mockkObject(authConfig)
-        every { authConfig.authEnabled } returns false 
-
-        application {
-            configureAuth()
-            configureRouting()
-        }
-
-        client.get("/protected").apply {
-            assertEquals(HttpStatusCode.OK, status)
-            assertEquals("You have reached a protected route, null", bodyAsText())
-        }
-    }
 
     // Iterate through the auth middleware test cases
     @Test
-    fun runAuthTestCases() = testApplication {
-        application {
-            configureAuth()
-            configureRouting()
-        }
-
-        // Loop over each test case
-        testCases.forEach { testCase ->
-            println("RUNNING TEST CASE: ${testCase.name}")
-
-            // Setup mock server for OIDC endpoints
-            val mockOidcServer = MockWebServer()
-            mockOidcServer.start(MOCK_OIDC_PORT)
-
-            // Base URL for the OIDC MockWebServer
-            val baseUrl = mockOidcServer.url("/").toString().removeSuffix("/")
-
-            val oidcConfigResponse =
-                """
-                {
-                    "issuer": "$baseUrl",
-                    "authorization_endpoint": "$baseUrl/oauth2/authorize",
-                    "token_endpoint": "$baseUrl/oauth2/token",
-                    "jwks_uri": "$baseUrl/oauth2/jwks"
-                }
-                """.trimIndent()
-
-            val modulus = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.modulus.toByteArray())
-            val exponent =
-                Base64.getUrlEncoder().withoutPadding().encodeToString(
-                    BigInteger.valueOf(publicKey.publicExponent.toLong()).toByteArray(),
-                )
-
-            val oidcJwksResponse =
-                """
-                    {
-                      "keys": [
-                        {
-                          "kty": "RSA",
-                          "kid": "test-key-id",
-                          "n": "$modulus",
-                          "e": "$exponent"
-                }
-                      ]
-                    }
-                """.trimIndent()
-
-            mockOidcServer.dispatcher =
-                object : Dispatcher() {
-                    override fun dispatch(request: RecordedRequest): MockResponse =
-                        when (request.path) {
-                            "/.well-known/openid-configuration" -> MockResponse().setResponseCode(HttpStatusCode.OK.value).setBody(oidcConfigResponse)
-                            "/oauth2/jwks" -> MockResponse().setResponseCode(HttpStatusCode.OK.value).setBody(oidcJwksResponse)
-                            else -> MockResponse().setResponseCode(HttpStatusCode.NotFound.value).setBody("Not Found")
-                        }
-                }
-
-            mockkObject(authConfig)
-
-            every { authConfig.authEnabled } returns testCase.authEnabled
-            every { authConfig.issuerUrl } returns testCase.issuerURL
-            every { authConfig.introspectionUrl } returns "http://mock-introspection-url"
-            every { authConfig.requiredScopes } returns testCase.requiredScopes
-
-            // Perform the GET request for the auth protected path
-            val response =
-                client.get("/protected") {
-                    if (testCase.authHeader.isNotEmpty()) {
-                        header("Authorization", testCase.authHeader)
-                    }
-                }
-
-            // Assert the status code
-            assertEquals(testCase.expectStatus, response.status.value, "Expected status code for ${testCase.name}")
-
-            // Assert the response message contains the expected message
-            if (testCase.expectMesg != "") {
-                assertTrue(
-                    response.bodyAsText().contains(testCase.expectMesg),
-                    "Expected response message to contain '${testCase.expectMesg}' for ${testCase.name}, but got '${response.bodyAsText()}'",
-                )
+    fun runAuthTestCases() =
+        testApplication {
+            application {
+                configureAuth()
+                configureRouting()
             }
 
-            // Clean up for next test case.
-            unmockkAll()
-            mockOidcServer.shutdown()
+            // Loop over each test case
+            testCases.forEach { testCase ->
+                println("RUNNING TEST CASE: ${testCase.name}")
+
+                // Setup mock server for OIDC endpoints
+                val mockOidcServer = MockWebServer()
+                mockOidcServer.start(mockOidcServerPort)
+
+                // Base URL for the OIDC MockWebServer
+                val baseUrl = mockOidcServer.url("/").toString().removeSuffix("/")
+
+                val oidcConfigResponse =
+                    """
+                    {
+                        "issuer": "$baseUrl",
+                        "authorization_endpoint": "$baseUrl/oauth2/authorize",
+                        "token_endpoint": "$baseUrl/oauth2/token",
+                        "jwks_uri": "$baseUrl/oauth2/jwks"
+                    }
+                    """.trimIndent()
+
+                val modulus = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.modulus.toByteArray())
+                val exponent =
+                    Base64.getUrlEncoder().withoutPadding().encodeToString(
+                        BigInteger.valueOf(publicKey.publicExponent.toLong()).toByteArray(),
+                    )
+
+                val oidcJwksResponse =
+                    """
+                        {
+                          "keys": [
+                            {
+                              "kty": "RSA",
+                              "kid": "test-key-id",
+                              "n": "$modulus",
+                              "e": "$exponent"
+                    }
+                          ]
+                        }
+                    """.trimIndent()
+
+                mockOidcServer.dispatcher =
+                    object : Dispatcher() {
+                        override fun dispatch(request: RecordedRequest): MockResponse =
+                            when (request.path) {
+                                "/.well-known/openid-configuration" ->
+                                    MockResponse()
+                                        .setResponseCode(
+                                            HttpStatusCode.OK.value,
+                                        ).setBody(oidcConfigResponse)
+                                "/oauth2/jwks" -> MockResponse().setResponseCode(HttpStatusCode.OK.value).setBody(oidcJwksResponse)
+                                else -> MockResponse().setResponseCode(HttpStatusCode.NotFound.value).setBody("Not Found")
+                            }
+                    }
+
+                mockkObject(authConfig)
+
+                every { authConfig.authEnabled } returns testCase.authEnabled
+                every { authConfig.issuerUrl } returns testCase.issuerURL
+                every { authConfig.introspectionUrl } returns "http://mock-introspection-url"
+                every { authConfig.requiredScopes } returns testCase.requiredScopes
+
+                // Perform the GET request for the auth protected path
+                val response =
+                    client.get("/protected") {
+                        if (testCase.authHeader.isNotEmpty()) {
+                            header("Authorization", testCase.authHeader)
+                        }
+                    }
+
+                // Assert the status code
+                assertEquals(testCase.expectStatus, response.status.value, "Expected status code for ${testCase.name}")
+
+                // Assert the response message contains the expected message
+                if (testCase.expectMesg != "") {
+                    assertTrue(
+                        response.bodyAsText().contains(testCase.expectMesg),
+                        "Expected response message to contain '${testCase.expectMesg}' for ${testCase.name}, but got '${response.bodyAsText()}'",
+                    )
+                }
+
+                // Clean up for next test case.
+                unmockkAll()
+                mockOidcServer.shutdown()
+            }
         }
-    }
 }
 
 fun createMockJWT(
