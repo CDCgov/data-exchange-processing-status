@@ -28,6 +28,7 @@ class HealthCheckRabbitMQ : HealthCheckSystem("RabbitMQ"), KoinComponent {
             }
         } catch (ex: Exception){
             logger.error("RabbitMQ is not healthy $ex.message")
+            healthIssues = ex.message
         }
     }
 

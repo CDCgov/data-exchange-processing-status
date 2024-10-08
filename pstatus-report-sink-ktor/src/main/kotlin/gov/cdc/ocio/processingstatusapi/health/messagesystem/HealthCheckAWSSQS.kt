@@ -31,6 +31,7 @@ class HealthCheckAWSSQS : HealthCheckSystem("AWS SQS"), KoinComponent {
 
         } catch (ex: Exception) {
             logger.error("AWS SQS is not healthy $ex.message")
+            healthIssues = ex.message
         }
     }
 
@@ -40,13 +41,13 @@ class HealthCheckAWSSQS : HealthCheckSystem("AWS SQS"), KoinComponent {
      * @return Boolean
      */
     @Throws(BadStateException::class)
-    private  fun isAWSSQSHealthy(config: AWSSQServiceConfiguration): Boolean {
+    private fun isAWSSQSHealthy(config: AWSSQServiceConfiguration): Boolean {
         val sqsClient: SqsClient?
         return try {
             sqsClient = config.createSQSClient()
             sqsClient.close()
             true
-        }catch (e: Exception){
+        } catch (e: Exception) {
             throw Exception("Failed to establish connection to AWS SQS service.")
         }
     }
