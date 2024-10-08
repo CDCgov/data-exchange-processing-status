@@ -13,15 +13,19 @@ import software.amazon.awssdk.protocols.jsoncore.JsonNode
 
 
 /**
- * DynamoDB repository implementation
+ * DynamoDB implementation of the processing status repository.
  *
+ * @param tablePrefix[String] The table prefix is prepended to each of the table names for the reports and
+ * deadlettered reports table names.
  * @property ddbClient DynamoDbClient
  * @property ddbEnhancedClient DynamoDbEnhancedClient
  * @property reportsTableName String
  * @property reportsDeadLetterTableName String
  * @property reportsCollection Collection
  * @property reportsDeadLetterCollection Collection
- * @constructor
+ * @constructor Provides a DynamoDB repository, which is a concrete implementation of the [ProcessingStatusRepository]
+ *
+ * @see [ProcessingStatusRepository]
  */
 class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
 

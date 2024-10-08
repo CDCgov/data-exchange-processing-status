@@ -14,7 +14,10 @@ import software.amazon.awssdk.services.dynamodb.model.ExecuteStatementRequest
  * @property dynamoTableName String
  * @property tableClassType Class<R>
  * @property dynamoTable DynamoDbTable<R>?
- * @constructor
+ * @constructor Creates a DynamoDB collection for use with the [Collection] interface.
+ *
+ * @see [DynamoRepository]
+ * @see [Collection]
  */
 class DynamoCollection<R>(
     private val dynamoDbClient: DynamoDbClient,
