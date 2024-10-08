@@ -18,6 +18,11 @@ repositories {
     mavenCentral()
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 group "gov.cdc.ocio"
 version "0.0.1"
 
@@ -53,9 +58,7 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
-kotlin {
-    jvmToolchain(20)
-}
+
 repositories{
     mavenLocal()
     mavenCentral()
