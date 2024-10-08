@@ -14,8 +14,8 @@ import org.bson.BsonInt64
 /**
  * MongoDB repository implementation.
  *
- * @param uri[String] URI of the MongoDB to connect with
- * @param databaseName[String] Name of the MongoDB database containing the reports
+ * @param uri[String] URI of the MongoDB to connect with.
+ * @param databaseName[String] Name of the MongoDB database containing the reports.
  * @property mongoClient [MongoClient]?
  * @property reportsDatabase [MongoDatabase]?
  * @property reportsMongoCollection [MongoCollection]?
