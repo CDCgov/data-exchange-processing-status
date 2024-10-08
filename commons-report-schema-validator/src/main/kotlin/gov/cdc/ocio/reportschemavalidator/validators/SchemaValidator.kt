@@ -11,5 +11,5 @@ import java.io.File
 
 interface SchemaValidator {
     fun validateSchema(schemaFileName: String, jsonNode: JsonNode, schemaFile: File, objectMapper: ObjectMapper,
-                       invalidData: MutableList<String>): ValidationSchemaResult
+                       schemaFileNames: MutableList<String>, invalidData: MutableList<String>): ValidationSchemaResult
 }

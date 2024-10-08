@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorProcessor
-import gov.cdc.ocio.reportschemavalidator.exceptions.BadRequestException
 import gov.cdc.ocio.reportschemavalidator.exceptions.MalformedException
 import gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
@@ -12,7 +11,6 @@ import gov.cdc.ocio.reportschemavalidator.validators.SchemaValidator
 import mu.KLogger
 import gov.cdc.ocio.reportschemavalidator.utils.JsonUtils
 import java.io.File
-
 
 /**
 The core service class that uses the below interfaces to perform validation and processing.
@@ -47,45 +45,44 @@ class SchemaValidationService(
 
             val reportJsonNode = objectMapper.readTree(message)
             // validate and load base schema file
-            val result  = validateBaseSchema(message,invalidData)
+            val result  = validateBaseSchema(message,schemaFileNames,invalidData)
             if(result.first == null && result.second!=null) return result.second!!
             val schemaFile = result.first!!
             schemaFileNames.add(schemaFile.name)
             // validate base schema
-            validationSchemaResult = schemaValidator.validateSchema(schemaFile.name,reportJsonNode,schemaFile,objectMapper,invalidData)
+            validationSchemaResult = schemaValidator.validateSchema(schemaFile.name,reportJsonNode,schemaFile,objectMapper,schemaFileNames,invalidData)
             if(!validationSchemaResult.status) return  validationSchemaResult
             // validate content type
-            validationSchemaResult= validateContentType(reportJsonNode,invalidData)
+            validationSchemaResult= validateContentType(reportJsonNode,schemaFileNames,invalidData)
             if(!validationSchemaResult.status) return  validationSchemaResult
             // validate content
-            validationSchemaResult= validateContent(reportJsonNode,invalidData)
+            validationSchemaResult= validateContent(reportJsonNode,schemaFileNames,invalidData)
             if(!validationSchemaResult.status) return  validationSchemaResult
             // validate content schema node and content schema version
-            validationSchemaResult= validateContentSchemaNodeVersion(reportJsonNode,invalidData)
+            validationSchemaResult= validateContentSchemaNodeVersion(reportJsonNode,schemaFileNames,invalidData)
             if(!validationSchemaResult.status) return  validationSchemaResult
             //validate content file based on the content schema name and content schema node
-            val contentValidationResult= validateContentSchemaFile(reportJsonNode,invalidData)
+            val contentValidationResult= validateContentSchemaFile(reportJsonNode,schemaFileNames,invalidData)
             if(!contentValidationResult.second.status) return  contentValidationResult.second
             val contentSchemaFile = contentValidationResult.first
             val contentSchemaFileName =contentSchemaFile!!.name
             schemaFileNames.add(contentSchemaFileName)
             //validate content schema
-            validationSchemaResult = schemaValidator.validateSchema(contentSchemaFileName,getContentNode(reportJsonNode),contentSchemaFile,objectMapper,invalidData)
+            validationSchemaResult = schemaValidator.validateSchema(contentSchemaFileName,getContentNode(reportJsonNode),contentSchemaFile,
+                objectMapper,schemaFileNames,invalidData)
             if(!validationSchemaResult.status) return  validationSchemaResult
         }
-        catch (e: BadRequestException) {
-            logger.error("The report validation failed ${e.message}")
-            throw e
-        }catch (e: MalformedException){
+        catch (e: MalformedException){
             val reason = "Report rejected: Malformed JSON or error processing the report"
             e.message?.let { invalidData.add(it) }
             //TODO :This should be done in the calling code
             // val malformedReportMessage = safeParseMessageAsReport(message)
             return errorProcessor.processError(
                 reason,
+                schemaFileNames,
                 invalidData)
         }
-        return ValidationSchemaResult("Successfully validated the report schema", true, mutableListOf())
+        return ValidationSchemaResult("Successfully validated the report schema", true, schemaFileNames,mutableListOf())
     }
 
     /**
@@ -96,7 +93,7 @@ class SchemaValidationService(
      * @return Pair<File?,ValidationSchemaResult>
      */
 
-    private fun validateBaseSchema(message:String, invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult?>{
+    private fun validateBaseSchema(message:String, schemaFileNames: MutableList<String>,invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult?>{
         //for backward compatibility following schema version will be loaded if report_schema_version is not found
         val defaultSchemaVersion = "0.0.1"
         var validationSchemaResult:ValidationSchemaResult? = null
@@ -109,6 +106,7 @@ class SchemaValidationService(
         if(schemaFile == null){
             validationSchemaResult=  errorProcessor.processError(
                 "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
+                schemaFileNames,
                 invalidData)
         }
         return Pair(schemaFile, validationSchemaResult)
@@ -120,7 +118,7 @@ class SchemaValidationService(
      * @param invalidData MutableList<String>
      * @return ValidationSchemaResult
      */
-    private fun validateContentType(reportJsonNode: JsonNode, invalidData:MutableList<String>):ValidationSchemaResult{
+    private fun validateContentType(reportJsonNode: JsonNode, schemaFileNames: MutableList<String>, invalidData:MutableList<String>):ValidationSchemaResult{
         //check for content type node
         val contentTypeNode = reportJsonNode.get("content_type")
         var reason="Content Type node is valid"
@@ -133,11 +131,12 @@ class SchemaValidationService(
                 reason = "Don't need to go further down the schema, since the mimetype is not json."
             }
             else{
-                return ValidationSchemaResult(reason,true, invalidData)
+                return ValidationSchemaResult(reason,true, schemaFileNames, invalidData)
             }
         }
         return errorProcessor.processError(
             reason,
+            schemaFileNames,
             invalidData)
     }
     /**
@@ -147,7 +146,7 @@ class SchemaValidationService(
      * @return ValidationSchemaResult
      */
 
-    private fun validateContent(reportJsonNode: JsonNode, invalidData:MutableList<String>):ValidationSchemaResult{
+    private fun validateContent(reportJsonNode: JsonNode, schemaFileNames: MutableList<String>, invalidData:MutableList<String>):ValidationSchemaResult{
         //check for content node
         val contentNode = reportJsonNode.get("content")
         var reason="Content node is valid"
@@ -155,9 +154,10 @@ class SchemaValidationService(
             reason = "Report rejected: `content` is not JSON or is missing."
             return errorProcessor.processError(
                 reason,
+                schemaFileNames,
                 invalidData)
         }
-        return ValidationSchemaResult(reason,true, invalidData)
+        return ValidationSchemaResult(reason,true, schemaFileNames, invalidData)
     }
     /**
      * The function which validates the content schema node version and returns the validation schema result
@@ -165,7 +165,7 @@ class SchemaValidationService(
      * @param invalidData MutableList<String>
      * @return ValidationSchemaResult
      */
-    private fun validateContentSchemaNodeVersion(reportJsonNode: JsonNode, invalidData:MutableList<String>):ValidationSchemaResult{
+    private fun validateContentSchemaNodeVersion(reportJsonNode: JsonNode, schemaFileNames: MutableList<String>, invalidData:MutableList<String>):ValidationSchemaResult{
         //check for `content_schema_name` and `content_schema_version`
         var reason="Content Schema Name and Content Schema Version are valid"
         val contentNode = getContentNode(reportJsonNode)
@@ -177,9 +177,10 @@ class SchemaValidationService(
             reason = "Report rejected: `content_schema_name` or `content_schema_version` is missing or empty."
             return errorProcessor.processError(
                 reason,
+                schemaFileNames,
                 invalidData)
         }
-        return ValidationSchemaResult(reason,true, invalidData)
+        return ValidationSchemaResult(reason,true,  schemaFileNames,invalidData)
     }
     /**
      * The function which validates the content schema file name,path, version and returns the schema file and validation schema result
@@ -187,7 +188,7 @@ class SchemaValidationService(
      * @param invalidData MutableList<String>
      *@return Pair<File?,ValidationSchemaResult>
      */
-    private fun validateContentSchemaFile(reportJsonNode: JsonNode, invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult>{
+    private fun validateContentSchemaFile(reportJsonNode: JsonNode, schemaFileNames: MutableList<String>, invalidData:MutableList<String>):Pair<File?,ValidationSchemaResult>{
         val reason: String
         var status = false
         val contentNode = getContentNode(reportJsonNode)
@@ -203,15 +204,14 @@ class SchemaValidationService(
                 "Report rejected: Content schema file not found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'."
             errorProcessor.processError(
                 reason,
+                schemaFileNames,
                 invalidData)
-
         }
         else{
             status=true
             reason="Content schema file found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'"
-
         }
-        return Pair(contentSchemaFile,ValidationSchemaResult(reason,status, invalidData))
+        return Pair(contentSchemaFile,ValidationSchemaResult(reason,status,schemaFileNames, invalidData))
     }
     /**
      * The function gets the content node

@@ -16,10 +16,10 @@ class ErrorLoggerProcessor(private val logger:KLogger) : ErrorProcessor {
      * @param invalidData MutableList<String>
      * @return ValidationSchemaResult
      */
-    override fun processError(reason: String, invalidData: MutableList<String>):ValidationSchemaResult {
+    override fun processError(reason: String, schemaFileNames: MutableList<String>, invalidData: MutableList<String>):ValidationSchemaResult {
         logger.error(reason)
         invalidData.add(reason)
-       return ValidationSchemaResult(reason,false,invalidData)
+       return ValidationSchemaResult(reason,false,schemaFileNames,invalidData)
     }
 
 }

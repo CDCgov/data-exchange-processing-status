@@ -31,6 +31,7 @@ class JsonSchemaValidator(private val logger: KLogger) : SchemaValidator {
         jsonNode: JsonNode,
         schemaFile: File,
         objectMapper: ObjectMapper,
+        schemaFileNames: MutableList<String>,
         invalidData: MutableList<String>,
     ):ValidationSchemaResult {
 
@@ -50,6 +51,6 @@ class JsonSchemaValidator(private val logger: KLogger) : SchemaValidator {
             schemaValidationMessages.forEach { invalidData.add(it.message) }
             //  processError(reason, invalidData,validationSchemaFileNames,createReportMessage)
         }
-        return ValidationSchemaResult(reason,status,invalidData)
+        return ValidationSchemaResult(reason,status,schemaFileNames,invalidData)
     }
 }
