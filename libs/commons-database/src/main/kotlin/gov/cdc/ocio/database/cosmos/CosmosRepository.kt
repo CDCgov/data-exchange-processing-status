@@ -7,23 +7,27 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 /**
  * The class which initializes and creates an instance of a cosmos db reports and reports-deadletter containers.
  *
- * @property reportsContainerName String
- * @property reportsDeadLetterContainerName String
- * @property reportsContainer CosmosContainer?
- * @property reportsDeadLetterContainer CosmosContainer?
- * @property reportsCollection Collection
- * @property reportsDeadLetterCollection Collection
- * @constructor
+ * @param uri[String] URI of the CosmosDB to connect with.
+ * @param authKey[String] Authorization Key to use when connecting to the CosmosDB.
+ * @param partitionKey[String] Container partition key to use, which defaults to "/uploadId" if not provided.
+ * @param reportsContainerName[String] Reports container name to use, which defaults to "Reports" if not provided.
+ * @param reportsDeadLetterContainerName[String] Reports deadletter container name to use, which default to
+ * "Reports-DeadLetter" if not provided.
+ * @property reportsContainer[com.azure.cosmos.CosmosContainer]?
+ * @property reportsDeadLetterContainer[com.azure.cosmos.CosmosContainer]?
+ * @property reportsCollection[Collection]
+ * @property reportsDeadLetterCollection[Collection]
+ * @constructor Provides a CosmosDB repository, which is a concrete implementation of the [ProcessingStatusRepository]
+ *
+ * @see [ProcessingStatusRepository]
  */
 class CosmosRepository(
     uri: String,
     authKey: String,
-    partitionKey: String
+    partitionKey: String = "/uploadId",
+    reportsContainerName: String = "Reports",
+    reportsDeadLetterContainerName: String = "Reports-DeadLetter"
 ) : ProcessingStatusRepository() {
-
-    private val reportsContainerName = "Reports"
-
-    private val reportsDeadLetterContainerName = "Reports-DeadLetter"
 
     private val reportsContainer =
         CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)
