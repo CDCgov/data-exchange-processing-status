@@ -46,7 +46,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                 val connectionString = environment.config.property("mongo.connection_string").getString()
                 val databaseName = environment.config.property("mongo.database_name").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {
-                    MongoRepository(connectionString, "ProcessingStatus")
+                    MongoRepository(connectionString, databaseName)
                 }
 
                 //  Create a MongoDB config that can be dependency injected (for health checks)
@@ -61,7 +61,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                     CouchbaseRepository(connectionString, username, password)
                 }
 
-                //  Create a CosmosDB config that can be dependency injected (for health checks)
+                //  Create a couchbase config that can be dependency injected (for health checks)
                 single { CouchbaseConfiguration(connectionString, username, password) }
                 databaseType = DatabaseType.COUCHBASE
             }

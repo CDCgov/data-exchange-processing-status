@@ -73,16 +73,17 @@ class MongoRepository(
             .build()
 
         mongoClient = MongoClients.create(settings)
-
-        val database = mongoClient?.getDatabase(databaseName)
-        try {
-            // Send a ping to confirm a successful connection
-            val command = BsonDocument("ping", BsonInt64(1))
-            val commandResult = database?.runCommand(command)
-            logger.info("Pinged your deployment. You successfully connected to MongoDB! commandResult = $commandResult")
-            return database
-        } catch (ex: MongoException) {
-            logger.error(ex.localizedMessage)
+        if (mongoClient != null) {
+            val database = mongoClient?.getDatabase(databaseName)
+            try {
+                // Send a ping to confirm a successful connection
+                val command = BsonDocument("ping", BsonInt64(1))
+                val commandResult = database?.runCommand(command)
+                logger.info("Pinged your deployment. You successfully connected to MongoDB! commandResult = $commandResult")
+                return database
+            } catch (ex: MongoException) {
+                logger.error(ex.localizedMessage)
+            }
         }
 
         return null
