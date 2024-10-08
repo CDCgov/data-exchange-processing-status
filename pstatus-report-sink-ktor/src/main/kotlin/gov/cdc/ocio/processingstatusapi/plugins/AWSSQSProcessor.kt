@@ -3,8 +3,8 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.google.gson.JsonSyntaxException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
-import gov.cdc.ocio.processingstatusapi.models.reports.Source
+import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
+import gov.cdc.ocio.processingstatusapi.models.Source
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger

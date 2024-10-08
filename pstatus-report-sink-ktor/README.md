@@ -6,16 +6,39 @@ This project is the processing status report sink.  It listens for messages on a
 
 This microservice is built using Ktor and can be built as a docker container image.
 
-### Environment Variable Setup for Messaging System selection
-The `MSG_SYSTEM` environment variable is used to determine which system will be loaded dynamically.
+### Environment Variable Setup
+#### Database
+The `DATABASE` environment variables is used to specify the database used for persisting processing status data.
+Set this variable to one of the following values:
+- `cosmos`
+- `dynamo`
+- `couchase`
+- `mongo`
+
+For Cosmos DB only, set the following environment variables:
+- `COSMOS_DB_CLIENT_ENDPOINT` - your Cosmos DB client endpoint.
+- `COSMOS_DB_CLIENT_KEY` - Your Cosmos DB client key.
+
+For Dynamo DB only, set the following environment variables:
+- `DYNAMO_TABLE_PREFIX` - Table prefix to be used for the reports and deadletter reports.
+- `AWS_ACCESS_KEY_ID` - The Access Key ID for an IAM user with permissions to read/write to and from the database.
+- `AWS_SECRET_ACCESS_KEY` - The secret access key for an IAM user with permissions to read/write to and from the database.
+
+For Couchbase DB only, set the following environment variables:
+- `COUCHBASE_CONNECTION_STRING` - URI of the couchbase database.
+- `COUCHBASE_USERNAME` - Username for the couchbase database.
+- `COUCHBASE_PASSWORD` - Password for the username provided.
+
+For Mongo DB only, set the following environment variables:
+- `MONGO_CONNECTION_STRING` - URI of the couchbase database.
+- `MONGO_DATABASE_NAME` - Name of the database. For example, "ProcessingStatus".
+
+#### Message System
+- The `MSG_SYSTEM` environment variable is used to determine which system will be loaded dynamically.
 Set this variable to one of the following values:
 - `AZURE_SERVICE_BUS`
 - `RABBITMQ`
 - `AWS`
-
-These environment variables are common to all messaging systems:
-- `COSMOS_DB_CLIENT_ENDPOINT` - your Cosmos DB client endpoint.
-- `COSMOS_DB_CLIENT_KEY` - Your Cosmos DB client key.
 
 For Azure Service Bus only, set the following environment variables:
 - `SERVICE_BUS_CONNECTION_STRING` - Your service bus connection string.
