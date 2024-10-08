@@ -6,22 +6,29 @@ import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoDatabase
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import mu.KotlinLogging
 import org.bson.BsonDocument
 import org.bson.BsonInt64
 
 
 /**
- * Mongo repository implementation
+ * MongoDB repository implementation.
  *
- * @property mongoClient MongoClient?
- * @property reportsDatabase MongoDatabase?
- * @property reportsMongoCollection MongoCollection<(Document..Document?)>?
- * @property reportsDeadLetterMongoCollection MongoCollection<(Document..Document?)>?
- * @property reportsCollection Collection
- * @property reportsDeadLetterCollection Collection
- * @constructor
+ * @param uri[String] URI of the MongoDB to connect with
+ * @param databaseName[String] Name of the MongoDB database containing the reports
+ * @property mongoClient [MongoClient]?
+ * @property reportsDatabase [MongoDatabase]?
+ * @property reportsMongoCollection [MongoCollection]?
+ * @property reportsDeadLetterMongoCollection [MongoCollection]?
+ * @property reportsCollection [Collection]
+ * @property reportsDeadLetterCollection [Collection]
+ * @constructor Provides a Couchbase repository, which is a concrete implementation of the [ProcessingStatusRepository]
+ *
+ * @see [ProcessingStatusRepository]
  */
 class MongoRepository(uri: String, databaseName: String): ProcessingStatusRepository() {
+
+    private val logger = KotlinLogging.logger {}
 
     private var mongoClient: MongoClient? = null
 
@@ -64,10 +71,10 @@ class MongoRepository(uri: String, databaseName: String): ProcessingStatusReposi
             // Send a ping to confirm a successful connection
             val command = BsonDocument("ping", BsonInt64(1))
             val commandResult = database?.runCommand(command)
-            println("Pinged your deployment. You successfully connected to MongoDB! commandResult = $commandResult")
+            logger.info("Pinged your deployment. You successfully connected to MongoDB! commandResult = $commandResult")
             return database
-        } catch (me: MongoException) {
-            System.err.println(me)
+        } catch (ex: MongoException) {
+            logger.error(ex.localizedMessage)
         }
 
         return null

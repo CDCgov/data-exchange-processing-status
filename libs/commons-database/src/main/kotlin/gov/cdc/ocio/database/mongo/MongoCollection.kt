@@ -2,16 +2,22 @@ package gov.cdc.ocio.database.mongo
 
 import gov.cdc.ocio.database.persistence.Collection
 import com.google.gson.Gson
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import org.bson.Document
 
 
 /**
- * MongoDB Collection implementation
+ * MongoDB Collection implementation.
  *
- * @property mongoCollection MongoCollection<Document>
- * @constructor
+ * @property mongoCollection [MongoCollection] Provides the MongoDB collection for use in the [Collection] interface
+ * @constructor Provides a MongoDB repository, which is a concrete implementation of the [ProcessingStatusRepository]
+ *
+ * @see [MongoRepository]
+ * @see [Collection]
  */
-class MongoCollection(private val mongoCollection: com.mongodb.client.MongoCollection<Document>): Collection {
+class MongoCollection(
+    private val mongoCollection: com.mongodb.client.MongoCollection<Document>
+): Collection {
 
     /**
      * Execute the provided query and return the results as POJOs.
