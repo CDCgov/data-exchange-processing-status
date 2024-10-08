@@ -16,6 +16,9 @@ import org.bson.BsonInt64
  *
  * @param uri[String] URI of the MongoDB to connect with.
  * @param databaseName[String] Name of the MongoDB database containing the reports.
+ * @param reportsCollectionName[String] Reports collection name to use, which defaults to "Reports" if not provided.
+ * @param reportsDeadLetterCollectionName[String] Reports deadletter collection name to use, which default to
+ * "Reports-DeadLetter" if not provided.
  * @property mongoClient [MongoClient]?
  * @property reportsDatabase [MongoDatabase]?
  * @property reportsMongoCollection [MongoCollection]?
@@ -26,7 +29,12 @@ import org.bson.BsonInt64
  *
  * @see [ProcessingStatusRepository]
  */
-class MongoRepository(uri: String, databaseName: String): ProcessingStatusRepository() {
+class MongoRepository(
+    uri: String,
+    databaseName: String,
+    reportsCollectionName: String = "Reports",
+    reportsDeadLetterCollectionName: String = "Reports-DeadLetter"
+): ProcessingStatusRepository() {
 
     private val logger = KotlinLogging.logger {}
 
@@ -34,8 +42,8 @@ class MongoRepository(uri: String, databaseName: String): ProcessingStatusReposi
 
     private val reportsDatabase = connectToDatabase(uri, databaseName)
 
-    private val reportsMongoCollection = reportsDatabase?.getCollection("Reports")
-    private val reportsDeadLetterMongoCollection = reportsDatabase?.getCollection("Reports-DeadLetter")
+    private val reportsMongoCollection = reportsDatabase?.getCollection(reportsCollectionName)
+    private val reportsDeadLetterMongoCollection = reportsDatabase?.getCollection(reportsDeadLetterCollectionName)
 
     override var reportsCollection = reportsMongoCollection?.let {
         MongoCollection(it)
