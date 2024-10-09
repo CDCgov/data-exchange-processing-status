@@ -25,6 +25,8 @@ dependencies {
     implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
 
+    implementation("io.insert-koin:koin-ktor:3.5.6")
+
     // CosmosDB
     implementation 'com.azure:azure-cosmos:4.63.3'
 
