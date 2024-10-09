@@ -59,6 +59,9 @@ tasks.test {
     useJUnitPlatform()
 }
 
+kotlin {
+    jvmToolchain(17)
+}
 repositories{
     mavenLocal()
     mavenCentral()
