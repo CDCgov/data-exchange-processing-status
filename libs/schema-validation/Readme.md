@@ -1,5 +1,5 @@
 # schema-validation
-The `schema-validation` library iis used for processing status report validations. Each report has a schema associated with it that this library can be used to determine whether the report is valid or not and if not, the reasons why. This will contain the interfaces and their implementations, which can be reused across multiple services.
+The `schema-validation` library is used for processing status report validations. Each report has a schema associated with it that this library can be used to determine whether the report is valid or not and if not, the reasons why. This will contain the interfaces and their implementations, which can be reused across multiple services.
 
 # Structure Overview  
 
