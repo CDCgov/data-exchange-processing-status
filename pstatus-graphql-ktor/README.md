@@ -1,7 +1,34 @@
 # Overview
-This project is the processing status report sink.  It listens for messages on an Azure Service bus, validates the messages, and if validated persists them to CosmosDB.
+This project is the processing status service. The pstatus-graph-ktor service provides the following features:
+
+Ability to query for existing reports, uploads, upload status.
+Validating the messages, and if validated persists them to CosmosDB. 
+Provides the feature for a user to subscribe or unsubscribe to email notifications.
+Workflows.
 
 This is a microservice built using Ktor that can be built as a docker container image.
+
+## Environment Variable Setup
+
+### Database
+
+For Cosmos DB only, set the following environment variables:
+
+COSMOS_DB_CLIENT_ENDPOINT - your Cosmos DB client endpoint.
+COSMOS_DB_CLIENT_KEY - Your Cosmos DB client key.
+
+### GRAPHQL 
+GRAPHQL_PATH - The path for the GraphQL endpoint.
+
+### Security 
+SECURITY_ENABLED - Boolean value. Set to false for development purposes in the local development environments.
+
+### Notifications
+PSTATUS_NOTIFICATIONS_BASE_URL - The notifications service base url.
+
+### Workflows
+PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL - The workflows service base url.
+
 
 ## Publish to CDC's Azure Container Registry
 ```commandline
