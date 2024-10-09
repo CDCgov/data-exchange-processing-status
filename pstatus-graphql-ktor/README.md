@@ -4,7 +4,6 @@ This project is the processing status service. The pstatus-graph-ktor service pr
 Ability to query for existing reports, uploads, upload status.
 Validating the messages, and if validated persists them to CosmosDB. 
 Provides the feature for a user to subscribe or unsubscribe to email notifications.
-Workflows.
 
 This is a microservice built using Ktor that can be built as a docker container image.
 
@@ -51,3 +50,9 @@ Inside of build.gradle `jib` section are the authentication settings.  These use
 $ gradle jib
 ```
 The location of the deployment will be to the `docker-dev2` repository under the folder `/v2/dex/pstatus`. 
+
+### HEALTH CHECK
+The api endpoint **"getHealth"** can be used to check the health of the service. It will also internally verify if the Cosmos DB is UP.
+
+**{{ps_api_base_url}}/graphql/getHealth**
+
