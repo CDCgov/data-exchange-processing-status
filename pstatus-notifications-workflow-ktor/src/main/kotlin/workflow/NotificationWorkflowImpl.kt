@@ -63,7 +63,9 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")
+            throw Exception("Error occurred while checking for upload deadline")
         }
+
 
     }
 
@@ -72,8 +74,7 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      *   @param dataStreamId String
      *   @param jurisdiction String
      *   @return int - The count of uploads for the specified data stream ID and jurisdiction for today.
-     *  * Returns -1 if an error occurred during the query.
-     */
+     *    */
     private fun checkUpload(dataStreamId: String, jurisdiction: String): Int {
         /** Get today's date in UTC **/
         val today = LocalDate.now(ZoneId.of("UTC"))
@@ -88,13 +89,18 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
                         + "from r where r.dataStreamId = '$dataStreamId' and "
                         + "r.jurisdiction = '$jurisdiction' and ($timeRangeWhereClause)"
                 )
+        logger.info("notification Query: $notificationQuery")
 
-        val results = cosmosRepository.reportsContainer?.queryItems(
-            notificationQuery, CosmosQueryRequestOptions(),
-            Integer::class.java
-        )
-
-        return results?.firstOrNull()?.toInt() ?: -1
+        return try {
+            val results = cosmosRepository.reportsContainer?.queryItems(
+                notificationQuery, CosmosQueryRequestOptions(),
+                Integer::class.java
+            )
+            results?.firstOrNull()?.toInt() ?: -1
+        } catch (ex: Exception) {
+            logger.error("Error occurred while checking upload for $dataStreamId and $jurisdiction: ${ex.message}")
+            throw Exception("Error occurred in checking upload")
+        }
     }
 
 

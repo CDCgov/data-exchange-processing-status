@@ -4,8 +4,16 @@ import com.azure.cosmos.implementation.BadRequestException
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 
+/**
+ *Builds a SQL clause for filtering timestamps based on a specified date range.
+ */
 class SqlClauseBuilder {
-
+    /**
+     * @param daysInterval An optional number of days to subtract from today's date.
+     * @param dateStart An optional start date in string format.
+     * @param dateEnd An optional end date in string format.
+     * @return A SQL clause as a String.
+     */
     @Throws(NumberFormatException::class, BadRequestException::class)
     fun buildSqlClauseForDateRange(daysInterval: Int?,
                                    dateStart: String?,

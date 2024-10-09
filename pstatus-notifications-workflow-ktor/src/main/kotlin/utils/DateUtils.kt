@@ -5,6 +5,9 @@ import org.apache.commons.lang3.time.FastDateFormat
 import java.text.ParseException
 import java.util.*
 
+/**
+ * A utility class for handling date operations.
+ */
 object DateUtils {
 
     private const val DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'"

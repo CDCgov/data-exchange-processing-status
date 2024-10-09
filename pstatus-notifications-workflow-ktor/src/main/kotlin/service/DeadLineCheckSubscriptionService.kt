@@ -33,6 +33,7 @@ class DeadLineCheckSubscriptionService {
         try {
             val dataStreamId = subscription.dataStreamId
             val jurisdiction = subscription.jurisdiction
+            val dataStreamRoute = subscription.dataStreamRoute
             val daysToRun = subscription.daysToRun
             val timeToRun = subscription.timeToRun
             val deliveryReference= subscription.deliveryReference
