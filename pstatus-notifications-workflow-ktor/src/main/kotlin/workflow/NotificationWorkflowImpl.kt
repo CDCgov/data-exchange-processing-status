@@ -58,7 +58,7 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
         try {
             // Logic to check if the upload occurred*/
             val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
-            if (uploadOccurred == 0) {
+            if (!uploadOccurred) {
                 activities.sendNotification(dataStreamId, jurisdiction, deliveryReference)
             }
         } catch (e: Exception) {
@@ -75,7 +75,7 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      *   @param jurisdiction String
      *   @return int - The count of uploads for the specified data stream ID and jurisdiction for today.
      *    */
-    private fun checkUpload(dataStreamId: String, jurisdiction: String): Int {
+    private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
         /** Get today's date in UTC **/
         val today = LocalDate.now(ZoneId.of("UTC"))
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
@@ -96,7 +96,8 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
                 notificationQuery, CosmosQueryRequestOptions(),
                 Integer::class.java
             )
-            results?.firstOrNull()?.toInt() ?: -1
+            val count = results?.firstOrNull()?.toInt()
+            count != 0 // Returns false if count == 0
         } catch (ex: Exception) {
             logger.error("Error occurred while checking upload for $dataStreamId and $jurisdiction: ${ex.message}")
             throw Exception("Error occurred in checking upload")
