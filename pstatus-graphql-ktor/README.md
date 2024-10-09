@@ -3,7 +3,7 @@ This project is part of the processing status suite of services, named, "pstatus
 
 ### Reports:
 Ability to query for existing reports, uploads, upload status.
-Validating the messages, and if validated persists them to CosmosDB. 
+Validating the messages, and, if validated, persists them to CosmosDB. 
 
 ### DeadLetterReports:
 - Ability to look for dead letter reports based on the search criteria.
@@ -12,8 +12,11 @@ Validating the messages, and if validated persists them to CosmosDB.
 ### Notifications:
 Provides the feature for a user to subscribe or unsubscribe to different types of Notifications as follows:
 
-- Data stream top errors to get notifications for top data stream errors and its frequency during an upload.
+- Top data stream errors and its frequency during an upload.
 - Upload errors when there are errors in an upload.
+- Email Notifications.
+- Webhook Notifications.
+- Deadline Checks.
 
 ## Environment Variable Setup
 
@@ -21,87 +24,82 @@ Provides the feature for a user to subscribe or unsubscribe to different types o
 
 For Cosmos DB only, set the following environment variables:
 
-COSMOS_DB_CLIENT_ENDPOINT - your Cosmos DB client endpoint.
-COSMOS_DB_CLIENT_KEY - Your Cosmos DB client key.
+- COSMOS_DB_CLIENT_ENDPOINT - your Cosmos DB client endpoint.
+- COSMOS_DB_CLIENT_KEY - Your Cosmos DB client key.
 
 ### GRAPHQL 
-GRAPHQL_PATH - The path for the GraphQL endpoint.
+- GRAPHQL_PATH - The path for the GraphQL endpoint.
 
 ### Security 
-SECURITY_ENABLED - Boolean value. Set to false for development purposes in the local development environments.
+- SECURITY_ENABLED - Boolean value. Set to false for development purposes in the local development environments.
 
 ### Notifications
-PSTATUS_NOTIFICATIONS_BASE_URL - The notifications service base url.
+- PSTATUS_NOTIFICATIONS_BASE_URL - The notifications service base url.
 
 ### Workflows
-PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL - The workflows service base url.
+- PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL - The workflows service base url.
 
 ## List of all the Endpoints available for Querying:
 
-### getHealth: 
+### getHealth
 Provides the Status of the service dependencies.
 
-### getReports: 
+### getReports
 Returns all the reports associated with the provided upload ID.
 
-### getSubmissionDetails:
+### getSubmissionDetails
 Returns the submission details for the provided upload ID.
 
-### getDeadLetterReportsByDataStream:
+### getDeadLetterReportsByDataStream
 Return all the dead-letter reports associated with the provided datastreamId, datastreamroute and timestamp date range.
 
-### getDeadLetterReportsByUploadId:
+### getDeadLetterReportsByUploadId
 Return all the dead-letter reports associated with the provided uploadId.
 
-### getDeadLetterReportsCountByDataStream:
+### getDeadLetterReportsCountByDataStream
 Return count of dead-letter reports associated with the provided datastreamId, (optional) datastreamroute and timestamp date range.
 
-### getUploadStats:
+### getUploadStats
 Return various uploads statistics.
 
-### getUploads:
+### getUploads
 Get the upload statuses for the given filter, sort, and pagination criteria.
 
 
-## List of all the Endpoints available for Mutations:
+## List of all the Endpoints available for Mutations
 
-### subscribeEmail:
+### subscribeEmail
 Subscribe Email Notifications.
 
-### unsubscribeEmail:
+### unsubscribeEmail
 Unsubscribe Email Notifications.
 
-### subscribeWebhook:
+### subscribeWebhook
 Subscribe Webhook Notifications.
 
-### unsubscribeWebhook:
+### unsubscribeWebhook
 Unsubscribe Webhook Notifications.
 
-### subscribeDataStreamTopErrorsNotification:
+### subscribeDataStreamTopErrorsNotification
 Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload.
 
-### unsubscribesDataStreamTopErrorsNotification:
+### unsubscribesDataStreamTopErrorsNotification
 UnSubscribe data stream top errors lets you unsubscribe from getting notifications for top data stream errors and its frequency during an upload.
 
-### subscribeDeadlineCheck:
+### subscribeDeadlineCheck
 Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm.
 
-### unsubscribeDeadlineCheck:
+### unsubscribeDeadlineCheck
 UnSubscribe Deadline Check lets you unsubscribe from getting notifications when an upload from jurisdictions has not happened by 12pm.
 
-### subscribeUploadErrorsNotification:
+### subscribeUploadErrorsNotification
 Subscribe upload errors lets you get notifications when there are errors in an upload.
 
-### unsubscribeUploadErrorsNotification:
+### unsubscribeUploadErrorsNotification
 UnSubscribe upload errors lets you unsubscribe from getting notifications when there are errors during an upload.
 
-### upsertReport:
+### upsertReport
 Create a new or replace an existing report. 
-
-
-
-
-
 
 ## Publish to CDC's Azure Container Registry
 ```commandline
