@@ -36,16 +36,16 @@ class ReportMutation() : Mutation {
     @GraphQLDescription("Create upload")
     @Suppress("unused")
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(
+    fun upsertReport( @GraphQLDescription(
+        "*Action*: Can be one of the following values\n"
+                + "`create`: Create new report\n"
+                + "`replace`: Replace existing report\n"
+        )
+        action: String,
+
         @GraphQLDescription(
             "*Report Input* to be created or updated:\n"
         )
-        input: ReportInput,
-        @GraphQLDescription(
-            "*Action*: Can be one of the following values\n"
-                    + "`create`: Create new report\n"
-                    + "`replace`: Replace existing report\n"
-        )
-        action: String
-        ) = ReportMutationService().upsertReport(input, action)
+        input: ReportInput
+        ) = ReportMutationService().upsertReport(action, input)
 }
