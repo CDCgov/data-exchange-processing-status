@@ -6,14 +6,14 @@ Ability to query for existing reports, uploads, upload status.
 Validating the messages, and if validated persists them to CosmosDB. 
 
 ### DeadLetterReports:
-Ability to look for dead letter reports based on the search criteria.
-Ability to retrieve dead letter reports stats based on the search criteria.
+- Ability to look for dead letter reports based on the search criteria.
+- Ability to retrieve dead letter reports stats based on the search criteria.
 
 ### Notifications:
 Provides the feature for a user to subscribe or unsubscribe to different types of Notifications as follows:
 
-Data stream top errors to get notifications for top data stream errors and its frequency during an upload.
-Upload errors when there are errors in an upload.
+- Data stream top errors to get notifications for top data stream errors and its frequency during an upload.
+- Upload errors when there are errors in an upload.
 
 ## Environment Variable Setup
 
