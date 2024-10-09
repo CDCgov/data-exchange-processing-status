@@ -55,7 +55,7 @@ class ReportMutationService : CosmosLoader() {
      * @throws ContentException If there is an error with the content format.
      */
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(action: String, input: ReportInput,): Report? {
+    fun upsertReport(action: String, input: ReportInput): Report? {
         logger.info("ReportId, id = ${input.id}, action = $action")
 
         return try {
