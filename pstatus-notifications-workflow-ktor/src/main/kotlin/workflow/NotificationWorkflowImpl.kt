@@ -36,6 +36,7 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
                     .build()
             )
             .build()
+
     )
     /**
     * The function which gets invoked by the temporal WF engine which checks whether upload has occurred within a specified time or not
@@ -73,8 +74,9 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      *  The actual function which checks for whether the upload has occurred or not within a specified time
      *   @param dataStreamId String
      *   @param jurisdiction String
-     *   @return int - The count of uploads for the specified data stream ID and jurisdiction for today.
-     *    */
+     *  @return True if there are records; false otherwise.
+     *  @throws Exception if an error occurs while querying the db.
+     */
     private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
         /** Get today's date in UTC **/
         val today = LocalDate.now(ZoneId.of("UTC"))
