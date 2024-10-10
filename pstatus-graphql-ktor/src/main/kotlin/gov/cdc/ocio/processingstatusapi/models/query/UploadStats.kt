@@ -23,9 +23,15 @@ data class UploadStats(
     @GraphQLDescription("Provides a list of all the duplicate filenames that were uploaded and how many.")
     var duplicateFilenames: List<DuplicateFilenameCounts> = listOf(),
 
-    @GraphQLDescription("Provides a list of all the uploads that have not been delivered. This means, the upload started, but according to the upload status reports we did not receive 100% of the expected chunks.")
-    var unDeliveredUploads: UnDeliveredUploadCounts = UnDeliveredUploadCounts(),
+    @GraphQLDescription(
+        "Provides a list of all the uploads that have not been delivered. \n" +
+        "Any upload id where an upload-completed report exists but not a blob-file-copy report or if the blob-file-copy report indicates failure."
+    )
+    var undeliveredUploads: UndeliveredUploadCounts = UndeliveredUploadCounts(),
 
-    @GraphQLDescription("Provides a list of all the uploads that are pending. This means, the upload started, but according to the upload status reports we did not receive 100% of the expected chunks.")
+    @GraphQLDescription(
+        "Provides a list of all the uploads that are pending. \n" +
+        "Any upload id where a metadata-verify report exists but not a report with upload-completed."
+    )
     var pendingUploads: PendingUploadCounts = PendingUploadCounts()
 )

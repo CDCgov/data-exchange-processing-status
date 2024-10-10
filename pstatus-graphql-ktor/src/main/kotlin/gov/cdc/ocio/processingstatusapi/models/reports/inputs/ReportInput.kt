@@ -35,7 +35,7 @@ data class ReportInput(
     @GraphQLDescription("Data")
     val data: List<DataInput>? = null,
 
-    @GraphQLDescription("Indicates the content type of the content; e.g. JSON, XML")
+    @GraphQLDescription("Indicates the content type of the content; e.g. JSON, APPLICATION/JSON, XML, BASE64")
     val contentType: String? = null,
 
     @GraphQLDescription("Jurisdiction report belongs to; set to null if not applicable")

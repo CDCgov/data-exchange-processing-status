@@ -1,0 +1,83 @@
+{
+	"upload_id": "fe85fdb7-2f07-4ad1-b73a-646cc2e25bbc",
+	"user_id": "test-event1",
+	"data_stream_id": "celr",
+	"data_stream_route": "hl7_out_recdeb",
+	"jurisdiction": "SMOKE",
+	"sender_id": "APHL",
+	"data_producer_id": "smoke-test-data-producer",
+	"dex_ingest_datetime": "2024-07-10T15:40:01Z",
+	"status": "SUCCESS",
+	"messageMetadata": {
+		"type": "object",
+		"properties": {
+			"message_uuid": {
+				"type": "UUID",
+				"description": "Unique identifier for the message associated with this report.  Null if not applicable."
+			},
+			"message_hash": {
+				"type": "string",
+				"description": "MD5 hash of the message content."
+			},
+			"aggregation": {
+				"type": "string",
+				"enum": ["SINGLE", "BATCH"],
+				"description": "Enumeration: [SINGLE, BATCH]."
+			},
+			"message_index": {
+				"type": "integer",
+				"description": "Index of the message; e.g. row if csv."
+			}
+
+		}
+	},
+	"stage_info": {
+		"service": "HL7v2 Pipeline",
+		"action": "RECEIVER",
+		"version": "0.0.49-SNAPSHOT",
+		"status": "SUCCESS",
+		"issues": null,
+		"start_processing_time": "2024-07-10T15:40:10.162+00:00",
+		"end_processing_time": "2024-07-10T15:40:10.228+00:00"
+	},
+	"tags": {
+		"$ref": "test-ref",
+		"description": "Optional tag(s) associated with this report."
+	},
+	"data": {
+		"$ref": "keyValueMap",
+		"description": "Optional data associated with this report."
+	},
+
+	"content": {
+		"report": {
+			"ingested_file_path": "https://ocioedemessagesatst.blob.core.windows.net/hl7ingress/dex-routing/dex-smoke-test_319101ba2fd7835983f3257713819f7b",
+			"ingested_file_timestamp": "2024-07-10T15:40:09+00:00",
+			"ingested_file_size": 10240,
+			"received_filename": "dex-smoke-test",
+			"supporting_metadata": {
+				"meta_ext_source": "test-src",
+				"meta_ext_filestatus": "test-file-status",
+				"meta_ext_file_timestamp": "test-timestamp",
+				"system_provider": "DEX-ROUTING",
+				"meta_ext_uploadid": "test-upload-id",
+				"meta_ext_objectkey": "test-obj-key",
+				"reporting_jurisdiction": "unknown"
+			},
+			"aggregation": "SINGLE",
+			"number_of_messages": 1,
+			"number_of_messages_not_propagated": 1,
+			"error_messages": [
+				{
+					"message_uuid": "378d6660-903f-40b8-b48b-80f9d77aa69c",
+					"message_index": 1,
+					"error_message": "No valid message found."
+				}
+			]
+		},
+		"content_schema_name": "hl7v2-debatch"
+	},
+	"report_schema_version": "1.0.0",
+	"content_type": "application/json"
+
+}
