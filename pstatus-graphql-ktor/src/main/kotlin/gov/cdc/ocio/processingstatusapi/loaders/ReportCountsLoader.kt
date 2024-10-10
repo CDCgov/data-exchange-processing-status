@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.PartitionKey
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportCounts
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
@@ -11,9 +10,25 @@ import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Redactor
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Validation
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
+import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
-class ReportCountsLoader: CosmosLoader() {
+
+class ReportCountsLoader: KoinComponent {
+
+    private val logger = KotlinLogging.logger {}
+
+    private val repository by inject<ProcessingStatusRepository>()
+
+    private val reportsCollection = repository.reportsCollection
+
+    private val cName = reportsCollection.collectionNameForQuery
+    private val cVar = reportsCollection.collectionVariable
+    private val cPrefix = reportsCollection.collectionVariablePrefix
+    private val cElFunc = repository.reportsCollection.collectionElementForQuery
 
     /**
      * Get report for the given upload ID.
@@ -26,27 +41,27 @@ class ReportCountsLoader: CosmosLoader() {
         // Get the reports
         val reportsSqlQuery = (
                 "select "
-                        + "count(1) as counts, r.stageName, r.content.schema_name, r.content.schema_version "
-                        + "from r where r.uploadId = '$uploadId' "
-                        + "group by r.stageName, r.content.schema_name, r.content.schema_version"
+                        + "count(1) as counts, ${cPrefix}stageName, ${cPrefix}content.schema_name, ${cPrefix}content.schema_version "
+                        + "from $cName $cVar where ${cPrefix}uploadId = '$uploadId' "
+                        + "group by ${cPrefix}stageName, ${cPrefix}content.${cElFunc("schema_name")}, ${cPrefix}content.${cElFunc("schema_version")}"
                 )
-        val reportItems = reportsContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val reportItems = reportsCollection.queryItems(
+            reportsSqlQuery,
             StageCounts::class.java
         )
-        if (reportItems != null && reportItems.count() > 0) {
+        if (reportItems.isNotEmpty()) {
 
             // Order by timestamp (ascending) and grab the first one found, which will give us the earliest timestamp.
             val firstReportSqlQuery = (
-                    "select * from r where r.uploadId = '$uploadId' "
-                            + "order by r.timestamp asc offset 0 limit 1"
+                    "select * from $cName $cVar where ${cPrefix}uploadId = '$uploadId' "
+                            + "order by ${cPrefix}timestamp asc offset 0 limit 1"
                     )
 
-            val firstReportItems = reportsContainer?.queryItems(
-                firstReportSqlQuery, CosmosQueryRequestOptions(),
+            val firstReportItems = reportsCollection.queryItems(
+                firstReportSqlQuery,
                 ReportDao::class.java
             )
-            val firstReport = firstReportItems?.firstOrNull()
+            val firstReport = firstReportItems.firstOrNull()
 
             logger.info("Successfully located report with uploadId = $uploadId")
 
@@ -54,7 +69,7 @@ class ReportCountsLoader: CosmosLoader() {
                 this.uploadId = uploadId
                 this.dataStreamId = firstReport?.dataStreamId
                 this.dataStreamRoute = firstReport?.dataStreamRoute
-               // this.timestamp = firstReport?.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+                this.timestamp = firstReport?.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
                 val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
                 val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
                 val revisedStageCounts = revisedStageCountsByUploadId[uploadId]
@@ -89,37 +104,31 @@ class ReportCountsLoader: CosmosLoader() {
         val hl7DebatchSchemaName = HL7Debatch.schemaDefinition.schemaName
         val hl7DebatchCountsQuery = (
                 "select "
-                        + "r.uploadId, r.stageName, SUM(r.content.stage.report.number_of_messages) as numberOfMessages, "
-                        + "SUM(r.content.stage.report.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
-                        + "from r "
-                        + "where r.content.schema_name = '$hl7DebatchSchemaName' and r.uploadId in ($quotedUploadIds) "
-                        + "group by r.uploadId, r.stageName"
+                        + "${cPrefix}uploadId, ${cPrefix}stageName, SUM(${cPrefix}content.stage.report.number_of_messages) as numberOfMessages, "
+                        + "SUM(${cPrefix}content.stage.report.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = '$hl7DebatchSchemaName' and ${cPrefix}uploadId in ($quotedUploadIds) "
+                        + "group by ${cPrefix}uploadId, ${cPrefix}stageName"
                 )
 
-        val options = CosmosQueryRequestOptions()
-        if (stageCountsByUploadId.size == 1)
-            options.partitionKey = PartitionKey(stageCountsByUploadId.keys.first())
-        else
-            options.maxDegreeOfParallelism = -1 // let SDK decide optimal number of concurrent operations
-
-        val hl7DebatchCountsItems = reportsContainer?.queryItems(
-            hl7DebatchCountsQuery, options,
+        val hl7DebatchCountsItems = reportsCollection.queryItems(
+            hl7DebatchCountsQuery,
             HL7DebatchCounts::class.java
         )
 
         val hl7ValidationSchemaName = HL7Validation.schemaDefinition.schemaName
         val hl7ValidationCountsQuery = (
                 "select "
-                        + "r.uploadId, r.stageName, "
-                        + "count(contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as valid, "
-                        + "count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) as invalid "
-                        + "from r "
-                        + "where r.content.schema_name = '$hl7ValidationSchemaName' and r.uploadId in ($quotedUploadIds) "
-                        + "group by r.uploadId, r.stageName"
+                        + "${cPrefix}uploadId, ${cPrefix}stageName, "
+                        + "count(contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) as valid, "
+                        + "count(not contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) as invalid "
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = '$hl7ValidationSchemaName' and ${cPrefix}uploadId in ($quotedUploadIds) "
+                        + "group by ${cPrefix}uploadId, ${cPrefix}stageName"
                 )
 
-        val hl7ValidationCountsItems = reportsContainer?.queryItems(
-            hl7ValidationCountsQuery, options,
+        val hl7ValidationCountsItems = reportsCollection.queryItems(
+            hl7ValidationCountsQuery,
             HL7ValidationCounts::class.java
         )
 
@@ -130,7 +139,7 @@ class ReportCountsLoader: CosmosLoader() {
             stageCounts.forEach { stageCount ->
                 when (stageCount.schema_name) {
                     HL7Debatch.schemaDefinition.schemaName -> {
-                        val hl7DebatchCounts = hl7DebatchCountsItems?.toList()?.firstOrNull {
+                        val hl7DebatchCounts = hl7DebatchCountsItems.toList().firstOrNull {
                             it.uploadId == uploadId && it.stageName == stageCount.stageName
                         }
                         val counts: Any = if (hl7DebatchCounts != null) {
@@ -144,7 +153,7 @@ class ReportCountsLoader: CosmosLoader() {
                         revisedStageCounts[stageCount.stageName!!] = counts
                     }
                     HL7Validation.schemaDefinition.schemaName -> {
-                        val hl7ValidationCounts = hl7ValidationCountsItems?.toList()?.firstOrNull {
+                        val hl7ValidationCounts = hl7ValidationCountsItems.toList().firstOrNull {
                             it.uploadId == uploadId && it.stageName == stageCount.stageName
                         }
                         val counts: Any = if (hl7ValidationCounts != null) {
@@ -193,7 +202,8 @@ class ReportCountsLoader: CosmosLoader() {
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
             daysInterval,
             dateStart,
-            dateEnd
+            dateEnd,
+            cPrefix
         )
 
         // Get the total matching upload ids
@@ -201,15 +211,16 @@ class ReportCountsLoader: CosmosLoader() {
         uploadIdCountSqlQuery.append(
             "select "
                     + "value count(1) "
-                    + "from (select distinct r.uploadId from r "
-                    + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause)"
+                    + "from (select distinct ${cPrefix}uploadId from $cName $cVar "
+                    + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
+                    + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause)"
         )
 
-        val uploadIdCountResult = reportsContainer?.queryItems(
-            uploadIdCountSqlQuery.toString(), CosmosQueryRequestOptions(),
+        val uploadIdCountResult = reportsCollection.queryItems(
+            uploadIdCountSqlQuery.toString(),
             Long::class.java
         )
-        val totalItems = uploadIdCountResult?.first() ?: 0
+        val totalItems = uploadIdCountResult.first()
         val numberOfPages: Int
         val pageNumberAsInt: Int
         val reportCountsList = mutableListOf<ReportCounts>()
@@ -222,33 +233,36 @@ class ReportCountsLoader: CosmosLoader() {
             val uploadIdsSqlQuery = StringBuilder()
             uploadIdsSqlQuery.append(
                 "select "
-                        + "distinct value r.uploadId "
-                        + "from r "
-                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
+                        + "distinct value ${cPrefix}uploadId "
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "$timeRangeWhereClause offset $offset limit $pageSizeAsInt"
             )
 
             // Get the matching uploadIds
-            val uploadIds = reportsContainer?.queryItems(
-                uploadIdsSqlQuery.toString(), CosmosQueryRequestOptions(),
+            val uploadIds = reportsCollection.queryItems(
+                uploadIdsSqlQuery.toString(),
                 String::class.java
             )
 
-            if (uploadIds != null && uploadIds.count() > 0) {
+            if (uploadIds.isNotEmpty()) {
                 val uploadIdsList = uploadIds.toList()
                 val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
                 val reportsSqlQuery = (
                         "select "
-                                + "r.uploadId, r.content.schema_name, r.content.schema_version, MIN(r.timestamp) as timestamp, count(r.stageName) as counts, r.stageName "
-                                + "from r where r.uploadId in ($quotedUploadIds) "
-                                + "group by r.uploadId, r.stageName, r.content.schema_name, r.content.schema_version"
+                                + "${cPrefix}uploadId, ${cPrefix}content.schema_name, ${cPrefix}content.schema_version, "
+                                + "MIN(r.timestamp) as timestamp, count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
+                                + "from $cName $cVar where ${cPrefix}uploadId in ($quotedUploadIds) "
+                                + "group by ${cPrefix}uploadId, ${cPrefix}stageName, ${cPrefix}content.schema_name, "
+                                + "${cPrefix}content.schema_version"
                         )
-                val reportItems = reportsContainer?.queryItems(
-                    reportsSqlQuery, CosmosQueryRequestOptions(),
+                val reportItems = reportsCollection.queryItems(
+                    reportsSqlQuery,
                     StageCountsForUpload::class.java
                 )
 
-                if (reportItems != null && reportItems.count() > 0) {
+                if (reportItems.isNotEmpty()) {
                     val stageCountsByUploadId = mutableMapOf<String, MutableList<StageCounts>>()
                     val earliestTimestampByUploadId = mutableMapOf<String, OffsetDateTime>()
                     reportItems.forEach {
@@ -322,22 +336,23 @@ class ReportCountsLoader: CosmosLoader() {
                                                daysInterval: Int?
     ): HL7InvalidStructureValidationCounts {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
 
         val reportsSqlQuery = (
                 "select "
-                        + "value count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) "
-                        + "from r "
-                        + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "value count(not contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) "
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
         val startTime = System.currentTimeMillis()
-        val countResult = reportsContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val countResult = reportsCollection.queryItems(
+            reportsSqlQuery,
             Long::class.java
         )
-        val totalItems = countResult?.firstOrNull() ?: 0
+        val totalItems = countResult.firstOrNull() ?: 0
         val endTime = System.currentTimeMillis()
         val counts = HL7InvalidStructureValidationCounts().apply {
             this.counts = totalItems
@@ -352,57 +367,59 @@ class ReportCountsLoader: CosmosLoader() {
      *
      * @return ProcessingCounts
      */
-    fun getProcessingCounts(dataStreamId: String,
-                            dataStreamRoute: String,
-                            dateStart: String?,
-                            dateEnd: String?,
-                            daysInterval: Int?
+    fun getProcessingCounts(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        dateStart: String?,
+        dateEnd: String?,
+        daysInterval: Int?
     ): ProcessingCounts {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
 
         // Get number completed uploading
         val numCompletedUploadingSqlQuery = (
                 "select "
                         + "value count(1) "
-                        + "from r "
-                        + "where r.content.schema_name = 'upload' and r.content['offset'] = r.content.size and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = 'upload' and ${cPrefix}content['offset'] = ${cPrefix}content.size and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
-        val completedUploadingCountResult = reportsContainer?.queryItems(
-            numCompletedUploadingSqlQuery, CosmosQueryRequestOptions(),
+        val completedUploadingCountResult = reportsCollection.queryItems(
+            numCompletedUploadingSqlQuery,
             Long::class.java
         )
-        val totalCompletedUploading = completedUploadingCountResult?.firstOrNull() ?: 0
+        val totalCompletedUploading = completedUploadingCountResult.firstOrNull() ?: 0
 
         val numUploadingSqlQuery = (
                 "select "
                         + "value count(1) "
-                        + "from r "
-                        + "where r.content.schema_name = 'upload' and r.content['offset'] != r.content.size and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = 'upload' and ${cPrefix}content['offset'] != ${cPrefix}content.size and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
-        val uploadingCountResult = reportsContainer?.queryItems(
-            numUploadingSqlQuery, CosmosQueryRequestOptions(),
+        val uploadingCountResult = reportsCollection.queryItems(
+            numUploadingSqlQuery,
             Long::class.java
         )
-        val totalUploading = uploadingCountResult?.firstOrNull() ?: 0
+        val totalUploading = uploadingCountResult.firstOrNull() ?: 0
 
         val numFailedSqlQuery = (
                 "select "
                         + "value count(1) "
-                        + "from r "
-                        + "where r.content.schema_name = 'dex-metadata-verify' and r.content.issues != null and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = 'dex-metadata-verify' and ${cPrefix}content.issues != null and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
-        val failedCountResult = reportsContainer?.queryItems(
-            numFailedSqlQuery, CosmosQueryRequestOptions(),
+        val failedCountResult = reportsCollection.queryItems(
+            numFailedSqlQuery,
             Long::class.java
         )
-        val totalFailed = failedCountResult?.firstOrNull() ?: 0
+        val totalFailed = failedCountResult.firstOrNull() ?: 0
 
         val counts = ProcessingCounts().apply {
             totalCounts = totalCompletedUploading + totalUploading + totalFailed
@@ -430,35 +447,38 @@ class ReportCountsLoader: CosmosLoader() {
         daysInterval: Int?
     ): HL7DirectIndirectMessageCounts {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
 
         val directMessageQuery = (
                 "select value SUM(directCounts) "
-                        + "from (select value SUM(r.content.stage.report.number_of_messages) from r "
-                        + "where r.content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
+                        + "from (select value SUM(${cPrefix}content.stage.report.number_of_messages) from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
                 )
 
         val indirectMessageQuery = (
                 "select value count(redactedCount) from ( "
-                        + "select * from r where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as redactedCount"
+                        + "select * from $cName $cVar where ${cPrefix}content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as redactedCount"
                 )
 
         val startTime = System.currentTimeMillis()
 
-        val directCountResult = reportsContainer?.queryItems(
-            directMessageQuery, CosmosQueryRequestOptions(),
+        val directCountResult = reportsCollection.queryItems(
+            directMessageQuery,
             Float::class.java
         )
 
-        val indirectCountResult = reportsContainer?.queryItems(
-            indirectMessageQuery, CosmosQueryRequestOptions(),
+        val indirectCountResult = reportsCollection.queryItems(
+            indirectMessageQuery,
             Float::class.java
         )
 
-        val directTotalItems: Long = directCountResult?.firstOrNull()?.toLong() ?: 0
-        val inDirectTotalItems = indirectCountResult?.firstOrNull()?.toLong() ?: 0
+        val directTotalItems: Long = directCountResult.firstOrNull()?.toLong() ?: 0
+        val inDirectTotalItems = indirectCountResult.firstOrNull()?.toLong() ?: 0
 
         val endTime = System.currentTimeMillis()
         val counts = HL7DirectIndirectMessageCounts().apply {
@@ -483,50 +503,54 @@ class ReportCountsLoader: CosmosLoader() {
         daysInterval: Int?
     ) : HL7InvalidMessageCounts {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
 
         val directInvalidMessageQuery = (
                 "select value SUM(directCounts) "
-                        + " FROM (select value SUM(r.content.stage.report.number_of_messages) from r "
-                        + " where r.content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
-                        + " r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
+                        + "FROM (select value SUM(${cPrefix}content.stage.report.number_of_messages) from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
                 )
 
         val directStructureInvalidMessageQuery = (
                 "select "
-                        + "value count(not contains(upper(r.content.summary.current_status), 'VALID_') ? 1 : undefined) "
-                        + "from r "
-                        + "where r.content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "value count(not contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) "
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
         val indirectInvalidMessageQuery = (
                 "select value count(invalidCounts) from ("
-                        + "select * from r where r.content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
-                        + "r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as invalidCounts"
+                        + "select * from $cName $cVar where ${cPrefix}content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as invalidCounts"
                 )
 
         val startTime = System.currentTimeMillis()
 
-        val directRedactedCountResult = reportsContainer?.queryItems(
-            directInvalidMessageQuery, CosmosQueryRequestOptions(),
+        val directRedactedCountResult = reportsCollection.queryItems(
+            directInvalidMessageQuery,
             Float::class.java
         )
 
-        val directStructureCountResult = reportsContainer?.queryItems(
-            directStructureInvalidMessageQuery, CosmosQueryRequestOptions(),
+        val directStructureCountResult = reportsCollection.queryItems(
+            directStructureInvalidMessageQuery,
             Float::class.java
         )
 
-        val indirectCountResult = reportsContainer?.queryItems(
-            indirectInvalidMessageQuery, CosmosQueryRequestOptions(),
+        val indirectCountResult = reportsCollection.queryItems(
+            indirectInvalidMessageQuery,
             Float::class.java
         )
 
-        val directRedactedCount = directRedactedCountResult?.firstOrNull()?.toLong() ?: 0
-        val directStructureCount = directStructureCountResult?.firstOrNull()?.toLong() ?: 0
+        val directRedactedCount = directRedactedCountResult.firstOrNull()?.toLong() ?: 0
+        val directStructureCount = directStructureCountResult.firstOrNull()?.toLong() ?: 0
         val directTotalItems = directRedactedCount + directStructureCount
-        val indirectTotalItems = indirectCountResult?.firstOrNull()?.toLong() ?: 0
+        val indirectTotalItems = indirectCountResult.firstOrNull()?.toLong() ?: 0
 
         val endTime = System.currentTimeMillis()
 
@@ -556,23 +580,25 @@ class ReportCountsLoader: CosmosLoader() {
         daysInterval: Int?
     ): List<StageCounts> {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd)
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
 
         val rollupCountsQuery = (
                 "select "
-                        + "r.content.schema_name, r.content.schema_version, count(r.stageName) as counts, r.stageName "
-                        + "from r where r.dataStreamId = '$dataStreamId' and "
-                        + "r.dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
-                        + "group by r.stageName, r.content.schema_name, r.content.schema_version"
+                        + "${cPrefix}content.schema_name, ${cPrefix}content.schema_version, "
+                        + "count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
+                        + "from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
+                        + "group by ${cPrefix}stageName, ${cPrefix}content.schema_name, ${cPrefix}content.schema_version"
                 )
 
-        val rollupCountsResult = reportsContainer?.queryItems(
-            rollupCountsQuery, CosmosQueryRequestOptions(),
+        val rollupCountsResult = reportsCollection.queryItems(
+            rollupCountsQuery,
             StageCounts::class.java
         )
 
         val rollupCounts = mutableListOf<StageCounts>()
-        if (rollupCountsResult != null && rollupCountsResult.count() > 0) {
+        if (rollupCountsResult.isNotEmpty()) {
             rollupCounts.addAll(rollupCountsResult.toList())
         }
 

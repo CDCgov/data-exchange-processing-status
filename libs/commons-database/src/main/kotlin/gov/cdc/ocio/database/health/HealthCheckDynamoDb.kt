@@ -1,7 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.health.database
+package gov.cdc.ocio.database.health
 
-import gov.cdc.ocio.processingstatusapi.health.HealthCheck
-import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -19,7 +19,7 @@ class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB") {
             getDynamoDbClient().listTables()
         }
         if (result.isSuccess)
-            status = HealthCheck.STATUS_UP
+            status = HealthStatusType.STATUS_UP
         else
             healthIssues = result.exceptionOrNull()?.message
     }

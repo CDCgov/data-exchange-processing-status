@@ -1,7 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.health.database
+package gov.cdc.ocio.database.health
 
-import gov.cdc.ocio.processingstatusapi.health.HealthCheck
-import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 
 
 /**
@@ -13,6 +13,6 @@ class HealthCheckUnsupportedDb : HealthCheckSystem("Database") {
      * No health check - just inform unsupported
      */
     override fun doHealthCheck() {
-        status = HealthCheck.STATUS_UNSUPPORTED
+        status = HealthStatusType.STATUS_UNSUPPORTED
     }
 }

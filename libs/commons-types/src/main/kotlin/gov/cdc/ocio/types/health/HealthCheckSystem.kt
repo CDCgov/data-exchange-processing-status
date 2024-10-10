@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.health
+package gov.cdc.ocio.types.health
 
 import mu.KotlinLogging
+
 
 /**
  * Abstract class used for modeling the health issues of an individual service.
@@ -13,7 +14,7 @@ abstract class HealthCheckSystem(val service: String) {
 
     protected val logger = KotlinLogging.logger {}
 
-    var status: String = "DOWN"
+    var status = HealthStatusType.STATUS_DOWN
         protected set
 
     var healthIssues: String? = null

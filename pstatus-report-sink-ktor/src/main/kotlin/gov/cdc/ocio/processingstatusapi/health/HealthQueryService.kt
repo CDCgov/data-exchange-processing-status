@@ -1,16 +1,20 @@
 package gov.cdc.ocio.processingstatusapi.health
 
 import gov.cdc.ocio.database.DatabaseType
+import gov.cdc.ocio.database.health.*
 import gov.cdc.ocio.processingstatusapi.MessageSystem
-import gov.cdc.ocio.processingstatusapi.health.database.*
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckAWSSQS
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckServiceBus
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckUnsupportedMessageSystem
+import gov.cdc.ocio.types.health.HealthCheck
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
+
 
 /**
  * Service for querying the health of the report-sink service and its dependencies.
@@ -72,10 +76,10 @@ class HealthQueryService: KoinComponent {
     ): HealthCheck {
 
         return HealthCheck().apply {
-            status = if (databaseHealth?.status == HealthCheck.STATUS_UP
-                && messageSystemHealth?.status == HealthCheck.STATUS_UP
+            status = if (databaseHealth?.status == HealthStatusType.STATUS_UP
+                && messageSystemHealth?.status == HealthStatusType.STATUS_UP
             )
-                HealthCheck.STATUS_UP else HealthCheck.STATUS_DOWN
+                HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
 
             totalChecksDuration = formatMillisToHMS(totalTime)
             databaseHealth?.let { dependencyHealthChecks.add(it) }
