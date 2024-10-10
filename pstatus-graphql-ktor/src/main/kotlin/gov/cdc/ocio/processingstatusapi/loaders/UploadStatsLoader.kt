@@ -128,8 +128,8 @@ class UploadStatsLoader: CosmosLoader() {
             this.inProgressUploadsCount = inProgressUploadsCount.toLong()
             this.completedUploadsCount = completedUploadsCount.toLong()
             this.duplicateFilenames = duplicateFilenames
-            this.unDeliveredUploads.totalCount = undeliveredUploads.count().toLong()
-            this.unDeliveredUploads.unDeliveredUploads = undeliveredUploads
+            this.undeliveredUploads.totalCount = undeliveredUploads.count().toLong()
+            this.undeliveredUploads.undeliveredUploads = undeliveredUploads
             this.pendingUploads.totalCount = pendingUploads.count().toLong()
             this.pendingUploads.pendingUploads = pendingUploads
         }
@@ -145,7 +145,7 @@ class UploadStatsLoader: CosmosLoader() {
      * @throws BadRequestException If an error occurs while fetching the undelivered uploads.
      */
     @Throws(ContentException::class, BadRequestException :: class)
-    private fun getUndeliveredUploads(dataStreamId: String, dataStreamRoute: String, timeRangeWhereClause: String): List<UnDeliveredUpload> {
+    private fun getUndeliveredUploads(dataStreamId: String, dataStreamRoute: String, timeRangeWhereClause: String): List<UndeliveredUpload> {
         try{
             //Get the uploadIds for each upload with 'upload-completed' and no report for blob-file-copy
             val undeliveredUploadIdsForBlobFileCopy = getUploadIdsWithIssues(dataStreamId, dataStreamRoute, "upload-completed", "blob-file-copy", timeRangeWhereClause)
@@ -192,7 +192,7 @@ class UploadStatsLoader: CosmosLoader() {
      * @throws BadRequestException If an error occurs while fetching the undelivered uploads.
      */
     @Throws(ContentException::class, BadRequestException::class)
-    private fun getPendingUploads(dataStreamId: String, dataStreamRoute: String, timeRangeWhereClause: String): List<UnDeliveredUpload> {
+    private fun getPendingUploads(dataStreamId: String, dataStreamRoute: String, timeRangeWhereClause: String): List<UndeliveredUpload> {
         try{
             //Get the uploadIds for each upload with 'metadata-verify' and no report for 'upload-completed'
             val pendingUploadIdsForBlobFileCopy = getUploadIdsWithIssues(dataStreamId, dataStreamRoute, "metadata-verify", "upload-completed", timeRangeWhereClause)
@@ -295,7 +295,7 @@ class UploadStatsLoader: CosmosLoader() {
     @Throws(ContentException::class)
     private fun executeUndeliveredUploadsQuery(query: String): Set<String> {
         try{
-            return reportsContainer?.queryItems(query, CosmosQueryRequestOptions(), UnDeliveredUpload::class.java)
+            return reportsContainer?.queryItems(query, CosmosQueryRequestOptions(), UndeliveredUpload::class.java)
                 ?.mapNotNull { it.uploadId }
                 ?.toSet() ?: emptySet()
         }catch (e: ContentException) {
@@ -406,9 +406,9 @@ class UploadStatsLoader: CosmosLoader() {
      * @throws ContentException If an error occurs while executing the undelivered upload query.
      */
     @Throws(ContentException::class)
-    private fun executeUploadsQuery(query: String): List<UnDeliveredUpload> {
+    private fun executeUploadsQuery(query: String): List<UndeliveredUpload> {
         try{
-            return reportsContainer?.queryItems(query, CosmosQueryRequestOptions(), UnDeliveredUpload::class.java)
+            return reportsContainer?.queryItems(query, CosmosQueryRequestOptions(), UndeliveredUpload::class.java)
                 ?.toList() ?: emptyList()
         }catch (e: ContentException) {
             logger.error("Error executing undelivered uploads counts query: ${e.message}", e)

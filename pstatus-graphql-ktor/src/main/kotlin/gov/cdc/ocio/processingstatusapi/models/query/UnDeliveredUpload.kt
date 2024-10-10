@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.models.query
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 
 @GraphQLDescription("Collection of undelivered found")
-data class UnDeliveredUpload(
+data class UndeliveredUpload(
 
     @GraphQLDescription("UploadId of the file that is not delivered.")
     var uploadId: String? = null,

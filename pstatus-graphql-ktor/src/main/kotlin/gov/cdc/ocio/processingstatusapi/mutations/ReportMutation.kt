@@ -33,19 +33,19 @@ class ReportMutation() : Mutation {
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The result of the upsert operation, handled by the ReportMutation class.
      */
-    @GraphQLDescription("Create upload")
+    @GraphQLDescription("Create a new report or replace an existing report.")
     @Suppress("unused")
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(
-        @GraphQLDescription(
-            "*Report Input* to be created or updated:\n"
+    fun upsertReport( @GraphQLDescription(
+        "*Action*: Can be one of the following values\n"
+                + "`create`: Create new report\n"
+                + "`replace`: Replace existing report\n"
         )
-        input: ReportInput,
+        action: String,
+
         @GraphQLDescription(
-            "*Action*: Can be one of the following values\n"
-                    + "`create`: Create new report\n"
-                    + "`replace`: Replace existing report\n"
+            "*Report data* to be created or updated:\n"
         )
-        action: String
-        ) = ReportMutationService().upsertReport(input, action)
+        input: ReportInput
+        ) = ReportMutationService().upsertReport(action, input)
 }
