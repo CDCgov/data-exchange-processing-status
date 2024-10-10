@@ -1,27 +1,20 @@
 package gov.cdc.ocio.processingstatusapi
 
-import com.azure.cosmos.models.CosmosItemRequestOptions
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.models.PartitionKey
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.ToNumberPolicy
-import com.google.gson.reflect.TypeToken
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.DispositionType
-import gov.cdc.ocio.processingstatusapi.models.Report
-import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
-import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
-import gov.cdc.ocio.processingstatusapi.models.reports.Source
-import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
+import gov.cdc.ocio.database.models.Report
+import gov.cdc.ocio.database.models.ReportDeadLetter
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.processingstatusapi.models.MessageMetadataSB
+import gov.cdc.ocio.processingstatusapi.models.Source
+import gov.cdc.ocio.processingstatusapi.models.StageInfoSB
 import mu.KotlinLogging
+import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.time.Instant
 import java.util.*
-import io.netty.handler.codec.http.HttpResponseStatus
 
 
 /**
@@ -31,15 +24,9 @@ import io.netty.handler.codec.http.HttpResponseStatus
  */
 class ReportManager: KoinComponent {
 
-    private val cosmosRepository by inject<CosmosRepository>()
-    private val cosmosDeadLetterRepository by inject<CosmosDeadLetterRepository>()
+    private val repository by inject<ProcessingStatusRepository>()
 
     private val logger = KotlinLogging.logger {}
-
-    // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
-    private val gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .create()
 
     /**
      * Create a report located with the provided upload ID.
@@ -47,7 +34,7 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param dexIngestDateTime Date
+     * @param dexIngestDateTime Instant
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
      * @param tags Map<String, String>?
@@ -68,11 +55,11 @@ class ReportManager: KoinComponent {
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
-        dexIngestDateTime: Date,
-        messageMetadata: MessageMetadata?,
-        stageInfo: StageInfo?,
-        tags: Map<String,String>?,
-        data:Map<String,String>?,
+        dexIngestDateTime: Instant,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
+        tags: Map<String, String>?,
+        data: Map<String, String>?,
         contentType: String,
         content: Any?,
         jurisdiction: String?,
@@ -110,7 +97,7 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param dexIngestDateTime Date
+     * @param dexIngestDateTime Instant
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
      * @param tags Map<String, String>?
@@ -128,9 +115,9 @@ class ReportManager: KoinComponent {
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
-        dexIngestDateTime: Date,
-        messageMetadata: MessageMetadata?,
-        stageInfo: StageInfo?,
+        dexIngestDateTime: Instant,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
         tags: Map<String,String>?,
         data:Map<String,String>?,
         contentType: String,
@@ -146,18 +133,26 @@ class ReportManager: KoinComponent {
             DispositionType.REPLACE -> {
                 logger.info("Replacing report(s) with service = '${stageInfo?.service}', action = '${stageInfo?.action}'")
                 // Delete all stages matching the report ID with the same service and action name
-                val sqlQuery = "select * from r where r.uploadId = '$uploadId' and r.stageInfo.service = '${stageInfo?.service}' and r.stageInfo.action = '${stageInfo?.action}'"
-                val items = cosmosRepository.reportsContainer?.queryItems(
-                    sqlQuery, CosmosQueryRequestOptions(),
+                val cName = repository.reportsCollection.collectionNameForQuery
+                val cVar = repository.reportsCollection.collectionVariable
+                val cPrefix = repository.reportsCollection.collectionVariablePrefix
+                val cElFunc = repository.reportsCollection.collectionElementForQuery
+                val sqlQuery = (
+                        "select * from $cName $cVar "
+                                + "where ${cPrefix}uploadId = '$uploadId' "
+                                + "and ${cPrefix}stageInfo.${cElFunc("service")} = '${stageInfo?.service}' "
+                                + "and ${cPrefix}stageInfo.${cElFunc("action")} = '${stageInfo?.action}'"
+                        )
+                val items = repository.reportsCollection.queryItems(
+                    sqlQuery,
                     Report::class.java
                 )
-                if ((items?.count() ?: 0) > 0) {
+                if (items.isNotEmpty()) {
                     try {
-                        items?.forEach {
-                            cosmosRepository.reportsContainer?.deleteItem(
+                        items.forEach {
+                            repository.reportsCollection.deleteItem(
                                 it.id,
-                                PartitionKey(it.uploadId),
-                                CosmosItemRequestOptions()
+                                it.uploadId
                             )
                         }
                         logger.info("Removed all reports with stage name = $stageInfo?.stage")
@@ -212,7 +207,7 @@ class ReportManager: KoinComponent {
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param dexIngestDateTime Date
+     * @param dexIngestDateTime Instant
      * @param messageMetadata MessageMetadata?
      * @param stageInfo StageInfo?
      * @param tags Map<String, String>?
@@ -223,7 +218,7 @@ class ReportManager: KoinComponent {
      * @param senderId String?
      * @param dataProducerId String?
      * @param source Source
-     * @return String
+     * @return String - report identifier
      * @throws BadStateException
      */
     @Throws(BadStateException::class)
@@ -231,9 +226,9 @@ class ReportManager: KoinComponent {
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
-        dexIngestDateTime: Date,
-        messageMetadata: MessageMetadata?,
-        stageInfo: StageInfo?,
+        dexIngestDateTime: Instant,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
         tags: Map<String,String>?,
         data:Map<String,String>?,
         contentType: String,
@@ -251,53 +246,52 @@ class ReportManager: KoinComponent {
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.dexIngestDateTime = dexIngestDateTime
-            this.messageMetadata = messageMetadata
-            this.stageInfo= stageInfo
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
+            this.messageMetadata = messageMetadata?.toMessageMetadata()
+            this.stageInfo = stageInfo?.toStageInfo()
             this.tags = tags
             this.data = data
             this.jurisdiction = jurisdiction
             this.senderId = senderId
             this.dataProducerId= dataProducerId
-            this.source = source
+            this.source = source.toString()
             this.contentType = contentType
-
-            if (contentType.lowercase() == "json") {
-                val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
-                this.content = jsonMap
-            } else
-                this.content = content
+            this.content = getContent(contentType, content)
         }
-       return createReportItem(uploadId,stageReportId,stageReport)
+       return createReportItem(uploadId, stageReportId, stageReport)
     }
 
     /**
      * Creates a dead-letter report if there is a malformed data or missing required fields
      *
-     * @param uploadId String
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param messageMetadata MessageMetadata?
-     * @param stageInfo StageInfo?
-     * @param tags Map<String,String>??
-     * @param data Map<String,String>?
-     * @param contentType String
-     * @param content String
+     * @param uploadId String?
+     * @param dataStreamId String?
+     * @param dataStreamRoute String?
+     * @param dexIngestDateTime Instant?
+     * @param messageMetadata MessageMetadataSB?
+     * @param stageInfo StageInfoSB?
+     * @param tags Map<String, String>?
+     * @param data Map<String, String>?
+     * @param dispositionType DispositionType
+     * @param contentType String?
+     * @param content Any?
      * @param jurisdiction String?
      * @param senderId String?
+     * @param deadLetterReasons List<String>
+     * @param validationSchemaFileNames List<String>
      * @param dataProducerId String?
      * @return String
      * @throws BadStateException
      */
-
     @Throws(BadStateException::class)
     fun createDeadLetterReport(
         uploadId: String?,
         dataStreamId: String?,
         dataStreamRoute: String?,
-        dexIngestDateTime: Date?,
-        messageMetadata: MessageMetadata?,
-        stageInfo: StageInfo?,
+        dexIngestDateTime: Instant?,
+        messageMetadata: MessageMetadataSB?,
+        stageInfo: StageInfoSB?,
         tags: Map<String,String>?,
         data:Map<String,String>?,
         dispositionType: DispositionType,
@@ -319,26 +313,49 @@ class ReportManager: KoinComponent {
             this.dataStreamId = dataStreamId
             this.dataStreamRoute = dataStreamRoute
             this.dexIngestDateTime = dexIngestDateTime
-            this.messageMetadata= messageMetadata
-            this.stageInfo= stageInfo
-            this.tags= tags
-            this.data= data
-            this.jurisdiction= jurisdiction
-            this.senderId= senderId
-            this.dataProducerId= dataProducerId
-            this.source = source
-            this.dispositionType= dispositionType.toString()
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
+            this.messageMetadata = messageMetadata?.toMessageMetadata()
+            this.stageInfo = stageInfo?.toStageInfo()
+            this.tags = tags
+            this.data = data
+            this.jurisdiction = jurisdiction
+            this.senderId = senderId
+            this.dataProducerId = dataProducerId
+            this.source = source.toString()
+            this.dispositionType = dispositionType.toString()
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
             this.validationSchemas= validationSchemaFileNames
-            if (contentType?.lowercase() == "json" && !isNullOrEmpty(content) && !isBase64Encoded(content.toString())) {
-                val typeObject = object : TypeToken<HashMap<*, *>?>() {}.type
-                val jsonMap: Map<String, Any> = gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
-                this.content = jsonMap
-            } else
-                this.content = content
+            this.content = getContent(contentType, content)
         }
-        return  createReportItem(uploadId,deadLetterReportId,deadLetterReport)
+
+        return createReportItem(uploadId, deadLetterReportId, deadLetterReport)
+    }
+
+    /**
+     * Attempt to determine the content and transform it to the type needed by the database.  If the content is not
+     * JSON then it will be persisted as a base64 encoded string.
+     *
+     * @param contentType String?
+     * @param content Any?
+     * @return Any?
+     */
+    private fun getContent(contentType: String?, content: Any?): Any? {
+        if (contentType?.lowercase() == "application/json" || contentType?.lowercase() == "json") {
+            try {
+                if (content is Map<*, *>)
+                    return repository.contentTransformer(content)
+                else
+                    throw BadStateException("Failed to interpret provided content as a JSON string")
+            } catch (e: Exception) {
+                logger.error { e.localizedMessage }
+                return null
+            }
+        } else {
+            val bytesArray = SerializationUtils.serialize(content as String)
+            return Base64.getEncoder().encodeToString(bytesArray)
+        }
     }
 
     /**
@@ -348,7 +365,6 @@ class ReportManager: KoinComponent {
      * @return String
      * @throws BadStateException
      */
-
     @Throws(BadStateException::class)
     fun createDeadLetterReport(deadLetterReason: String): String {
         val deadLetterReportId = UUID.randomUUID().toString()
@@ -356,16 +372,9 @@ class ReportManager: KoinComponent {
             this.id = deadLetterReportId
             this.deadLetterReasons = listOf(deadLetterReason)
         }
-        return  createReportItem(null,deadLetterReportId,deadLetterReport)
+        return createReportItem(null, deadLetterReportId, deadLetterReport)
     }
 
-    /**
-     * The function which calculates the interval after which the retry should occur
-     * @param attempt Int
-     */
-    private fun getCalculatedRetryDuration(attempt: Int): Long {
-        return DEFAULT_RETRY_INTERVAL_MILLIS * (attempt + 1)
-    }
     /** Function to check whether the value is null or empty based on its type
      * @param value Any
      */
@@ -390,98 +399,39 @@ class ReportManager: KoinComponent {
 
     /**
      * The common function which writes to cosmos container based on the report type
-     * @param uploadId String
+     *
+     * @param uploadId String?
      * @param reportId String
-     * @reportType Any
+     * @param reportType Any
+     * @return String - report identifier
      */
+    private fun createReportItem(uploadId: String?, reportId: String, reportType: Any): String {
+        var success = false
 
-    private fun  createReportItem(uploadId: String?, reportId:String, reportType:Any) : String{
-
-        var responseReportId = ""
-        var reportTypeName = "Report"
-        var statusCode:Int? = null
-        var isValidResponse = false
-        var recommendedDuration:String?= null
-        var attempts = 0
-
-        do {
-            try {
-                //use when here to determing whether report type is StageReport or DeadLetterReport
-                when (reportType) {
-                    is ReportDeadLetter -> {
-                        val response = cosmosDeadLetterRepository.reportsDeadLetterContainer?.createItem(
-                            reportType,
-                            PartitionKey(uploadId),
-                            CosmosItemRequestOptions())
-
-                        isValidResponse = response!=null
-                        reportTypeName ="dead-letter report"
-                        responseReportId = response?.item?.reportId ?: "0"
-                        statusCode = response?.statusCode
-                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
-                    }
-
-                    is Report -> {
-                        val response = cosmosRepository.reportsContainer?.createItem(
-                            reportType,
-                            PartitionKey(uploadId),
-                            CosmosItemRequestOptions())
-
-                        isValidResponse = response!=null
-                        responseReportId = response?.item?.reportId ?: "0"
-                        statusCode = response?.statusCode
-                        recommendedDuration = response?.responseHeaders?.get("x-ms-retry-after-ms")
-
-                    }
-
-                }
-                logger.info("Creating ${reportTypeName}, response http status code = ${statusCode}, attempt = ${attempts + 1}, uploadId = $uploadId")
-                  if(isValidResponse){
-
-                      when (statusCode) {
-                          HttpResponseStatus.OK.code(), HttpResponseStatus.CREATED.code() -> {
-                              logger.info("Created report with reportId = ${responseReportId}, uploadId = $uploadId")
-                              return reportId
-                          }
-
-                          HttpResponseStatus.TOO_MANY_REQUESTS.code() -> {
-                              // See: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips?tabs=trace-net-core#429
-                              // https://learn.microsoft.com/en-us/rest/api/cosmos-db/common-cosmosdb-rest-response-headers
-                              // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/troubleshoot-request-rate-too-large?tabs=resource-specific
-
-                              logger.warn("Received 429 (too many requests) from cosmosdb, attempt ${attempts + 1}, will retry after $recommendedDuration millis, uploadId = $uploadId")
-                              val waitMillis = recommendedDuration?.toLong()
-                              Thread.sleep(waitMillis ?: DEFAULT_RETRY_INTERVAL_MILLIS)
-                          }
-
-                          else -> {
-                              // Need to retry regardless
-                              val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                              logger.warn("Received response code ${statusCode}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                              Thread.sleep(retryAfterDurationMillis)
-                          }
-                      }
-                    }
-                  else {
-                      val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                      logger.warn("Received null response from cosmosdb, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                      Thread.sleep(retryAfterDurationMillis)
-                  }
-            }
-            catch (e: Exception) {
-                val retryAfterDurationMillis = getCalculatedRetryDuration(attempts)
-                logger.error("CreateReport: Exception: ${e.localizedMessage}, attempt ${attempts + 1}, will retry after $retryAfterDurationMillis millis, uploadId = $uploadId")
-                Thread.sleep(retryAfterDurationMillis)
+        // Determine whether report type is Report or ReportDeadLetter
+        when (reportType) {
+            is ReportDeadLetter -> {
+                success = repository.reportsDeadLetterCollection.createItem(
+                    reportId,
+                    reportType,
+                    Report::class.java,
+                    uploadId
+                )
             }
 
+            is Report -> {
+                success = repository.reportsCollection.createItem(
+                    reportId,
+                    reportType,
+                    Report::class.java,
+                    uploadId
+                )
+            }
+        }
 
+        if (success)
+            return reportId
 
-        } while (attempts++ < MAX_RETRY_ATTEMPTS)
-        throw BadStateException("Failed to create dead-letterReport reportId = ${responseReportId}, uploadId = $uploadId")
-    }
-
-    companion object {
-        const val DEFAULT_RETRY_INTERVAL_MILLIS = 500L
-        const val MAX_RETRY_ATTEMPTS = 100
+        throw BadStateException("Failed to create ${reportType::class.simpleName} with reportId = reportId, uploadId = $uploadId")
     }
 }

@@ -12,17 +12,17 @@ import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
+import gov.cdc.ocio.database.utils.InstantTypeAdapter
 import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.reports.CreateReportMessage
-import gov.cdc.ocio.processingstatusapi.models.reports.MessageMetadata
-import gov.cdc.ocio.processingstatusapi.models.reports.Source
-import gov.cdc.ocio.processingstatusapi.models.reports.StageInfo
+import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
+import gov.cdc.ocio.processingstatusapi.models.MessageMetadataSB
+import gov.cdc.ocio.processingstatusapi.models.Source
+import gov.cdc.ocio.processingstatusapi.models.StageInfoSB
 import mu.KotlinLogging
 import java.awt.datatransfer.MimeTypeParseException
 import java.io.File
 import java.time.Instant
-import java.util.*
 import javax.activation.MimeType
 
 /**
@@ -34,10 +34,12 @@ class SchemaValidation {
         //Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
         val gson: Gson = GsonBuilder()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .create()
         val logger = KotlinLogging.logger {}
         lateinit var reason: String
     }
+
     /**
      * Loads a base schema file from resources folder and returns file object.
      * @param fileName The name of the schema file to load.
@@ -60,7 +62,7 @@ class SchemaValidation {
         val schemaFileNames = mutableListOf<String>()
         val objectMapper: ObjectMapper = jacksonObjectMapper()
 
-        //for backward compatability following schema version will be loaded if report_schema_version is not found
+        //for backward compatibility following schema version will be loaded if report_schema_version is not found
         val defaultSchemaVersion = "0.0.1"
 
         val createReportMessage: CreateReportMessage
@@ -205,20 +207,20 @@ class SchemaValidation {
             dexIngestDateTime = runCatching {
                 val dexIngestDateTimeStr = jsonNode.get("dex_ingest_datetime").asText()
                 val dexIngestDateTimeInstant = Instant.parse(dexIngestDateTimeStr)
-                Date.from(dexIngestDateTimeInstant)
+                Instant.from(dexIngestDateTimeInstant)
             }.getOrNull()
 
             // Try to get the metadata as JSON object, but if not, get it as a string
             val messageMetadataAsNode = runCatching { jsonNode.get("message_metadata") }.getOrNull()
             messageMetadata = runCatching { when (messageMetadataAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<MessageMetadata>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(messageMetadataAsNode, object : TypeReference<MessageMetadataSB>() {})
                 else -> null
             }}.getOrNull()
 
             // Try to get the stage info as JSON object, but if not, get it as a string
             val stageInfoAsNode = runCatching { jsonNode.get("stage_info") }.getOrNull()
             stageInfo = runCatching { when (stageInfoAsNode?.nodeType) {
-                JsonNodeType.OBJECT -> objectMapper.convertValue(stageInfoAsNode, object : TypeReference<StageInfo>() {})
+                JsonNodeType.OBJECT -> objectMapper.convertValue(stageInfoAsNode, object : TypeReference<StageInfoSB>() {})
                 else -> null
             }}.getOrNull()
 
@@ -308,7 +310,7 @@ class SchemaValidation {
      * @throws BadRequestException
      * @throws Exception
      */
-    fun createReport(createReportMessage: CreateReportMessage, source:Source) {
+    fun createReport(createReportMessage: CreateReportMessage, source: Source) {
         try {
             val uploadId = createReportMessage.uploadId
             var stageName = createReportMessage.stageInfo?.action
