@@ -1,4 +1,4 @@
-package gov.cdc.ocio.reader.sink.aws
+package gov.cdc.ocio.eventreadersink.cloud
 
 import org.apache.camel.component.aws2.s3.AWS2S3Component
 import org.apache.camel.component.aws2.s3.AWS2S3Configuration
