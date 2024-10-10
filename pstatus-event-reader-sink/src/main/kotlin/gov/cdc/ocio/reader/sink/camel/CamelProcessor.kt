@@ -122,7 +122,6 @@ class CamelProcessor {
         sharedAccessKey: String
     ) {
         // Create the AMQP URI
-//        val endpoint ="Endpoint=sb://ocio-ede-dev-processingstatus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=PCmVAxYcWtdtHbcMEAXhW1yZNQeDd4jXe+ASbIXaG3A="
         val endpoint =connectionString
         val connectionFactory = JmsConnectionFactory()
         connectionFactory.remoteURI = "amqps://${endpoint.substringAfter("sb://")}"
