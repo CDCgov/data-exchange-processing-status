@@ -1,6 +1,7 @@
 package gov.cdc.ocio.eventreadersink
 
 import gov.cdc.ocio.eventreadersink.cloud.CloudProviderType
+import gov.cdc.ocio.eventreadersink.exceptions.BadStateException
 import gov.cdc.ocio.eventreadersink.exceptions.ConfigurationException
 import gov.cdc.ocio.eventreadersink.exceptions.MissingPropertyException
 import gov.cdc.ocio.eventreadersink.model.AwsConfig
@@ -15,8 +16,10 @@ import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
 import gov.cdc.ocio.eventreadersink.model.CloudConfig
 import gov.cdc.ocio.eventreadersink.sink.CamelProcessor
-import io.ktor.server.plugins.*
+import gov.cdc.ocio.eventreadersink.sink.EventProcessor
 import mu.KotlinLogging
+import org.koin.dsl.module
+import org.koin.ktor.ext.inject
 
 val logger = KotlinLogging.logger {}
 
@@ -26,18 +29,29 @@ val logger = KotlinLogging.logger {}
  * Instantiate a singleton CloudConfig instance
  * @param environment ApplicationEnvironment
  */
-fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment) {
+fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     try {
         val provider = environment.config.property("cloud.provider").getString()
-         val cloudConfig = when (provider) {
+
+        //Load CloudConfiguration based on the Cloud Provider
+        val cloudConfig = when (provider) {
             CloudProviderType.AWS.value -> loadAwsConfig(environment)
             CloudProviderType.AZURE.value -> loadAzureConfig(environment)
             else -> throw IllegalArgumentException("Unsupported cloud provider: $provider")
         }
-        CamelProcessor().sinkMessageToStorage(cloudConfig)
+
+        // Define Koin module for CamelProcessor
+        val camelModule = module {
+            single(createdAtStart = true) { CamelProcessor() } // Creates a singleton instance of CamelProcessor
+            single { EventProcessor(cloudConfig) }
+        }
+
+        return modules(listOf(camelModule))
+
     } catch (e: Exception) {
         // Log the error (replace with your logging mechanism)
         logger.error("Error loading Koin modules: ${e.message}")
+        return modules(emptyList())
     }
 }
 
@@ -115,11 +129,13 @@ fun main(args: Array<String>) {
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
 }
 
+fun eventReaderSink() {
+
+}
 
 /**
  * The main application module which always runs and loads other modules
  */
-
 fun Application.module() {
 
     install(Koin) {
@@ -129,5 +145,16 @@ fun Application.module() {
         jackson()
     }
     configureRouting()
+
+    // Call the method from EventProcessor as soon as the application starts with the initial setup
+    val eventProcessor: EventProcessor by inject()
+    try {
+        eventProcessor.processEvent()
+    } catch (e: BadStateException) {
+        logger.error("Application failed to start due to bad state: ${e.message}", e)
+    } catch (e: Exception) {
+        logger.error("Application failed to start due to an unexpected error: ${e.message}", e)
+    }
+
 }
 
