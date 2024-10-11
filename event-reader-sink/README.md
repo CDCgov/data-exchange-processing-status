@@ -1,5 +1,5 @@
 # Overview
-This project is the processing status event-reader-sink service. Based on the configurations, it does the following:
+This project is the processing status event-reader-sink service, uses Camel Routing. Based on the Camel Route Configurations, it does the following:
 - Listens for messages on an Azure Service bus and sinks them into the Blob Storage, or,
 - Listens for messages on the AWS SNS Topic and sinks them into S3.
 
