@@ -5,4 +5,4 @@ package gov.cdc.ocio.eventreadersink.exceptions
  *
  * @constructor
  */
-class BadRequestException(message: String): Exception(message)
+class BadServiceException(message: String): Exception(message)
