@@ -11,7 +11,7 @@ $ gradle publishImageToLocalRegistry
 $ az login
 $ az acr login --name ociodexdevprocessingstatus
 $ docker login ociodexdevprocessingstatus.azurecr.io
-$ docker tag pstatus-graphql-ktor ociodexdevprocessingstatus.azurecr.io/pstatus-graphql-ktor:v1
+$ docker tag event-reader-sink ociodexdevprocessingstatus.azurecr.io/event-reader-sink:v1
 $ docker push ociodexdevprocessingstatus.azurecr.io/event-reader-sink:v1 
 ```
 For the docker login step, provide the username and password found in the ACR > Access Keys.  The username will be `ociodexdevprocessingstatus.azurecr.io`.
