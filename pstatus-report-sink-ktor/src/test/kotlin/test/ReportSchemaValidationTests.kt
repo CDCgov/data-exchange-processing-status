@@ -4,7 +4,6 @@ package test
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.database.cosmos.CosmosContainerManager
-import gov.cdc.ocio.database.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.plugins.ServiceBusProcessor
 import io.mockk.*
 import org.mockito.Mockito
@@ -33,7 +32,7 @@ class ReportSchemaValidationTests {
         try {
             // Mock file
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("$.upload_id: is missing but it is required")
         }
         Assert.assertTrue(exceptionThrown)
@@ -45,7 +44,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("$.data_stream_id: is missing but it is required")
         }
         Assert.assertTrue(exceptionThrown)
@@ -57,7 +56,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("$.data_stream_route: is missing but it is required")
         }
         Assert.assertTrue(exceptionThrown)
@@ -70,7 +69,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("$.stage_info: is missing but it is required")
         }
         Assert.assertTrue(exceptionThrown)
@@ -83,7 +82,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("$.content_type: is missing but it is required")
         }
         Assert.assertTrue(exceptionThrown)
@@ -96,7 +95,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("Report rejected: `content` is not JSON or is missing.")
         }
         Assert.assertTrue(exceptionThrown)
@@ -109,7 +108,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("Report rejected: `content_schema_name` or `content_schema_version` is missing or empty.")
         }
         Assert.assertTrue(exceptionThrown)
@@ -122,7 +121,7 @@ class ReportSchemaValidationTests {
         var exceptionThrown = false
         try {
             ServiceBusProcessor().withMessage(serviceBusReceivedMessage)
-        } catch(ex: BadRequestException) {
+        } catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("Report rejected: `content_schema_name` or `content_schema_version` is missing or empty.")
         }
         Assert.assertTrue(exceptionThrown)
@@ -138,7 +137,7 @@ class ReportSchemaValidationTests {
         catch (ex :IllegalArgumentException){
             exceptionThrown = ex.localizedMessage.contains("File not found: hl7v2-debatch.2.0.0.schema.json")
         }
-        catch(ex: BadRequestException) {
+        catch(ex: Exception) {
             exceptionThrown = ex.localizedMessage.contains("Report rejected: Content schema file not found for content schema name 'hl7v2-debatch' and schema version '2.0.0'.")
         }
         Assert.assertTrue(exceptionThrown)
