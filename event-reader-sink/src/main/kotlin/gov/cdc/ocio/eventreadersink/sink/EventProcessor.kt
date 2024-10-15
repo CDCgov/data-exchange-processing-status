@@ -26,7 +26,7 @@ class EventProcessor(private val cloudConfig: CloudConfig) : KoinComponent {
      * the processing, logging an error message if an exception is
      * thrown.
      */
-    @Throws(BadStateException::class, IllegalArgumentException::class)
+    @Throws(BadStateException::class, IllegalArgumentException::class, Exception:: class)
     fun processEvent() {
         try {
             camelProcessor.sinkMessageToStorage(cloudConfig)
@@ -38,7 +38,7 @@ class EventProcessor(private val cloudConfig: CloudConfig) : KoinComponent {
             throw e // Re-throwing the original exception
         } catch (e: Exception) {
             logger.error("Failed to process event due to an unexpected error: ${e.message}", e)
-            throw BadStateException("Unexpected error occurred  ${e.message}")
+            throw e
         }
     }
 }
