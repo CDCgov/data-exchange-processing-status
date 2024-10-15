@@ -26,16 +26,6 @@ class CosmosRuleRepository(
     //private val repository by inject<ProcessingStatusRepository>()
     private val repository: CosmosRepository by inject { parametersOf(uri, authKey,"/ruleId", containerName) }
     private val logger = KotlinLogging.logger {}
-
-    /* private val logger = LoggerFactory.getLogger(CosmosRuleRepository::class.java)
-     private val database: CosmosDatabase
-     private val container: CosmosContainer*/
-
-    init {
-        /*  database = cosmosClient.getDatabase(databaseName)
-          container = database.getContainer(containerName)*/
-    }
-
     /**
      * The function which saves the rule to the Cosmos SB container
      * @param rule WorkflowRule
@@ -43,9 +33,9 @@ class CosmosRuleRepository(
      */
     override fun saveRule(rule: WorkflowRule): WorkflowRule {
         return try {
-            val id = UUID.randomUUID().toString()
+
             repository.rulesCollection.createItem(
-                id,
+                rule.id,
                 rule,
                 WorkflowRule::class.java,
                 rule.ruleId)

@@ -14,8 +14,11 @@ object RuleValidationUtils {
      * @throws RuleValidationException if the rule is invalid.
      */
     fun validateRule(rule: WorkflowRule) {
-        if (rule.id.isBlank()) {
+        if (rule.ruleId.isBlank()) {
             throw RuleValidationException("Rule ID cannot be blank.")
+        }
+        if (rule.ruleName.isBlank()) {
+            throw RuleValidationException("Rule Name cannot be blank.")
         }
         if (rule.conditions.isEmpty()) {
             throw RuleValidationException("Rule must contain at least one condition.")

@@ -9,6 +9,7 @@ import gov.cdc.ocio.rulesengine.models.RuleAction
 interface WorkflowRule {
     val id: String // surrogate key
     val ruleId:String //partition key
+    val ruleName:String
     val conditions: Map<String, Any> // Condition map defining the rule logic
     val state: String // ***For future use*** - State associated with this rule, e.g., "ACTIVE", "INACTIVE"
     val actions: List<RuleAction> // List of actions to be taken when conditions are met

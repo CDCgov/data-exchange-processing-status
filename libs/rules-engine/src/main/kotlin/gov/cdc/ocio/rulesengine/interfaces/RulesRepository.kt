@@ -2,7 +2,7 @@ package gov.cdc.ocio.rulesengine.interfaces
 
 /**
  * The interface which defines the CRUD operations to perform on CosmosDB
- * using the CosmosRepository from commons-databasse library
+ * using the CosmosRepository from commons-database library
  */
 
 interface RulesRepository {

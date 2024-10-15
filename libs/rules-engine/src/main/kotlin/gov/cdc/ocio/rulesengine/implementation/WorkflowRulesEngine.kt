@@ -25,7 +25,7 @@ class WorkflowRulesEngine(
      * @param rule WorkflowRule
      * @return String - the ruleId
      */
-   @Throws(RulesEngineException::class)
+    @Throws(RulesEngineException::class)
     override fun addRule(rule: WorkflowRule): String {
         return try {
             // Validate the rule before adding it to the system
@@ -70,7 +70,7 @@ class WorkflowRulesEngine(
         return try {
             val result = repository.findRuleById(ruleId)
             result
-        } catch (ex: Exception) {
+        } catch (ex: RuleNotFoundException) {
             logger.error("Error retrieving rule: ${ex.message}")
             throw ex
         }
@@ -96,7 +96,7 @@ class WorkflowRulesEngine(
         throw NotImplementedException("This function has not yet been implemented")
     }
 
-    /* TODO - To Check with Matt on whether these are required
+    /* TODO - ***FUTURE USE*** To Check with Matt on whether these are required
      override fun updateRule(updatedRule: WorkflowRule): WorkflowRule? {
         return try {
             // Validate the rule before adding it to the system
