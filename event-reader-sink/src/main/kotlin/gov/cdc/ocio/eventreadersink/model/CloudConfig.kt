@@ -6,12 +6,12 @@ package gov.cdc.ocio.eventreadersink.model
  * This data class allows for the selection between AWS and Azure configurations,
  * encapsulating the settings necessary for accessing the respective cloud services.
  *
- * @property provider The cloud provider to use ("aws" or "azure").
+ * @property provider provider The cloud provider to use, represented by the CloudProviderType enum.
  * @property awsConfig Optional configuration for AWS services, represented by an AwsConfig instance.
  * @property azureConfig Optional configuration for Azure services, represented by an AzureConfig instance.
  */
 data class CloudConfig(
-    var provider: String, // "aws" or "azure"
+    var provider: CloudProviderType,
     var awsConfig: AwsConfig? = null,
     var azureConfig: AzureConfig? = null
 )

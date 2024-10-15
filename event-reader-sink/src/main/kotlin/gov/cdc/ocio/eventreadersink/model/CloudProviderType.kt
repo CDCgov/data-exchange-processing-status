@@ -1,4 +1,4 @@
-package gov.cdc.ocio.eventreadersink.cloud
+package gov.cdc.ocio.eventreadersink.model
 
 /**
  * Enum class representing the different cloud provider types.
