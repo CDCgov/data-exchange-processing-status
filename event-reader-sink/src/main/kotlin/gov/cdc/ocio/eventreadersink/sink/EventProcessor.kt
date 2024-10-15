@@ -32,7 +32,7 @@ class EventProcessor(private val cloudConfig: CloudConfig) : KoinComponent {
             camelProcessor.sinkMessageToStorage(cloudConfig)
         } catch (e: IllegalArgumentException) {
             logger.error("Failed to process event due to invalid argument: ${e.message}", e)
-            throw BadStateException("Invalid argument provided: ${e.message}")
+            throw e
         } catch (e: BadStateException) {
             logger.error("Failed to process event: ${e.message}")
             throw e // Re-throwing the original exception
