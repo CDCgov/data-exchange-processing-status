@@ -1,6 +1,6 @@
 package gov.cdc.ocio.eventreadersink
 
-import gov.cdc.ocio.eventreadersink.cloud.CloudProviderType
+import gov.cdc.ocio.eventreadersink.model.CloudProviderType
 import gov.cdc.ocio.eventreadersink.exceptions.BadStateException
 import gov.cdc.ocio.eventreadersink.exceptions.ConfigurationException
 import gov.cdc.ocio.eventreadersink.exceptions.MissingPropertyException
@@ -76,7 +76,7 @@ private fun loadAwsConfig(environment: ApplicationEnvironment): CloudConfig {
             s3Region = environment.config.property("cloud.aws.s3.region").getString()
         )
 
-        CloudConfig(provider = CloudProviderType.AWS.value, awsConfig = awsConfig)
+        CloudConfig(provider = CloudProviderType.AWS, awsConfig = awsConfig)
     }catch (e: MissingPropertyException) {
         logger.error("Error: Missing required AWS configuration property: ${e.message}")
         throw ConfigurationException("Missing required AWS configuration property.")
@@ -109,7 +109,7 @@ private fun loadAzureConfig(environment: ApplicationEnvironment): CloudConfig {
             storageAccountName = environment.config.property("cloud.azure.blob_storage.storage_account_name").getString()
         )
 
-        CloudConfig(provider = CloudProviderType.AZURE.value, azureConfig = azureConfig)
+        CloudConfig(provider = CloudProviderType.AZURE, azureConfig = azureConfig)
     } catch (e: MissingPropertyException) {
         logger.error("Error: Missing required Azure configuration property: ${e.message}")
         throw ConfigurationException("Missing required Azure configuration property.")

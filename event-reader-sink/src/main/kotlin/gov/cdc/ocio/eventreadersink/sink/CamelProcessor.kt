@@ -1,6 +1,6 @@
 package gov.cdc.ocio.eventreadersink.sink
 
-import gov.cdc.ocio.eventreadersink.cloud.CloudProviderType
+import gov.cdc.ocio.eventreadersink.model.CloudProviderType
 import gov.cdc.ocio.eventreadersink.exceptions.BadStateException
 import gov.cdc.ocio.eventreadersink.model.AwsConfig
 import gov.cdc.ocio.eventreadersink.model.AzureConfig
@@ -38,7 +38,7 @@ class CamelProcessor {
             val provider = cloudConfig.provider
 
             when (provider) {
-                CloudProviderType.AWS.value -> {
+                CloudProviderType.AWS -> {
                     val awsConfig: AwsConfig? = cloudConfig.awsConfig
                     if (awsConfig != null) {
                         logger.info("Sinking message to S3 for AWS configuration.")
@@ -48,7 +48,7 @@ class CamelProcessor {
                         throw IllegalArgumentException("AWS configuration is missing.")
                     }
                 }
-                CloudProviderType.AZURE.value -> {
+                CloudProviderType.AZURE -> {
                     val azureConfig: AzureConfig? = cloudConfig.azureConfig
                     if (azureConfig != null) {
                         logger.info ("Sinking message to Blob Storage for Azure configuration.")

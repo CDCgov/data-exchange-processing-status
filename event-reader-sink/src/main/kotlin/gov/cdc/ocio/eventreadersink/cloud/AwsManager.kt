@@ -45,7 +45,7 @@ class AwsManager {
             throw ConfigurationException("Failed to configure AWS SQS component: ${e.message}")
         } catch (e: Exception) {
             logger.error("An unexpected error occurred configuring SQS component: ${e.message}")
-            throw Exception("Failed to configure AWS SQS component due to an unexpected error: ${e.message}")
+            throw e
         }
     }
 
@@ -81,7 +81,7 @@ class AwsManager {
             throw ConfigurationException("Failed to configure AWS S3 component: ${e.message}")
         } catch (e: Exception) {
             logger.error("An unexpected error occurred configuring S3 component: ${e.message}")
-            throw Exception("Failed to configure AWS S3 component due to an unexpected error: ${e.message}")
+            throw e
         }
     }
 
