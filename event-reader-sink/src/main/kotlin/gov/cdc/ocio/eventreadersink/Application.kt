@@ -80,7 +80,7 @@ private fun loadAwsConfig(environment: ApplicationEnvironment): CloudConfig {
         CloudConfig(provider = CloudProviderType.AWS, awsConfig = awsConfig)
     }catch (e: MissingPropertyException) {
         logger.error("Error: Missing required AWS configuration property: ${e.message}")
-        throw ConfigurationException("Missing required AWS configuration property.")
+        throw MissingPropertyException("Missing required AWS configuration property.")
     } catch (e: Exception) {
         logger.error("Error loading AWS configuration: ${e.message}")
         throw ConfigurationException("Failed to load AWS configuration.")
