@@ -14,6 +14,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
 import gov.cdc.ocio.eventreadersink.model.CloudConfig
+import gov.cdc.ocio.eventreadersink.plugins.configureRouting
 import gov.cdc.ocio.eventreadersink.sink.CamelProcessor
 import gov.cdc.ocio.eventreadersink.sink.EventProcessor
 import mu.KotlinLogging
@@ -138,7 +139,7 @@ fun Application.module() {
         loadKoinModules(environment)
     }
 
-    //configureRouting()
+    configureRouting()
 
     install(ContentNegotiation) {
         jackson()
