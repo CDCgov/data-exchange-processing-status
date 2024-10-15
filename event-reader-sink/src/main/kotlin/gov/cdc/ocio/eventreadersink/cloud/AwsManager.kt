@@ -76,12 +76,9 @@ class AwsManager {
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid argument provided for S3 configuration: ${e.message}")
             throw e
-        } catch (e: ConfigurationException) {
+        } catch (e: Exception) {
             logger.error("Error configuring AWS S3 component: ${e.message}")
             throw ConfigurationException("Failed to configure AWS S3 component: ${e.message}")
-        } catch (e: Exception) {
-            logger.error("An unexpected error occurred configuring S3 component: ${e.message}")
-            throw e
         }
     }
 
