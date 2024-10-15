@@ -35,7 +35,7 @@ class AzureSink {
      * @param subscriptionName The name of the subscription to the topic.
      * @throws BadServiceException
      */
-    @Throws(BadServiceException:: class)
+    @Throws(BadServiceException:: class, Exception:: class)
     fun sinkAsbTopicSubscriptionToBlob(
         connectionString: String,
         accountName: String,
@@ -60,9 +60,12 @@ class AzureSink {
             )
             camelContext.addRoutes(AzureRoutes(topicName, subscriptionName, accountName, accountKey, containerName))
             startCamelContext(camelContext)
-        } catch (e: Exception) {
+        } catch (e: BadServiceException) {
             logger.error("Failed to sink messages from Azure Service Bus to Blob Storage: ${e.message}", e)
             throw BadServiceException("Error initializing AzureSink: ${e.message}")
+        } catch (e: Exception) {
+            logger.error("Failed to sink messages from Azure Service Bus to Blob Storage: ${e.message}", e)
+            throw e
         }
     }
 
@@ -71,21 +74,27 @@ class AzureSink {
      * @param camelContext The Camel context to start.
      * @throws BadStateException
      */
-    @Throws (BadStateException:: class)
+    @Throws (BadStateException:: class, Exception:: class)
     private fun startCamelContext(camelContext: CamelContext) {
         try {
             camelContext.start()
             Runtime.getRuntime().addShutdownHook(Thread {
                 try {
                     camelContext.stop()
-                } catch (e: Exception) {
+                } catch (e: BadStateException) {
                     logger.error("Failed to stop Camel context: ${e.message}", e)
                     throw BadStateException("Error starting Camel context: ${e.message}")
+                } catch (e: Exception) {
+                    logger.error("Failed to stop Camel context due to an unexpected error: ${e.message}", e)
+                    throw e
                 }
             })
-        } catch (e: Exception) {
-            logger.error("Failed to start Camel context: ${e.message}", e)
+        } catch (e: BadStateException) {
+            logger.error("Failed to stop Camel context: ${e.message}", e)
             throw BadStateException("Error starting Camel context: ${e.message}")
+        } catch (e: Exception) {
+            logger.error("Failed to start Camel context due to an unexpected error: ${e.message}", e)
+            throw e
         }
     }
 
@@ -120,9 +129,12 @@ class AzureSink {
             }
 
             camelContext.addComponent("amqp", amqpComponent)
-        } catch (e: Exception) {
+        } catch (e: ConfigurationException) {
             logger.error("Failed to configure AMQP component: ${e.message}", e)
             throw ConfigurationException("Error configuring AMQP component ${e.message}")
+        } catch (e: Exception) {
+            logger.error("Failed to configure AMQP component due to an unexpected error: ${e.message}", e)
+            throw e
         }
     }
 }

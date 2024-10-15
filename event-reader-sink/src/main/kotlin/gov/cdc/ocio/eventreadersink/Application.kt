@@ -6,7 +6,6 @@ import gov.cdc.ocio.eventreadersink.exceptions.ConfigurationException
 import gov.cdc.ocio.eventreadersink.exceptions.MissingPropertyException
 import gov.cdc.ocio.eventreadersink.model.AwsConfig
 import gov.cdc.ocio.eventreadersink.model.AzureConfig
-import gov.cdc.ocio.eventreadersink.plugins.configureRouting
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -138,10 +137,12 @@ fun Application.module() {
     install(Koin) {
         loadKoinModules(environment)
     }
+
+    //configureRouting()
+
     install(ContentNegotiation) {
         jackson()
     }
-    configureRouting()
 
     // Call the method from EventProcessor as soon as the application starts with the initial setup
     val eventProcessor: EventProcessor by inject()

@@ -88,9 +88,12 @@ class AwsSink {
             )
             camelContext.addComponent("aws2-s3", s3Component)
 
-        } catch (e: Exception) {
+        } catch (e: ConfigurationException) {
             logger.error("Error configuring AWS components: ${e.message}", e)
             throw ConfigurationException("Failed to configure AWS components: ${e.message}")
+        } catch (e: Exception) {
+            logger.error("Error configuring AWS components due to an unexpected error: ${e.message}", e)
+            throw e
         }
     }
 }

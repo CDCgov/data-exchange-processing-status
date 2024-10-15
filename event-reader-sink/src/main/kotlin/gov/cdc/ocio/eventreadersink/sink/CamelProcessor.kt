@@ -32,7 +32,7 @@ class CamelProcessor {
      * @throws IllegalArgumentException if the cloud provider is unsupported or
      *                                   configuration is missing.
      */
-    @Throws(BadStateException:: class, IllegalArgumentException:: class)
+    @Throws(BadStateException:: class, IllegalArgumentException:: class, Exception::class)
     fun sinkMessageToStorage(cloudConfig: CloudConfig) {
         try {
             val provider = cloudConfig.provider
@@ -73,9 +73,12 @@ class CamelProcessor {
                     throw IllegalArgumentException("Unsupported cloud provider: $provider")
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: BadStateException) {
             logger.error ("Error processing cloud configuration: ${e.message}" )
             throw BadStateException("Error processing cloud configuration:  ${e.message}")
+        } catch (e: Exception) {
+            logger.error("Error sinking message to storage due to an unexpected error: ${e.message}")
+            throw e
         }
     }
 }

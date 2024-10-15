@@ -26,7 +26,7 @@ class AwsManager {
      * @throws IllegalArgumentException
      * @throws ConfigurationException
      */
-    @Throws (IllegalArgumentException:: class, ConfigurationException:: class)
+    @Throws (IllegalArgumentException:: class, ConfigurationException:: class, Exception:: class)
     fun configureAwsSQSComponent(awsAccessKeyId: String, awsSecretAccessKey: String, awsRegion: String): Sqs2Component {
 
         try {
@@ -40,9 +40,12 @@ class AwsManager {
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid argument provided for SQS configuration: ${e.message}")
             throw e
-        } catch (e: Exception) {
-            logger.error("Error configuring AWS SQS component: ${e.message}", e)
+        } catch (e: ConfigurationException) {
+            logger.error("Error configuring AWS SQS component: ${e.message}")
             throw ConfigurationException("Failed to configure AWS SQS component: ${e.message}")
+        } catch (e: Exception) {
+            logger.error("An unexpected error occurred configuring SQS component: ${e.message}")
+            throw Exception("Failed to configure AWS SQS component due to an unexpected error: ${e.message}")
         }
     }
 
@@ -73,9 +76,12 @@ class AwsManager {
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid argument provided for S3 configuration: ${e.message}")
             throw e
-        } catch (e: Exception) {
-            logger.error("Error configuring AWS S3 component: ${e.message}", e)
+        } catch (e: ConfigurationException) {
+            logger.error("Error configuring AWS S3 component: ${e.message}")
             throw ConfigurationException("Failed to configure AWS S3 component: ${e.message}")
+        } catch (e: Exception) {
+            logger.error("An unexpected error occurred configuring S3 component: ${e.message}")
+            throw Exception("Failed to configure AWS S3 component due to an unexpected error: ${e.message}")
         }
     }
 
