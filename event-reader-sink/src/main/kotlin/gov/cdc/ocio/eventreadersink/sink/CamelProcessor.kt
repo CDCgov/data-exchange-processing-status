@@ -68,14 +68,10 @@ class CamelProcessor {
                         throw IllegalArgumentException("Azure configuration is missing.")
                     }
                 }
-                else -> {
-                    logger.error ("Unsupported cloud provider: $provider")
-                    throw IllegalArgumentException("Unsupported cloud provider: $provider")
-                }
             }
         } catch (e: BadStateException) {
             logger.error ("Error processing cloud configuration: ${e.message}" )
-            throw BadStateException("Error processing cloud configuration:  ${e.message}")
+            throw e
         } catch (e: Exception) {
             logger.error("Error sinking message to storage due to an unexpected error: ${e.message}")
             throw e

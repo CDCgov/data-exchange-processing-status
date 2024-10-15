@@ -62,7 +62,7 @@ class AzureSink {
             startCamelContext(camelContext)
         } catch (e: BadServiceException) {
             logger.error("Failed to sink messages from Azure Service Bus to Blob Storage: ${e.message}", e)
-            throw BadServiceException("Error initializing AzureSink: ${e.message}")
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to sink messages from Azure Service Bus to Blob Storage: ${e.message}", e)
             throw e
@@ -83,18 +83,18 @@ class AzureSink {
                     camelContext.stop()
                 } catch (e: BadStateException) {
                     logger.error("Failed to stop Camel context: ${e.message}", e)
-                    throw BadStateException("Error starting Camel context: ${e.message}")
-                } catch (e: Exception) {
-                    logger.error("Failed to stop Camel context due to an unexpected error: ${e.message}", e)
                     throw e
+                } catch (e: Exception) {
+                    logger.error("Failed to stop Camel context: ${e.message}", e)
+                    throw BadStateException("Failed to stop Camel context due to an unexpected error: ${e.message}")
                 }
             })
         } catch (e: BadStateException) {
             logger.error("Failed to stop Camel context: ${e.message}", e)
-            throw BadStateException("Error starting Camel context: ${e.message}")
-        } catch (e: Exception) {
-            logger.error("Failed to start Camel context due to an unexpected error: ${e.message}", e)
             throw e
+        } catch (e: Exception) {
+            logger.error("Failed to start Camel context: ${e.message}", e)
+            throw BadStateException("Failed to start Camel context due to an unexpected error: ${e.message}")
         }
     }
 
@@ -131,10 +131,10 @@ class AzureSink {
             camelContext.addComponent("amqp", amqpComponent)
         } catch (e: ConfigurationException) {
             logger.error("Failed to configure AMQP component: ${e.message}", e)
-            throw ConfigurationException("Error configuring AMQP component ${e.message}")
-        } catch (e: Exception) {
-            logger.error("Failed to configure AMQP component due to an unexpected error: ${e.message}", e)
             throw e
+        } catch (e: Exception) {
+            logger.error("Failed to configure AMQP component: ${e.message}", e)
+            throw ConfigurationException("Error configuring AMQP component ${e.message}")
         }
     }
 }

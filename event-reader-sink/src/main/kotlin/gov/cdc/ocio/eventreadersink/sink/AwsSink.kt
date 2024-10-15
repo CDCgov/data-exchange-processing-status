@@ -51,7 +51,7 @@ class AwsSink {
             Runtime.getRuntime().addShutdownHook(Thread { camelContext.stop() })
         } catch (e: ConfigurationException) {
             logger.error("Error configuring AWS components: ${e.message}", e)
-            throw ConfigurationException("Error configuring AWS components:: ${e.message}")
+            throw e
         } catch (e: Exception) {
             logger.error("Error while sinking messages to S3: ${e.message}", e)
             throw e
@@ -88,12 +88,9 @@ class AwsSink {
             )
             camelContext.addComponent("aws2-s3", s3Component)
 
-        } catch (e: ConfigurationException) {
-            logger.error("Error configuring AWS components: ${e.message}", e)
-            throw ConfigurationException("Failed to configure AWS components: ${e.message}")
         } catch (e: Exception) {
             logger.error("Error configuring AWS components due to an unexpected error: ${e.message}", e)
-            throw e
+            throw ConfigurationException("Failed to configure AWS components: ${e.message}")
         }
     }
 }
