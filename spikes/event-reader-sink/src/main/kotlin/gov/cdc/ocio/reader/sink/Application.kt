@@ -27,7 +27,6 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment) {
         "aws" -> {
             val awsAccessKeyId = environment.config.property("cloud.aws.credentials.access_key_id").getString()
             val awsSecretAccessKey = environment.config.property("cloud.aws.credentials.secret_access_key").getString()
-            val awsSqsEndpoint = environment.config.propertyOrNull("cloud.aws.sqs.endpoint")?.getString()
             val awsSqsQueueName = environment.config.property("cloud.aws.sqs.queue_name").getString()
             val awsSqsQueueURL = environment.config.property("cloud.aws.sqs.queue_url").getString()
             val awsSqsRegion = environment.config.property("cloud.aws.sqs.region").getString()
@@ -40,7 +39,6 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment) {
                     provider,
                     awsAccessKeyId,
                     awsSecretAccessKey,
-                    awsSqsEndpoint,
                     awsSqsQueueName,
                     awsSqsQueueURL,
                     awsSqsRegion,
@@ -71,7 +69,6 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment) {
             cloudConfig =
                 CloudConfig(
                     provider,
-                    "",
                     "",
                     "",
                     "",

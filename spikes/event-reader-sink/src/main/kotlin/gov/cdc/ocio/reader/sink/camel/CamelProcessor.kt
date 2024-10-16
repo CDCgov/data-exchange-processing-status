@@ -64,10 +64,10 @@ class CamelProcessor {
             )
 
         // Override the service endpoint (if available). Ex. for LocalStack
-        val sqsEndpoint = cloudConfig.awsSqsEndpoint
-        if (sqsEndpoint != null && sqsEndpoint.isNotEmpty()) {
+        val sqsQueueURL = cloudConfig.awsSqsQueueURL
+        if (sqsQueueURL != null && sqsQueueURL.isNotEmpty()) {
             sqsComponent.configuration.isOverrideEndpoint = true // Use public setter to enable override
-            sqsComponent.configuration.uriEndpointOverride = sqsEndpoint // Pass the endpoint as a String
+            sqsComponent.configuration.uriEndpointOverride = sqsQueueURL // Pass the endpoint as a String
         }
 
         camelContext.addComponent("aws2-sqs", sqsComponent)

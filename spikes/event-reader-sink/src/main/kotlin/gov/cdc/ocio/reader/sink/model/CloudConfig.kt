@@ -5,7 +5,6 @@ data class CloudConfig(
     // AWS Config Values
     var awsAccessKeyId: String? = null,
     var awsSecretAccessKey: String? = null,
-    var awsSqsEndpoint: String? = null,
     var awsSqsQueueName: String? = null,
     var awsSqsQueueURL: String? = null,
     var awsSqsRegion: String? = null,
