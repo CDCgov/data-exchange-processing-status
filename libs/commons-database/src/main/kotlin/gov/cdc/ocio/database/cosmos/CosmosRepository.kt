@@ -10,8 +10,8 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
  * @param uri[String] URI of the CosmosDB to connect with.
  * @param authKey[String] Authorization Key to use when connecting to the CosmosDB.
  * @param partitionKey[String] Container partition key to use, which defaults to "/uploadId" if not provided.
- * @param reportsContainerName[String] Reports container name to use, which defaults to "Reports" if not provided.
- * @param reportsDeadLetterContainerName[String] Reports deadletter container name to use, which default to
+ * @param containerName[String] Reports, Rules container name to use, which defaults to "Reports" if not provided.
+ * @param reportsDeadLetterContainerName[String] Reports dead letter container name to use, which default to
  * "Reports-DeadLetter" if not provided.
  * @property reportsContainer[com.azure.cosmos.CosmosContainer]?
  * @property reportsDeadLetterContainer[com.azure.cosmos.CosmosContainer]?
@@ -25,18 +25,23 @@ class CosmosRepository(
     uri: String,
     authKey: String,
     partitionKey: String = "/uploadId",
-    reportsContainerName: String = "Reports",
+    containerName: String = "Reports",
     reportsDeadLetterContainerName: String = "Reports-DeadLetter"
 ) : ProcessingStatusRepository() {
 
     private val reportsContainer =
-        CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsContainerName, partitionKey)
+        CosmosContainerManager.initDatabaseContainer(uri, authKey, containerName, partitionKey)
 
     private val reportsDeadLetterContainer =
         CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsDeadLetterContainerName, partitionKey)
 
-    override var reportsCollection = CosmosCollection(reportsContainerName, reportsContainer) as Collection
+    private val rulesContainer =
+        CosmosContainerManager.initDatabaseContainer(uri, authKey, containerName, partitionKey)
+
+    override var reportsCollection = CosmosCollection(containerName, reportsContainer) as Collection
 
     override var reportsDeadLetterCollection =
         CosmosCollection(reportsDeadLetterContainerName, reportsDeadLetterContainer) as Collection
+
+    override var rulesCollection = CosmosCollection(containerName, rulesContainer) as Collection
 }
