@@ -105,11 +105,10 @@ class CamelProcessor {
         camelContext.addComponent("aws2-s3", s3Component)
 
         // Add routes
-        //     TODO: Remove delay for testing! Add: "?delay=2000"
         camelContext.addRoutes(
             object : RouteBuilder() {
                 override fun configure() {
-                    from("aws2-sqs://${cloudConfig.awsSqsQueueName}?delay=2000")
+                    from("aws2-sqs://${cloudConfig.awsSqsQueueName}")
                         .process { exchange ->
                             val uniqueKey = "message-${System.currentTimeMillis()}.json"
                             exchange.message.setHeader("CamelAwsS3Key", uniqueKey)
