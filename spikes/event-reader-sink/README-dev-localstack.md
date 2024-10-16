@@ -32,7 +32,6 @@ export CLOUD_PROVIDER="aws"
 export AWS_S3_REGION="us-east-1"
 
 # SQS settings
-export AWS_SQS_ENDPOINT="http://localhost:4566"
 export AWS_QUEUE_NAME="test-queue"
 export AWS_QUEUE_URL="http://localhost:4566/000000000000/test-queue"
 export AWS_SQS_REGION="us-east-1"
