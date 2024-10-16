@@ -88,6 +88,7 @@ class AwsSink {
                     awsConfig.accessKeyId,
                     awsConfig.secretAccessKey,
                     awsConfig.s3Region,
+                    awsConfig.s3EndpointURL,
                 )
             camelContext.addComponent("aws2-s3", s3Component)
         } catch (e: Exception) {

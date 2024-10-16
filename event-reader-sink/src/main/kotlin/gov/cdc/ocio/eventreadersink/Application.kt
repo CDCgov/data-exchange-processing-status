@@ -73,6 +73,7 @@ private fun loadAwsConfig(environment: ApplicationEnvironment): CloudConfig {
             sqsQueueName = environment.config.property("cloud.aws.sqs.queue_name").getString(),
             sqsQueueURL = environment.config.property("cloud.aws.sqs.queue_url").getString(),
             sqsRegion = environment.config.property("cloud.aws.sqs.region").getString(),
+            s3EndpointURL = environment.config.propertyOrNull("cloud.aws.s3.endpoint_url")?.getString(),
             s3BucketName = environment.config.property("cloud.aws.s3.bucket_name").getString(),
             s3Region = environment.config.property("cloud.aws.s3.region").getString()
         )

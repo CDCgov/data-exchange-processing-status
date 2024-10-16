@@ -78,6 +78,7 @@ class AwsManager {
         awsAccessKeyId: String,
         awsSecretAccessKey: String,
         awsRegion: String,
+        awsS3EndpointURL: String?,
     ): AWS2S3Component {
         try {
             val s3Component = AWS2S3Component()
@@ -86,6 +87,13 @@ class AwsManager {
             s3Configuration.secretKey = awsSecretAccessKey
             s3Configuration.region = awsRegion
             s3Component.configuration = s3Configuration
+
+            // Override the service endpoint (if available). Ex. for LocalStack
+            if (!awsS3EndpointURL.isNullOrEmpty()) {
+                s3Component.configuration.isOverrideEndpoint = true // Use public setter to enable override
+                s3Component.configuration.uriEndpointOverride = awsS3EndpointURL
+            }
+
             return s3Component
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid argument provided for S3 configuration: ${e.message}")
