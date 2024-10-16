@@ -22,4 +22,5 @@ data class CloudConfig(
     var containerName: String? = null,
     var storageAccountKey: String? = null,
     var storageAccountName: String? = null,
+    var storageEndpoint: String? = null,
 )

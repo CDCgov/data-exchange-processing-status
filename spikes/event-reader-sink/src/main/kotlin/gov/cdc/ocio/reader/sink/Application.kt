@@ -66,6 +66,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment) {
             val containerName = environment.config.property("cloud.azure.blob_storage.container_name").getString()
             val storageAccountKey = environment.config.property("cloud.azure.blob_storage.storage_account_key").getString()
             val storageAccountName = environment.config.property("cloud.azure.blob_storage.storage_account_name").getString()
+            val storageEndpoint = environment.config.property("cloud.azure.blob_storage.storage_endpoint").getString()
 
             cloudConfig =
                 CloudConfig(
@@ -88,6 +89,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment) {
                     containerName,
                     storageAccountKey,
                     storageAccountName,
+                    storageEndpoint,
                 )
             CamelProcessor().sinkMessageToStorage(cloudConfig)
         }

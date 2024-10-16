@@ -2,6 +2,7 @@ package gov.cdc.ocio.reader.sink.camel
 
 import com.azure.storage.blob.BlobServiceClientBuilder
 import com.azure.storage.blob.models.BlobStorageException
+import com.azure.storage.common.StorageSharedKeyCredential
 import gov.cdc.ocio.reader.sink.aws.AwsManager
 import gov.cdc.ocio.reader.sink.model.CloudConfig
 import org.apache.camel.CamelContext
@@ -34,6 +35,7 @@ class CamelProcessor {
                     cloudConfig.storageAccountName.toString(),
                     cloudConfig.storageAccountKey.toString(),
                     cloudConfig.containerName.toString(),
+                    cloudConfig.storageEndpoint.toString(),
                     cloudConfig.namespace.toString(),
                     cloudConfig.sharedAccessKeyName.toString(),
                     cloudConfig.sharedAccessKey.toString(),
@@ -132,6 +134,7 @@ class CamelProcessor {
         accountName: String,
         accountKey: String,
         containerName: String,
+        storageEndpoint: String?,
         serviceBusNamespace: String,
         sharedAccessKeyName: String,
         sharedAccessKey: String,
@@ -144,25 +147,43 @@ class CamelProcessor {
         // Configure the JMS component with AMQP over WebSocket
         configureAMQPComponent(connectionString, camelContext, serviceBusNamespace, sharedAccessKeyName, sharedAccessKey)
 
+        // Construct the endpoint URI conditionally
+        val fromUri =
+            if (subscriptionName.isNullOrEmpty()) {
+                "amqp:queue:$topicName"
+            } else {
+                "amqp:queue:$topicName/subscriptions/$subscriptionName"
+            }
+
         // Add routes
         camelContext.addRoutes(
             object : RouteBuilder() {
                 override fun configure() {
-                    from("amqp:queue:$topicName/subscriptions/$subscriptionName")
+                    from(fromUri)
                         .process { exchange ->
                             val message = exchange.getIn().getBody(String::class.java)
                             exchange.message.setBody(message.toByteArray(Charsets.UTF_8))
 
-                            val blobClient =
+                            val blobClientBuilder =
                                 BlobServiceClientBuilder()
-                                    .connectionString(
-                                        "DefaultEndpointsProtocol=https;AccountName=$accountName;AccountKey=$accountKey;EndpointSuffix=core.windows.net",
-                                    ).buildClient()
+                                    .credential(StorageSharedKeyCredential(accountName, accountKey))
+
+                            // Use the provided endpoint if available, else use the default endpoint
+                            if (storageEndpoint.isNullOrEmpty()) {
+                                blobClientBuilder.endpoint("https://$accountName.blob.core.windows.net")
+                            } else {
+                                blobClientBuilder.endpoint(storageEndpoint)
+                            }
+
+                            val blobClient =
+                                blobClientBuilder
+                                    .buildClient()
                                     .getBlobContainerClient(containerName)
                                     .getBlobClient("message-${System.currentTimeMillis()}.json")
 
                             try {
                                 blobClient.upload(message.byteInputStream(), message.length.toLong(), true)
+                                log.info("Successfully uploaded message to Blob Storage")
                             } catch (e: BlobStorageException) {
                                 log.error("Error uploading to Blob Storage", e)
                             }
