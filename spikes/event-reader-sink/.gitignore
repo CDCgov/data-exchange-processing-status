@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Local Docker container data ###
+local-data

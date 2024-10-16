@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 # Wait for localstack startup
 until curl -s http://localhost:4566/ > /dev/null; do
