@@ -8,11 +8,11 @@ import org.apache.camel.component.aws2.sqs.Sqs2Component
 import org.apache.camel.component.aws2.sqs.Sqs2Configuration
 
 private val logger = KotlinLogging.logger {}
+
 /**
  * Class for creating Aws Components
  */
 class AwsManager {
-
     /**
      * Configures and returns an instance of Sqs2Component for interacting with AWS SQS.
      *
@@ -26,9 +26,13 @@ class AwsManager {
      * @throws IllegalArgumentException
      * @throws ConfigurationException
      */
-    @Throws (IllegalArgumentException:: class, ConfigurationException:: class, Exception:: class)
-    fun configureAwsSQSComponent(awsAccessKeyId: String, awsSecretAccessKey: String, awsRegion: String): Sqs2Component {
-
+    @Throws(IllegalArgumentException::class, ConfigurationException::class, Exception::class)
+    fun configureAwsSQSComponent(
+        awsAccessKeyId: String,
+        awsSecretAccessKey: String,
+        awsRegion: String,
+        awsSqsQueueURL: String,
+    ): Sqs2Component {
         try {
             val sqsComponent = Sqs2Component()
             val sqsConfiguration = Sqs2Configuration()
@@ -36,6 +40,13 @@ class AwsManager {
             sqsConfiguration.secretKey = awsSecretAccessKey
             sqsConfiguration.region = awsRegion
             sqsComponent.configuration = sqsConfiguration
+
+            // Override the service endpoint (if available). Ex. for LocalStack
+            if (!awsSqsQueueURL.isNullOrEmpty()) {
+                sqsComponent.configuration.isOverrideEndpoint = true // Use public setter to enable override
+                sqsComponent.configuration.uriEndpointOverride = awsSqsQueueURL
+            }
+
             return sqsComponent
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid argument provided for SQS configuration: ${e.message}")
@@ -62,9 +73,12 @@ class AwsManager {
      * @throws IllegalArgumentException
      * @throws ConfigurationException
      */
-    @Throws (IllegalArgumentException:: class, ConfigurationException:: class)
-    fun configureAwsS3Component(awsAccessKeyId: String, awsSecretAccessKey: String, awsRegion: String): AWS2S3Component {
-
+    @Throws(IllegalArgumentException::class, ConfigurationException::class)
+    fun configureAwsS3Component(
+        awsAccessKeyId: String,
+        awsSecretAccessKey: String,
+        awsRegion: String,
+    ): AWS2S3Component {
         try {
             val s3Component = AWS2S3Component()
             val s3Configuration = AWS2S3Configuration()
@@ -81,5 +95,4 @@ class AwsManager {
             throw ConfigurationException("Failed to configure AWS S3 component: ${e.message}")
         }
     }
-
 }
