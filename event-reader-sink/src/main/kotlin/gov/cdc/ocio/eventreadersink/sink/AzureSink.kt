@@ -25,6 +25,7 @@ class AzureSink {
      * and adds the necessary routes for processing incoming messages.
      *
      * @param connectionString The connection string for the Azure Service Bus.
+     * @param storageEndpointURL The custom URL for Azure Storage (for Azurite or left null for default Azure endpoint).
      * @param accountName The Azure storage account name.
      * @param accountKey The Azure storage account key.
      * @param containerName The name of the Blob Storage container.
@@ -38,6 +39,7 @@ class AzureSink {
     @Throws(BadServiceException:: class, Exception:: class)
     fun sinkAsbTopicSubscriptionToBlob(
         connectionString: String,
+        storageEndpointURL: String?,
         accountName: String,
         accountKey: String,
         containerName: String,
@@ -58,7 +60,7 @@ class AzureSink {
                 sharedAccessKeyName,
                 sharedAccessKey
             )
-            camelContext.addRoutes(AzureRoutes(topicName, subscriptionName, accountName, accountKey, containerName))
+            camelContext.addRoutes(AzureRoutes(topicName, subscriptionName, accountName, accountKey, containerName, storageEndpointURL))
             startCamelContext(camelContext)
         } catch (e: BadServiceException) {
             logger.error("Failed to sink messages from Azure Service Bus to Blob Storage: ${e.message}", e)
@@ -112,13 +114,22 @@ class AzureSink {
     private fun configureAmqpComponent(
         connectionString: String,
         camelContext: CamelContext,
-        serviceBusHostname: String,
+        serviceBusNamespace: String,
         sharedAccessKeyName: String,
         sharedAccessKey: String
     ) {
         try {
+            // Create the AMQP URI using the connectionString and serviceBusHostname
+            val endpoint =
+                if (connectionString.isNullOrEmpty()) {
+                    "amqps://$serviceBusNamespace.servicbus.windows.net"
+                } else {
+                    //"amqps://${connectionString.substringAfter("sb://")}"
+                    connectionString
+                }
+
             val connectionFactory = JmsConnectionFactory().apply {
-                remoteURI = "amqps://${connectionString.substringAfter("sb://")}"
+                remoteURI = endpoint
                 username = sharedAccessKeyName
                 password = sharedAccessKey
             }

@@ -3,6 +3,7 @@ package gov.cdc.ocio.eventreadersink.camel
 import com.azure.storage.blob.BlobClient
 import com.azure.storage.blob.BlobServiceClientBuilder
 import com.azure.storage.blob.models.BlobStorageException
+import com.azure.storage.common.StorageSharedKeyCredential
 import gov.cdc.ocio.eventreadersink.exceptions.BadStateException
 import org.apache.camel.builder.RouteBuilder
 import mu.KotlinLogging
@@ -25,7 +26,8 @@ class AzureRoutes(
     private val subscriptionName: String,
     private val accountName: String,
     private val accountKey: String,
-    private val containerName: String
+    private val containerName: String,
+    private val storageEndpointURL: String?
 ) : RouteBuilder() {
 
     /**
@@ -54,8 +56,16 @@ class AzureRoutes(
                 logger.error("Unexpected error occurred: ${exception.message}", exception)
             }
 
+        // Construct the endpoint URI conditionally
+        val fromUri =
+            if (subscriptionName.isNullOrEmpty()) {
+                "amqp:queue:$topicName"
+            } else {
+                "amqp:queue:$topicName/subscriptions/$subscriptionName"
+            }
+
         //Define the Camel Route for Azure Components: ServiceBus Topic -> BlobStorage
-        from("amqp:queue:$topicName/subscriptions/$subscriptionName")
+        from(fromUri)
             .process { exchange ->
                 val message = exchange.getIn().getBody(String::class.java)
                 logger.info("Received message from Azure Service Bus: $message")
@@ -71,8 +81,19 @@ class AzureRoutes(
     @Throws(BlobStorageException:: class, Exception:: class)
     private fun uploadToBlobStorage(message: String) {
         try {
-            val blobClient = BlobServiceClientBuilder()
-                .connectionString("DefaultEndpointsProtocol=https;AccountName=$accountName;AccountKey=$accountKey;EndpointSuffix=core.windows.net")
+            val blobClientBuilder =
+                BlobServiceClientBuilder()
+                    .credential(StorageSharedKeyCredential(accountName, accountKey))
+
+                    // Use the provided endpoint if available, else use the default endpoint
+                    if (storageEndpointURL.isNullOrEmpty()) {
+                        blobClientBuilder.endpoint("https://$accountName.blob.core.windows.net")
+                    } else {
+                        blobClientBuilder.endpoint(storageEndpointURL)
+                    }
+
+            val blobClient = blobClientBuilder
+//                .connectionString("DefaultEndpointsProtocol=https;AccountName=$accountName;AccountKey=$accountKey;EndpointSuffix=core.windows.net")
                 .buildClient()
                 .getBlobContainerClient(containerName)
                 .getBlobClient("message-${System.currentTimeMillis()}.json")
