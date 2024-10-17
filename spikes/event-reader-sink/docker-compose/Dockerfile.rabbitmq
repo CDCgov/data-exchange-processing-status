@@ -1,6 +1,6 @@
 FROM rabbitmq:3-management
 
-USER root
 # Enable plugin
+USER root
 RUN rabbitmq-plugins enable rabbitmq_amqp1_0
 USER rabbitmq
