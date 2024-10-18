@@ -1,15 +1,14 @@
 package gov.cdc.ocio.eventreadersink.sink
 
 import gov.cdc.ocio.eventreadersink.camel.AwsRoutes
-import org.apache.camel.CamelContext
-import org.apache.camel.impl.DefaultCamelContext
 import gov.cdc.ocio.eventreadersink.cloud.AwsManager
 import gov.cdc.ocio.eventreadersink.exceptions.ConfigurationException
 import gov.cdc.ocio.eventreadersink.model.AwsConfig
 import mu.KotlinLogging
+import org.apache.camel.CamelContext
+import org.apache.camel.impl.DefaultCamelContext
 
 private val logger = KotlinLogging.logger {}
-
 
 /**
  * AwsSink is responsible for managing the sinking of messages from AWS SQS/SNS to S3
@@ -21,7 +20,6 @@ private val logger = KotlinLogging.logger {}
  * seamless transfer of messages to storage in S3 buckets.
  */
 class AwsSink {
-
     /**
      * Sinks messages from an AWS SQS topic subscription to an S3 bucket.
      *
@@ -33,9 +31,8 @@ class AwsSink {
      * @throws RuntimeException if an error occurs during the setup of AWS components
      *         or starting the Camel context.
      */
-    @Throws(ConfigurationException:: class, Exception:: class)
+    @Throws(ConfigurationException::class, Exception::class)
     fun sinkSQSTopicSubscriptionToS3(awsConfig: AwsConfig) {
-
         try {
             // Initialize the Camel context
             val camelContext: CamelContext = DefaultCamelContext()
@@ -71,23 +68,29 @@ class AwsSink {
      * @throws Exception
      */
     @Throws(ConfigurationException::class, Exception::class)
-    private fun configureAwsComponents(awsConfig: AwsConfig, camelContext: CamelContext) {
-
+    private fun configureAwsComponents(
+        awsConfig: AwsConfig,
+        camelContext: CamelContext,
+    ) {
         try {
-            val sqsComponent = AwsManager().configureAwsSQSComponent(
-                awsConfig.accessKeyId,
-                awsConfig.secretAccessKey,
-                awsConfig.sqsRegion
-            )
+            val sqsComponent =
+                AwsManager().configureAwsSQSComponent(
+                    awsConfig.accessKeyId,
+                    awsConfig.secretAccessKey,
+                    awsConfig.sqsRegion,
+                    awsConfig.sqsQueueURL,
+                )
+
             camelContext.addComponent("aws2-sqs", sqsComponent)
 
-            val s3Component = AwsManager().configureAwsS3Component(
-                awsConfig.accessKeyId,
-                awsConfig.secretAccessKey,
-                awsConfig.s3Region
-            )
+            val s3Component =
+                AwsManager().configureAwsS3Component(
+                    awsConfig.accessKeyId,
+                    awsConfig.secretAccessKey,
+                    awsConfig.s3Region,
+                    awsConfig.s3EndpointURL,
+                )
             camelContext.addComponent("aws2-s3", s3Component)
-
         } catch (e: Exception) {
             logger.error("Error configuring AWS components due to an unexpected error: ${e.message}", e)
             throw ConfigurationException("Failed to configure AWS components: ${e.message}")
