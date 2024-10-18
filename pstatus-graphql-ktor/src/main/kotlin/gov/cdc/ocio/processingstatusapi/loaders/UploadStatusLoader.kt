@@ -109,7 +109,7 @@ class UploadStatusLoader: KoinComponent {
                         }
                     }
                     //Add the sort by fields to grouping
-                    sqlQuery.append(" , r.$sortField")
+                    sqlQuery.append(" , ${cPrefix}$sortField")
 
                     var sortOrderVal = DEFAULT_SORT_ORDER
 
@@ -126,7 +126,7 @@ class UploadStatusLoader: KoinComponent {
 
                     }
                     //Sort By/ Order By the given sort field
-                    sortByQueryStr.append(" order by r.$sortField $sortOrderVal")
+                    sortByQueryStr.append(" order by ${cPrefix}$sortField $sortOrderVal")
                 }
             }
         }
