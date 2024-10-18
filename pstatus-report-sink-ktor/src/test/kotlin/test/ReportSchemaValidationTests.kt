@@ -4,7 +4,7 @@ package test
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.microsoft.azure.functions.ExecutionContext
 import gov.cdc.ocio.database.cosmos.CosmosContainerManager
-import gov.cdc.ocio.database.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.plugins.ServiceBusProcessor
 import io.mockk.*
 import org.mockito.Mockito
