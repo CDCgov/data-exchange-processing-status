@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker container persistent data ###
+docker-compose/local-data/
