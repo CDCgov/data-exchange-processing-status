@@ -1,8 +1,7 @@
 package gov.cdc.ocio.processingnotifications.workflow
 
-import com.azure.cosmos.models.CosmosQueryRequestOptions
+import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
-import gov.cdc.ocio.processingnotifications.cosmos.CosmosRepository
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
@@ -21,10 +20,8 @@ import java.time.format.DateTimeFormatter
  * @property activities T
  */
 class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
-    private val logger = KotlinLogging.logger {}
-
     private val cosmosRepository by inject<CosmosRepository>()
-
+    private val logger = KotlinLogging.logger {}
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
         ActivityOptions.newBuilder()
@@ -38,11 +35,13 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             .build()
 
     )
+
+
+
     /**
     * The function which gets invoked by the temporal WF engine which checks whether upload has occurred within a specified time or not
     * invokes the activity, if there are errors
     * @param dataStreamId String
-    * @param dataStreamRoute String
     * @param jurisdiction String
     * @param daysToRun List<String>
     * @param timeToRun String
@@ -94,11 +93,11 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
         logger.info("notification Query: $notificationQuery")
 
         return try {
-            val results = cosmosRepository.reportsContainer?.queryItems(
-                notificationQuery, CosmosQueryRequestOptions(),
+            val results = cosmosRepository.reportsCollection.queryItems(
+                notificationQuery,
                 Integer::class.java
             )
-            val count = results?.firstOrNull()?.toInt()
+            val count = results.size
             count != 0 // Returns false if count == 0
         } catch (ex: Exception) {
             logger.error("Error occurred while checking upload for $dataStreamId and $jurisdiction: ${ex.message}")
