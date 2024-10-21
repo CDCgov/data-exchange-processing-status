@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.database.cosmos.CosmosRepository
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
 import graphql.scalars.ExtendedScalars
@@ -20,11 +21,10 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val cosmosModule = module {
         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single { CosmosRepository(uri, authKey ) }
-      //  single { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
-
+        single<ProcessingStatusRepository> { CosmosRepository(uri, authKey ) }
+        single<ProcessingStatusRepository> { CosmosRepository(uri, authKey,  "/uploadId","Reports","Reports-DeadLetter") }
         // Create a CosmosDB config that can be dependency injected (for health checks)
-        single() { CosmosConfiguration(uri, authKey) } //createdAtStart = true
+        single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
     }
 
     return modules(listOf(cosmosModule))

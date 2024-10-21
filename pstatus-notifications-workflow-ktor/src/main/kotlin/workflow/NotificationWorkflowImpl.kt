@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow
 
-import gov.cdc.ocio.database.cosmos.CosmosRepository
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import io.temporal.activity.ActivityOptions
@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
  * @property activities T
  */
 class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
-    private val cosmosRepository by inject<CosmosRepository>()
+    private val cosmosRepository by inject<ProcessingStatusRepository>()
     private val logger = KotlinLogging.logger {}
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
@@ -35,8 +35,6 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             .build()
 
     )
-
-
 
     /**
     * The function which gets invoked by the temporal WF engine which checks whether upload has occurred within a specified time or not
