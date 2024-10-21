@@ -14,9 +14,6 @@ data class UploadStats(
     @GraphQLDescription("Total number of uploads that were stopped by the upload api due to one or more issues with the metadata received.")
     var badMetadataCount: Long = 0,
 
-    @GraphQLDescription("Number of uploads where we have received at least one chunk of data, but not all of them.")
-    var inProgressUploadsCount: Long = 0,
-
     @GraphQLDescription("Number of uploads that have been completed.  This means, not only did the upload start, but according to the upload status reports we have received 100% of the expected chunks.")
     var completedUploadsCount: Long = 0,
 

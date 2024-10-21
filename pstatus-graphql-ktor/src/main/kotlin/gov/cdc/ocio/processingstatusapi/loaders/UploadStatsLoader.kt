@@ -45,14 +45,6 @@ class UploadStatsLoader: CosmosLoader() {
                         + "ARRAY_LENGTH(r.stageInfo.issues) > 0 and $timeRangeWhereClause"
                 )
 
-        val inProgressUploadsCountQuery = (
-                "select value count(1) "
-                        + "from r "
-                        + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
-                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-status' and "
-                        + "r.content['offset'] < r.content['size'] and $timeRangeWhereClause"
-                )
-
         val completedUploadsCountQuery = (
                 "select value count(1) "
                         + "from r "
@@ -93,13 +85,6 @@ class UploadStatsLoader: CosmosLoader() {
 
         val badMetadataCount = badMetadataCountResult?.firstOrNull() ?: 0
 
-        val inProgressUploadCountResult = reportsContainer?.queryItems(
-            inProgressUploadsCountQuery, CosmosQueryRequestOptions(),
-            Float::class.java
-        )
-
-        val inProgressUploadsCount = inProgressUploadCountResult?.firstOrNull() ?: 0
-
         val duplicateFilenameCountResult = reportsContainer?.queryItems(
             duplicateFilenameCountQuery, CosmosQueryRequestOptions(),
             DuplicateFilenameCounts::class.java
@@ -125,7 +110,6 @@ class UploadStatsLoader: CosmosLoader() {
             this.uniqueUploadIdsCount = uniqueUploadIdsCount.toLong()
             this.uploadsWithStatusCount = uploadsWithStatusCount.toLong()
             this.badMetadataCount = badMetadataCount.toLong()
-            this.inProgressUploadsCount = inProgressUploadsCount.toLong()
             this.completedUploadsCount = completedUploadsCount.toLong()
             this.duplicateFilenames = duplicateFilenames
             this.undeliveredUploads.totalCount = undeliveredUploads.count().toLong()
