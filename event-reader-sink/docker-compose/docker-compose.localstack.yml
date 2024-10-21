@@ -1,0 +1,12 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,s3  # Include both SQS and S3
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "./local-data/localstack:/var/lib/localstack"
+      - "./localstack-bootstrap.sh:/etc/localstack/init/ready.d/bootstrap.sh"  # Bootstrap script

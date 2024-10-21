@@ -42,8 +42,9 @@ class AwsRoutes(private val awsConfig: AwsConfig) : RouteBuilder() {
 
         //Define the Camel Route for AWS Components: SQS/SNS Topic -> S3
         from("aws2-sqs://${awsConfig.sqsQueueName}")
-            .setHeader("CamelAwsS3Key", simple("message-${System.currentTimeMillis()}.json"))
-            .to("aws2-s3://${awsConfig.s3BucketName}?accessKey=${awsConfig.accessKeyId}&secretKey=${awsConfig.secretAccessKey}&region=${awsConfig.s3Region}")
+            .process { exchange ->
+                exchange.message.setHeader("CamelAwsS3Key", "message-${System.currentTimeMillis()}.json")
+            }.to("aws2-s3://${awsConfig.s3BucketName}?accessKey=${awsConfig.accessKeyId}&secretKey=${awsConfig.secretAccessKey}&region=${awsConfig.s3Region}")
             .log("Message sent to S3 bucket: ${awsConfig.s3BucketName}")
     }
 }
