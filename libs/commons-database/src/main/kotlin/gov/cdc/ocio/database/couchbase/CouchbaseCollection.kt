@@ -48,7 +48,7 @@ class CouchbaseCollection(
             // Couchbase items are received as an array, but within each array element is a field with the content.
             // The content field name will match that of the collection name.
             val collectionName = it.names.first()
-            val item = it.get(collectionName)
+            val item = if (collectionName.equals(collectionVariable)) it.get(collectionName) else it
             val obj = gson.fromJson(item.toString(), classType)
             results.add(obj)
         }
