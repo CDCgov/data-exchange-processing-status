@@ -83,12 +83,14 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
         val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
-
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd)
+
+        val cVar = cosmosRepository.reportsCollection.collectionVariable
+        val cPrefix = cosmosRepository.reportsCollection.collectionVariablePrefix
         val notificationQuery = (
                 "SELECT VALUE COUNT(1) "
-                        + "from r where r.dataStreamId = '$dataStreamId' and "
-                        + "r.jurisdiction = '$jurisdiction' and ($timeRangeWhereClause)"
+                        + "from $cVar where  ${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}jurisdiction = '$jurisdiction' and ($timeRangeWhereClause)"
                 )
         logger.info("notification Query: $notificationQuery")
 

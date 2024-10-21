@@ -45,10 +45,6 @@ fun Application.module() {
     install(ContentNegotiation) {
         jackson()
     }
-
-
-
-
     // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
 }
