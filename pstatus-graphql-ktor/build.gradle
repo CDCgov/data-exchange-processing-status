@@ -33,7 +33,9 @@ configurations {
     // create a separate configuration for the agent since it should not be a normal dependency
     agent
 }
-
+application {
+    mainClass.set("gov.cdc.ocio.processingstatusapi.ApplicationKt")
+}
 repositories{
     mavenLocal()
     mavenCentral()
