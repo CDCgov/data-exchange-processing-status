@@ -22,7 +22,9 @@ data class UploadStats(
 
     @GraphQLDescription(
         "Provides a list of all the uploads that have not been delivered. \n" +
-        "Any upload id where an upload-completed report exists but not a blob-file-copy report or if the blob-file-copy report indicates failure."
+        "Any upload is considered undelivered when: \n" +
+        "'1. ' Any upload id where an upload-completed report exists, but not a blob-file-copy report. \n" +
+        "'2. ' Any upload id where a blob-file-copy report exists and it's status indicates failure. \n"
     )
     var undeliveredUploads: UndeliveredUploadCounts = UndeliveredUploadCounts(),
 
