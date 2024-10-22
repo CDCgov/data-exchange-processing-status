@@ -14,6 +14,7 @@ package gov.cdc.ocio.eventreadersink.model
  * @property containerName The name of the Blob Storage container.
  * @property storageAccountKey The storage account key for the Azure Storage account.
  * @property storageAccountName The storage account name for the Azure Storage account.
+ * @property storageEndpointURL The custom URL for Azure Storage (for Azurite or left null for default Azure endpoint).
  */
 data class AzureConfig(
     var namespace: String,
@@ -24,5 +25,6 @@ data class AzureConfig(
     var subscriptionName: String,
     var containerName: String,
     var storageAccountKey: String,
-    var storageAccountName: String
+    var storageAccountName: String,
+    var storageEndpointURL: String?
 )

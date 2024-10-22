@@ -19,6 +19,7 @@ data class AwsConfig(
     var sqsQueueName: String,
     var sqsQueueURL: String,
     var sqsRegion: String,
+    var s3EndpointURL: String?,
     var s3BucketName: String,
     var s3Region: String
 )
