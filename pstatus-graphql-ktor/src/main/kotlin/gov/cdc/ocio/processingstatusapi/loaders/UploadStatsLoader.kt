@@ -49,8 +49,9 @@ class UploadStatsLoader: CosmosLoader() {
                 "select value count(1) "
                         + "from r "
                         + "where r.dataStreamId = '$dataStreamId' and r.dataStreamRoute = '$dataStreamRoute' and "
-                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-status' and "
-                        + "r.content['offset'] = r.content['size'] and $timeRangeWhereClause"
+                        + "r.stageInfo.service = 'UPLOAD API' and r.stageInfo.action = 'upload-completed' and "
+                        + "r.stageInfo.status = 'SUCCESS' and "
+                        + "$timeRangeWhereClause "
                 )
 
         val duplicateFilenameCountQuery = (
