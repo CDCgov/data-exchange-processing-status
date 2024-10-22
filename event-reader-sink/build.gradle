@@ -71,19 +71,14 @@ dependencies {
     implementation("org.apache.camel:camel-aws2-s3:3.19.0")
     implementation("org.apache.camel:camel-aws2-sqs:3.19.0")
 
+    // For tests
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testImplementation("io.ktor:ktor-server-tests:$ktor_version")
+    testImplementation("io.ktor:ktor-server-core:$ktor_version") // remove me?
+    testImplementation("org.mockito:mockito-core:4.0.0")
+    testImplementation("org.mockito:mockito-inline:4.0.0")
 }
-test {
-    useTestNG()
-    testLogging {
-        events "passed", "skipped", "failed"
-    }
-    //Change this to "true" if we want to execute unit tests
-    systemProperty("isTestEnvironment", "false")
-
-    // Set the test classpath, if required
-}
-
-
 
 repositories {
     mavenCentral()
@@ -97,4 +92,24 @@ jib {
             password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
         }
     }
+}
+
+sourceSets {
+    test {
+        kotlin.srcDir("src/test/kotlin")
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
+
+    //Change this to "true" if we want to execute unit tests
+    systemProperty("isTestEnvironment", "true")
+
+    // Set the test classpath, if required
 }
