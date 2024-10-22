@@ -22,6 +22,8 @@ class UploadStatsLoader: KoinComponent {
     private val cName = reportsCollection.collectionNameForQuery
     private val cVar = reportsCollection.collectionVariable
     private val cPrefix = reportsCollection.collectionVariablePrefix
+    private val openBkt = reportsCollection.openBracketChar
+    private val closeBkt = reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
 
     @Throws(BadRequestException::class, ContentException::class)
@@ -79,7 +81,7 @@ class UploadStatsLoader: KoinComponent {
                 )
 
         val duplicateFilenameCountQuery = (
-                "select * from $cName $cVar "
+                "select * from "
                         + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
@@ -373,7 +375,7 @@ class UploadStatsLoader: KoinComponent {
         return (
                 "select value count(1) "
                         + "from "
-                        + "(select distinct uploadId "
+                        + "(select distinct ${cPrefix}uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
@@ -424,11 +426,11 @@ class UploadStatsLoader: KoinComponent {
         return (
                 "select distinct ${cPrefix}uploadId "
                         + "from $cName $cVar "
-                        + "where IS_DEFINED(${cPrefix}content.content_schema_name) and "
+                        + "where "//IS_DEFINED(${cPrefix}content.content_schema_name) and "
                         + "${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}content.content_schema_name = 'blob-file-copy' and "
-                        + "${cPrefix}stageInfo.action = 'blob-file-copy' and "
+                        + "${cPrefix}stageInfo.${cElFunc("action")} = 'blob-file-copy' and "
                         + "${cPrefix}stageInfo.status = 'FAILURE' and "
                         + "$timeRangeWhereClause "
                 )
@@ -450,11 +452,11 @@ class UploadStatsLoader: KoinComponent {
     ): String {
         return """
             SELECT distinct ${cPrefix}uploadId, ${cPrefix}content.filename 
-            FROM r 
+            FROM $cName $cVar 
             WHERE ${cPrefix}dataStreamId = '$dataStreamId' 
             AND ${cPrefix}dataStreamRoute = '$dataStreamRoute' 
-            AND ${cPrefix}stageInfo.action = 'metadata-verify' 
-            AND ${cPrefix}uploadId IN ($quotedIds) 
+            AND ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' 
+            AND ${cPrefix}uploadId IN ${openBkt}$quotedIds${closeBkt} 
             AND $timeRangeWhereClause
         """.trimIndent()
     }
