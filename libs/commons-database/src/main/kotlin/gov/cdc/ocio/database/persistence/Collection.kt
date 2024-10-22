@@ -59,6 +59,12 @@ interface Collection {
     // With dynamodb this will be the table name surrounded by quotes.
     val collectionNameForQuery: String
 
+    val openBracketChar
+        get() = '('
+
+    val closeBracketChar
+        get() = ')'
+
     // The collection element for query is a function that transforms the element name used for the query.  For
     // example, with cosmosdb it's a straight pass-through.  For dynamodb, the element name will be surrounded by
     // quotation marks.
