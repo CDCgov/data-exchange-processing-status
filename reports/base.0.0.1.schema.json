@@ -1,0 +1,53 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/cdcent/data-exchange-messages/reports/base",
+    "title": "Base Report",
+    "type": "object",
+    "required": ["upload_id", "data_stream_id", "data_stream_route", "content_type"],
+    "if": {
+        "properties": {
+            "content_type": {
+                "const": "json"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "content": {
+                "$ref": "#/$defs/jsonContent"
+            }
+        }
+    },
+    "properties": {
+        "upload_id": {
+            "$ref": "#/$defs/uuid",
+            "description": "Unique upload identifier associated with this report."
+        },
+        "data_stream_id": {
+            "type": "string"
+        },
+        "data_stream_route": {
+            "type": "string"
+        },
+        "content_type": {
+            "type": "string"
+        }
+    },
+    "$defs": {
+        "uuid": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "jsonContent": {
+            "type": "object",
+            "properties": {
+                "schema_name": {
+                    "type": "string"
+                },
+                "schema_version": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
