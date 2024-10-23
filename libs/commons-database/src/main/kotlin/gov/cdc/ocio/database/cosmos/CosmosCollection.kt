@@ -133,7 +133,7 @@ class CosmosCollection(
 
     override val collectionVariablePrefix = "r."
 
-    override val collectionNameForQuery = containerName
+    override val collectionNameForQuery = "" // safer not to provide the container name
 
     override val collectionElementForQuery = { name: String -> name }
 
