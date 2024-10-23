@@ -1,0 +1,86 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/cdcent/data-exchange-messages/reports/buzz-file-capture",
+    "title": "Buzz File Capture",
+    "type": "object",
+    "required": ["content_schema_name", "content_schema_version", "source", "name", "id", "src_url", "date_created", "date_modified", "user_email", "parent_name", "parent_id", "mime"],
+    "properties": {
+        "content_schema_name": {
+            "type": "string"
+        },
+        "content_schema_version": {
+            "type": "string"
+        },
+        "source": {
+            "type": "string",
+            "description": "Source of the content."
+        },
+        "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the content."
+        },
+        "name": {
+            "type": "string",
+            "description": "Name of the file."
+        },
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for the file."
+        },
+        "src_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Source URL of the file."
+        },
+        "date_created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation date of the file."
+        },
+        "date_modified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification date of the file."
+        },
+        "user_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email of the user associated with the file."
+        },
+        "parent_name": {
+            "type": "string",
+            "description": "Name of the parent directory or REDCap project."
+        },
+        "parent_id": {
+            "type": "string",
+            "description": "Unique identifier of the parent directory or REDCap project."
+        },
+        "file_size": {
+            "type": ["integer", "null"],
+            "description": "Size of the file in bytes."
+        },
+        "mime": {
+            "type": "string",
+            "description": "MIME type of the file."
+        },
+        "fingerprints": {
+            "type": ["array", "null"],
+            "items": {
+                "type": "object",
+                "required": ["algo", "hash"],
+                "properties": {
+                    "algo": {
+                        "type": "string",
+                        "description": "Algorithm used for the hash."
+                    },
+                    "hash": {
+                        "type": "string",
+                        "description": "Hash value of the file."
+                    }
+                }
+            },
+            "description": "Optional list of fingerprints associated with the file."
+        }
+    }
+}

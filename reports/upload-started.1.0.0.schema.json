@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/cdcent/data-exchange-messages/reports/upload-started",
+    "title": "Upload Started Report",
+    "type": "object",
+    "required": [
+        "content_schema_name",
+        "content_schema_version",
+        "status"
+    ],
+    "properties": {
+        "content_schema_name": {
+            "type": "string"
+        },
+        "content_schema_version": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "SUCCESS",
+                "FAILURE"
+            ]
+        }
+    }
+}
