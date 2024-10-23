@@ -9,6 +9,7 @@ import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import io.ktor.util.logging.*
+import mu.KotlinLogging
 import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
