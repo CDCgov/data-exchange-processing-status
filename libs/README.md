@@ -12,7 +12,7 @@ The `commons-types` library is a collection of types including enumerations, mod
 ## rules-engine _(coming soon)_
 The `rules-engine` library allows business rules to be dynamically defined to drive actions.  The intended purpose is for use in workflows to specify conditions for state determination.
 
-## schema-validation _(coming soon)_
+## schema-validation 
 The `schema-validation` library is used for processing status report validations.  Each report has a schema associated with it that this library can be used to determine whether the report is valid or not and if not, the reasons why.
 
 ## subscription-management _(coming soon)_

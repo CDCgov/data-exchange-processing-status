@@ -64,20 +64,13 @@ class UploadStatsLoader: KoinComponent {
                         + "ARRAY_LENGTH(${cPrefix}stageInfo.issues) > 0 and $timeRangeWhereClause"
                 )
 
-        val inProgressUploadsCountQuery = (
-                "select value count(1) "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-status' and "
-                        + "${cPrefix}content['offset'] < ${cPrefix}content['size'] and $timeRangeWhereClause"
-                )
-
         val completedUploadsCountQuery = (
                 "select value count(1) "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-status' and "
-                        + "${cPrefix}content['offset'] = ${cPrefix}content['size'] and $timeRangeWhereClause"
+                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' and "
+                        + "${cPrefix}stageInfo.status = 'SUCCESS' and "
+                        + "$timeRangeWhereClause "
                 )
 
         val duplicateFilenameCountQuery = (
@@ -112,13 +105,6 @@ class UploadStatsLoader: KoinComponent {
 
         val badMetadataCount = badMetadataCountResult.firstOrNull() ?: 0
 
-        val inProgressUploadCountResult = reportsCollection.queryItems(
-            inProgressUploadsCountQuery,
-            Float::class.java
-        )
-
-        val inProgressUploadsCount = inProgressUploadCountResult.firstOrNull() ?: 0
-
         val duplicateFilenameCountResult = reportsCollection.queryItems(
             duplicateFilenameCountQuery,
             DuplicateFilenameCounts::class.java
@@ -144,11 +130,10 @@ class UploadStatsLoader: KoinComponent {
             this.uniqueUploadIdsCount = uniqueUploadIdsCount.toLong()
             this.uploadsWithStatusCount = uploadsWithStatusCount.toLong()
             this.badMetadataCount = badMetadataCount.toLong()
-            this.inProgressUploadsCount = inProgressUploadsCount.toLong()
             this.completedUploadsCount = completedUploadsCount.toLong()
             this.duplicateFilenames = duplicateFilenames
-            this.unDeliveredUploads.totalCount = undeliveredUploads.count().toLong()
-            this.unDeliveredUploads.unDeliveredUploads = undeliveredUploads
+            this.undeliveredUploads.totalCount = undeliveredUploads.count().toLong()
+            this.undeliveredUploads.undeliveredUploads = undeliveredUploads
             this.pendingUploads.totalCount = pendingUploads.count().toLong()
             this.pendingUploads.pendingUploads = pendingUploads
         }
@@ -168,7 +153,7 @@ class UploadStatsLoader: KoinComponent {
         dataStreamId: String,
         dataStreamRoute: String,
         timeRangeWhereClause: String
-    ): List<UnDeliveredUpload> {
+    ): List<UndeliveredUpload> {
         try {
             //Get the uploadIds for each upload with 'upload-completed' and no report for blob-file-copy
             val undeliveredUploadIdsForBlobFileCopy = getUploadIdsWithIssues(
@@ -217,7 +202,7 @@ class UploadStatsLoader: KoinComponent {
      * @param dataStreamId The ID of the data stream.
      * @param dataStreamRoute The route of the data stream.
      * @param timeRangeWhereClause The SQL clause for the time range.
-     * @return A list of [UnDeliveredUpload] objects representing the undelivered uploads.
+     * @return A list of [UndeliveredUpload] objects representing the undelivered uploads.
      * @throws BadRequestException If an error occurs while fetching the undelivered uploads.
      */
     @Throws(ContentException::class, BadRequestException::class)
@@ -225,7 +210,7 @@ class UploadStatsLoader: KoinComponent {
         dataStreamId: String,
         dataStreamRoute: String,
         timeRangeWhereClause: String
-    ): List<UnDeliveredUpload> {
+    ): List<UndeliveredUpload> {
         try {
             // Get the uploadIds for each upload with 'metadata-verify' and no report for 'upload-completed'
             val pendingUploadIdsForBlobFileCopy = getUploadIdsWithIssues(
@@ -277,44 +262,26 @@ class UploadStatsLoader: KoinComponent {
         timeRangeWhereClause: String): List<String> {
 
         try{
-            // Query to retrieve the count of uploads with 'metadata-verify' with the provided search criteria
-            val expectedActionCountQuery = buildCountQuery(dataStreamId, dataStreamRoute, expectedAction, timeRangeWhereClause)
 
             // Query to retrieve the uploads with 'metadata-verify' with the provided search criteria
             val expectedActionQuery = buildUploadByActionQuery(dataStreamId, dataStreamRoute, expectedAction, timeRangeWhereClause)
 
-            // Query to retrieve the count of uploads with 'blob-file-copy' with the provided search criteria
-            val missingActionCountQuery = buildCountQuery(dataStreamId, dataStreamRoute, missingAction, timeRangeWhereClause)
-
             // Query to retrieve the uploads with 'blob-file-copy' with the provided search criteria
             val missingActionQuery = buildUploadByActionQuery(dataStreamId, dataStreamRoute, missingAction, timeRangeWhereClause)
 
-            // Query: Count of all uploads with 'metadata-verify'
-            val expectedActionCount = executeUndeliveredUploadsCountsQuery(expectedActionCountQuery)
+            // Fetch the list of undelivered uploadIds
+            val expectedActionIds = executeUndeliveredUploadsQuery(expectedActionQuery)
+            val missingActionIds = executeUndeliveredUploadsQuery(missingActionQuery)
 
-            // Query: Count of all uploads with 'blob-file-copy'
-            val missingActionCount = executeUndeliveredUploadsCountsQuery(missingActionCountQuery)
+            return (expectedActionIds - missingActionIds).toList()
 
-            // Fetch the list of undelivered uploadIds when the counts do not match
-            if (expectedActionCount != missingActionCount) {
-                // Get the list of uploadIds with metadata-verify that do not have an entry with an uploadId exist in blob-file-copy
-                val expectedActionIds = executeUndeliveredUploadsQuery(expectedActionQuery)
-                val missingActionIds = executeUndeliveredUploadsQuery(missingActionQuery)
-
-                val finalResults = (expectedActionIds - missingActionIds).toList()
-                logger.info("Total number of uploads with stage, $expectedAction, without any associated reports: " + finalResults.count())
-                return finalResults
-
-            }else {
-                return listOf()
-            } //END if
         }catch (e: ContentException) {
             logger.error("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}", e)
-            throw ContentException("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}")
+            throw e
 
         } catch (e: BadRequestException) {
             logger.error("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}", e)
-            throw BadRequestException("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}")
+            throw e
 
         }catch (e: Exception) {
             logger.error("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}", e)
@@ -336,53 +303,18 @@ class UploadStatsLoader: KoinComponent {
         try {
             return reportsCollection.queryItems(
                 query,
-                UnDeliveredUpload::class.java
-            ).mapNotNull { it.uploadId }.toSet()
+                UndeliveredUpload::class.java
+            )
+                .mapNotNull { it.uploadId }
+                .toSet()
         } catch (e: ContentException) {
+            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
+            throw e
+        } catch (e: Exception) {
             logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
             throw ContentException("Error executing undelivered uploads counts query: ${e.message}")
         }
-    }
 
-    /**
-     * Executes an undelivered uploads counts query and returns the count.
-     *
-     * @param query The SQL query to execute.
-     * @return The count of undelivered uploads.
-     * @throws ContentException If an error occurs while executing the undelivered uploads counts query.
-     */
-    @Throws(ContentException::class)
-    private fun executeUndeliveredUploadsCountsQuery(query: String): Int {
-        try {
-            return reportsCollection.queryItems(query, Int::class.java)
-                .firstOrNull() ?: 0
-        } catch (e: ContentException) {
-            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
-            throw ContentException("Error executing undelivered uploads counts query: ${e.message}")
-        }
-    }
-
-    /**
-     * Builds a SQL count query for the specified data stream, route, and action.
-     *
-     * @param dataStreamId The ID of the data stream.
-     * @param dataStreamRoute The route of the data stream.
-     * @param action The action to filter by.
-     * @param timeRangeWhereClause The SQL clause for the time range.
-     * @return The SQL query string.
-     */
-    private fun buildCountQuery(dataStreamId: String, dataStreamRoute: String, action: String, timeRangeWhereClause: String): String {
-        return (
-                "select value count(1) "
-                        + "from "
-                        + "(select distinct ${cPrefix}uploadId "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.${cElFunc("action")} = '$action' and "
-                        + timeRangeWhereClause
-                        + ") as count")
-            .trimIndent()
     }
 
     /**
@@ -469,10 +401,13 @@ class UploadStatsLoader: KoinComponent {
      * @throws ContentException If an error occurs while executing the undelivered upload query.
      */
     @Throws(ContentException::class)
-    private fun executeUploadsQuery(query: String): List<UnDeliveredUpload> {
-        try{
-            return reportsCollection.queryItems(query, UnDeliveredUpload::class.java).toList()
+    private fun executeUploadsQuery(query: String): List<UndeliveredUpload> {
+        try {
+            return reportsCollection.queryItems(query, UndeliveredUpload::class.java).toList()
         } catch (e: ContentException) {
+            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
+            throw e
+        } catch (e: Exception) {
             logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
             throw ContentException("Error executing undelivered uploads counts query: ${e.message}")
         }

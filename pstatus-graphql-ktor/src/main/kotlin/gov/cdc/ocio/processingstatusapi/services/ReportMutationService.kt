@@ -63,7 +63,7 @@ class ReportMutationService : KoinComponent {
      * @throws ContentException If there is an error with the content format.
      */
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(input: ReportInput, action: String): Report? {
+    fun upsertReport(action: String, input: ReportInput): Report? {
         logger.info("ReportId, id = ${input.id}, action = $action")
 
         return try {
@@ -141,7 +141,7 @@ class ReportMutationService : KoinComponent {
             val parsedContent = input.content?.let { parseContent(it, input.contentType) } as? Map<*, *>?
 
             // Set id and reportId to be the same
-            val reportId = input.id ?: generateNewId() // Generate a new ID if not provided
+            val reportId = input.id // Generate a new ID if not provided
 
 
             Report(
@@ -305,7 +305,7 @@ class ReportMutationService : KoinComponent {
     private fun validateInput(input: ReportInput, action: UpsertAction) {
         when (action) {
             UpsertAction.CREATE -> {
-                if (!input.id.isNullOrBlank()) {
+                if (input.id != null) {
                     throw BadRequestException("ID should not be provided for create action.Provided ID: ${input.id}")
                 }
             }
@@ -352,7 +352,7 @@ class ReportMutationService : KoinComponent {
     @Throws(BadRequestException::class, ContentException:: class)
     private fun createReport(report: Report): Report? {
 
-        if (!report.id.isNullOrBlank()) {
+        if (report.id != null) {
             throw BadRequestException("ID should not be provided for create action.")
         }
 
