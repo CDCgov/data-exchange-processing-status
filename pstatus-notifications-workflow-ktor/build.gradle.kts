@@ -22,14 +22,17 @@ repositories {
   group "gov.cdc.ocio"
   version "0.0.1"
 
-
+tasks.register("prepareKotlinBuildScriptModel"){}
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
-
+application {
+    mainClass.set("gov.cdc.ocio.processingnotifications.ApplicationKt")
+}
 
 dependencies {
+    implementation(project(":libs:commons-database"))
     implementation("io.temporal:temporal-sdk:1.15.1")
     implementation("com.sendgrid:sendgrid-java:4.9.2")
     implementation ("io.ktor:ktor-server-core:2.3.2")
