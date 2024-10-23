@@ -145,7 +145,7 @@ class UploadStatsLoader: KoinComponent {
      * @param dataStreamId The ID of the data stream.
      * @param dataStreamRoute The route of the data stream.
      * @param timeRangeWhereClause The SQL clause for the time range.
-     * @return A list of [UnDeliveredUpload] objects representing the undelivered uploads.
+     * @return A list of [UndeliveredUpload] objects representing the undelivered uploads.
      * @throws BadRequestException If an error occurs while fetching the undelivered uploads.
      */
     @Throws(ContentException::class, BadRequestException :: class)
