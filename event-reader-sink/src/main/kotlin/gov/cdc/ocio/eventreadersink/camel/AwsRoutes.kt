@@ -14,10 +14,17 @@ private val logger = KotlinLogging.logger {}
  *
  * @property awsConfig Configuration parameters for AWS services such as
  * SQS queue name, S3 bucket name, access key, and region.
+ * @property timeProvider Inject a time provider for controllable time in tests.
+ * @property sqsEndpoint Overridable sqs endpoint for test purposes.
+ * @property s3Endpoint Overridable s3 endpoint for test purposes.
  */
 
-class AwsRoutes(private val awsConfig: AwsConfig) : RouteBuilder() {
-
+class AwsRoutes(
+    private val awsConfig: AwsConfig,
+    private val timeProvider: () -> Long = { System.currentTimeMillis() },
+    private val sqsEndpoint: String = "aws2-sqs://${awsConfig.sqsQueueName}",
+    private val s3Endpoint: String = "aws2-s3://${awsConfig.s3BucketName}?accessKey=${awsConfig.accessKeyId}&secretKey=${awsConfig.secretAccessKey}&region=${awsConfig.s3Region}"
+) : RouteBuilder() {    
     /**
      * Configures the Camel routes for processing messages from AWS SQS to S3.
      *
@@ -41,10 +48,12 @@ class AwsRoutes(private val awsConfig: AwsConfig) : RouteBuilder() {
             }
 
         //Define the Camel Route for AWS Components: SQS/SNS Topic -> S3
-        from("aws2-sqs://${awsConfig.sqsQueueName}")
+        from(sqsEndpoint)
+            .routeId("awsRoute")
             .process { exchange ->
-                exchange.message.setHeader("CamelAwsS3Key", "message-${System.currentTimeMillis()}.json")
-            }.to("aws2-s3://${awsConfig.s3BucketName}?accessKey=${awsConfig.accessKeyId}&secretKey=${awsConfig.secretAccessKey}&region=${awsConfig.s3Region}")
+                val timestamp = timeProvider()
+                exchange.message.setHeader("CamelAwsS3Key", "message-${timestamp}.json")
+            }.to(s3Endpoint)
             .log("Message sent to S3 bucket: ${awsConfig.s3BucketName}")
     }
 }
