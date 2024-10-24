@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusapi.loaders
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportCounts
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import gov.cdc.ocio.processingstatusapi.models.reports.*
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Debatch
@@ -69,7 +69,7 @@ class ReportCountsLoader: KoinComponent {
                 this.uploadId = uploadId
                 this.dataStreamId = firstReport?.dataStreamId
                 this.dataStreamRoute = firstReport?.dataStreamRoute
-                this.timestamp = firstReport?.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+                this.timestamp = firstReport?.timestamp?.atOffset(ZoneOffset.UTC)
                 val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
                 val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
                 val revisedStageCounts = revisedStageCountsByUploadId[uploadId]

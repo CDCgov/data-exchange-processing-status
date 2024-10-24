@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.DataStream
 import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import gov.cdc.ocio.processingstatusapi.models.Report
@@ -83,7 +83,7 @@ class ReportLoader: KoinComponent {
             ReportDao::class.java
         )
         val reports = mutableListOf<Report>()
-        reportItems.forEach { reports.add(it.toReport()) }
+        reportItems.forEach { reports.add(Report.fromReportDao(it)) }
 
         return reports
     }
@@ -122,7 +122,7 @@ class ReportLoader: KoinComponent {
                     SortOrder.Descending -> "desc"
                     else -> "asc" // default
                 }
-                reportsSqlQuery.append(" order by ${cPrefix}timestamp $sortOrderVal")
+//                reportsSqlQuery.append(" order by ${cPrefix}dexIngestTimestamp $sortOrderVal")
             }
             null -> {
                 // nothing to sort by
@@ -139,7 +139,7 @@ class ReportLoader: KoinComponent {
         // Convert the report DAOs to reports and ensure the user has access to them.
         val reports = mutableListOf<Report>()
         reportItems.forEach { reportItem ->
-            val report = reportItem.toReport()
+            val report = Report.fromReportDao(reportItem)
             dataStreams?.run {
                 if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
                     throw ForbiddenException("You are not allowed to access this resource.")

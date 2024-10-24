@@ -66,5 +66,5 @@ open class Report(
 
     var content: Any? = null,
 
-    val timestamp: Instant = Instant.now()
+    var timestamp: Instant = Instant.now()
 )

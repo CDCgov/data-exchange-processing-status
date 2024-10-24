@@ -1,9 +1,11 @@
-package gov.cdc.ocio.processingstatusapi.models.dao
+package gov.cdc.ocio.database.models.dao
 
 import com.google.gson.Gson
-import gov.cdc.ocio.processingstatusapi.models.Report
-import java.time.ZoneOffset
+import gov.cdc.ocio.database.dynamo.ReportConverterProvider
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
+import java.time.Instant
 import java.util.*
+
 
 /**
  * Data access object for reports, which is the structure returned from CosmosDB queries.
@@ -27,6 +29,9 @@ import java.util.*
  * @property contentAsString String?
  * @constructor
  */
+@DynamoDbBean(converterProviders = [
+    ReportConverterProvider::class
+])
 open class ReportDao(
 
     var id : String? = null,
@@ -39,7 +44,7 @@ open class ReportDao(
 
     var dataStreamRoute: String? = null,
 
-    var dexIngestDateTime: Date? = null,
+    var dexIngestDateTime: Instant? = null,
 
     var messageMetadata: MessageMetadataDao? = null,
 
@@ -49,15 +54,15 @@ open class ReportDao(
 
     var data: Map<String, String>? = null,
 
-    var contentType : String? = null,
+    var contentType: String? = null,
 
-    var jurisdiction:String? =null,
+    var jurisdiction: String? =null,
 
-    var senderId:String? = null,
+    var senderId: String? = null,
 
-    var dataProducerId:String? = null,
+    var dataProducerId: String? = null,
 
-    var timestamp: Date? = null,
+    var timestamp: Instant? = null,
 
     var content: Any? = null
 ) {
@@ -78,26 +83,4 @@ open class ReportDao(
             }
 
         }
-
-    /**
-     * Convenience function to convert a cosmos data object to a Report object
-     */
-    fun toReport() = Report().apply {
-        this.id = this@ReportDao.id
-        this.uploadId = this@ReportDao.uploadId
-        this.reportId = this@ReportDao.reportId
-        this.dataStreamId = this@ReportDao.dataStreamId
-        this.dataStreamRoute = this@ReportDao.dataStreamRoute
-        this.dexIngestDateTime = this@ReportDao.dexIngestDateTime?.toInstant()?.atOffset(ZoneOffset.UTC)
-        this.messageMetadata = this@ReportDao.messageMetadata?.toMessageMetadata()
-        this.stageInfo = this@ReportDao.stageInfo?.toStageInfo()
-        this.tags = this@ReportDao.tags
-        this.data = this@ReportDao.data
-        this.jurisdiction = this@ReportDao.jurisdiction
-        this.senderId = this@ReportDao.senderId
-        this.dataProducerId= this@ReportDao.dataProducerId
-        this.timestamp = this@ReportDao.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
-        this.contentType = this@ReportDao.contentType
-        this.content = this@ReportDao.content as? Map<*, *>
-    }
 }
