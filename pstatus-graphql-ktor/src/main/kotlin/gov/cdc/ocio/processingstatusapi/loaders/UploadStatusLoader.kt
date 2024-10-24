@@ -28,6 +28,7 @@ class UploadStatusLoader: KoinComponent {
     private val cVar = reportsCollection.collectionVariable
     private val cPrefix = reportsCollection.collectionVariablePrefix
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val timeFunc = repository.reportsCollection.timeConversionForQuery
 
     /**
      * Advanced query for dex uploads, including sorting, filtering and pagination.
@@ -80,12 +81,12 @@ class UploadStatusLoader: KoinComponent {
         }
 
         dateStart?.run {
-            val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-            sqlQuery.append(" and ${cPrefix}dexIngestDateTime >= $dateStartEpochSecs")
+            val dateStartEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateStart, "date_start"))
+            sqlQuery.append(" and ${cPrefix}dexIngestDateTime >= $dateStartEpochMillis")
         }
         dateEnd?.run {
-            val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-            sqlQuery.append(" and ${cPrefix}dexIngestDateTime < $dateEndEpochSecs")
+            val dateEndEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateEnd, "date_end"))
+            sqlQuery.append(" and ${cPrefix}dexIngestDateTime < $dateEndEpochMillis")
         }
 
         sqlQuery.append(" group by ${cPrefix}uploadId, ${cPrefix}jurisdiction, ${cPrefix}senderId")

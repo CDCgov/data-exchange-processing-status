@@ -69,4 +69,7 @@ interface Collection {
     // example, with cosmosdb it's a straight pass-through.  For dynamodb, the element name will be surrounded by
     // quotation marks.
     val collectionElementForQuery: (String) -> String
+
+    val timeConversionForQuery: (Long) -> String
+        get() = { timeEpoch: Long -> timeEpoch.toString() }
 }

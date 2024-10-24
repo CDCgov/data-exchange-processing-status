@@ -97,11 +97,9 @@ class CouchbaseCollection(
 
     override val collectionVariablePrefix = "r."
 
-    override val openBracketChar
-        get() = '['
+    override val openBracketChar = '['
 
-    override val closeBracketChar
-        get() = ']'
+    override val closeBracketChar = ']'
 
     override val collectionNameForQuery = "\"${couchbaseScope.bucketName()}.${couchbaseScope.name()}.$collectionName\""
 
