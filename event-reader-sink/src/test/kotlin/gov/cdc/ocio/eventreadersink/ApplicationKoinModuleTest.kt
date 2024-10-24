@@ -1,7 +1,8 @@
+package gov.cdc.ocio.eventreadersink
+
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase
-import gov.cdc.ocio.eventreadersink.loadKoinModules
 import gov.cdc.ocio.eventreadersink.sink.CamelProcessor
 import gov.cdc.ocio.eventreadersink.sink.EventProcessor
 import io.ktor.server.application.ApplicationEnvironment
@@ -100,10 +101,9 @@ class ApplicationKoinModulesTest {
         `when`(mockEnvironment.config).thenReturn(mockConfig)
 
         // Call the loadKoinModules function to produce log message
-        val koinApp =
-            koinApplication {
-                loadKoinModules(mockEnvironment)
-            }
+        koinApplication {
+            loadKoinModules(mockEnvironment)
+        }
 
         // Check that the error message was logged
         val logMessages = logAppender.getLogMessages()
@@ -125,10 +125,9 @@ class ApplicationKoinModulesTest {
         `when`(mockEnvironment.config).thenReturn(mockConfig)
 
         // Call the loadKoinModules function to produce log message
-        val koinApp =
-            koinApplication {
-                loadKoinModules(mockEnvironment)
-            }
+        koinApplication {
+            loadKoinModules(mockEnvironment)
+        }
 
         // Check that the error message was logged
         val logMessages = logAppender.getLogMessages()
@@ -150,10 +149,9 @@ class ApplicationKoinModulesTest {
         `when`(mockEnvironment.config).thenReturn(mockConfig)
 
         // Call the loadKoinModules function to produce log message
-        val koinApp =
-            koinApplication {
-                loadKoinModules(mockEnvironment)
-            }
+        koinApplication {
+            loadKoinModules(mockEnvironment)
+        }
 
         // Check that the error message was logged
         val logMessages = logAppender.getLogMessages()
