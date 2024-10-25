@@ -101,7 +101,7 @@ class CouchbaseCollection(
 
     override val closeBracketChar = ']'
 
-    override val collectionNameForQuery = "\"${couchbaseScope.bucketName()}.${couchbaseScope.name()}.$collectionName\""
+    override val collectionNameForQuery = "${couchbaseScope.bucketName()}.${couchbaseScope.name()}.`$collectionName`"
 
     override val collectionElementForQuery = { name: String -> name }
 
