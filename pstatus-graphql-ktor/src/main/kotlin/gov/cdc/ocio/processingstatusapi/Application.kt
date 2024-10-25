@@ -1,8 +1,8 @@
 package gov.cdc.ocio.processingstatusapi
 
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+import gov.cdc.ocio.database.cosmos.CosmosConfiguration
+import gov.cdc.ocio.database.cosmos.CosmosRepository
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
 import graphql.scalars.ExtendedScalars
@@ -20,9 +20,8 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val cosmosModule = module {
         val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
         val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
-        single(createdAtStart = true) { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
-
+        single<ProcessingStatusRepository> { CosmosRepository(uri, authKey ) }
+        single<ProcessingStatusRepository> { CosmosRepository(uri, authKey,  "/uploadId","Reports","Reports-DeadLetter") }
         // Create a CosmosDB config that can be dependency injected (for health checks)
         single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
     }
@@ -45,10 +44,6 @@ fun Application.module() {
     install(ContentNegotiation) {
         jackson()
     }
-
-
-
-
     // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
 }
