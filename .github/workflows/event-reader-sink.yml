@@ -1,0 +1,25 @@
+name: DEV - Event Reader Sink
+
+on:
+  workflow_dispatch:
+    inputs:
+      REF:
+        description: Branch from CDCgov/data-exchange-processing-status that you want to deploy to the dev environment.
+        default: develop
+        required: true
+        type: string
+  push:
+    branches:
+        - develop
+    tags:
+        - 'v[0-9].[0-9]+.[0-9]+'
+    paths:
+        - event-reader-sink/**
+
+jobs:
+  remote-trigger:
+    uses: ./.github/workflows/remote-cd-trigger-template.yml
+    with:
+      WORKFLOW: event-reader-service-build-pushImage-dev.yml 
+      REF: ${{ inputs.REF }}
+    secrets: inherit
