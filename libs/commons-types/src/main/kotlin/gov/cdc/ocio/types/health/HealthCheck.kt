@@ -1,22 +1,16 @@
-package gov.cdc.ocio.processingstatusapi.health
+package gov.cdc.ocio.types.health
 
 
 /**
  * Run health checks for the service.
  *
- * @property status String?
+ * @property status HealthStatusType
  * @property totalChecksDuration String?
  * @property dependencyHealthChecks MutableList<HealthCheckSystem>
  */
 class HealthCheck {
 
-    companion object{
-        const val STATUS_UP = "UP"
-        const val STATUS_DOWN = "DOWN"
-        const val STATUS_UNSUPPORTED = "UNSUPPORTED"
-    }
-
-    var status: String = STATUS_DOWN
+    var status = HealthStatusType.STATUS_DOWN
 
     var totalChecksDuration: String? = null
 

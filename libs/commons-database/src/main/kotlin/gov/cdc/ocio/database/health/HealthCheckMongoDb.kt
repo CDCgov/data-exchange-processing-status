@@ -1,12 +1,12 @@
-package gov.cdc.ocio.processingstatusapi.health.database
+package gov.cdc.ocio.database.health
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.mongodb.*
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoDatabase
 import gov.cdc.ocio.database.mongo.MongoConfiguration
-import gov.cdc.ocio.processingstatusapi.health.HealthCheck
-import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 import org.bson.BsonDocument
 import org.bson.BsonInt64
 import org.koin.core.component.KoinComponent
@@ -27,7 +27,7 @@ class HealthCheckMongoDb: HealthCheckSystem("Mongo DB"), KoinComponent {
     override fun doHealthCheck() {
         try {
             if (isMongoDBHealthy()) {
-                status = HealthCheck.STATUS_UP
+                status = HealthStatusType.STATUS_UP
             }
         } catch (ex: Exception) {
             logger.error("MongoDB is not healthy $ex.message")

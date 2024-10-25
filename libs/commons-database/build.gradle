@@ -25,6 +25,8 @@ dependencies {
     implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
 
+    implementation("io.insert-koin:koin-ktor:3.5.6")
+
     // CosmosDB
     implementation 'com.azure:azure-cosmos:4.63.3'
 
@@ -37,6 +39,8 @@ dependencies {
     // DynamoDB
     implementation 'software.amazon.awssdk:dynamodb:2.27.16'
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
+
+    implementation project(':libs:commons-types')
 
     implementation 'org.owasp.encoder:encoder:1.2.3'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'

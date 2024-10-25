@@ -33,7 +33,7 @@ class InstantTypeAdapter :
      * @return Instant?
      */
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Instant? {
-        return json?.asString?.let { Instant.parse(it) }
+        return json?.asLong?.let { Instant.ofEpochMilli(it) }
     }
 
 }

@@ -1,6 +1,8 @@
 package gov.cdc.ocio.processingstatusapi.models.submission
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
+import gov.cdc.ocio.database.models.dao.MessageMetadataDao
+
 
 /**
  * Aggregation of message - SINGLE or BATCH
@@ -14,14 +16,13 @@ enum class Aggregation {
     BATCH
 }
 
-
 /**
  * MessageMetadata within a report.
+ *
  * @property messageUUID String?
  * @property messageHash String?
  * @property aggregation String?
  * @property messageIndex Int?`
-
  */
 @GraphQLDescription("Report metadata containing the disposition type, message identifier, index, aggregation of whether Single or Batch and the filename")
 data class MessageMetadata(
@@ -37,4 +38,21 @@ data class MessageMetadata(
 
     @GraphQLDescription("Message Index")
     var messageIndex: Int? = null
-)
+) {
+    companion object {
+
+        /**
+         * Convenience function to convert a cosmos data object to a MessageMetadata object
+         */
+        fun fromMessageMetadataDao(dao: MessageMetadataDao?) = MessageMetadata().apply {
+            this.messageUUID = dao?.messageUUID
+            this.messageHash = dao?.messageHash
+            this.aggregation = when (dao?.aggregation) {
+                gov.cdc.ocio.database.models.Aggregation.SINGLE -> Aggregation.SINGLE
+                gov.cdc.ocio.database.models.Aggregation.BATCH -> Aggregation.BATCH
+                else -> null
+            }
+            this.messageIndex = dao?.messageIndex
+        }
+    }
+}

@@ -9,9 +9,10 @@ import com.google.gson.reflect.TypeToken
 /**
  * Base class for all processing status repositories
  *
- * @property reportsCollection Collection
- * @property reportsDeadLetterCollection Collection
- * @property subscriptionManagementCollection Collection
+ * @property reportsCollection [Collection]
+ * @property reportsDeadLetterCollection [Collection]
+ * @property subscriptionManagementCollection [Collection]
+ * @property notificationSubscriptionsCollection [Collection]
  */
 abstract class ProcessingStatusRepository {
 
@@ -23,6 +24,9 @@ abstract class ProcessingStatusRepository {
 
     // Common interface for the subscription management collection
     open lateinit var subscriptionManagementCollection: Collection
+
+    // Common interface for the notification subscriptions collection
+    open lateinit var notificationSubscriptionsCollection: Collection
 
     private val gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)

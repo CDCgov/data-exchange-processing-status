@@ -1,10 +1,10 @@
-package gov.cdc.ocio.processingstatusapi.health.database
+package gov.cdc.ocio.database.health
 
 import com.couchbase.client.java.Cluster
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
-import gov.cdc.ocio.processingstatusapi.health.HealthCheck
-import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -23,7 +23,7 @@ class HealthCheckCouchbaseDb: HealthCheckSystem("Couchbase DB"), KoinComponent {
     override fun doHealthCheck() {
         try {
             if (isCouchbaseDBHealthy()) {
-                status = HealthCheck.STATUS_UP
+                status = HealthStatusType.STATUS_UP
             }
         } catch (ex: Exception) {
             logger.error("Cosmos DB is not healthy $ex.message")
