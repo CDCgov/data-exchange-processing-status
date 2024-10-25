@@ -15,5 +15,5 @@ The `rules-engine` library allows business rules to be dynamically defined to dr
 ## schema-validation 
 The `schema-validation` library is used for processing status report validations.  Each report has a schema associated with it that this library can be used to determine whether the report is valid or not and if not, the reasons why.
 
-## subscription-management _(coming soon)_
+## subscription-management 
 The `subscriptions-management` library is used for managing notification subscriptions.  Notification subscriptions are setup by end-users to get automatically notified when conditions are met through a variety of delivery mechanisms.  This library will provide the means to define and manage those subscriptions.

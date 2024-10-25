@@ -28,18 +28,22 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 
 group "gov.cdc.ocio"
 version "0.0.1"
-mainClassName = "gov.cdc.ocio.processingstatusapi.ApplicationKt"
 
 configurations {
     // create a separate configuration for the agent since it should not be a normal dependency
     agent
 }
-
+application {
+    mainClass.set("gov.cdc.ocio.processingstatusapi.ApplicationKt")
+}
 repositories{
     mavenLocal()
     mavenCentral()
 }
+
+tasks.register("prepareKotlinBuildScriptModel"){}
 dependencies {
+    implementation(project(":libs:commons-database"))
     implementation "io.ktor:ktor-server-core-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-netty-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-cors:$ktor_version"
