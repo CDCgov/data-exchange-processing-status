@@ -56,7 +56,7 @@ open class ReportDao(
 
     var contentType: String? = null,
 
-    var jurisdiction: String? =null,
+    var jurisdiction: String? = null,
 
     var senderId: String? = null,
 
