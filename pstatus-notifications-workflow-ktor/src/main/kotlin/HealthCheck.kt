@@ -1,10 +1,13 @@
 package gov.cdc.ocio.processingnotifications
 
+import gov.cdc.ocio.processingnotifications.cosmos.CosmosClientManager
+import gov.cdc.ocio.processingnotifications.cosmos.CosmosConfiguration
 import io.temporal.api.workflowservice.v1.GetSystemInfoRequest
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 
 /**
@@ -29,6 +32,10 @@ abstract class HealthCheckSystem {
 class HealthCheckTemporalServer: HealthCheckSystem() {
     override val service: String = "Temporal Server"
 }
+
+class HealthCheckCosmosDb: HealthCheckSystem() {
+    override val service = "Cosmos DB"
+}
 /**
  * Run health checks for the service.
  *
@@ -40,6 +47,7 @@ class HealthCheck {
 
     var status: String = "DOWN"
     var totalChecksDuration: String? = null
+    val service = "Cosmos DB"
     var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
 }
 
@@ -49,12 +57,13 @@ class HealthCheck {
  * @property logger KLogger
 
  */
-class TemporalHealthCheckService: KoinComponent {
+class HealthCheckService: KoinComponent {
     private val logger = KotlinLogging.logger {}
     private val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
         .setTarget(System.getenv().get("")) // Temporal server address
         .build()
     private val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
+    private val cosmosConfiguration by inject<CosmosConfiguration>()
 
     /**
      * Returns a HealthCheck object with the overall health of temporal server and its dependencies.
@@ -63,8 +72,11 @@ class TemporalHealthCheckService: KoinComponent {
      */
     fun getHealth(): HealthCheck {
         val temporalHealth = HealthCheckTemporalServer()
+        val cosmosDBHealth = HealthCheckCosmosDb()
+
         val time = measureTimeMillis {
             try {
+                checkCosmosDBHealth(cosmosDBHealth)
                 val isDown= serviceStubs.isShutdown  || serviceStubs.isTerminated
                 if(isDown)
                 {
@@ -87,6 +99,7 @@ class TemporalHealthCheckService: KoinComponent {
 
         return HealthCheck().apply {
             status = temporalHealth.status
+            status = cosmosDBHealth.status
             totalChecksDuration = formatMillisToHMS(time)
             dependencyHealthChecks.add(temporalHealth)
         }
@@ -106,5 +119,22 @@ class TemporalHealthCheckService: KoinComponent {
         val remainingMillis = millis % 1000
 
         return "%02d:%02d:%02d.%03d".format(hours, minutes, remainingSeconds, remainingMillis / 10)
+    }
+
+    private fun checkCosmosDBHealth(cosmosDBHealth: HealthCheckCosmosDb){
+        try {
+            if (isCosmosDBHealthy(cosmosConfiguration)) {
+                cosmosDBHealth.status = "STATUS_UP"
+            }
+        }catch (ex: Exception){
+            logger.error("Cosmos DB is not healthy $ex.message")
+        }
+    }
+
+    private fun isCosmosDBHealthy(config: CosmosConfiguration): Boolean {
+        return if (CosmosClientManager.getCosmosClient(config.uri, config.authKey) == null)
+            throw Exception("Failed to establish a CosmosDB client.")
+        else
+            true
     }
 }

@@ -87,6 +87,6 @@ fun Route.unsubscribesDataStreamTopErrorsNotification() {
  */
 fun Route.healthCheckRoute() {
     get("/health") {
-        call.respond(TemporalHealthCheckService().getHealth())
+        call.respond(HealthCheckService().getHealth())
     }
 }

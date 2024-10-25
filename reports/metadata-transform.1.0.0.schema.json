@@ -1,0 +1,35 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/cdcent/data-exchange-messages/reports/metadata-transform",
+    "title": "Metadata Transform Report",
+    "type": "object",
+    "required": [
+        "content_schema_name",
+        "content_schema_version"
+    ],
+    "properties": {
+        "content_schema_name": {
+            "type": "string"
+        },
+        "content_schema_version": {
+            "type": "string"
+        },
+        "transforms": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "field": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
