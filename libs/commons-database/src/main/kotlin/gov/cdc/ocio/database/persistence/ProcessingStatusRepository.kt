@@ -11,6 +11,7 @@ import com.google.gson.reflect.TypeToken
  *
  * @property reportsCollection Collection
  * @property reportsDeadLetterCollection Collection
+ * @property subscriptionManagementCollection Collection
  */
 abstract class ProcessingStatusRepository {
 
@@ -19,6 +20,9 @@ abstract class ProcessingStatusRepository {
 
     // Common interface for the reports deadletter collection
     open lateinit var reportsDeadLetterCollection: Collection
+
+    // Common interface for the subscription management collection
+    open lateinit var subscriptionManagementCollection: Collection
 
     private val gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
