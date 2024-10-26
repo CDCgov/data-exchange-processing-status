@@ -33,6 +33,9 @@ application {
 
 dependencies {
     implementation(project(":libs:commons-database"))
+    implementation("software.amazon.awssdk:dynamodb:2.17.98")
+    implementation("software.amazon.awssdk:ses:2.17.98")
+    implementation("software.amazon.awssdk:regions:2.17.98")
     implementation("io.temporal:temporal-sdk:1.15.1")
     implementation("com.sendgrid:sendgrid-java:4.9.2")
     implementation ("io.ktor:ktor-server-core:2.3.2")
@@ -42,7 +45,7 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.2")
     implementation ("io.github.microutils:kotlin-logging-jvm:3.0.5")
-   implementation ("com.google.code.gson:gson:2.10.1")
+    implementation ("com.google.code.gson:gson:2.10.1")
     implementation ("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation ("org.slf4j:slf4j-api:1.7.36")
     implementation ("ch.qos.logback:logback-classic:1.4.12")
@@ -62,6 +65,8 @@ dependencies {
     implementation ("io.ktor:ktor-client-content-negotiation:2.1.0")
     implementation ("io.netty:netty-all:4.1.68.Final")
     implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
+    implementation("software.amazon.awssdk:dynamodb-enhanced:2.20.70") // Latest Enhanced Client for DynamoDB
+    implementation("software.amazon.awssdk:dynamodb:2.20.70") // Core DynamoDB SDK dependency
     testImplementation(kotlin("test"))
 
 }
