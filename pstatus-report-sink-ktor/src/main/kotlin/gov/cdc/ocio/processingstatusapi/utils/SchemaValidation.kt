@@ -368,7 +368,7 @@ class SchemaValidation {
      * The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
      * @throws BadRequestException
      */
-    private fun sendToDeadLetter(
+    fun sendToDeadLetter(
         invalidData: MutableList<String>,
         validationSchemaFileNames: MutableList<String>,
         createReportMessage: CreateReportMessage

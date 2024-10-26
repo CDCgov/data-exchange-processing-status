@@ -92,6 +92,8 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'
 
     implementation project(':libs:commons-database')
+    implementation project(':libs:schema-validation')
+
 
     agent "io.opentelemetry.javaagent:opentelemetry-javaagent:1.29.0"
 
