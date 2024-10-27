@@ -14,9 +14,9 @@ import java.util.*
  * to persist rules, conditions, and actions.
  * @param repository ProcessingStatusRepository
  */
-class CosmosSubscriptionManagementRepository(
+class SubscriptionManagementRepository(
    private val repository: ProcessingStatusRepository
-) :  KoinComponent,SubscriptionManagementRepository {
+) :  KoinComponent, SubscriptionManagementRepository {
 
     private val logger = KotlinLogging.logger {}
     /**
