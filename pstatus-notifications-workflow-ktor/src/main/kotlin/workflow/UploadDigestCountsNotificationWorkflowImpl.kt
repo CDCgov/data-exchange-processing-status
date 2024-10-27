@@ -12,7 +12,10 @@ import org.koin.core.component.inject
 import java.time.Duration
 
 /**
- * The implementation class which determines the daily digest counts of the list of jurisdictions for the set data stream list
+ * The implementation class which determines the daily digest counts of the list of jurisdictions for the set data stream id list
+ * @property repository ProcessingStatusRepository
+ * @property logger logger
+ * @property activities T
 
  */
 class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificationWorkflow, KoinComponent {
@@ -29,11 +32,13 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
                     .build()
             )
             .build()
-
     )
 
     /**
-     *
+     * The main function which is used by temporal workflow engine for orchestrating the daily upload digest counts
+     * @param jurisdictionIds: List<String>
+     * @param dataStreams: List<String>
+     * @param deliveryReference String
      */
     override fun processDailyUploadDigest(
         jurisdictionIds: List<String>,
@@ -42,11 +47,14 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
     ) {
         try {
             val uploadDigestResults = getUploadDigest(jurisdictionIds,dataStreams)
-            // Aggregate the upload counts
-            val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
-            // Format the email body
-            val emailBody = formatEmailBody(aggregatedCounts)
-            activities.sendDigestEmail(emailBody, deliveryReference)
+
+            if(uploadDigestResults.isNotEmpty()) {
+                // Aggregate the upload counts
+                val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
+                // Format the email body
+                val emailBody = formatEmailBody(aggregatedCounts)
+                activities.sendDigestEmail(emailBody, deliveryReference)
+            }
         }
         catch (e: Exception) {
             logger.error("Error occurred while processing daily upload digest: ${e.message}")
@@ -56,7 +64,7 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
 
 
     /**
-     * The function which determines the digest counts and top errors during an upload and its frequency
+     * The function which gets the digest counts query and sends it to the corresponding db collection
      * @param jurisdictionIds List<String>
      * @param dataStreams List<String>
      */
@@ -75,7 +83,7 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
     }
 
     /**
-     * Function which uses SQL-compatible query statement in PartiQL that groups by jurisdictionId and dataStream to aggregate counts.
+     * Function which uses SQL-compatible query statement in PartiQL for dynamo or sql statements for other db types
      * @param jurisdictionIds List<String>
      * @param dataStreamIds List<String>
      * @return String
@@ -99,6 +107,12 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
 
     }
 
+    /**
+     *  DynamoDB does not support GROUP BY, so this function is used to aggregate the counts
+     *  Function that groups by jurisdictionId and dataStreamId to aggregate counts.
+     *  @param uploadCounts List<UploadDigestResponse>
+     *  @return Map<String, Map<String, Int>>
+     */
     private fun aggregateUploadCounts(uploadCounts: List<UploadDigestResponse>): Map<String, Map<String, Int>> {
         return uploadCounts.groupBy { it.jurisdiction }
             .mapValues { (_, counts) ->
@@ -107,14 +121,20 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
             }
     }
 
+    /**
+     *  Function for Email Body Formatting
+     *  @param uploadCounts Map<String, Map<String, Int>>
+     *  @return String
+     */
     private fun formatEmailBody(uploadCounts: Map<String, Map<String, Int>>): String {
         val builder = StringBuilder()
         builder.append("Daily Upload Digest for Data Streams:\n\n")
-
+        builder.append("JurisdictionIds:\n")
         uploadCounts.forEach { (jurisdictionId, streams) ->
-            builder.append("Jurisdiction: $jurisdictionId\n")
+            builder.append("\t$jurisdictionId\n")
+            builder.append("DataStreamIds:\n")
             streams.forEach { (stream, count) ->
-                builder.append("DataStreamId: $stream: $count uploads\n")
+                builder.append("\t$stream: $count uploads\n")
             }
             builder.append("\n")
         }

@@ -20,19 +20,9 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
-  /*  val cosmosModule = module {
-        val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
-        val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single<ProcessingStatusRepository>{ CosmosRepository(uri, authKey) } //createdAtStart = true is not working , with lib integration
-        // Create a CosmosDB config that can be dependency injected (for health checks)
-        single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
-    }*/
-
-    //return modules(listOf(cosmosModule))
-     val logger = KotlinLogging.logger {}
+    val logger = KotlinLogging.logger {}
     val databaseModule = module {
         when (val database = environment.config.tryGetString("ktor.database")) {
-
             DatabaseType.COUCHBASE.value -> {
                 val connectionString = environment.config.property("couchbase.connection_string").getString()
                 single<ProcessingStatusRepository> {
@@ -80,18 +70,22 @@ fun Application.module() {
         healthCheckRoute()
     }
 
-    testUploadDigestCount()
+    //***ONLY FOR QUICK AND DIRTY TESTING***
+  //  testUploadDigestCount()
 
 }
 
+/**
+ * THIS IS ONLY FOR QUICK AND DIRTY TESTING. CAN BE REMOVED ONCE THIS SERVICE IS MATURED
+ */
 fun testUploadDigestCount(){
     val service = UploadDigestCountsNotificationSubscriptionService()
     service.run(
         UploadDigestSubscription(
-        jurisdictionIds = listOf("SMOKE", "J456"),
+        jurisdictionIds = listOf("SMOKE", "SMOKE100"),
         dataStreamIds = listOf("dex-testing", "dex-testing100"),
             listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun"),
-            "35 02 * *",
+            "45 02 * *",
            "xph6@cdc.gov"
     ))
 

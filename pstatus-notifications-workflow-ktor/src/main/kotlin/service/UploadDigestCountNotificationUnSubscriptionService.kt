@@ -8,7 +8,7 @@ import mu.KotlinLogging
 
 /**
  * The main class which unsubscribes the workflow execution
- * for upload errors
+ * for daily upload digest counts
  * @property cacheService IMemoryCacheService
  * @property workflowEngine WorkflowEngine
  */

@@ -13,7 +13,7 @@ import mu.KotlinLogging
 
 /**
  * The main class which subscribes the workflow execution
- * for upload digest counts
+ * for daily upload digest counts
  * @property logger KotlinLogging.Logger
  * @property workflowEngine WorkflowEngine
  * @property notificationActivitiesImpl  NotificationActivitiesImpl
@@ -24,7 +24,7 @@ class UploadDigestCountsNotificationSubscriptionService {
     private val notificationActivitiesImpl:NotificationActivitiesImpl = NotificationActivitiesImpl()
 
     /**
-     *  The main method which executes workflow for uploadDeadline check
+     *  The main method which executes workflow for orchestrating the daily digest counts
      *  @param subscription DeadlineCheckSubscription
      *  @return WorkflowSubscriptionResult
      */
@@ -40,7 +40,6 @@ class UploadDigestCountsNotificationSubscriptionService {
             val workflow :UploadDigestCountsNotificationWorkflow=  workflowEngine.setupWorkflow(taskQueue,daysToRun,timeToRun,
                 UploadDigestCountsNotificationWorkflowImpl::class.java ,notificationActivitiesImpl, UploadDigestCountsNotificationWorkflow::class.java)
             val execution =    WorkflowClient.start(workflow::processDailyUploadDigest, jurisdictionIds, dataStreams, deliveryReference)
-          //  return cacheService.updateSubscriptionPreferences(execution.workflowId,subscription)
             val workflowId = execution.workflowId
             return WorkflowSubscriptionResult(subscriptionId = workflowId, message = "Successfully subscribed for $workflowId", deliveryReference = deliveryReference)
         }

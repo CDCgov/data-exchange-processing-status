@@ -46,7 +46,7 @@ fun Route.subscribeUploadDigestCountsRoute() {
     }
 }
 /**
- * Route to unsubscribe for DeadlineCheck subscription
+ * Route to unsubscribe for upload digest counts
  */
 fun Route.unsubscribeUploadDigestCountsRoute() {
     post("/unsubscribe/uploadDigestCounts") {
