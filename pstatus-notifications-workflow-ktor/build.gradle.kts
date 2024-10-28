@@ -33,9 +33,6 @@ application {
 
 dependencies {
     implementation(project(":libs:commons-database"))
-    implementation("software.amazon.awssdk:dynamodb:2.17.98")
-    implementation("software.amazon.awssdk:ses:2.17.98")
-    implementation("software.amazon.awssdk:regions:2.17.98")
     implementation("io.temporal:temporal-sdk:1.15.1")
     implementation("com.sendgrid:sendgrid-java:4.9.2")
     implementation ("io.ktor:ktor-server-core:2.3.2")
@@ -66,7 +63,7 @@ dependencies {
     implementation ("io.netty:netty-all:4.1.68.Final")
     implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
     implementation("software.amazon.awssdk:dynamodb-enhanced:2.20.70") // Latest Enhanced Client for DynamoDB
-    implementation("software.amazon.awssdk:dynamodb:2.20.70") // Core DynamoDB SDK dependency
+   // implementation("software.amazon.awssdk:dynamodb:2.20.70") // Core DynamoDB SDK dependency
     testImplementation(kotlin("test"))
 
 }
