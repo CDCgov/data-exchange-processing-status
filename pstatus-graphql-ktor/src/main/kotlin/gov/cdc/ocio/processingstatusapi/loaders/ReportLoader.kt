@@ -1,8 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import com.azure.cosmos.models.CosmosQueryRequestOptions
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
+import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.DataStream
 import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import gov.cdc.ocio.processingstatusapi.models.Report
@@ -12,14 +13,22 @@ import gov.cdc.ocio.processingstatusapi.models.submission.SubmissionDetails
 import graphql.schema.DataFetchingEnvironment
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-
-class ForbiddenException(message: String) : RuntimeException(message)
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
  * Report loader for graphql
  */
-class ReportLoader: CosmosLoader() {
+class ReportLoader: KoinComponent {
+
+    private val repository by inject<ProcessingStatusRepository>()
+
+    private val reportsCollection = repository.reportsCollection
+
+    private val cName = reportsCollection.collectionNameForQuery
+    private val cVar = reportsCollection.collectionVariable
+    private val cPrefix = reportsCollection.collectionVariablePrefix
 
     /**
      * Get all reports associated with the provided upload id.
@@ -46,10 +55,11 @@ class ReportLoader: CosmosLoader() {
      * @param sortOrder SortOrder?
      * @return UploadDetails
      */
-    fun getSubmissionDetailsByUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
-                                       uploadId: String,
-                                       reportsSortedBy: String?,
-                                       sortOrder: SortOrder?
+    fun getSubmissionDetailsByUploadId(
+        dataFetchingEnvironment: DataFetchingEnvironment,
+        uploadId: String,
+        reportsSortedBy: String?,
+        sortOrder: SortOrder?
     ): SubmissionDetails {
 
         val reports = getReportsForUploadId(dataFetchingEnvironment, uploadId, reportsSortedBy, sortOrder)
@@ -66,14 +76,14 @@ class ReportLoader: CosmosLoader() {
     fun search(ids: List<String>): List<Report> {
         val quotedIds = ids.joinToString("\",\"", "\"", "\"")
 
-        val reportsSqlQuery = "select * from r where r.id in ($quotedIds)"
+        val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}id in ($quotedIds)"
 
-        val reportItems = reportsContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val reportItems = reportsCollection.queryItems(
+            reportsSqlQuery,
             ReportDao::class.java
         )
         val reports = mutableListOf<Report>()
-        reportItems?.forEach { reports.add(it.toReport()) }
+        reportItems.forEach { reports.add(Report.fromReportDao(it)) }
 
         return reports
     }
@@ -87,10 +97,11 @@ class ReportLoader: CosmosLoader() {
      * @param sortOrder SortOrder?
      * @return List<Report>
      */
-    private fun getReportsForUploadId(dataFetchingEnvironment: DataFetchingEnvironment,
-                                      uploadId: String,
-                                      reportsSortedBy: String?,
-                                      sortOrder: SortOrder?
+    private fun getReportsForUploadId(
+        dataFetchingEnvironment: DataFetchingEnvironment,
+        uploadId: String,
+        reportsSortedBy: String?,
+        sortOrder: SortOrder?
     ): List<Report> {
 
         // Obtain the data streams available to the user from the data fetching env.
@@ -102,7 +113,7 @@ class ReportLoader: CosmosLoader() {
         }
 
         val reportsSqlQuery = StringBuilder()
-        reportsSqlQuery.append("select * from r where r.uploadId = '$uploadId'")
+        reportsSqlQuery.append("select * from $cName $cVar where ${cPrefix}uploadId = '$uploadId'")
 
         when (reportsSortedBy) {
             "timestamp" -> {
@@ -111,7 +122,7 @@ class ReportLoader: CosmosLoader() {
                     SortOrder.Descending -> "desc"
                     else -> "asc" // default
                 }
-                reportsSqlQuery.append(" order by r.timestamp $sortOrderVal")
+//                reportsSqlQuery.append(" order by ${cPrefix}dexIngestTimestamp $sortOrderVal")
             }
             null -> {
                 // nothing to sort by
@@ -120,15 +131,15 @@ class ReportLoader: CosmosLoader() {
                 throw BadRequestException("Reports can not be sorted by '$reportsSortedBy'")
             }
         }
-        val reportItems = reportsContainer?.queryItems(
-            reportsSqlQuery.toString(), CosmosQueryRequestOptions(),
+        val reportItems = reportsCollection.queryItems(
+            reportsSqlQuery.toString(),
             ReportDao::class.java
         )
 
         // Convert the report DAOs to reports and ensure the user has access to them.
         val reports = mutableListOf<Report>()
-        reportItems?.forEach { reportItem ->
-            val report = reportItem.toReport()
+        reportItems.forEach { reportItem ->
+            val report = Report.fromReportDao(reportItem)
             dataStreams?.run {
                 if (dataStreams?.firstOrNull { ds -> ds.name == report.dataStreamId && ds.route == report.dataStreamRoute } == null)
                     throw ForbiddenException("You are not allowed to access this resource.")
@@ -140,11 +151,11 @@ class ReportLoader: CosmosLoader() {
     }
 
     /**
-     *  Get uploadDetails
+     *  Get upload details for the provided reports.
+     *
      *  @param reports MutableList<Report>
      *  @return UploadDetails
      */
-
     private fun getUploadDetails(reports: List<Report>): SubmissionDetails {
 
         // Determine rollup status

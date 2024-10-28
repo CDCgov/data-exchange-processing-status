@@ -1,10 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import com.azure.cosmos.CosmosContainer
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.util.CosmosPagedIterable
 import data.UploadsStatusDataGenerator
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportCounts
 import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.reports.StageCounts
@@ -20,6 +16,7 @@ import org.koin.dsl.module
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+
 
 class ReportCountsLoaderTest {
 

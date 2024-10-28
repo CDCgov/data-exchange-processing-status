@@ -1,2 +1,4 @@
 rootProject.name = 'data-exchange-processing-status'
-include 'libs:commons-database','libs:schema-validation','pstatus-report-sink-ktor','pstatus-graphql-ktor'
+
+include 'libs:commons-database', 'libs:commons-types', 'libs:subscription-management', 'pstatus-report-sink-ktor', 'pstatus-graphql-ktor', 'pstatus-notifications-workflow-ktor'
+

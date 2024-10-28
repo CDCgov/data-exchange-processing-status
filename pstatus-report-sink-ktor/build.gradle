@@ -93,6 +93,7 @@ dependencies {
 
     implementation project(':libs:commons-database')
     implementation project(':libs:schema-validation')
+    implementation project(':libs:commons-types')
 
 
     agent "io.opentelemetry.javaagent:opentelemetry-javaagent:1.29.0"

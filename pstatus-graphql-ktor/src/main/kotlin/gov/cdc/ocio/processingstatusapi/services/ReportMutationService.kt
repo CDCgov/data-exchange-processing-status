@@ -1,14 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.services
 
-import com.azure.cosmos.models.CosmosItemRequestOptions
-import com.azure.cosmos.models.CosmosItemResponse
-import com.azure.cosmos.models.PartitionKey
-import com.azure.json.implementation.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.loaders.CosmosLoader
 import gov.cdc.ocio.processingstatusapi.models.ReportContentType
 import gov.cdc.ocio.processingstatusapi.models.Report
 import gov.cdc.ocio.processingstatusapi.models.reports.*
@@ -20,7 +18,11 @@ import gov.cdc.ocio.processingstatusapi.models.submission.Issue
 import gov.cdc.ocio.processingstatusapi.models.submission.Level
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
+import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.*
+
 
 /**
  * ReportMutation class handles the creation and replacement of reports in a Cosmos DB.
@@ -37,9 +39,15 @@ import java.util.*
  *   into usable formats.
  *
  */
-class ReportMutationService : CosmosLoader() {
+class ReportMutationService : KoinComponent {
 
     private val objectMapper = ObjectMapper()
+
+    private val logger = KotlinLogging.logger {}
+
+    private val repository by inject<ProcessingStatusRepository>()
+
+    private val reportsCollection = repository.reportsCollection
 
     /**
      * Upserts a report based on the provided input and action.
@@ -224,7 +232,7 @@ class ReportMutationService : CosmosLoader() {
      */
     private fun generateNewId(): String {
         // Generate a new unique ID
-        return java.util.UUID.randomUUID().toString()
+        return UUID.randomUUID().toString()
     }
 
     /**
@@ -353,22 +361,20 @@ class ReportMutationService : CosmosLoader() {
             throw BadRequestException("Upload ID must be provided.")
         }
 
-        report.id = generateNewId()
-        report.reportId = report.id
-        val options = CosmosItemRequestOptions()
-
         return try {
-            val createResponse: CosmosItemResponse<Report>? = reportsContainer?.createItem(report, PartitionKey(report.uploadId), options)
+            val success =
+                reportsCollection.createItem(generateNewId(), report, Report::class.java, report.uploadId)
 
-            // Check if createResponse is null and throw an exception if it is
-            createResponse?.item ?: throw ContentException("Failed to create report: response was null.")
+            // Check if successful and throw an exception if not
+            if (!success)
+                throw ContentException("Failed to create report")
 
+            report
         } catch (e: Exception) {
             logger.error(e.localizedMessage)
             throw ContentException("Failed to create report: ${e.message}")
         }
     }
-
 
     /**
      * Replaces an existing report in the database.
@@ -398,22 +404,50 @@ class ReportMutationService : CosmosLoader() {
         }
 
         return try {
-            val readResponse: CosmosItemResponse<Report> = reportsContainer?.readItem(
-                report.id!!,
-                PartitionKey(report.uploadId!!),
-                Report::class.java
-            ) ?: throw ContentException("Report with ID ${report.id} not found for replacement.")
 
-            val options = CosmosItemRequestOptions()
-            val replaceResponse: CosmosItemResponse<Report>? = reportsContainer?.replaceItem(
+            val uploadId = report.uploadId
+            val stageInfo = report.stageInfo
+
+            // Delete all reports matching the report ID with the same service and action name
+            val cName = repository.reportsCollection.collectionNameForQuery
+            val cVar = repository.reportsCollection.collectionVariable
+            val cPrefix = repository.reportsCollection.collectionVariablePrefix
+            val cElFunc = repository.reportsCollection.collectionElementForQuery
+            val sqlQuery = (
+                    "select * from $cName $cVar "
+                            + "where ${cPrefix}uploadId = '$uploadId' "
+                            + "and ${cPrefix}stageInfo.${cElFunc("service")} = '${stageInfo?.service}' "
+                            + "and ${cPrefix}stageInfo.${cElFunc("action")} = '${stageInfo?.action}'"
+                    )
+            val items = repository.reportsCollection.queryItems(
+                sqlQuery,
+                gov.cdc.ocio.database.models.Report::class.java
+            )
+            if (items.isNotEmpty()) {
+                try {
+                    items.forEach {
+                        reportsCollection.deleteItem(
+                            it.id,
+                            it.uploadId
+                        )
+                    }
+                    logger.info("Removed all reports with stage name = $stageInfo?.stage")
+                } catch(e: Exception) {
+                    throw BadStateException("Issue deleting report: ${e.localizedMessage}")
+                }
+            }
+
+            val success = reportsCollection.createItem(
+                generateNewId(),
                 report,
-                report.id!!,
-                PartitionKey(report.uploadId!!),
-                options
+                Report::class.java,
+                uploadId
             )
 
-            // Check if replaceResponse is null and throw an exception if it is
-            replaceResponse?.item ?: throw ContentException("Failed to replace report: response was null.")
+            if (!success)
+               throw ContentException("Failed to replace report")
+
+            report
 
         } catch (e: Exception) {
             logger.error(e.localizedMessage)

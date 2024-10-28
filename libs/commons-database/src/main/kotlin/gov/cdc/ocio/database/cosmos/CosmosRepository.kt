@@ -10,9 +10,11 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
  * @param uri[String] URI of the CosmosDB to connect with.
  * @param authKey[String] Authorization Key to use when connecting to the CosmosDB.
  * @param partitionKey[String] Container partition key to use, which defaults to "/uploadId" if not provided.
- * @param reportsContainerName[String] Reports container name to use, which defaults to "Reports" if not provided.
- * @param reportsDeadLetterContainerName[String] Reports deadletter container name to use, which default to
+ * @param reportsContainerName[String] Reports, Rules container name to use, which defaults to "Reports" if not provided.
+ * @param reportsDeadLetterContainerName[String] Reports dead letter container name to use, which defaults to
  * "Reports-DeadLetter" if not provided.
+ * @param notificationSubscriptionsContainerName[String] Notification subscriptions container name to use, which
+ * defaults to "NotificationSubscriptions" if not provided.
  * @property reportsContainer[com.azure.cosmos.CosmosContainer]?
  * @property reportsDeadLetterContainer[com.azure.cosmos.CosmosContainer]?
  * @property reportsCollection[Collection]
@@ -26,7 +28,8 @@ class CosmosRepository(
     authKey: String,
     partitionKey: String = "/uploadId",
     reportsContainerName: String = "Reports",
-    reportsDeadLetterContainerName: String = "Reports-DeadLetter"
+    reportsDeadLetterContainerName: String = "Reports-DeadLetter",
+    notificationSubscriptionsContainerName: String = "NotificationSubscriptions"
 ) : ProcessingStatusRepository() {
 
     private val reportsContainer =
@@ -35,8 +38,14 @@ class CosmosRepository(
     private val reportsDeadLetterContainer =
         CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsDeadLetterContainerName, partitionKey)
 
+    private val subscriptionManagementContainer =
+        CosmosContainerManager.initDatabaseContainer(uri, authKey, notificationSubscriptionsContainerName, partitionKey)
+
     override var reportsCollection = CosmosCollection(reportsContainerName, reportsContainer) as Collection
 
     override var reportsDeadLetterCollection =
         CosmosCollection(reportsDeadLetterContainerName, reportsDeadLetterContainer) as Collection
+
+    override var subscriptionManagementCollection =
+        CosmosCollection(notificationSubscriptionsContainerName, subscriptionManagementContainer) as Collection
 }
