@@ -4,9 +4,9 @@ import com.azure.core.exception.ResourceNotFoundException
 import com.azure.messaging.servicebus.ServiceBusException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import gov.cdc.ocio.processingstatusapi.health.HealthCheck
-import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
 import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -27,7 +27,7 @@ class HealthCheckServiceBus : HealthCheckSystem("Azure Service Bus"), KoinCompon
     override fun doHealthCheck() {
         try {
             if (isServiceBusHealthy(azureServiceBusConfiguration)) {
-                status = HealthCheck.STATUS_UP
+                status = HealthStatusType.STATUS_UP
             }
         } catch (ex: Exception) {
             logger.error("Azure Service Bus is not healthy $ex.message")

@@ -42,15 +42,24 @@ class CouchbaseCollection(
      */
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
         val result = couchbaseScope.query(query)
-        val jsonObjects: List<JsonObject> = result.rowsAsObject()
         val results = mutableListOf<T>()
-        jsonObjects.forEach {
-            // Couchbase items are received as an array, but within each array element is a field with the content.
-            // The content field name will match that of the collection name.
-            val collectionName = it.names.first()
-            val item = it.get(collectionName)
-            val obj = gson.fromJson(item.toString(), classType)
-            results.add(obj)
+        when (classType) {
+            // Handle primitive types
+            String::class.java, Float::class.java, Int::class.java, Long::class.java, Boolean::class.java -> {
+                results.addAll(result.rowsAs(classType))
+            }
+            // Handle all others as JSON objects
+            else -> {
+                val jsonObjects = result.rowsAsObject()
+                jsonObjects.forEach {
+                    // Couchbase items are received as an array, but within each array element is a field with the content.
+                    // The content field name will match that of the collection name.
+                    val collectionName = it.names.first()
+                    val item = if (collectionName.equals(collectionVariable)) it.get(collectionName) else it
+                    val obj = gson.fromJson(item.toString(), classType)
+                    results.add(obj)
+                }
+            }
         }
         return results
     }
@@ -88,7 +97,11 @@ class CouchbaseCollection(
 
     override val collectionVariablePrefix = "r."
 
-    override val collectionNameForQuery = collectionName
+    override val openBracketChar = '['
+
+    override val closeBracketChar = ']'
+
+    override val collectionNameForQuery = "${couchbaseScope.bucketName()}.${couchbaseScope.name()}.`$collectionName`"
 
     override val collectionElementForQuery = { name: String -> name }
 

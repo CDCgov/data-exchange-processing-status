@@ -3,9 +3,9 @@ package gov.cdc.ocio.processingstatusapi.health.messagesystem
 import aws.sdk.kotlin.services.sqs.SqsClient
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.health.HealthCheck
-import gov.cdc.ocio.processingstatusapi.health.HealthCheckSystem
 import gov.cdc.ocio.processingstatusapi.plugins.AWSSQServiceConfiguration
+import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -26,7 +26,7 @@ class HealthCheckAWSSQS : HealthCheckSystem("AWS SQS"), KoinComponent {
     override fun doHealthCheck() {
         try {
             if (isAWSSQSHealthy(awsSqsServiceConfiguration)) {
-                status = HealthCheck.STATUS_UP
+                status = HealthStatusType.STATUS_UP
             }
 
         } catch (ex: Exception) {

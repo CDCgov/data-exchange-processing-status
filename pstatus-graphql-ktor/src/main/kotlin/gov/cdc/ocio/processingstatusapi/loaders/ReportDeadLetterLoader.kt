@@ -1,18 +1,28 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import com.azure.cosmos.models.CosmosQueryRequestOptions
+import gov.cdc.ocio.database.models.dao.ReportDeadLetterDao
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDeadLetterDao
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import java.text.SimpleDateFormat
 import java.util.*
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
  * Class for generating reporting queries from cosmos db container which is then wrapped in a graphQl query service
  */
-class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
+class ReportDeadLetterLoader: KoinComponent {
+
+    private val repository by inject<ProcessingStatusRepository>()
+
+    private val reportsDeadLetterCollection = repository.reportsDeadLetterCollection
+
+    private val cName = reportsDeadLetterCollection.collectionNameForQuery
+    private val cVar = reportsDeadLetterCollection.collectionVariable
+    private val cPrefix = reportsDeadLetterCollection.collectionVariablePrefix
 
     /**
      * Function that returns a list of DeadLetterReports based on uploadId
@@ -20,15 +30,15 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
      * @param uploadId String
      */
     fun getByUploadId(uploadId: String): List<ReportDeadLetter> {
-        val reportsSqlQuery = "select * from r where r.uploadId = '$uploadId'"
+        val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}uploadId = '$uploadId'"
 
-        val reportItems = reportsDeadLetterContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val reportItems = reportsDeadLetterCollection.queryItems(
+            reportsSqlQuery,
             ReportDeadLetterDao::class.java
         )
 
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
-        reportItems?.forEach { deadLetterReports.add(it.toReportDeadLetter()) }
+        reportItems.forEach { deadLetterReports.add(ReportDeadLetter.fromReportDeadLetterDao(it)) }
 
         return deadLetterReports
     }
@@ -54,20 +64,21 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
             daysInterval,
             getFormattedDateAsString(startDate),
-            getFormattedDateAsString(endDate)
+            getFormattedDateAsString(endDate),
+            cPrefix
         )
 
-        val reportsSqlQuery = "select * from r where r.dataStreamId = '$dataStreamId' " +
-                "and r.dataStreamRoute= '$dataStreamRoute' " +
+        val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
+                "and ${cPrefix}dataStreamRoute = '$dataStreamRoute' " +
                 "and $timeRangeWhereClause"
 
-        val reportItems = reportsDeadLetterContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val reportItems = reportsDeadLetterCollection.queryItems(
+            reportsSqlQuery,
             ReportDeadLetterDao::class.java
         )
 
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
-        reportItems?.forEach { deadLetterReports.add(it.toReportDeadLetter()) }
+        reportItems.forEach { deadLetterReports.add(ReportDeadLetter.fromReportDeadLetterDao(it)) }
 
         return deadLetterReports
     }
@@ -92,16 +103,17 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate)
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
 
-        val reportsSqlQuery = "select value count(1) from r where r.dataStreamId = '$dataStreamId' " +
-                "and $timeRangeWhereClause " + if (dataStreamRoute != null) " and r.dataStreamRoute= '$dataStreamRoute'" else ""
+        val reportsSqlQuery = "select value count(1) from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
+                "and $timeRangeWhereClause " + if (dataStreamRoute != null) " and ${cPrefix}dataStreamRoute= '$dataStreamRoute'" else ""
 
-        val reportItems = reportsDeadLetterContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val reportItems = reportsDeadLetterCollection.queryItems(
+            reportsSqlQuery,
             Int::class.java
         )
-        val count = reportItems?.count() ?: 0
+        val count = reportItems.count()
         logger.info("Count of records: $count")
         return count
     }
@@ -115,14 +127,14 @@ class ReportDeadLetterLoader : CosmosDeadLetterLoader() {
     fun search(ids: List<String>): List<ReportDeadLetter> {
         val quotedIds = ids.joinToString("\",\"", "\"", "\"")
 
-        val reportsSqlQuery = "select * from r where r.id in ($quotedIds)"
+        val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}id in ($quotedIds)"
 
-        val reportItems = reportsDeadLetterContainer?.queryItems(
-            reportsSqlQuery, CosmosQueryRequestOptions(),
+        val reportItems = reportsDeadLetterCollection.queryItems(
+            reportsSqlQuery,
             ReportDeadLetterDao::class.java
         )
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
-        reportItems?.forEach { deadLetterReports.add(it.toReportDeadLetter()) }
+        reportItems.forEach { deadLetterReports.add(ReportDeadLetter.fromReportDeadLetterDao(it)) }
 
         return deadLetterReports
     }

@@ -16,8 +16,10 @@ import java.time.Duration
  * @param bucketName[String] Name of the bucket within the cluster to use.
  * @param scopeName[String] Name of the scope for the couchbase collections.
  * @param reportsCollectionName[String] Reports collection name to use, which defaults to "Reports" if not provided.
- * @param reportsDeadLetterCollectionName[String] Reports deadletter collection name to use, which default to
+ * @param reportsDeadLetterCollectionName[String] Reports deadletter collection name to use, which defaults to
  * "Reports-DeadLetter" if not provided.
+ * @param notificationSubscriptionsCollectionName[String] Notification subscriptions collection name to use, which
+ * defaults to "NotificationSubscriptions" if not provided.
  * @property cluster (Cluster..Cluster?)
  * @property processingStatusBucket (Bucket..Bucket?)
  * @property scope Scope
@@ -36,7 +38,8 @@ class CouchbaseRepository(
     bucketName: String = "ProcessingStatus",
     scopeName: String = "data",
     reportsCollectionName: String = "Reports",
-    reportsDeadLetterCollectionName: String = "Reports-DeadLetter"
+    reportsDeadLetterCollectionName: String = "Reports-DeadLetter",
+    notificationSubscriptionsCollectionName: String = "NotificationSubscriptions"
 ) : ProcessingStatusRepository() {
 
     // Connect without customizing the cluster environment
@@ -50,6 +53,8 @@ class CouchbaseRepository(
 
     private val reportsDeadLetterCouchbaseCollection: com.couchbase.client.java.Collection
 
+    private val notificationSubscriptionsCouchbaseCollection: com.couchbase.client.java.Collection
+
     init {
         processingStatusBucket.waitUntilReady(Duration.ofSeconds(10))
 
@@ -58,6 +63,8 @@ class CouchbaseRepository(
         reportsCouchbaseCollection = scope.collection(reportsCollectionName)
 
         reportsDeadLetterCouchbaseCollection = scope.collection(reportsDeadLetterCollectionName)
+
+        notificationSubscriptionsCouchbaseCollection = scope.collection(notificationSubscriptionsCollectionName)
     }
 
     override var reportsCollection =
@@ -74,4 +81,10 @@ class CouchbaseRepository(
             reportsDeadLetterCouchbaseCollection
         ) as Collection
 
+    override var notificationSubscriptionsCollection =
+        CouchbaseCollection(
+            reportsDeadLetterCollectionName,
+            scope,
+            notificationSubscriptionsCouchbaseCollection
+        ) as Collection
 }
