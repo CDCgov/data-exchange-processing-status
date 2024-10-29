@@ -10,7 +10,6 @@ import java.io.InputStreamReader
 import java.net.Socket
 import javax.mail.MessagingException
 import javax.mail.Session
-import kotlin.math.log
 
 /**
  * EMail dispatcher implements IDispatcher which will implement code to send out emails
@@ -67,11 +66,11 @@ class EmailDispatcher(): IDispatcher {
      * @param subscription NotificationSubscription
      * @return String
      */
-    private fun sendEmail(subscription: NotificationSubscription): Unit {
+    private fun sendEmail(subscription: NotificationSubscription) {
 
         try{
             // TODO : Change this into properties
-            val toEmalId = subscription.subscriberAddressOrUrl;
+            val toEmalId = subscription.subscriberAddressOrUrl
             val props = System.getProperties()
             props["mail.smtp.host"] = "smtpgw.cdc.gov"
             props["mail.smtp.port"] = 25

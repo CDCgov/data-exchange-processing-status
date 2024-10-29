@@ -63,7 +63,7 @@ class ReportParser {
                 recurseParseHelper(field.value, reportMetricMap, reportType)
             } else {
                 if (field.key.equals(statusFieldName, true)) {
-                    processStatusValueInArray(field, reportMetricMap, reportType!!)
+                    processStatusValueInArray(field, reportMetricMap, reportType)
                 }
             }
 
@@ -75,7 +75,7 @@ class ReportParser {
         reportMetricMap: HashMap<String, String>,
         reportType: String
     ) {
-        val validStatusValue = getValidStatusValue(field.value.textValue());
+        val validStatusValue = getValidStatusValue(field.value.textValue())
         if (!reportMetricMap.containsKey(reportType)) {
             reportMetricMap[reportType] = validStatusValue
         } else {
@@ -102,7 +102,7 @@ class ReportParser {
      * @return String
      */
     private fun getValidStatusValue(status: String): String {
-        var tempStatus = status.lowercase()
+        val tempStatus = status.lowercase()
         return if (tempStatus == "success" || (!tempStatus.contains("invalid") && tempStatus.contains("valid"))) {
             "success"
         } else if (tempStatus.contains("invalid") || tempStatus.contains("error") || tempStatus.contains("failure")) {

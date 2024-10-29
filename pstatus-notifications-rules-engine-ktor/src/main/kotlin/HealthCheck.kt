@@ -55,7 +55,6 @@ class HealthCheck {
  * Service for querying the health of the report-sink service and its dependencies.
  *
  * @property logger KLogger
- * @property cosmosConfiguration CosmosConfiguration
  * @property azureServiceBusConfiguration AzureServiceBusConfiguration
  */
 class HealthQueryService: KoinComponent {
