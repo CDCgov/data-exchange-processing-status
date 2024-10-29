@@ -33,7 +33,10 @@ class InstantTypeAdapter :
      * @return Instant?
      */
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Instant? {
-        return json?.asLong?.let { Instant.ofEpochMilli(it) }
+        // We can't determine the type of the source through inspection of the JsonElement other than to try to get it
+        // as different types.  Keep trying until one succeeds, otherwise throw an exception.
+        runCatching { json?.asString?.let { return Instant.parse(it) } }
+        runCatching { json?.asLong?.let { return Instant.ofEpochMilli(it) } }
+        throw JsonParseException("Failed to parse JsonElement while deserializing ${typeOfT?.typeName}; json = ${json.toString()}")
     }
-
 }
