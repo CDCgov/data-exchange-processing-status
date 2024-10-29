@@ -1,0 +1,18 @@
+services:
+  graphql:
+    image: quay.io/us-cdcgov/phdo/pstatus-graphql:latest
+    ports:
+      - "8080:8080" # GraphQL listener port
+    environment:
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://localhost"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+  rabbitmq:
+    image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+    ports:
+      - "5672:5672" #AMQP protocol port
+      - "15672:15672" # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
