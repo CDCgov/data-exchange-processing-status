@@ -25,12 +25,18 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+application {
+    mainClass.set("gov.cdc.ocio.processingstatusnotifications.ApplicationKt")
+}
+
 tasks.withType(KotlinCompile).configureEach {
     kotlinOptions {
         jvmTarget = "17"
     }
 
 }
+
+tasks.register("prepareKotlinBuildScriptModel"){}
 
 group "gov.cdc.ocio"
 version "0.0.1"

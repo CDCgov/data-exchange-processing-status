@@ -63,7 +63,7 @@ object InMemoryCache {
      */
     private fun updateSubscriptionRuleCache(subscriptionRule: String): String {
         // Try to read from existing cache to see an existing subscription rule
-        var existingSubscriptionId: String? = null
+        val existingSubscriptionId: String?
         readWriteLock.readLock().lock()
         try {
             existingSubscriptionId = subscriptionRuleCache.get(subscriptionRule)
