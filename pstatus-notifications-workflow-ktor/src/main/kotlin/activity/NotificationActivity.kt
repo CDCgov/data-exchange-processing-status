@@ -24,4 +24,9 @@ interface NotificationActivities {
         error:String,
         deliveryReference: String
     )
+
+    @ActivityMethod
+    fun sendDigestEmail(
+        emailBody: String,
+        deliveryReference: String)
 }

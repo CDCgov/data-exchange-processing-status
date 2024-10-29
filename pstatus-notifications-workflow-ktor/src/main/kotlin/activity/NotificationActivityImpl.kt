@@ -14,7 +14,6 @@ class NotificationActivitiesImpl : NotificationActivities {
     /**
      * Send notification method which uses the email service to send email when an upload fails
      * @param dataStreamId String
-     * @param dataStreamRoute String
      * @param jurisdiction String
      * @param deliveryReference String
      */
@@ -48,5 +47,9 @@ class NotificationActivitiesImpl : NotificationActivities {
     override fun sendDataStreamTopErrorsNotification(error: String, deliveryReference: String) {
         logger.info(error)
         emailService.sendEmail("TEST EMAIL-DATA STREAM TOP ERRORS NOTIFICATION",error, deliveryReference)
+    }
+
+    override fun sendDigestEmail(emailBody: String, deliveryReference: String) {
+        emailService.sendEmail("DAILY UPLOAD DIGEST COUNTS NOTIFICATION",emailBody, deliveryReference)
     }
 }
