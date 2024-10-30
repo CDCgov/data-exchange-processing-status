@@ -28,31 +28,24 @@ import java.util.*
  * The AWS SQS service is an additional interface for receiving and validating reports.
  */
 class AWSSQSProcessor {
-    private lateinit var jsonUtils: DefaultJsonUtils
+    private val objectMapper: ObjectMapper by lazy {ObjectMapper()}
+    private val jsonUtils: DefaultJsonUtils by lazy {DefaultJsonUtils(objectMapper)}
     private lateinit var schemaValidationService: SchemaValidationService
-    private lateinit var schemaLoader: FileSchemaLoader
-    private lateinit var schemaValidator: JsonSchemaValidator
-    private lateinit var errorProcessor: ErrorLoggerProcessor
-    private lateinit var logger: KLogger
-    private lateinit var gson: Gson
-    private lateinit var objectMapper: ObjectMapper
+    private val schemaLoader: FileSchemaLoader by lazy {FileSchemaLoader()}
+    private val schemaValidator: JsonSchemaValidator by lazy {JsonSchemaValidator(SchemaValidation.logger)}
+    private val errorProcessor: ErrorLoggerProcessor by lazy {ErrorLoggerProcessor(SchemaValidation.logger)}
+    private val logger: KLogger by lazy {KotlinLogging.logger {}}
 
-    @Throws(BadRequestException::class)
-    fun validateMessage(messageAsString: String) {
-        //Initialize components
-        objectMapper = ObjectMapper()
-        jsonUtils = DefaultJsonUtils(objectMapper)
-        schemaLoader = FileSchemaLoader()
-        logger = KotlinLogging.logger {}
-        schemaValidator = JsonSchemaValidator(logger)
-        errorProcessor = ErrorLoggerProcessor(logger)
-
-        gson = GsonBuilder()
+    private val gson: Gson by lazy {
+        GsonBuilder()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .create()
+    }
 
+    @Throws(BadRequestException::class)
+    fun validateMessage(messageAsString: String) {
         try {
             logger.info { "Received message from AWS SQS: $messageAsString" }
             val message = SchemaValidation().checkAndReplaceDeprecatedFields(messageAsString)
@@ -78,6 +71,7 @@ class AWSSQSProcessor {
 
                 logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
                 val validationResult = schemaValidationService.validateJsonSchema(messageAsString)
+
                 if (validationResult.status) {
                     logger.info { "The message has been successfully validated, creating report." }
                     SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java), Source.AWS)
