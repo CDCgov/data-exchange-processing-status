@@ -1,5 +1,3 @@
-version: '3.7'
-
 name: pstatus-api
 
 services:
@@ -61,7 +59,7 @@ services:
           memory: 4G  # Set the memory limit here
 
   couchbase-setup:
-    image: couchbase
+    image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
     depends_on:
       - couchbase
     restart: "no"
