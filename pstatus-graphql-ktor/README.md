@@ -120,7 +120,7 @@ down and run in podman or docker without the need to build anything.
 
 ```shell
 $ gradle jib \
-    -Djib.to.image=quay.io/us-cdcgov/phdo/pstatus-report-sink:latest \
+    -Djib.to.image=quay.io/us-cdcgov/phdo/pstatus-graphql:latest \
     -Djib.to.auth.username='us-cdcgov+github_ci_phdo' \
     -Djib.to.auth.password=$PASSWORD
 ```
