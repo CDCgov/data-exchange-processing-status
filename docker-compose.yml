@@ -45,14 +45,6 @@ services:
     environment:
       - COUCHBASE_ADMINISTRATOR_USERNAME=admin
       - COUCHBASE_ADMINISTRATOR_PASSWORD=password
-#    volumes:
-#      - ./couchbase-init.sh:/scripts/couchbase-init.sh  # Mount the setup script
-#      - couchbase_data:/opt/couchbase/var
-#    entrypoint: /scripts/couchbase-init.sh  # Use custom entrypoint to initialize
-#    entrypoint: /entrypoint.sh
-#    entrypoint: ["/entrypoint.sh"]
-#    command: sh /scripts/couchbase-init.sh
-#    entrypoint: sh -c "/couchbase-init.sh"
     deploy:
       resources:
         limits:

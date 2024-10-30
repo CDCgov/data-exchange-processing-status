@@ -1,13 +1,5 @@
 #!/bin/bash
 
-#sh ./entrypoint.sh
-#(exec "./entrypoint.sh")
-#/bin/sh ./entrypoint.sh
-#echo "Running original entrypoint.sh script..."
-#. /entrypoint.sh
-#/entrypoint.sh "$@"
-#/entrypoint.sh couchbase-server &
-
 # Wait for Couchbase Server to start
 until curl -s -u admin:password http://couchbase:8091/pools >/dev/null; do
   echo "Waiting for Couchbase to start..."
