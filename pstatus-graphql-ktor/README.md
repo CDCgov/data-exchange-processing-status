@@ -101,17 +101,8 @@ UnSubscribe upload errors lets you unsubscribe from getting notifications when t
 ### upsertReport
 Create a new or replace an existing report. 
 
-## Publish to CDC's Azure Container Registry
-```commandline
-$ gradle publishImageToLocalRegistry
-$ az login
-$ az acr login --name ociodexdevprocessingstatus
-$ docker login ociodexdevprocessingstatus.azurecr.io
-$ docker tag pstatus-graphql-ktor ociodexdevprocessingstatus.azurecr.io/pstatus-graphql-ktor:v1
-$ docker push ociodexdevprocessingstatus.azurecr.io/pstatus-graphql-ktor:v1 
-```
-For the docker login step, provide the username and password found in the ACR > Access Keys.  The username will be `ociodexdevprocessingstatus.azurecr.io`.
-
+# Publishing
+There are several ways to publish the 
 ## Publish to CDC's ImageHub
 With one gradle command you can builds and publish the project's Docker container image to the external container registry, imagehub, which is a nexus repository.
 
@@ -123,7 +114,33 @@ $ gradle jib
 ```
 The location of the deployment will be to the `docker-dev2` repository under the folder `/v2/dex/pstatus`. 
 
-### HEALTH CHECK
+## Publish to CDC's Quay.io Repo
+The purpose of publishing to quay.io is to make the container images publicly available so they can easily be pulled
+down and run in podman or docker without the need to build anything.
+
+```shell
+$ gradle jib \
+    -Djib.to.image=quay.io/us-cdcgov/phdo/pstatus-graphql:latest \
+    -Djib.to.auth.username='us-cdcgov+github_ci_phdo' \
+    -Djib.to.auth.password=$PASSWORD
+```
+Replace the`PASSWORD` value with the one for the `us-cdcgov+github_ci_phdo` robot account. 
+
+## Publish to CDC's Azure Container Registry
+This is a less common approach and is likely only considered if the code will be run within an Azure container instance
+or app service.
+
+```shell
+$ gradle publishImageToLocalRegistry
+$ az login
+$ az acr login --name ociodexdevprocessingstatus
+$ docker login ociodexdevprocessingstatus.azurecr.io
+$ docker tag pstatus-graphql-ktor ociodexdevprocessingstatus.azurecr.io/pstatus-graphql-ktor:v1
+$ docker push ociodexdevprocessingstatus.azurecr.io/pstatus-graphql-ktor:v1 
+```
+For the docker login step, provide the username and password found in the ACR > Access Keys.  The username will be `ociodexdevprocessingstatus.azurecr.io`.
+
+### Health Check
 The api endpoint **"getHealth"** can be used to check the health of the service. It will also internally verify if the Cosmos DB is UP.
 
 **{{ps_api_base_url}}/graphql/getHealth**
