@@ -414,7 +414,7 @@ class ReportManager: KoinComponent {
                 success = repository.reportsDeadLetterCollection.createItem(
                     reportId,
                     reportType,
-                    Report::class.java,
+                    ReportDeadLetter::class.java,
                     uploadId
                 )
             }
