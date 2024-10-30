@@ -1,13 +1,18 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
+import com.google.gson.ToNumberPolicy
+import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
+import gov.cdc.ocio.database.utils.InstantTypeAdapter
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
+
 import gov.cdc.ocio.processingstatusapi.models.Source
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.loaders.FileSchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
@@ -16,6 +21,8 @@ import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 
 import mu.KLogger
 import mu.KotlinLogging
+import java.time.Instant
+import java.util.*
 
 /**
  * The AWS SQS service is an additional interface for receiving and validating reports.
@@ -26,7 +33,8 @@ class AWSSQSProcessor {
     private lateinit var schemaLoader: FileSchemaLoader
     private lateinit var schemaValidator: JsonSchemaValidator
     private lateinit var errorProcessor: ErrorLoggerProcessor
-    private lateinit var klogger: KLogger
+    private lateinit var logger: KLogger
+    private lateinit var gson: Gson
 
 
     @Throws(BadRequestException::class)
@@ -34,15 +42,21 @@ class AWSSQSProcessor {
         val objectMapper = ObjectMapper()
         jsonUtils = DefaultJsonUtils(objectMapper)
         schemaLoader = FileSchemaLoader()
-        klogger = KotlinLogging.logger {}
-        schemaValidator = JsonSchemaValidator(klogger)
-        errorProcessor = ErrorLoggerProcessor(klogger)
+        logger = KotlinLogging.logger {}
+        schemaValidator = JsonSchemaValidator(logger)
+        errorProcessor = ErrorLoggerProcessor(logger)
+
+        gson = GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .create()
 
         try {
-            klogger.info { "Received message from AWS SQS: $messageAsString" }
+            logger.info { "Received message from AWS SQS: $messageAsString" }
             val message = SchemaValidation().checkAndReplaceDeprecatedFields(messageAsString)
 
-            klogger.info { "SQS message after checking for depreciated fields $message" }
+            logger.info { "SQS message after checking for depreciated fields $message" }
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
              * Otherwise, proceeds with schema validation.
@@ -53,21 +67,21 @@ class AWSSQSProcessor {
 
             if (isValidationDisabled) {
                 if (!isReportValidJson) {
-                    klogger.error { "Message is not in correct JSON format." }
+                    logger.error { "Message is not in correct JSON format." }
                     SchemaValidation().sendToDeadLetter("Validation failed.The message is not in JSON format.")
                     return
                 }
             } else {
                 schemaValidationService =
-                    SchemaValidationService(schemaLoader, schemaValidator, errorProcessor, jsonUtils, klogger)
+                    SchemaValidationService(schemaLoader, schemaValidator, errorProcessor, jsonUtils, logger)
 
-                klogger.info { "The message is in the correct JSON format. Proceed with schema validation" }
+                logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
                 val validationResult = schemaValidationService.validateJsonSchema(messageAsString)
                 if (validationResult.status) {
-                    klogger.info { "The message has been successfully validated, creating report." }
+                    logger.info { "The message has been successfully validated, creating report." }
                     SchemaValidation().createReport(gson.fromJson(message, CreateReportMessage::class.java), Source.AWS)
                 } else {
-                    klogger.info { "The message failed to validate, creating dead-letter report." }
+                    logger.info { "The message failed to validate, creating dead-letter report." }
                     SchemaValidation().sendToDeadLetter(
                         validationResult.invalidData,
                         validationResult.schemaFileNames,
@@ -77,10 +91,10 @@ class AWSSQSProcessor {
                 }
             }
         } catch (e: BadRequestException) {
-            klogger.error("Failed to validate message received from AWS SQS: ${e.message}")
+            logger.error("Failed to validate message received from AWS SQS: ${e.message}")
             throw e
         } catch (e: JsonSyntaxException) {
-            klogger.error("Failed to parse message received from AWS SQS: ${e.localizedMessage}")
+            logger.error("Failed to parse message received from AWS SQS: ${e.localizedMessage}")
             throw BadStateException("Unable to interpret the create report message")
         }
     }

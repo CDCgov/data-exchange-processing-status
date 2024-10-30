@@ -48,6 +48,6 @@ tasks.test {
     // Set the test classpath, if required
 }
 kotlin {
-    jvmToolchain(20)
+    jvmToolchain(17)
 }
 
