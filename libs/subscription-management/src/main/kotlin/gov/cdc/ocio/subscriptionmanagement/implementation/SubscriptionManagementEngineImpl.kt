@@ -4,7 +4,7 @@ import gov.cdc.ocio.subscriptionmanagement.exception.SubscriptionNotFoundExcepti
 import gov.cdc.ocio.subscriptionmanagement.exception.SubscriptionManagementException
 import gov.cdc.ocio.subscriptionmanagement.interfaces.SubscriptionManagementEngine
 import gov.cdc.ocio.subscriptionmanagement.interfaces.WorkflowSubscription
-import gov.cdc.ocio.subscriptionmanagement.repository.CosmosSubscriptionManagementRepository
+import gov.cdc.ocio.subscriptionmanagement.repository.SubscriptionManagementRepository
 import gov.cdc.ocio.subscriptionmanagement.utils.SubscriptionValidationUtils
 import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import mu.KLogger
@@ -16,7 +16,7 @@ import kotlin.jvm.Throws
  * This uses the persistence layer the CosmosRuleRepository to perform the CRUD
  */
 class SubscriptionManagementEngineImpl(
-    private val repository: CosmosSubscriptionManagementRepository,
+    private val repository: SubscriptionManagementRepository,
     private val logger: KLogger
 ) : SubscriptionManagementEngine {
 

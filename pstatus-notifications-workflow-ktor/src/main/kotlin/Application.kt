@@ -1,8 +1,9 @@
 package gov.cdc.ocio.processingnotifications
 
-import gov.cdc.ocio.database.cosmos.CosmosConfiguration
-import gov.cdc.ocio.database.cosmos.CosmosRepository
-import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+
+import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.processingnotifications.model.UploadDigestSubscription
+import gov.cdc.ocio.processingnotifications.service.UploadDigestCountsNotificationSubscriptionService
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -10,19 +11,11 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.routing.*
 import org.koin.core.KoinApplication
-import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
-    val cosmosModule = module {
-        val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
-        val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single<ProcessingStatusRepository>{ CosmosRepository(uri, authKey) } //createdAtStart = true is not working , with lib integration
-        // Create a CosmosDB config that can be dependency injected (for health checks)
-        single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
-    }
-
-    return modules(listOf(cosmosModule))
+    val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
+    return modules(listOf(databaseModule))
 }
 fun main(args: Array<String>) {
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
@@ -42,7 +35,28 @@ fun Application.module() {
         unsubscribeUploadErrorsNotification()
         subscribeDataStreamTopErrorsNotification()
         unsubscribesDataStreamTopErrorsNotification()
+        subscribeUploadDigestCountsRoute()
+        unsubscribeUploadDigestCountsRoute()
         healthCheckRoute()
     }
+
+    //***ONLY FOR QUICK AND DIRTY TESTING***
+  //  testUploadDigestCount()
+
+}
+
+/**
+ * THIS IS ONLY FOR QUICK AND DIRTY TESTING. CAN BE REMOVED ONCE THIS SERVICE IS MATURED
+ */
+fun testUploadDigestCount(){
+    val service = UploadDigestCountsNotificationSubscriptionService()
+    service.run(
+        UploadDigestSubscription(
+        jurisdictionIds = listOf("SMOKE", "SMOKE100"),
+        dataStreamIds = listOf("dex-testing", "dex-testing100"),
+            listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun"),
+            "45 02 * *",
+           "xph6@cdc.gov"
+    ))
 
 }

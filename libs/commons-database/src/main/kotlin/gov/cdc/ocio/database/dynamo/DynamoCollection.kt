@@ -135,6 +135,6 @@ class DynamoCollection<R>(
             .atZone(ZoneId.of("GMT"))
 
         // Format the Instant to ISO 8601 string
-        DateTimeFormatter.ISO_INSTANT.format(instant);
+        DateTimeFormatter.ISO_INSTANT.format(instant)
     }
 }
