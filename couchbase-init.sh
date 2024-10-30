@@ -14,8 +14,6 @@ if [ ! -e "/home/couchbase_initialized" ] ; then
     --cluster-username "admin" --cluster-password "password" --services "data,index,query" \
     --cluster-ramsize 500 --cluster-index-ramsize 256 --index-storage-setting "memopt"
 
-  echo "1"
-
   # Create a bucket if it doesn't exist
   cb_bucket_exists=$(curl -s -u admin:password http://couchbase:8091/pools/default/buckets | grep -c "ProcessingStatus")
   if [ "$cb_bucket_exists" -eq 0 ]; then
@@ -23,8 +21,6 @@ if [ ! -e "/home/couchbase_initialized" ] ; then
     couchbase-cli bucket-create -c couchbase:8091 -u admin -p password \
       --bucket=ProcessingStatus --bucket-type=couchbase --bucket-ramsize=100
   fi
-
-  echo "2"
 
   # Add a scope
   echo "Adding scope 'data'..."
