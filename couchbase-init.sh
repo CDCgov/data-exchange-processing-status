@@ -6,7 +6,7 @@ until curl -s -u admin:password http://couchbase:8091/pools >/dev/null; do
   sleep 5
 done
 
-echo "Couchbase is up and running5."
+echo "Couchbase is up and running."
 
 if [ ! -e "/home/couchbase_initialized" ] ; then
   echo "Initializing the cluster..."
@@ -46,7 +46,7 @@ if [ ! -e "/home/couchbase_initialized" ] ; then
 
   # Done
   echo "Couchbase Server initialized."
-  echo "Initialized `date +"%D %T"`" > /home/couchbase_initialized
+  echo "Initialized" > /home/couchbase_initialized
 
   echo "Couchbase setup completed."
 else
