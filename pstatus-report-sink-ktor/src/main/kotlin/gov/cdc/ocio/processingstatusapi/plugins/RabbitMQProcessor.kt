@@ -1,12 +1,16 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
+import com.google.gson.ToNumberPolicy
+import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
+import gov.cdc.ocio.database.utils.InstantTypeAdapter
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.models.Source
 import gov.cdc.ocio.processingstatusapi.utils.*
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.loaders.FileSchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
@@ -14,6 +18,8 @@ import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 import mu.KLogger
 import mu.KotlinLogging
+import java.time.Instant
+import java.util.*
 
 /**
  * The RabbitMQ service is additional interface for receiving and validating reports for local runs.
@@ -25,7 +31,9 @@ class RabbitMQProcessor {
     private lateinit var schemaLoader: FileSchemaLoader
     private lateinit var schemaValidator: JsonSchemaValidator
     private lateinit var errorProcessor: ErrorLoggerProcessor
-    private lateinit var klogger: KLogger
+    private lateinit var logger: KLogger
+    private lateinit var gson: Gson
+    private lateinit var objectMapper: ObjectMapper
 
     /**
      * Process a message received from rabbitMQ queue running locally.
@@ -36,10 +44,23 @@ class RabbitMQProcessor {
      */
     @Throws(BadRequestException::class)
     fun validateMessage(messageAsString: String) {
+        objectMapper = ObjectMapper()
+        jsonUtils = DefaultJsonUtils(objectMapper)
+        schemaLoader = FileSchemaLoader()
+        logger = KotlinLogging.logger {}
+        schemaValidator = JsonSchemaValidator(logger)
+        errorProcessor = ErrorLoggerProcessor(logger)
+
+        gson = GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .create()
+
         try {
-            klogger.info { "Received message from RabbitMQ: $messageAsString" }
+            logger.info { "Received message from RabbitMQ: $messageAsString" }
             val message = SchemaValidation().checkAndReplaceDeprecatedFields(messageAsString)
-            klogger.info { "RabbitMQ message after checking for depreciated fields $message" }
+            logger.info { "RabbitMQ message after checking for depreciated fields $message" }
 
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
@@ -50,32 +71,25 @@ class RabbitMQProcessor {
 
             if (isValidationDisabled) {
                 if (!isReportValidJson) {
-                    klogger.error { "Message is not in correct JSON format." }
+                    logger.error { "Message is not in correct JSON format." }
                     SchemaValidation().sendToDeadLetter("Validation failed.The message is not in JSON format.")
                     return
                 }
             } else {
-                val objectMapper = ObjectMapper()
-                jsonUtils = DefaultJsonUtils(objectMapper)
-                schemaLoader = FileSchemaLoader()
-                klogger = KotlinLogging.logger {}
-                schemaValidator = JsonSchemaValidator(klogger)
-                errorProcessor = ErrorLoggerProcessor(klogger)
-
-                klogger.info { "The message is in the correct JSON format. Proceed with schema validation" }
+                logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
                 schemaValidationService =
-                    SchemaValidationService(schemaLoader, schemaValidator, errorProcessor, jsonUtils, klogger)
+                    SchemaValidationService(schemaLoader, schemaValidator, errorProcessor, jsonUtils, logger)
 
-                klogger.info { "The message is in the correct JSON format. Proceed with schema validation" }
+                logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
                 val validationResult = schemaValidationService.validateJsonSchema(messageAsString)
                 if (validationResult.status) {
-                    klogger.info { "The message has been successfully validated, creating report." }
+                    logger.info { "The message has been successfully validated, creating report." }
                     SchemaValidation().createReport(
                         gson.fromJson(messageAsString, CreateReportMessage::class.java),
                         Source.RABBITMQ
                     )
                 } else {
-                    klogger.info { "The message failed to validate, creating dead-letter report." }
+                    logger.info { "The message failed to validate, creating dead-letter report." }
                     SchemaValidation().sendToDeadLetter(
                         validationResult.invalidData,
                         validationResult.schemaFileNames,
@@ -85,9 +99,9 @@ class RabbitMQProcessor {
                 }
             }
         } catch (e: BadRequestException) {
-            klogger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
+            logger.error(e) { "Failed to validate rabbitMQ message ${e.message}" }
         } catch (e: JsonSyntaxException) {
-            klogger.error(e) { "Failed to parse rabbitMQ message ${e.message}" }
+            logger.error(e) { "Failed to parse rabbitMQ message ${e.message}" }
         }
     }
 }

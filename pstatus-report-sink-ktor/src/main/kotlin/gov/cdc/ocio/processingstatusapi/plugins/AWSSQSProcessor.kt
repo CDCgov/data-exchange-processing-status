@@ -35,11 +35,12 @@ class AWSSQSProcessor {
     private lateinit var errorProcessor: ErrorLoggerProcessor
     private lateinit var logger: KLogger
     private lateinit var gson: Gson
-
+    private lateinit var objectMapper: ObjectMapper
 
     @Throws(BadRequestException::class)
     fun validateMessage(messageAsString: String) {
-        val objectMapper = ObjectMapper()
+        //Initialize components
+        objectMapper = ObjectMapper()
         jsonUtils = DefaultJsonUtils(objectMapper)
         schemaLoader = FileSchemaLoader()
         logger = KotlinLogging.logger {}
