@@ -71,9 +71,9 @@ dependencies.  It will also set everything up for you so you can get started qui
 ### GraphQL
 The `pstatus-api/graphql-1` service running in Docker is your gateway to GraphQL through the
 [GraphiQL playground](http://localhost:8090/graphiql).
+
 ![PS API GraphiQL](./resources/ps-api-graphiql.png)
-> **Note**: Postman can also be used for a more rich GraphQL experience.  If using Postman, simply go to
-> "New" -> "GraphQL" and paste "localhost:8090/graphql" in the URL field.
+> **Note**: Postman can also be used for a more rich GraphQL experience.  If using Postman, simply go to "New" -> "GraphQL" and paste "localhost:8090/graphql" in the URL field.
 
 #### Get Health
 Paste the following query into your GraphQL (either Postman or the GraphiQL playground).
@@ -91,6 +91,7 @@ query GetHealth {
 }
 ```
 Run it and you should see an output that looks like this:
+
 ![PS API GraphiQL Get Health](./resources/ps-api-graphiql-get-health.png)
 
 #### Create a Report
