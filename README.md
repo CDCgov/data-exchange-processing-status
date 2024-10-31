@@ -1,8 +1,9 @@
-# CDCgov GitHub Organization Open Source Project Template
+# Public Health Data Observability (PHDO) Processing Status (PS) API
 
-**Template for clearance: This project serves as a template to aid projects in starting up and moving through clearance procedures. To start, create a new repository and implement the required [open practices](open_practices.md), train on and agree to adhere to the organization's [rules of behavior](rules_of_behavior.md), and [send a request through the create repo form](https://forms.office.com/Pages/ResponsePage.aspx?id=aQjnnNtg_USr6NJ2cHf8j44WSiOI6uNOvdWse4I-C2NUNk43NzMwODJTRzA4NFpCUk1RRU83RTFNVi4u) using language from this template as a Guide.**
-
-**General disclaimer** This repository was created for use by CDC programs to collaborate on public health related projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by CDC and its partners to share information and collaborate on software. CDC use of GitHub does not imply an endorsement of any one particular service, product, or enterprise. 
+**General disclaimer** This repository was created for use by CDC programs to collaborate on public health related
+projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by
+CDC and its partners to share information and collaborate on software. CDC use of GitHub does not imply an endorsement
+of any one particular service, product, or enterprise. 
 
 ## Access Request, Repo Creation Request
 
@@ -18,9 +19,56 @@
 * [Code of Conduct](code-of-conduct.md)
 
 ## Overview
+The Public Health Data Observability (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
+It was developed to support public health Data Senders in their effort to share critical public health data with
+internal CDC Programs. Data Senders are CDC partners across the country, including:
 
-Describe the purpose of your project. Add additional sections as necessary to help collaborators and potential collaborators understand and use your project.
-  
+- State, tribal, local, and territorial public health authorities
+- Hospitals and health systems
+- Laboratories
+- Trusted Intermediaries
+
+PS API is a self-hosted, containerized, and pre-packaged tool for data submission visibility. It is configurable and
+can be run both locally and in any cloud environment. PS API was developed to provide visibility into the status and
+performance of file uploads. It enables users to request reports about the status of uploads and to develop custom
+queries to learn detailed information about the data being uploaded and processed.
+
+## Quick Start
+The following Quick Start will help you get up and running quickly to explore basic functionality of the PS API.
+
+### Prerequisites
+- **Docker**: See [instructions](https://docs.docker.com/desktop/) for downloading Docker Desktop for Windows, MacOS, and Linux.
+- **Docker Compose**: See [instructions](https://docs.docker.com/compose/install/) for downloading Docker Compose for Windows, MacOS, and Linux.
+
+### Docker Compose
+The PS API can be deployed locally using docker-compose, which will create the PS API services and all its
+dependencies.  It will also set everything up for you so you can get started quickly.
+
+- Step 1: Clone the repo:
+  ```shell
+  git clone https://github.com/CDCgov/data-exchange-processing-status.git
+  ```
+- Step 2: Ensure Docker Desktop is currently running on your machine.
+- Step 3: Open a Terminal or PowerShell and navigate to the folder where you placed the above files.
+- Step 4: In the Terminal or PowerShell, run docker-compose to launch:
+  ```shell
+  docker-compose up –d
+  ```
+  After a moment you should see the following:
+  ```shell
+  $ docker-compose up -d
+   [+] Running 6/6
+   ✔ Network pstatus-api_default              Created                                                                                                                                              0.0s
+   ✔ Container pstatus-api-couchbase-1        Started                                                                                                                                              0.1s
+   ✔ Container pstatus-api-rabbitmq-1         Started                                                                                                                                              0.1s
+   ✔ Container pstatus-api-couchbase-setup-1  Started                                                                                                                                              0.1s
+   ✔ Container pstatus-api-report-sink-1      Started
+   ✔ Container pstatus-api-graphql-1          Started
+  ```
+- Step 5: Wait about 15 seconds and then verify the services are running in Docker Desktop as shown below. The couchbase-setup service should show that it has Exited since it has completed the setup. Note, RabbitMQ does not require a setup service.
+  ![PS API Docker Desktop](./resources/ps-api-docker-desktop.png)
+- Step 6: You are now ready to start using PS API!
+
 ## Public Domain Standard Notice
 This repository constitutes a work of the United States Government and is not
 subject to domestic copyright protection under 17 USC § 105. This repository is in
