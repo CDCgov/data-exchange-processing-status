@@ -6,7 +6,7 @@ export AWS_S3_REGION="us-east-1"
 export AZURE_BLOB_STORAGE_ACCOUNT_NAME="devstoreaccount1"
 export AZURE_BLOB_STORAGE_ACCOUNT_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==" # Default Azurite Key
 export AZURE_BLOB_CONTAINER_NAME="test-container"
-export AZURE_BLOB_ENDPOINT_URL="http://localhost:10000/devstoreaccount1"
+export AZURE_BLOB_ENDPOINT_URL="http://localhost:10000"
 
 # Azure Service Bus settings (for RabbitMQ)
 export SERVICE_BUS_NAMESPACE="localhost"

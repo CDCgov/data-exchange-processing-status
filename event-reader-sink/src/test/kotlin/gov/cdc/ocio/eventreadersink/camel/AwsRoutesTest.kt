@@ -2,8 +2,6 @@ package gov.cdc.ocio.eventreadersink.camel
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.AppenderBase
 import gov.cdc.ocio.eventreadersink.model.AwsConfig
 import io.mockk.every
 import io.mockk.mockk
@@ -33,10 +31,9 @@ class AwsRoutesTest : CamelTestSupport() {
     }
 
     @AfterEach
-    override fun tearDown() {
-        // Clear log messages after each test
+    fun cleanup() {
         logAppender.clear()
-        super.tearDown() // Call the parent class tearDown method
+        context.stop() // Stop the Camel context if necessary
     }
 
     @Test
@@ -124,19 +121,4 @@ fun configureMockAwsConfig(mockAwsConfig: AwsConfig) {
     every { mockAwsConfig.s3EndpointURL } returns "testEndpointURL"
     every { mockAwsConfig.s3BucketName } returns "testBucket"
     every { mockAwsConfig.s3Region } returns "us-east-1"
-}
-
-// Appender for capturing logs
-class TestLogAppender : AppenderBase<ILoggingEvent>() {
-    private val logMessages = mutableListOf<String>()
-
-    override fun append(eventObject: ILoggingEvent) {
-        logMessages.add(eventObject.formattedMessage)
-    }
-
-    fun getLogMessages(): List<String> = logMessages
-
-    fun clear() {
-        logMessages.clear()
-    }
 }
