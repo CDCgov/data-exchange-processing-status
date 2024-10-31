@@ -73,7 +73,7 @@ The `pstatus-api/graphql-1` service running in Docker is your gateway to GraphQL
 [GraphiQL playground](http://localhost:8090/graphiql).
 
 ![PS API GraphiQL](./resources/ps-api-graphiql.png)
-> **Note**: Postman can also be used for a more rich GraphQL experience.  If using Postman, simply go to "New" -> "GraphQL" and paste "localhost:8090/graphql" in the URL field.
+> **Note**: Postman can also be used for a more rich GraphQL experience.  If using Postman, simply go to _New &#x27A1; GraphQL_ and paste "http://localhost:8090/graphql" in the URL field.
 
 #### Get Health
 Paste the following query into your GraphQL (either Postman or the GraphiQL playground).
