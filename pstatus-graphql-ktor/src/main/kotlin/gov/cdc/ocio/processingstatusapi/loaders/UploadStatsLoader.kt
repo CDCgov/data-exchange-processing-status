@@ -155,25 +155,14 @@ class UploadStatsLoader: KoinComponent {
         timeRangeWhereClause: String
     ): List<UndeliveredUpload> {
         try {
-            //Get the uploadIds for each upload with 'upload-completed' and no report for blob-file-copy
-            val undeliveredUploadIdsForBlobFileCopy = getUploadIdsWithIssues(
-                dataStreamId,
-                dataStreamRoute,
-                "upload-completed",
-                "blob-file-copy",
-                timeRangeWhereClause
-            )
 
+            //All the uploadIds that can be categorized as undelivered
             //Query - Get all the uploads with an item for blob-file-copy and status of failure
             val unDeliveredUploadIdsQuery = buildBlobFileCopyFailureQuery(dataStreamId, dataStreamRoute, timeRangeWhereClause)
             logger.info("UploadsStats, fetch uploadIds query = $unDeliveredUploadIdsQuery")
             val uploadsWithFailures = executeUndeliveredUploadsQuery(unDeliveredUploadIdsQuery)
 
-            //All the uploadIds that can be categorized as undelivered
-            // (Any upload id where an upload-completed report exists but not a blob-file-copy report
-            // or if there is the least one report with  blob-file-copy report and the status indicates failure.)
-            val uploadIds = uploadsWithFailures + undeliveredUploadIdsForBlobFileCopy
-            val quotedIds = uploadIds.joinToString("\",\"", "\"", "\"")
+            val quotedIds = uploadsWithFailures.joinToString("\",\"", "\"", "\"")
 
             //Query to get the respective filenames for the above uploadIds with the select criteria
             val unDeliveredUploadsQuery = buildUploadsQuery(dataStreamId, dataStreamRoute, quotedIds, timeRangeWhereClause)
@@ -391,6 +380,33 @@ class UploadStatsLoader: KoinComponent {
             AND ${cPrefix}uploadId IN ${openBkt}$quotedIds${closeBkt} 
             AND $timeRangeWhereClause
         """.trimIndent()
+    }
+
+
+    /**
+     * Builds a SQL query to retrieve the uploads with an item for blob-file-copy and a status of failure.
+     *
+     * @param dataStreamId The ID of the data stream.
+     * @param dataStreamRoute The route of the data stream.
+     * @param timeRangeWhereClause The SQL clause for the time range.
+     * @return The SQL query string.
+     */
+    private fun buildBlobFileCopyFailureQuery1(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        timeRangeWhereClause: String
+    ): String {
+        return (
+                "select distinct ${cPrefix}uploadId, "
+                        + "from $cName $cVar "
+                        + "where "//IS_DEFINED(${cPrefix}content.content_schema_name) and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                        + "${cPrefix}content.content_schema_name = 'blob-file-copy' and "
+                        + "${cPrefix}stageInfo.${cElFunc("action")} = 'blob-file-copy' and "
+                        + "${cPrefix}stageInfo.status = 'FAILURE' and "
+                        + "$timeRangeWhereClause "
+                )
     }
 
     /**
