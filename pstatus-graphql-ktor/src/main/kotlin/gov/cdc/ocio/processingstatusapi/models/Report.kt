@@ -1,9 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
+import gov.cdc.ocio.processingstatusapi.utils.DateUtils.getOffsetDateTimeFromInstant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
@@ -84,13 +84,13 @@ data class Report(
         /**
          * Convenience function to convert a cosmos data object to a Report object
          */
-        fun fromReportDao(dao: ReportDao) = Report().apply {
+        fun fromReportDao(dao: gov.cdc.ocio.database.models.Report) = Report().apply {
             this.id = dao.id
             this.uploadId = dao.uploadId
             this.reportId = dao.reportId
             this.dataStreamId = dao.dataStreamId
             this.dataStreamRoute = dao.dataStreamRoute
-            this.dexIngestDateTime = dao.dexIngestDateTime?.atOffset(ZoneOffset.UTC)
+            this.dexIngestDateTime = getOffsetDateTimeFromInstant(dao.dexIngestDateTime,"dexIngestDateTime")
             this.messageMetadata = MessageMetadata.fromMessageMetadataDao(dao.messageMetadata)
             this.stageInfo = StageInfo.fromStageInfoDao(dao.stageInfo)
             this.tags = dao.tags
@@ -98,7 +98,7 @@ data class Report(
             this.jurisdiction = dao.jurisdiction
             this.senderId = dao.senderId
             this.dataProducerId = dao.dataProducerId
-            this.timestamp = dao.timestamp?.atOffset(ZoneOffset.UTC)
+            this.timestamp = getOffsetDateTimeFromInstant(dao.timestamp, "timestamp")
             this.contentType = dao.contentType
             this.content = dao.content as? Map<*, *>
         }

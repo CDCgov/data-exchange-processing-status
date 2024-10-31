@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
-import gov.cdc.ocio.database.models.dao.ReportDeadLetterDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportDeadLetter
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
@@ -34,7 +33,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
-            ReportDeadLetterDao::class.java
+            gov.cdc.ocio.database.models.ReportDeadLetter::class.java
         )
 
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
@@ -74,7 +73,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
-            ReportDeadLetterDao::class.java
+            gov.cdc.ocio.database.models.ReportDeadLetter::class.java
         )
 
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
@@ -131,7 +130,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
-            ReportDeadLetterDao::class.java
+            gov.cdc.ocio.database.models.ReportDeadLetter::class.java
         )
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
         reportItems.forEach { deadLetterReports.add(ReportDeadLetter.fromReportDeadLetterDao(it)) }
