@@ -2,11 +2,8 @@ package gov.cdc.ocio.eventreadersink.camel
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
-import com.azure.storage.blob.BlobClient
 import com.azure.storage.blob.models.BlobStorageException
 import gov.cdc.ocio.eventreadersink.util.TestLogAppender
-import io.mockk.every
-import io.mockk.mockk
 import org.apache.camel.builder.AdviceWith
 import org.apache.camel.builder.AdviceWithRouteBuilder
 import org.apache.camel.component.mock.MockEndpoint
@@ -24,6 +21,12 @@ class AzureRoutesTest : CamelTestSupport() {
     private val logger: Logger = LoggerFactory.getLogger("org.apache.camel.processor.errorhandler.DefaultErrorHandler") as Logger
     private val logAppender = TestLogAppender()
 
+    // Common mock vars
+    private val mockServiceBusEndpoint = "direct://serviceBus"
+    private val mockBlobEndpoint = "mock:azure-storage-blob://testAccount/testContainer"
+    private val fixedTimeProvider = { 1729691041456L }
+    private val jsonPayload = """{"name": "Test User", "email": "test@example.com"}"""
+
     @BeforeEach
     fun setup() {
         logger.level = Level.DEBUG
@@ -37,20 +40,9 @@ class AzureRoutesTest : CamelTestSupport() {
         context.stop() // Stop the Camel context if necessary
     }
 
-    @Test
-    fun `test Azure route initialization and message processing`() {
-        // Simulate Service Bus queue as a direct endpoint for message input to the route
-        val mockServiceBusEndpoint = "direct://serviceBus"
-        // Mock blob container endpoint for assertions on messages
-        val mockBlobEndpoint = "mock:azure-storage-blob://testAccount/testContainer"
-
-        val mockBlobClient = mockk<BlobClient>()
-        every { mockBlobClient.upload(any(), any(), true) } returns Unit // Mock the upload action
-
-        // Set fixed timestamp
-        val fixedTimeProvider = { 1729691041456L }
-
-        // Initialize AzureRoutes with valid configuration
+    // Helper method for common mock azure route init logic
+    private fun setupAzureRoute(exceptionSimulation: Boolean = false): MockEndpoint {
+        // Setup the AzureRoutes configuration
         azureRoutes =
             AzureRoutes(
                 topicName = "testTopic",
@@ -86,12 +78,23 @@ class AzureRoutesTest : CamelTestSupport() {
         // Mock the blob storage endpoint
         val mockBlob = context.getEndpoint(mockBlobEndpoint, MockEndpoint::class.java)
 
+        if (exceptionSimulation) {
+            // Simulate an exception in the route
+            mockBlob.whenAnyExchangeReceived { throw BlobStorageException("Simulated Exception", null, null) }
+        }
+
+        return mockBlob
+    }
+
+    @Test
+    fun `test Azure route initialization and message processing`() {
+        val mockBlob = setupAzureRoute()
+
         // Prepare mock expectations
         mockBlob.expectedMessageCount(1)
         mockBlob.expectedHeaderReceived("CamelAzureStorageBlobBlobName", "message-1729691041456.json")
 
-        // Simulate sending a JSON message to mock SQS queue
-        val jsonPayload = """{"name": "Test User", "email": "test@example.com"}"""
+        // Simulate sending a JSON message to mock the SB endpoint
         template.sendBody(mockServiceBusEndpoint, jsonPayload)
 
         // Verify message reached the blob storage endpoint
@@ -100,61 +103,12 @@ class AzureRoutesTest : CamelTestSupport() {
 
     @Test
     fun `test Azure route error handling with retries`() {
-        // Simulate Service Bus queue as a direct endpoint for message input to the route
-        val mockServiceBusEndpoint = "direct://serviceBus"
-        // Mock blob container endpoint for assertions on messages
-        val mockBlobEndpoint = "mock:azure-storage-blob://testAccount/testContainer"
-
-        val mockBlobClient = mockk<BlobClient>()
-        every { mockBlobClient.upload(any(), any(), true) } returns Unit // Mock the upload action
-
-        // Set fixed timestamp
-        val fixedTimeProvider = { 1729691041456L }
-
-        // Initialize AzureRoutes with valid configuration
-        azureRoutes =
-            AzureRoutes(
-                topicName = "testTopic",
-                subscriptionName = "testSubscription",
-                accountName = "testAccount",
-                accountKey = "testKey",
-                containerName = "testContainer",
-                storageEndpointURL = "",
-                timeProvider = fixedTimeProvider,
-                customFromUri = mockServiceBusEndpoint,
-            )
-
-        context.addRoutes(azureRoutes)
-
-        val routeDefinition = context.getRouteDefinition("azureBlobRoute")
-        AdviceWith.adviceWith(
-            routeDefinition,
-            context,
-            object : AdviceWithRouteBuilder() {
-                override fun configure() {
-                    replaceFromWith(mockServiceBusEndpoint) // Redirect the `from` endpoint to mock
-                    weaveByToUri("azure-storage-blob://*").replace().to(mockBlobEndpoint) // Redirect blob storage to mock endpoint
-                }
-            },
-        )
-
-        // Start Camel context after configuring routes
-        context.start()
-
-        // Verify route started
-        assertTrue(context.routeDefinitions.isNotEmpty())
-
-        // Mock the blob storage endpoint
-        val mockBlob = context.getEndpoint(mockBlobEndpoint, MockEndpoint::class.java)
-        // Simulate an exception in the route
-        mockBlob.whenAnyExchangeReceived { throw BlobStorageException("Simulated Exception", null, null) }
+        val mockBlob = setupAzureRoute(exceptionSimulation = true)
 
         // Prepare mock expectations (1 attempted & 3 retries)
         mockBlob.expectedMessageCount(4)
-//        mockBlob.expectedHeaderReceived("CamelAzureStorageBlobBlobName", "message-1729691041456.json")
 
-        // Simulate sending a JSON message to mock SQS queue
-        val jsonPayload = """{"name": "Test User", "email": "test@example.com"}"""
+        // Simulate sending a JSON message to mock Service Bus endpoint
         template.sendBody(mockServiceBusEndpoint, jsonPayload)
 
         // Verify message reached the blob storage endpoint
