@@ -24,6 +24,12 @@ class AwsRoutesTest : CamelTestSupport() {
     private val logger: Logger = LoggerFactory.getLogger("org.apache.camel.processor.errorhandler.DefaultErrorHandler") as Logger
     private val logAppender = TestLogAppender()
 
+    // Common mock vars
+    private val mockSqsEndpoint = "direct:sqs"
+    private val mockS3Endpoint = "mock:aws2-s3://testBucket"
+    private val fixedTimeProvider = { 1729691041456L }
+    private val jsonPayload = """{"name": "Test User", "email": "test@example.com"}"""
+
     @BeforeEach
     fun setup() {
         logger.level = Level.DEBUG
@@ -37,21 +43,23 @@ class AwsRoutesTest : CamelTestSupport() {
         context.stop() // Stop the Camel context if necessary
     }
 
-    @Test
-    fun `test AWS route initialization and message processing`() {
-        // Simulate SQS queue as a direct endpoint for message input to the route
-        val mockSqsEndpoint = "direct:sqs"
-        // Mock S3 endpoint for assertions on messages to S3
-        val mockS3Endpoint = "mock:aws2-s3://testBucket"
-
-        // Configure mockAwsConfig with helper
+    // Helper method for common mock aws route init logic
+    private fun setupAwsRoute(exceptionSimulation: Boolean = false): MockEndpoint {
+        // Setup the AwsRoutes configuration
         configureMockAwsConfig(mockAwsConfig)
 
-        // Set fixed timestamp
-        val fixedTimeProvider = { 1729691041456L }
+        awsRoutes =
+            AwsRoutes(
+                awsConfig = mockAwsConfig,
+                timeProvider = fixedTimeProvider,
+                sqsEndpoint = mockSqsEndpoint,
+                s3Endpoint = mockS3Endpoint,
+            )
 
-        awsRoutes = AwsRoutes(mockAwsConfig, fixedTimeProvider, mockSqsEndpoint, mockS3Endpoint)
         context.addRoutes(awsRoutes)
+
+        // Start the context
+        context.start()
 
         // Verify route started
         assertTrue(context.routeDefinitions.size > 0)
@@ -59,13 +67,24 @@ class AwsRoutesTest : CamelTestSupport() {
         // Mock the S3 endpoint
         val mockS3 = context.getEndpoint(mockS3Endpoint, MockEndpoint::class.java)
 
+        if (exceptionSimulation) {
+            // Simulate an exception in the route
+            mockS3.whenAnyExchangeReceived { throw RuntimeException("Simulated Exception") }
+        }
+
+        return mockS3
+    }
+
+    @Test
+    fun `test AWS route initialization and message processing`() {
+        val mockS3 = setupAwsRoute()
+
         // Prepare mock expectations
         mockS3.expectedMessageCount(1)
         mockS3.expectedHeaderReceived("CamelAwsS3Key", "message-1729691041456.json")
 
         // Simulate sending a JSON message to mock SQS queue
-        val jsonPayload = """{"name": "Test User", "email": "test@example.com"}"""
-        template.sendBody("direct:sqs", jsonPayload)
+        template.sendBody(mockSqsEndpoint, jsonPayload)
 
         // Verify message arrived at mock S3 endpoint
         mockS3.assertIsSatisfied()
@@ -73,23 +92,14 @@ class AwsRoutesTest : CamelTestSupport() {
 
     @Test
     fun `test AWS route error handling with retries`() {
-        val mockSqsEndpoint = "direct:sqs"
-        val mockS3Endpoint = "mock:aws2-s3://testBucket"
-        configureMockAwsConfig(mockAwsConfig)
-
-        val fixedTimeProvider = { 1729691041456L }
-        awsRoutes = AwsRoutes(mockAwsConfig, fixedTimeProvider, mockSqsEndpoint, mockS3Endpoint)
-        context.addRoutes(awsRoutes)
-
-        // Simulate an exception in the route
-        val mockS3 = context.getEndpoint(mockS3Endpoint, MockEndpoint::class.java)
-        mockS3.whenAnyExchangeReceived { throw RuntimeException("Simulated Exception") }
+        val mockS3 = setupAwsRoute(exceptionSimulation = true)
 
         // Prepare mock expectations (1 attempted & 3 retries)
         mockS3.expectedMessageCount(4)
 
-        // Send a message to the SQS queue (this triggers the route)
-        template.sendBody("direct:sqs", "Test Message")
+        // Simulate sending a JSON message to mock SQS queue
+        template.sendBody(mockSqsEndpoint, jsonPayload)
+
         mockS3.assertIsSatisfied()
 
         // Check logs...
@@ -104,22 +114,22 @@ class AwsRoutesTest : CamelTestSupport() {
                 "Failed delivery for .* On delivery attempt: 3 caught: java.lang.RuntimeException: Simulated Exception",
             )
 
-        // Assert that each expected messages appears
+        // Assert that each expected message appears
         expectedMessages.forEachIndexed { index, expectedMessage ->
             val matchingLogs = logMessages.filter { it.matches(Regex(expectedMessage)) }
             assertTrue(matchingLogs.isNotEmpty(), "Expected log for delivery attempt $index not found.")
         }
     }
-}
 
-// Helper function for mocking AwsConfig
-fun configureMockAwsConfig(mockAwsConfig: AwsConfig) {
-    every { mockAwsConfig.accessKeyId } returns "testAccessKey"
-    every { mockAwsConfig.secretAccessKey } returns "testSecretKey"
-    every { mockAwsConfig.sqsQueueName } returns "testQueue"
-    every { mockAwsConfig.sqsQueueURL } returns "testQueueURL"
-    every { mockAwsConfig.sqsRegion } returns "us-east-1"
-    every { mockAwsConfig.s3EndpointURL } returns "testEndpointURL"
-    every { mockAwsConfig.s3BucketName } returns "testBucket"
-    every { mockAwsConfig.s3Region } returns "us-east-1"
+    // Helper method for mocking AwsConfig
+    private fun configureMockAwsConfig(mockAwsConfig: AwsConfig) {
+        every { mockAwsConfig.accessKeyId } returns "testAccessKey"
+        every { mockAwsConfig.secretAccessKey } returns "testSecretKey"
+        every { mockAwsConfig.sqsQueueName } returns "testQueue"
+        every { mockAwsConfig.sqsQueueURL } returns "testQueueURL"
+        every { mockAwsConfig.sqsRegion } returns "us-east-1"
+        every { mockAwsConfig.s3EndpointURL } returns "testEndpointURL"
+        every { mockAwsConfig.s3BucketName } returns "testBucket"
+        every { mockAwsConfig.s3Region } returns "us-east-1"
+    }
 }
