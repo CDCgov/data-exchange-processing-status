@@ -39,6 +39,7 @@ dependencies {
     // DynamoDB
     implementation 'software.amazon.awssdk:dynamodb:2.27.16'
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
+    implementation 'software.amazon.awssdk:aws-json-protocol:2.29.3'
 
     implementation project(':libs:commons-types')
 

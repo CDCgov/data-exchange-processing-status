@@ -100,7 +100,7 @@ data class Report(
             this.dataProducerId = dao.dataProducerId
             this.timestamp = dao.timestamp?.atOffset(ZoneOffset.UTC)
             this.contentType = dao.contentType
-            this.content = dao.content as? Map<*, *>
+            this.content = dao.contentAsMap
         }
     }
 }
