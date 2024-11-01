@@ -91,7 +91,10 @@ val AWSSQSPlugin = createApplicationPlugin(
         try {
             receivedMessages.messages?.forEach { message ->
                 SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
-                message.body?.let { AWSSQSProcessor().validateMessage(it) }
+                val awsSQSProcessor = AWSSQSProcessor()
+                message.body?.let {
+                    awsSQSProcessor.processMessage(it)
+                }
             }
             deleteMessage(receivedMessages)
         }catch (e: Exception) {
