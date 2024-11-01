@@ -33,7 +33,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
-            gov.cdc.ocio.database.models.ReportDeadLetter::class.java
+            gov.cdc.ocio.database.models.dao.ReportDeadLetterDao::class.java
         )
 
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
@@ -73,7 +73,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
-            gov.cdc.ocio.database.models.ReportDeadLetter::class.java
+            gov.cdc.ocio.database.models.dao.ReportDeadLetterDao::class.java
         )
 
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
@@ -130,7 +130,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
-            gov.cdc.ocio.database.models.ReportDeadLetter::class.java
+            gov.cdc.ocio.database.models.dao.ReportDeadLetterDao::class.java
         )
         val deadLetterReports = mutableListOf<ReportDeadLetter>()
         reportItems.forEach { deadLetterReports.add(ReportDeadLetter.fromReportDeadLetterDao(it)) }

@@ -95,7 +95,7 @@ data class ReportDeadLetter(
         /**
          * Convenience function to convert a cosmos data object to a ReportDeadLetter object
          */
-        fun fromReportDeadLetterDao(dao: gov.cdc.ocio.database.models.ReportDeadLetter) = ReportDeadLetter().apply {
+        fun fromReportDeadLetterDao(dao: gov.cdc.ocio.database.models.dao.ReportDeadLetterDao) = ReportDeadLetter().apply {
             this.id = dao.id
             this.uploadId = dao.uploadId
             this.reportId = dao.reportId

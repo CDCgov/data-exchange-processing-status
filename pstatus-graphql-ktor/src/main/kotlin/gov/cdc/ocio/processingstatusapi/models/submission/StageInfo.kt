@@ -72,7 +72,7 @@ data class StageInfo(
         /**
          * Convenience function to convert a database object to a StageInfo object
          */
-        fun fromStageInfoDao(dao: gov.cdc.ocio.database.models.StageInfo?) = StageInfo().apply {
+        fun fromStageInfoDao(dao: gov.cdc.ocio.database.models.dao.StageInfoDao?) = StageInfo().apply {
             this.service = dao?.service
             this.action = dao?.action
             this.version = dao?.version

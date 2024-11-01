@@ -62,9 +62,11 @@ open class ReportDao(
 
     var dataProducerId: String? = null,
 
-    var timestamp: Instant? = null,
+    var source: String? = null,
 
-    var content: Any? = null
+    var content: Any? = null,
+
+    var timestamp: Instant = Instant.now()
 ) {
 
     val contentAsString: String?

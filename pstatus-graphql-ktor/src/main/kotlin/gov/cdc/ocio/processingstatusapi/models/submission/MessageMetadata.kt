@@ -42,7 +42,7 @@ data class MessageMetadata(
         /**
          * Convenience function to convert a cosmos data object to a MessageMetadata object
          */
-        fun fromMessageMetadataDao(dao: gov.cdc.ocio.database.models.MessageMetadata?) = MessageMetadata().apply {
+        fun fromMessageMetadataDao(dao: gov.cdc.ocio.database.models.dao.MessageMetadataDao?) = MessageMetadata().apply {
             this.messageUUID = dao?.messageUUID
             this.messageHash = dao?.messageHash
             this.aggregation = when (dao?.aggregation) {

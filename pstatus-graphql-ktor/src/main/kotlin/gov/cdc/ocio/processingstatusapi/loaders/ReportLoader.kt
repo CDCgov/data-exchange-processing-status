@@ -79,7 +79,7 @@ class ReportLoader: KoinComponent {
 
         val reportItems = reportsCollection.queryItems(
             reportsSqlQuery,
-            gov.cdc.ocio.database.models.Report::class.java
+            gov.cdc.ocio.database.models.dao.ReportDao::class.java
         )
         val reports = mutableListOf<Report>()
         reportItems.forEach { reports.add(Report.fromReportDao(it)) }
@@ -132,7 +132,7 @@ class ReportLoader: KoinComponent {
         }
         val reportItems = reportsCollection.queryItems(
             reportsSqlQuery.toString(),
-            gov.cdc.ocio.database.models.Report::class.java
+            gov.cdc.ocio.database.models.dao.ReportDao::class.java
         )
 
         // Convert the report DAOs to reports and ensure the user has access to them.

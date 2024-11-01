@@ -5,7 +5,6 @@ import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils.getOffsetDateTimeFromInstant
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 
 
 /**
@@ -84,7 +83,7 @@ data class Report(
         /**
          * Convenience function to convert a cosmos data object to a Report object
          */
-        fun fromReportDao(dao: gov.cdc.ocio.database.models.Report) = Report().apply {
+        fun fromReportDao(dao: gov.cdc.ocio.database.models.dao.ReportDao) = Report().apply {
             this.id = dao.id
             this.uploadId = dao.uploadId
             this.reportId = dao.reportId
