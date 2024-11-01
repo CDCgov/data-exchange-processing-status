@@ -109,7 +109,7 @@ private fun loadAzureConfig(environment: ApplicationEnvironment): CloudConfig {
             containerName = environment.config.property("cloud.azure.blob_storage.container_name").getString(),
             storageAccountKey = environment.config.property("cloud.azure.blob_storage.storage_account_key").getString(),
             storageAccountName = environment.config.property("cloud.azure.blob_storage.storage_account_name").getString(),
-            storageEndpointURL = environment.config.property("cloud.azure.blob_storage.storage_endpoint_url")?.getString()
+            storageEndpointURL = environment.config.property("cloud.azure.blob_storage.storage_endpoint_url").getString()
         )
 
         CloudConfig(provider = CloudProviderType.AZURE, azureConfig = azureConfig)
