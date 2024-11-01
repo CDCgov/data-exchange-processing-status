@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import com.azure.storage.blob.BlobClient
 import com.azure.storage.blob.models.BlobStorageException
+import gov.cdc.ocio.eventreadersink.util.TestLogAppender
 import io.mockk.every
 import io.mockk.mockk
 import org.apache.camel.builder.AdviceWith

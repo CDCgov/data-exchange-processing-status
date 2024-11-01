@@ -3,6 +3,7 @@ package gov.cdc.ocio.eventreadersink.camel
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import gov.cdc.ocio.eventreadersink.model.AwsConfig
+import gov.cdc.ocio.eventreadersink.util.TestLogAppender
 import io.mockk.every
 import io.mockk.mockk
 import org.apache.camel.component.mock.MockEndpoint

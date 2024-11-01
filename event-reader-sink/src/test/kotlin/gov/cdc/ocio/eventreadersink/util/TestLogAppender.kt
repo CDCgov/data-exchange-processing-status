@@ -1,4 +1,4 @@
-package gov.cdc.ocio.eventreadersink.camel
+package gov.cdc.ocio.eventreadersink.util
 
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase

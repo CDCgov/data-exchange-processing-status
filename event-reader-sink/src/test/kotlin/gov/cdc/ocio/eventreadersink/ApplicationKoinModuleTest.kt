@@ -1,10 +1,9 @@
 package gov.cdc.ocio.eventreadersink
 
 import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.AppenderBase
 import gov.cdc.ocio.eventreadersink.sink.CamelProcessor
 import gov.cdc.ocio.eventreadersink.sink.EventProcessor
+import gov.cdc.ocio.eventreadersink.util.TestLogAppender
 import io.ktor.server.application.ApplicationEnvironment
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.MapApplicationConfig
@@ -157,20 +156,6 @@ class ApplicationKoinModulesTest {
         val logMessages = logAppender.getLogMessages()
         assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
         assertTrue(logMessages.any { it.contains("Cannot invoke") })
-    }
-}
-
-class TestLogAppender : AppenderBase<ILoggingEvent>() {
-    private val logMessages = mutableListOf<String>()
-
-    override fun append(eventObject: ILoggingEvent) {
-        logMessages.add(eventObject.formattedMessage)
-    }
-
-    fun getLogMessages(): List<String> = logMessages
-
-    fun clear() {
-        logMessages.clear()
     }
 }
 
