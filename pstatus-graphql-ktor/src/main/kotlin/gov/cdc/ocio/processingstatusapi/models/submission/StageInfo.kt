@@ -1,8 +1,8 @@
 package gov.cdc.ocio.processingstatusapi.models.submission
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.processingstatusapi.utils.DateUtils.getOffsetDateTimeFromInstant
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 /**
  * Status of Report-SUCCESS OR FAILURE
@@ -82,8 +82,8 @@ data class StageInfo(
                 else -> null
             }
             this.issues = dao?.issues?.map { Issue.fromIssueDao(it) }
-            this.startProcessingTime =  getOffsetDateTimeFromInstant(dao?.startProcessingTime, "startProcessingTime")
-            this.endProcessingTime =  getOffsetDateTimeFromInstant(dao?.endProcessingTime, "endProcessingTime")
+            this.startProcessingTime = dao?.startProcessingTime?.atOffset(ZoneOffset.UTC)
+            this.endProcessingTime =  dao?.endProcessingTime?.atOffset(ZoneOffset.UTC)
         }
     }
 }

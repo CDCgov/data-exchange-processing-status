@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
@@ -79,7 +80,7 @@ class ReportLoader: KoinComponent {
 
         val reportItems = reportsCollection.queryItems(
             reportsSqlQuery,
-            gov.cdc.ocio.database.models.dao.ReportDao::class.java
+            ReportDao::class.java
         )
         val reports = mutableListOf<Report>()
         reportItems.forEach { reports.add(Report.fromReportDao(it)) }
@@ -132,7 +133,7 @@ class ReportLoader: KoinComponent {
         }
         val reportItems = reportsCollection.queryItems(
             reportsSqlQuery.toString(),
-            gov.cdc.ocio.database.models.dao.ReportDao::class.java
+            ReportDao::class.java
         )
 
         // Convert the report DAOs to reports and ensure the user has access to them.
