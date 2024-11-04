@@ -110,8 +110,9 @@ test {
 
     // Set the test classpath, if required
 }
-
-
+kotlin {
+    jvmToolchain(17)
+}
 repositories{
      mavenCentral()
 }
