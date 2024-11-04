@@ -7,7 +7,10 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
 import gov.cdc.ocio.database.utils.EpochToInstantConverter
+import gov.cdc.ocio.database.extensions.convertToNumber
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
+import software.amazon.awssdk.protocols.jsoncore.JsonNode
+import software.amazon.awssdk.protocols.jsoncore.internal.ObjectJsonNode
 import java.time.Instant
 import java.util.*
 
@@ -95,4 +98,60 @@ open class ReportDao(
             }
 
         }
+
+    val contentAsMap: Map<*, *>?
+        get() {
+            if (content == null) return null
+
+            return when (content) {
+                is Map<*, *> -> content as Map<*, *>
+                is ObjectJsonNode -> {
+                    // We can't use the TableSchema.fromClass() since we can't determine all the attribute values from
+                    // an Any object.
+                    objectJsonNodeToMap(content as ObjectJsonNode)
+                }
+                else -> null
+            }
+        }
+
+    /**
+     * Convert the provided ObjectJsonNode to a map.
+     *
+     * @param node ObjectJsonNode
+     * @return Map<String, Any?>
+     */
+    private fun objectJsonNodeToMap(node: ObjectJsonNode): Map<String, Any?> =
+        objectJsonNodeToMap(node.asObject())
+
+    /**
+     * Convert the provided node map to a map.
+     *
+     * @param nodeMap Map<String, JsonNode>
+     * @return Map<String, Any?>
+     */
+    private fun objectJsonNodeToMap(nodeMap: Map<String, JsonNode>): Map<String, Any?> {
+        val resultMap = mutableMapOf<String, Any?>()
+        nodeMap.forEach { (fieldName, fieldValue) ->
+            resultMap[fieldName] = parseJsonNode(fieldValue)
+        }
+        return resultMap
+    }
+
+    /**
+     * Parse the provided json node into its object.
+     *
+     * @param node JsonNode
+     * @return Any?
+     */
+    private fun parseJsonNode(node: JsonNode): Any? {
+        return when {
+            node.isObject -> objectJsonNodeToMap(node.asObject())
+            node.isArray -> node.asArray().map { parseJsonNode(it) }
+            node.isString -> node.asString()
+            node.isBoolean -> node.asBoolean()
+            node.isNumber -> node.asNumber().convertToNumber()
+            else -> null
+        }
+    }
+
 }
