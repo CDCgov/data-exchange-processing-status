@@ -128,7 +128,7 @@ class UploadStatus {
                         uploadStatus.fileName = uploadStage.filename
                         uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
                         uploadStatus.metadata = uploadStage.metadata
-                        uploadStatus.timestamp = report.timestamp?.atOffset(ZoneOffset.UTC)
+                        uploadStatus.timestamp = report.timestamp.atOffset(ZoneOffset.UTC)
                         uploadStatus.senderId = report.senderId
                         uploadStatus.jurisdiction = report.jurisdiction
                     }
@@ -146,7 +146,7 @@ class UploadStatus {
                                 uploadStatus.uploadId = uploadId
                                 uploadStatus.fileName = metadataVerifyStage.filename
                                 uploadStatus.metadata = metadataVerifyStage.metadata
-                                uploadStatus.timestamp = report.timestamp?.atOffset(ZoneOffset.UTC)
+                                uploadStatus.timestamp = report.timestamp.atOffset(ZoneOffset.UTC)
                                 if (uploadStatus.issues == null)
                                     uploadStatus.issues = mutableListOf()
                                 uploadStatus.issues?.addAll(issues)
@@ -157,7 +157,7 @@ class UploadStatus {
                             uploadStatus.uploadId = uploadId
                             uploadStatus.fileName = metadataVerifyStage.filename
                             uploadStatus.metadata = metadataVerifyStage.metadata
-                            uploadStatus.timestamp = report.timestamp?.atOffset(ZoneOffset.UTC)
+                            uploadStatus.timestamp = report.timestamp.atOffset(ZoneOffset.UTC)
                         }
                     }
                 }
