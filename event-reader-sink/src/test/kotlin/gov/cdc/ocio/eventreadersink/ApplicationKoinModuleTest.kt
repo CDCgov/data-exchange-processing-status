@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ApplicationKoinModulesTest {
+class ApplicationKoinModuleTest {
     // Setup logging capture
     private val logger: Logger = LoggerFactory.getLogger("gov.cdc.ocio.eventreadersink.Application") as Logger
     private val logAppender = TestLogAppender()
@@ -35,18 +35,77 @@ class ApplicationKoinModulesTest {
         logAppender.clear()
     }
 
+    @Test
+    fun `test loadKoinModules with AWS config`() {
+        val koinApp = setupKoinApp("aws")
+
+        assertModulesLoaded(koinApp)
+    }
+
+    @Test
+    fun `test loadKoinModules with Azure config`() {
+        val koinApp = setupKoinApp("azure")
+
+        assertModulesLoaded(koinApp)
+    }
+
+    @Test
+    fun `test loadKoinModules unsupported cloud provider`() {
+        val koinApp =
+            setupKoinApp("UNKNOWN") {
+                // Make the cloud.provider UNKNOWN
+                `when`(it.property("cloud.provider")).thenReturn(
+                    MapApplicationConfig("cloud.provider" to "UNKNOWN").property("cloud.provider"),
+                )
+            }
+
+        // Check that the error message was logged
+        val logMessages = logAppender.getLogMessages()
+        assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
+        assertTrue(logMessages.any { it.contains("Unsupported cloud provider: UNKNOWN") })
+    }
+
+    @Test
+    fun `test loadKoinModules with AWS config missing a property`() {
+        val koinApp =
+            setupKoinApp("aws") {
+                // Make the queue_name property return null
+                `when`(it.property("cloud.aws.sqs.queue_name")).thenReturn(null)
+            }
+
+        // Check that the error message was logged
+        val logMessages = logAppender.getLogMessages()
+        assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
+        assertTrue(logMessages.any { it.contains("Cannot invoke") })
+    }
+
+    @Test
+    fun `test loadKoinModules with Azure config missing a property`() {
+        val koinApp =
+            setupKoinApp("azure") {
+                // Make the connection_string property return null
+                `when`(it.property("cloud.azure.service_bus.connection_string")).thenReturn(null)
+            }
+
+        // Check that the error message was logged
+        val logMessages = logAppender.getLogMessages()
+        assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
+        assertTrue(logMessages.any { it.contains("Cannot invoke") })
+    }
+
     // Helper method for common koin app init logic
     private fun setupKoinApp(
         cloudProvider: String,
-        modifyConfig: (ApplicationConfig) -> Unit = {}
+        modifyConfig: (ApplicationConfig) -> Unit = {},
     ): KoinApplication {
         // Mock ApplicationEnvironment and ApplicationConfig
         val mockEnvironment = mock(ApplicationEnvironment::class.java)
-        val mockConfig = when (cloudProvider) {
-            "aws" -> mockAwsConfig()
-            "azure" -> mockAzureConfig()
-            else -> mockAwsConfig() // Default to AWS config
-        }
+        val mockConfig =
+            when (cloudProvider) {
+                "aws" -> mockAwsConfig()
+                "azure" -> mockAzureConfig()
+                else -> mockAwsConfig() // Default to AWS config
+            }
 
         // Apply any modifications to the config
         modifyConfig(mockConfig)
@@ -60,10 +119,8 @@ class ApplicationKoinModulesTest {
         }
     }
 
-    @Test
-    fun `test loadKoinModules with AWS config`() {
-        val koinApp = setupKoinApp("aws")
-
+    // Helper method to assert modules are loaded
+    private fun assertModulesLoaded(koinApp: KoinApplication) {
         // Verify that CamelProcessor and EventProcessor have been loaded
         val camelProcessor = koinApp.koin.get<CamelProcessor>()
         val eventProcessor = koinApp.koin.get<EventProcessor>()
@@ -71,60 +128,6 @@ class ApplicationKoinModulesTest {
         // Ensure the processors are loaded
         assertEquals(CamelProcessor::class, camelProcessor::class)
         assertEquals(EventProcessor::class, eventProcessor::class)
-    }
-
-    @Test
-    fun `test loadKoinModules with Azure config`() {
-        val koinApp = setupKoinApp("azure")
-
-        // Verify that CamelProcessor and EventProcessor have been loaded
-        val camelProcessor = koinApp.koin.get<CamelProcessor>()
-        val eventProcessor = koinApp.koin.get<EventProcessor>()
-
-        // Ensure the processors are loaded
-        assertEquals(CamelProcessor::class, camelProcessor::class)
-        assertEquals(EventProcessor::class, eventProcessor::class)
-    }
-
-    @Test
-    fun `test loadKoinModules unsupported cloud provider`() {
-        val koinApp = setupKoinApp("UNKNOWN") {
-            // Make the cloud.provider UNKNOWN
-            `when`(it.property("cloud.provider")).thenReturn(
-                MapApplicationConfig("cloud.provider" to "UNKNOWN").property("cloud.provider")
-            )
-        }
-
-        // Check that the error message was logged
-        val logMessages = logAppender.getLogMessages()
-        assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
-        assertTrue(logMessages.any { it.contains("Unsupported cloud provider: UNKNOWN") })
-    }
-
-    @Test
-    fun `test loadKoinModules with AWS config missing a property`() {
-        val koinApp = setupKoinApp("aws") {
-            // Make the queue_name property return null
-            `when`(it.property("cloud.aws.sqs.queue_name")).thenReturn(null)
-        }
-
-        // Check that the error message was logged
-        val logMessages = logAppender.getLogMessages()
-        assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
-        assertTrue(logMessages.any { it.contains("Cannot invoke") })
-    }
-
-    @Test
-    fun `test loadKoinModules with Azure config missing a property`() {
-        val koinApp = setupKoinApp("azure") {
-            // Make the connection_string property return null
-            `when`(it.property("cloud.azure.service_bus.connection_string")).thenReturn(null)
-        }
-
-        // Check that the error message was logged
-        val logMessages = logAppender.getLogMessages()
-        assertTrue(logMessages.any { it.contains("Error loading Koin modules:") })
-        assertTrue(logMessages.any { it.contains("Cannot invoke") })
     }
 
     // Helper method to mock aws config
@@ -165,7 +168,9 @@ class ApplicationKoinModulesTest {
     private fun mockAzureConfig(): ApplicationConfig {
         val mockConfig = mock(ApplicationConfig::class.java)
 
-        `when`(mockConfig.property("cloud.provider")).thenReturn(MapApplicationConfig("cloud.provider" to "azure").property("cloud.provider"))
+        `when`(
+            mockConfig.property("cloud.provider"),
+        ).thenReturn(MapApplicationConfig("cloud.provider" to "azure").property("cloud.provider"))
         `when`(mockConfig.property("cloud.azure.service_bus.namespace")).thenReturn(
             MapApplicationConfig(
                 "cloud.azure.service_bus.namespace" to "mock-namespace",
@@ -220,4 +225,3 @@ class ApplicationKoinModulesTest {
         return mockConfig
     }
 }
-
