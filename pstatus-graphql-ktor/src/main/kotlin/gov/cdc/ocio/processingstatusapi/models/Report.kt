@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.OffsetDateTime
@@ -84,7 +83,7 @@ data class Report(
         /**
          * Convenience function to convert a cosmos data object to a Report object
          */
-        fun fromReportDao(dao: ReportDao) = Report().apply {
+        fun fromReportDao(dao: gov.cdc.ocio.database.models.dao.ReportDao) = Report().apply {
             this.id = dao.id
             this.uploadId = dao.uploadId
             this.reportId = dao.reportId
@@ -98,7 +97,7 @@ data class Report(
             this.jurisdiction = dao.jurisdiction
             this.senderId = dao.senderId
             this.dataProducerId = dao.dataProducerId
-            this.timestamp = dao.timestamp?.atOffset(ZoneOffset.UTC)
+            this.timestamp =dao.timestamp.atOffset(ZoneOffset.UTC)// getOffsetDateTimeFromInstant(dao.timestamp, "timestamp")
             this.contentType = dao.contentType
             this.content = dao.content as? Map<*, *>
         }
