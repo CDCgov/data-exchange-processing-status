@@ -102,6 +102,10 @@ jib {
     }
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 repositories{
     mavenCentral()
 }
