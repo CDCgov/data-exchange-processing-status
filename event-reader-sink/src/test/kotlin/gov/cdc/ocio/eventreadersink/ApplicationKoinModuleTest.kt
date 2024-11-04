@@ -38,26 +38,19 @@ class ApplicationKoinModuleTest {
     @Test
     fun `test loadKoinModules with AWS config`() {
         val koinApp = setupKoinApp("aws")
-
         assertModulesLoaded(koinApp)
     }
 
     @Test
     fun `test loadKoinModules with Azure config`() {
         val koinApp = setupKoinApp("azure")
-
         assertModulesLoaded(koinApp)
     }
 
     @Test
     fun `test loadKoinModules unsupported cloud provider`() {
         val koinApp =
-            setupKoinApp("UNKNOWN") {
-                // Make the cloud.provider UNKNOWN
-                `when`(it.property("cloud.provider")).thenReturn(
-                    MapApplicationConfig("cloud.provider" to "UNKNOWN").property("cloud.provider"),
-                )
-            }
+            setupKoinApp("UNKNOWN")
 
         // Check that the error message was logged
         val logMessages = logAppender.getLogMessages()
@@ -68,9 +61,8 @@ class ApplicationKoinModuleTest {
     @Test
     fun `test loadKoinModules with AWS config missing a property`() {
         val koinApp =
-            setupKoinApp("aws") {
-                // Make the queue_name property return null
-                `when`(it.property("cloud.aws.sqs.queue_name")).thenReturn(null)
+            setupKoinApp("aws") { properties ->
+                properties.remove("cloud.aws.sqs.queue_name")
             }
 
         // Check that the error message was logged
@@ -82,9 +74,8 @@ class ApplicationKoinModuleTest {
     @Test
     fun `test loadKoinModules with Azure config missing a property`() {
         val koinApp =
-            setupKoinApp("azure") {
-                // Make the connection_string property return null
-                `when`(it.property("cloud.azure.service_bus.connection_string")).thenReturn(null)
+            setupKoinApp("azure") { properties ->
+                properties.remove("cloud.azure.service_bus.connection_string")
             }
 
         // Check that the error message was logged
@@ -93,27 +84,16 @@ class ApplicationKoinModuleTest {
         assertTrue(logMessages.any { it.contains("Cannot invoke") })
     }
 
-    // Helper method for common koin app init logic
+    // Helper method for common Koin app initialization logic
     private fun setupKoinApp(
         cloudProvider: String,
-        modifyConfig: (ApplicationConfig) -> Unit = {},
+        modifyProperties: (MutableMap<String, String>) -> Unit = {},
     ): KoinApplication {
-        // Mock ApplicationEnvironment and ApplicationConfig
+        val properties = getMockProperties(cloudProvider).toMutableMap()
+        modifyProperties(properties)
+        val mockConfig = createMockConfig(properties)
         val mockEnvironment = mock(ApplicationEnvironment::class.java)
-        val mockConfig =
-            when (cloudProvider) {
-                "aws" -> mockAwsConfig()
-                "azure" -> mockAzureConfig()
-                else -> mockAwsConfig() // Default to AWS config
-            }
-
-        // Apply any modifications to the config
-        modifyConfig(mockConfig)
-
-        // Set the mock config in the environment
         `when`(mockEnvironment.config).thenReturn(mockConfig)
-
-        // Call the loadKoinModules function
         return koinApplication {
             loadKoinModules(mockEnvironment)
         }
@@ -130,98 +110,46 @@ class ApplicationKoinModuleTest {
         assertEquals(EventProcessor::class, eventProcessor::class)
     }
 
-    // Helper method to mock aws config
-    private fun mockAwsConfig(): ApplicationConfig {
+    // Helper method to create a mock config with given properties
+    private fun createMockConfig(properties: Map<String, String>): ApplicationConfig {
         val mockConfig = mock(ApplicationConfig::class.java)
-
-        `when`(mockConfig.property("cloud.provider")).thenReturn(MapApplicationConfig("cloud.provider" to "aws").property("cloud.provider"))
-        `when`(mockConfig.property("cloud.aws.credentials.access_key_id")).thenReturn(
-            MapApplicationConfig(
-                "cloud.aws.credentials.access_key_id" to "mock-access-key",
-            ).property("cloud.aws.credentials.access_key_id"),
-        )
-        `when`(mockConfig.property("cloud.aws.credentials.secret_access_key")).thenReturn(
-            MapApplicationConfig(
-                "cloud.aws.credentials.secret_access_key" to "mock-secret-key",
-            ).property("cloud.aws.credentials.secret_access_key"),
-        )
-        `when`(
-            mockConfig.property("cloud.aws.sqs.queue_name"),
-        ).thenReturn(MapApplicationConfig("cloud.aws.sqs.queue_name" to "mock-queue-name").property("cloud.aws.sqs.queue_name"))
-        `when`(
-            mockConfig.property("cloud.aws.sqs.queue_url"),
-        ).thenReturn(MapApplicationConfig("cloud.aws.sqs.queue_url" to "mock-queue-url").property("cloud.aws.sqs.queue_url"))
-        `when`(
-            mockConfig.property("cloud.aws.sqs.region"),
-        ).thenReturn(MapApplicationConfig("cloud.aws.sqs.region" to "mock-region").property("cloud.aws.sqs.region"))
-        `when`(
-            mockConfig.property("cloud.aws.s3.bucket_name"),
-        ).thenReturn(MapApplicationConfig("cloud.aws.s3.bucket_name" to "mock-bucket").property("cloud.aws.s3.bucket_name"))
-        `when`(
-            mockConfig.property("cloud.aws.s3.region"),
-        ).thenReturn(MapApplicationConfig("cloud.aws.s3.region" to "mock-s3-region").property("cloud.aws.s3.region"))
-
+        properties.forEach { (key, value) ->
+            `when`(mockConfig.property(key)).thenReturn(MapApplicationConfig(key to value).property(key))
+        }
         return mockConfig
     }
 
-    // Helper method to mock azure config
-    private fun mockAzureConfig(): ApplicationConfig {
-        val mockConfig = mock(ApplicationConfig::class.java)
-
-        `when`(
-            mockConfig.property("cloud.provider"),
-        ).thenReturn(MapApplicationConfig("cloud.provider" to "azure").property("cloud.provider"))
-        `when`(mockConfig.property("cloud.azure.service_bus.namespace")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.service_bus.namespace" to "mock-namespace",
-            ).property("cloud.azure.service_bus.namespace"),
-        )
-        `when`(mockConfig.property("cloud.azure.service_bus.connection_string")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.service_bus.connection_string" to "mock-connection-string",
-            ).property("cloud.azure.service_bus.connection_string"),
-        )
-        `when`(mockConfig.property("cloud.azure.service_bus.shared_access_key_name")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.service_bus.shared_access_key_name" to "mock-shared-access-key-name",
-            ).property("cloud.azure.service_bus.shared_access_key_name"),
-        )
-        `when`(mockConfig.property("cloud.azure.service_bus.shared_access_key")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.service_bus.shared_access_key" to "mock-shared-access-key",
-            ).property("cloud.azure.service_bus.shared_access_key"),
-        )
-        `when`(mockConfig.property("cloud.azure.service_bus.topic_name")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.service_bus.topic_name" to "mock-topic-name",
-            ).property("cloud.azure.service_bus.topic_name"),
-        )
-        `when`(mockConfig.property("cloud.azure.service_bus.subscription_name")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.service_bus.subscription_name" to "mock-subscription-name",
-            ).property("cloud.azure.service_bus.subscription_name"),
-        )
-        `when`(mockConfig.property("cloud.azure.blob_storage.container_name")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.blob_storage.container_name" to "mock-container-name",
-            ).property("cloud.azure.blob_storage.container_name"),
-        )
-        `when`(mockConfig.property("cloud.azure.blob_storage.storage_account_key")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.blob_storage.storage_account_key" to "mock-storage-account-key",
-            ).property("cloud.azure.blob_storage.storage_account_key"),
-        )
-        `when`(mockConfig.property("cloud.azure.blob_storage.storage_account_name")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.blob_storage.storage_account_name" to "mock-storage-account-name",
-            ).property("cloud.azure.blob_storage.storage_account_name"),
-        )
-        `when`(mockConfig.property("cloud.azure.blob_storage.storage_endpoint_url")).thenReturn(
-            MapApplicationConfig(
-                "cloud.azure.blob_storage.storage_endpoint_url" to "mock-storage-endpoint-url",
-            ).property("cloud.azure.blob_storage.storage_endpoint_url"),
-        )
-
-        return mockConfig
-    }
+    // Helper method to get mock properties based on cloud provider
+    private fun getMockProperties(cloudProvider: String): Map<String, String> =
+        when (cloudProvider.lowercase()) {
+            "aws" ->
+                mapOf(
+                    "cloud.provider" to "aws",
+                    "cloud.aws.credentials.access_key_id" to "mock-access-key",
+                    "cloud.aws.credentials.secret_access_key" to "mock-secret-key",
+                    "cloud.aws.sqs.queue_name" to "mock-queue-name",
+                    "cloud.aws.sqs.queue_url" to "mock-queue-url",
+                    "cloud.aws.sqs.region" to "mock-region",
+                    "cloud.aws.s3.bucket_name" to "mock-bucket",
+                    "cloud.aws.s3.region" to "mock-s3-region",
+                )
+            "azure" ->
+                mapOf(
+                    "cloud.provider" to "azure",
+                    "cloud.azure.service_bus.namespace" to "mock-namespace",
+                    "cloud.azure.service_bus.connection_string" to "mock-connection-string",
+                    "cloud.azure.service_bus.shared_access_key_name" to "mock-shared-access-key-name",
+                    "cloud.azure.service_bus.shared_access_key" to "mock-shared-access-key",
+                    "cloud.azure.service_bus.topic_name" to "mock-topic-name",
+                    "cloud.azure.service_bus.subscription_name" to "mock-subscription-name",
+                    "cloud.azure.blob_storage.container_name" to "mock-container-name",
+                    "cloud.azure.blob_storage.storage_account_key" to "mock-storage-account-key",
+                    "cloud.azure.blob_storage.storage_account_name" to "mock-storage-account-name",
+                    "cloud.azure.blob_storage.storage_endpoint_url" to "mock-storage-endpoint-url",
+                )
+            else ->
+                mapOf(
+                    "cloud.provider" to cloudProvider,
+                )
+        }
 }
