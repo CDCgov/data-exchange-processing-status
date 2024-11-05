@@ -83,7 +83,6 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
     private fun getDynamoDbClient() : DynamoDbClient {
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return DynamoDbClient.builder()
-            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
             .build()
     }
 
