@@ -59,7 +59,10 @@ For AWS SNS/SQS only, set the following environment variables:
 - `AWS_SECRET_ACCESS_KEY` - The secret access key for an IAM user with permissions to receive and delete messages from the specified SQS queue. This key is used for authentication and secure access to the queue.
 - `AWS_REGION` (Optional) - The AWS region where your SQS queue is located, if not provided, default region `us-east-1` will be used
 
-# Publish to CDC's ImageHub
+# Publishing the Container Image
+There are two container repos for the PS API report-sink service.  The first is CDC's ImageHub and is a private repo.  The second container image is the CDC's Quay.io repo and is public.
+
+## Publish to CDC's ImageHub
 With one gradle command you can build and publish the project's Docker container image to the external container registry, imagehub, which is a nexus repository.
 
 To do this, we use Google [jib](https://cloud.google.com/java/getting-started/jib), which vastly simplifies the build process as you don't need a docker daemon running in order to build the Docker container image.
@@ -69,6 +72,18 @@ Inside of build.gradle `jib` section are the authentication settings.  These use
 gradle jib
 ```
 The location of the deployment will be to the `docker-dev2` repository under the folder `/v2/dex/pstatus`.
+
+## Publish to CDC's Quay.io Repo
+The purpose of publishing to quay.io is to make the container images publicly available so they can easily be pulled
+down and run in podman or docker without the need to build anything.
+
+```shell
+$ gradle jib \
+    -Djib.to.image=quay.io/us-cdcgov/phdo/pstatus-report-sink:latest \
+    -Djib.to.auth.username='us-cdcgov+github_ci_phdo' \
+    -Djib.to.auth.password=$PASSWORD
+```
+Replace the`PASSWORD` value with the one for the `us-cdcgov+github_ci_phdo` robot account.
 
 # Report Delivery Mechanisms
 Reports may be provided in one of four ways - either through calls into the Processing Status (PS) API as GraphQL mutations, by way of an Azure Service Bus, AWS SNS/SQS or using RabbitMQ.  There are pros and cons of each summarized below.
@@ -188,6 +203,7 @@ factory.newConnection().use { connection: com.rabbitmq.client.ConnectionFactory 
 ```
 ### AWS SNS/SQS
 The reports may be sent to PS API AWS SQS queue.
+
 #### How to send reports to AWS SNS/SQS
 There are two ways reports can be sent  through AWS Console and programmatically.
 1. Using AWS Console:

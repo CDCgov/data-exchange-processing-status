@@ -47,6 +47,12 @@ tasks.test {
 
     // Set the test classpath, if required
 }
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 kotlin {
     jvmToolchain(17)
 }

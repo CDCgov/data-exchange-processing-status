@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.database.models.dao.ReportDeadLetterDao
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.OffsetDateTime
@@ -96,7 +95,7 @@ data class ReportDeadLetter(
         /**
          * Convenience function to convert a cosmos data object to a ReportDeadLetter object
          */
-        fun fromReportDeadLetterDao(dao: ReportDeadLetterDao) = ReportDeadLetter().apply {
+        fun fromReportDeadLetterDao(dao: gov.cdc.ocio.database.models.dao.ReportDeadLetterDao) = ReportDeadLetter().apply {
             this.id = dao.id
             this.uploadId = dao.uploadId
             this.reportId = dao.reportId
@@ -110,7 +109,7 @@ data class ReportDeadLetter(
             this.jurisdiction = dao.jurisdiction
             this.senderId = dao.senderId
             this.dataProducerId = dao.dataProducerId
-            this.timestamp = dao.timestamp?.atOffset(ZoneOffset.UTC)
+            this.timestamp = dao.timestamp.atOffset(ZoneOffset.UTC)
             this.contentType = dao.contentType
             this.content = dao.content as? Map<*, *>
             this.dispositionType = dao.dispositionType

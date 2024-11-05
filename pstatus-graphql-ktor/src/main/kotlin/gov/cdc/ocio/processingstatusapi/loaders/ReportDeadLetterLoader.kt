@@ -119,7 +119,7 @@ class ReportDeadLetterLoader: KoinComponent {
     }
 
     /**
-     * Search the report deadletters by report id.
+     * Search the report dead letters by report id.
      *
      * @param ids List<String>
      * @return List<ReportDeadLetter>
