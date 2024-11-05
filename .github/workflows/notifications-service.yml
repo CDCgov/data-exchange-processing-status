@@ -11,7 +11,7 @@ on:
     branches:
         - develop
     paths:
-        - pstatus-notifications-ktor/**
+        - pstatus-notifications-rules-engine-ktor/**
 
 jobs:
   remote-trigger:

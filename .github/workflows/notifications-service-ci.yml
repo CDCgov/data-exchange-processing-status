@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - pstatus-notifications-ktor/**
+      - pstatus-notifications-rules-engine-ktor/**
 
 defaults:
   run:
-    working-directory: pstatus-notifications-ktor/
+    working-directory: pstatus-notifications-rules-engine-ktor/
 
 jobs:
   unit-test:
