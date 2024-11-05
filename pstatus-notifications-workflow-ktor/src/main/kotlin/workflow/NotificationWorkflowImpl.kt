@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications.workflow
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
@@ -20,7 +21,7 @@ import java.time.format.DateTimeFormatter
  * @property activities T
  */
 class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
-    private val cosmosRepository by inject<ProcessingStatusRepository>()
+    private val repository by inject<ProcessingStatusRepository>()
     private val logger = KotlinLogging.logger {}
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
@@ -77,33 +78,38 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
     private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
         /** Get today's date in UTC **/
         val today = LocalDate.now(ZoneId.of("UTC"))
-        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
         val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd)
 
-        val reportsCollection =cosmosRepository.reportsCollection
+        val reportsCollection =repository.reportsCollection
+        val collectionName =reportsCollection.collectionNameForQuery
         val cVar = reportsCollection.collectionVariable
         val cPrefix =reportsCollection.collectionVariablePrefix
-        val notificationQuery = (
-                "SELECT VALUE COUNT(1) "
-                        + "from $cVar where  ${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}jurisdiction = '$jurisdiction' and ($timeRangeWhereClause)"
-                )
+        val notificationQuery = """
+           SELECT ${cPrefix}id 
+           FROM $collectionName $cVar 
+           WHERE ${cPrefix}dataStreamId = '$dataStreamId' 
+               AND ${cPrefix}jurisdiction = '$jurisdiction' 
+               AND ${cPrefix}dexIngestDateTime >= '$dateStart' 
+               AND ${cPrefix}dexIngestDateTime < '$dateEnd'
+         """.trimIndent()
+
         logger.info("notification Query: $notificationQuery")
 
         return try {
-            val results = cosmosRepository.reportsCollection.queryItems(
+            val results = repository.reportsCollection.queryItems(
                 notificationQuery,
-                Integer::class.java
+                CheckUploadResponse::class.java
             )
-            val count = results.size
-            count != 0 // Returns false if count == 0
-        } catch (ex: Exception) {
+            logger.info("notification Query results: ${results.size}")
+            results.isNotEmpty() // Returns true if there are results, false if none
+           } catch (ex: Exception) {
             logger.error("Error occurred while checking upload for $dataStreamId and $jurisdiction: ${ex.message}")
             throw Exception("Error occurred in checking upload")
-        }
+           }
     }
 
 
