@@ -4,10 +4,14 @@ import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
+import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.database.persistence.Collection
+import gov.cdc.ocio.database.utils.EpochToInstantConverter
 import io.netty.handler.codec.http.HttpResponseStatus
 import mu.KotlinLogging
-
+import java.time.Instant
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 
 /**
  * Cosmos Collection implementation.
@@ -25,6 +29,21 @@ class CosmosCollection(
 ) : Collection {
 
     private val logger = KotlinLogging.logger {}
+    // Create a custom ObjectMapper with the InstantToOffsetDateTimeConverter registered
+    private fun createObjectMapper(): ObjectMapper {
+        val module = SimpleModule().apply {
+            addDeserializer(Instant::class.java, EpochToInstantConverter())
+        }
+        return ObjectMapper().apply {
+            registerModule(module)              // Register custom module
+            registerModule(JavaTimeModule())    // Register JavaTimeModule for OffsetDateTime support
+        }
+    }
+
+    // This will hold your ObjectMapper
+    private val objectMapper: ObjectMapper = createObjectMapper()
+
+
 
     /**
      * Execute the provided query and return the results as POJOs.
@@ -38,8 +57,16 @@ class CosmosCollection(
             query, CosmosQueryRequestOptions(),
             classType
         )
-
-        return items?.toList() ?: listOf()
+        try {
+            val response =items?.map {
+                objectMapper.convertValue(it, classType)
+            } ?: listOf()
+            return  response
+        }
+        catch (e:Exception){
+            logger.error { e.message }
+        }
+       return items?.toList() ?: listOf()
     }
 
     /**
@@ -121,6 +148,9 @@ class CosmosCollection(
         return response != null
     }
 
+
+
+
     /**
      * The function which calculates the interval after which the retry should occur
      *
@@ -142,3 +172,4 @@ class CosmosCollection(
         const val MAX_RETRY_ATTEMPTS = 100
     }
 }
+
