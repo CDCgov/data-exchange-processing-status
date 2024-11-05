@@ -2,7 +2,6 @@ package gov.cdc.ocio.database.health
 
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 
