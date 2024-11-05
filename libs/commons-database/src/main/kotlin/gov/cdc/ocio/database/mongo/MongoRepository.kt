@@ -14,11 +14,13 @@ import org.bson.BsonInt64
 /**
  * MongoDB repository implementation.
  *
- * @param uri[String] URI of the MongoDB to connect with.
- * @param databaseName[String] Name of the MongoDB database containing the reports.
- * @param reportsCollectionName[String] Reports collection name to use, which defaults to "Reports" if not provided.
- * @param reportsDeadLetterCollectionName[String] Reports deadletter collection name to use, which default to
+ * @param uri [String] URI of the MongoDB to connect with.
+ * @param databaseName [String] Name of the MongoDB database containing the reports.
+ * @param reportsCollectionName [String] Reports collection name to use, which defaults to "Reports" if not provided.
+ * @param reportsDeadLetterCollectionName [String] Reports deadletter collection name to use, which defaults to
  * "Reports-DeadLetter" if not provided.
+ * @param notificationSubscriptionsCollectionName [String] Notification subscriptions collection name to use, which
+ * defaults to "NotificationSubscriptions" if not provided.
  * @property mongoClient [MongoClient]?
  * @property reportsDatabase [MongoDatabase]?
  * @property reportsMongoCollection [MongoCollection]?
@@ -33,7 +35,8 @@ class MongoRepository(
     uri: String,
     databaseName: String,
     reportsCollectionName: String = "Reports",
-    reportsDeadLetterCollectionName: String = "Reports-DeadLetter"
+    reportsDeadLetterCollectionName: String = "Reports-DeadLetter",
+    notificationSubscriptionsCollectionName: String = "NotificationSubscriptions"
 ): ProcessingStatusRepository() {
 
     private val logger = KotlinLogging.logger {}
@@ -43,13 +46,21 @@ class MongoRepository(
     private val reportsDatabase = connectToDatabase(uri, databaseName)
 
     private val reportsMongoCollection = reportsDatabase?.getCollection(reportsCollectionName)
+
     private val reportsDeadLetterMongoCollection = reportsDatabase?.getCollection(reportsDeadLetterCollectionName)
+
+    private val notificationSubscriptionsMongoCollection =
+        reportsDatabase?.getCollection(notificationSubscriptionsCollectionName)
 
     override var reportsCollection = reportsMongoCollection?.let {
         MongoCollection(it)
     } as Collection
 
     override var reportsDeadLetterCollection = reportsDeadLetterMongoCollection?.let {
+        MongoCollection(it)
+    } as Collection
+
+    override var notificationSubscriptionsCollection = notificationSubscriptionsMongoCollection?.let {
         MongoCollection(it)
     } as Collection
 

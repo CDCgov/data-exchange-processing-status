@@ -1,7 +1,8 @@
 package gov.cdc.ocio.processingnotifications
 
-import gov.cdc.ocio.processingnotifications.cosmos.CosmosClientManager
-import gov.cdc.ocio.processingnotifications.cosmos.CosmosConfiguration
+
+import gov.cdc.ocio.database.cosmos.CosmosClientManager
+import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import io.temporal.api.workflowservice.v1.GetSystemInfoRequest
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions

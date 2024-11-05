@@ -1,12 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
 import data.UploadsStatusDataGenerator
-import com.azure.cosmos.CosmosContainer
-import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.util.CosmosPagedIterable
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+import gov.cdc.ocio.database.cosmos.CosmosCollection
+import gov.cdc.ocio.database.cosmos.CosmosRepository
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
 import io.mockk.*
 import org.junit.jupiter.api.AfterEach
@@ -17,19 +15,19 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
-import java.util.*
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class UploadStatusLoaderTest : KoinTest {
 
     private val mockCosmosRepository: CosmosRepository = mockk()
-    private val mockReportsContainer: CosmosContainer = mockk()
+    private val mockReportsCollection: CosmosCollection = mockk()
     private val uploadStatusLoader: UploadStatusLoader = mockk()
 
     private val testModule = module {
         single { mockCosmosRepository }
-        single { mockReportsContainer }
+        single { mockReportsCollection }
         single { uploadStatusLoader } // Provide the mocked UploadStatusLoader
     }
 
@@ -41,7 +39,7 @@ class UploadStatusLoaderTest : KoinTest {
         }
 
         // Mock CosmosRepository and its container
-        every { mockCosmosRepository.reportsContainer } returns mockReportsContainer
+        every { mockCosmosRepository.reportsCollection } returns mockReportsCollection
     }
 
     @AfterEach
@@ -174,37 +172,31 @@ class UploadStatusLoaderTest : KoinTest {
         // Setup mocks
         //Return PageIterable of type UploadCounts
         val uploadCounts = listOf(
-            UploadCounts(4, "uploadId1", Date(), "jurisdiction1", "senderId1"),
-            UploadCounts(2, "uploadId2", Date(), "jurisdiction2","senderId2")
+            UploadCounts(4, "uploadId1", Instant.now(), "jurisdiction1", "senderId1"),
+            UploadCounts(2, "uploadId2",Instant.now(), "jurisdiction2","senderId2")
         )
         val uploadCountsIterator = uploadCounts.iterator()
-        val mockPagedIterableForUploadCounts: CosmosPagedIterable<UploadCounts> = mockk {
-            every { iterator() } returns uploadCountsIterator as MutableIterator<UploadCounts>
-        }
+
 
         every {
-            mockReportsContainer.queryItems(
+            mockReportsCollection.queryItems(
                 any<String>(),
-                any<CosmosQueryRequestOptions>(),
-                UploadCounts::class.java
+               UploadCounts::class.java
             )
-        } returns mockPagedIterableForUploadCounts
+        } returns listOf()
 
 
         //Return PageIterable of type ReportDAO
         val reports = UploadsStatusDataGenerator().createReportsData()
         val reportsIterator = reports.iterator()
-        val mockPagedIterableForReports: CosmosPagedIterable<ReportDao> = mockk {
-            every { iterator() } returns reportsIterator as MutableIterator<ReportDao>
-        }
+
 
         every {
-            mockReportsContainer.queryItems(
+            mockReportsCollection.queryItems(
                 any<String>(),
-                any<CosmosQueryRequestOptions>(),
                 ReportDao::class.java
             )
-        } returns mockPagedIterableForReports
+        } returns  listOf()
 
 
         every {

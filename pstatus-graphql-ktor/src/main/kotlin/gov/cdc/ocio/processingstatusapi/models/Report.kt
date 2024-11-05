@@ -4,6 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 
 /**
@@ -77,4 +78,28 @@ data class Report(
 
     @GraphQLDescription("Datestamp the report was recorded in the database")
     var timestamp: OffsetDateTime? = null
-)
+) {
+    companion object {
+        /**
+         * Convenience function to convert a cosmos data object to a Report object
+         */
+        fun fromReportDao(dao: gov.cdc.ocio.database.models.dao.ReportDao) = Report().apply {
+            this.id = dao.id
+            this.uploadId = dao.uploadId
+            this.reportId = dao.reportId
+            this.dataStreamId = dao.dataStreamId
+            this.dataStreamRoute = dao.dataStreamRoute
+            this.dexIngestDateTime = dao.dexIngestDateTime?.atOffset(ZoneOffset.UTC)
+            this.messageMetadata = MessageMetadata.fromMessageMetadataDao(dao.messageMetadata)
+            this.stageInfo = StageInfo.fromStageInfoDao(dao.stageInfo)
+            this.tags = dao.tags
+            this.data = dao.data
+            this.jurisdiction = dao.jurisdiction
+            this.senderId = dao.senderId
+            this.dataProducerId = dao.dataProducerId
+            this.timestamp =dao.timestamp.atOffset(ZoneOffset.UTC)// getOffsetDateTimeFromInstant(dao.timestamp, "timestamp")
+            this.contentType = dao.contentType
+            this.content = dao.contentAsMap
+        }
+    }
+}

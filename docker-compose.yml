@@ -1,0 +1,82 @@
+name: pstatus-api
+
+services:
+  graphql:
+    image: quay.io/us-cdcgov/phdo/pstatus-graphql:latest
+    ports:
+      - "127.0.0.1:8090:8080" # GraphQL listener port
+    environment:
+      SECURITY_ENABLED: false
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
+    depends_on:
+      - couchbase-setup
+    restart: "always"
+
+  report-sink:
+    image: quay.io/us-cdcgov/phdo/pstatus-report-sink:latest
+    ports:
+      - "127.0.0.1:8080:8080" # Rest API listener port
+    environment:
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+      MSG_SYSTEM: "RABBITMQ"
+      RABBITMQ_EXCHANGE_TOPIC_NAME: "PSAPIExchange"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_REPORT_QUEUE_NAME: "PSAPIQueue"
+      RABBITMQ_ROUTING_KEY: "psapi1234"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_VIRTUAL_HOST: "/"
+    depends_on:
+      - couchbase-setup
+      - rabbitmq
+    restart: "always"
+
+  couchbase:
+    image: couchbase
+    ports:
+      - "8091-8096:8091-8096"
+      - "11210-11211:11210-11211"
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+    deploy:
+      resources:
+        limits:
+          memory: 4G  # Set the memory limit here
+
+  couchbase-setup:
+    image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
+    depends_on:
+      - couchbase
+    restart: "no"
+    volumes:
+      - ./couchbase-init.sh:/scripts/couchbase-init.sh  # Mount the setup script
+    entrypoint: [ "bash", "-c", "/scripts/couchbase-init.sh" ]
+
+  rabbitmq:
+    image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+    ports:
+      - "5672:5672" # AMQP protocol port
+      - "15672:15672" # Management UI port
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+volumes:
+  couchbase_data:
+    external: false
+
+networks:
+  default:
+    driver: bridge

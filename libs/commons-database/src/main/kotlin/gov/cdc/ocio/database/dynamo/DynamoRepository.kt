@@ -16,12 +16,14 @@ import software.amazon.awssdk.protocols.jsoncore.JsonNode
  *
  * @param tablePrefix[String] The table prefix is prepended to each of the table names for the reports and
  * deadlettered reports table names.
- * @property ddbClient DynamoDbClient
- * @property ddbEnhancedClient DynamoDbEnhancedClient
- * @property reportsTableName String
- * @property reportsDeadLetterTableName String
- * @property reportsCollection Collection
- * @property reportsDeadLetterCollection Collection
+ * @property ddbClient [DynamoDbClient]
+ * @property ddbEnhancedClient [DynamoDbEnhancedClient]
+ * @property reportsTableName [String]
+ * @property reportsDeadLetterTableName [String]
+ * @property notificationSubscriptionsTableName [String]
+ * @property reportsCollection [Collection]
+ * @property reportsDeadLetterCollection [Collection]
+ * @property notificationSubscriptionsCollection [Collection]
  * @constructor Provides a DynamoDB repository, which is a concrete implementation of the [ProcessingStatusRepository]
  *
  * @see [ProcessingStatusRepository]
@@ -36,6 +38,8 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
 
     private val reportsDeadLetterTableName = "$tablePrefix-reports-deadletter".lowercase()
 
+    private val notificationSubscriptionsTableName = "$tablePrefix-notification-subscriptions".lowercase()
+
     override var reportsCollection =
         DynamoCollection(
             ddbClient,
@@ -49,6 +53,13 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
         ddbEnhancedClient,
         reportsDeadLetterTableName,
         ReportDeadLetter::class.java
+    ) as Collection
+
+    override var notificationSubscriptionsCollection = DynamoCollection(
+        ddbClient,
+        ddbEnhancedClient,
+        notificationSubscriptionsTableName,
+        Any::class.java // TODO(This needs to be replaced!)
     ) as Collection
 
     /**
@@ -72,7 +83,6 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
     private fun getDynamoDbClient() : DynamoDbClient {
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return DynamoDbClient.builder()
-            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
             .build()
     }
 

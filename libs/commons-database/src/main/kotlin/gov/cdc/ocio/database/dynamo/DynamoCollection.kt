@@ -1,10 +1,13 @@
 package gov.cdc.ocio.database.dynamo
 
-import mu.KotlinLogging
 import gov.cdc.ocio.database.persistence.Collection
+import mu.KotlinLogging
 import software.amazon.awssdk.enhanced.dynamodb.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ExecuteStatementRequest
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -126,4 +129,12 @@ class DynamoCollection<R>(
     // Elements "sometimes" need to be surrounded by quotes for dynamodb, so do it always.
     override val collectionElementForQuery = { name: String -> "\"$name\"" }
 
+    override val timeConversionForQuery: (Long) -> String = { epochMillis ->
+        val instant = Instant
+            .ofEpochMilli(epochMillis)
+            .atZone(ZoneId.of("GMT"))
+
+        // Format the Instant to ISO 8601 string
+        DateTimeFormatter.ISO_INSTANT.format(instant)
+    }
 }

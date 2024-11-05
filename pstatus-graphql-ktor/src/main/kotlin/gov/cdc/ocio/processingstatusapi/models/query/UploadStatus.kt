@@ -2,10 +2,10 @@ package gov.cdc.ocio.processingstatusapi.models.query
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.google.gson.Gson
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.UploadMetadataVerifyStage
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.UploadStage
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.SchemaDefinition
 import io.ktor.server.util.*
 import java.time.OffsetDateTime
@@ -128,7 +128,7 @@ class UploadStatus {
                         uploadStatus.fileName = uploadStage.filename
                         uploadStatus.timeUploadingSec = (endTimeEpochMillis - uploadStage.startTimeEpochMillis) / 1000.0
                         uploadStatus.metadata = uploadStage.metadata
-                        uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+                        uploadStatus.timestamp = report.timestamp.atOffset(ZoneOffset.UTC)
                         uploadStatus.senderId = report.senderId
                         uploadStatus.jurisdiction = report.jurisdiction
                     }
@@ -146,7 +146,7 @@ class UploadStatus {
                                 uploadStatus.uploadId = uploadId
                                 uploadStatus.fileName = metadataVerifyStage.filename
                                 uploadStatus.metadata = metadataVerifyStage.metadata
-                                uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+                                uploadStatus.timestamp = report.timestamp.atOffset(ZoneOffset.UTC)
                                 if (uploadStatus.issues == null)
                                     uploadStatus.issues = mutableListOf()
                                 uploadStatus.issues?.addAll(issues)
@@ -157,7 +157,7 @@ class UploadStatus {
                             uploadStatus.uploadId = uploadId
                             uploadStatus.fileName = metadataVerifyStage.filename
                             uploadStatus.metadata = metadataVerifyStage.metadata
-                            uploadStatus.timestamp = report.timestamp?.toInstant()?.atOffset(ZoneOffset.UTC)
+                            uploadStatus.timestamp = report.timestamp.atOffset(ZoneOffset.UTC)
                         }
                     }
                 }

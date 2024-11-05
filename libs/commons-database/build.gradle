@@ -25,6 +25,8 @@ dependencies {
     implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
 
+    implementation("io.insert-koin:koin-ktor:3.5.6")
+
     // CosmosDB
     implementation 'com.azure:azure-cosmos:4.63.3'
 
@@ -37,6 +39,9 @@ dependencies {
     // DynamoDB
     implementation 'software.amazon.awssdk:dynamodb:2.27.16'
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
+    implementation 'software.amazon.awssdk:aws-json-protocol:2.29.3'
+
+    implementation project(':libs:commons-types')
 
     implementation 'org.owasp.encoder:encoder:1.2.3'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'
@@ -46,6 +51,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     testImplementation "org.mockito:mockito-inline:3.11.2"
     testImplementation "io.mockk:mockk:1.13.9"
+    implementation 'joda-time:joda-time:2.12.7'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0'
 }
 
 jar {
@@ -55,6 +62,13 @@ jar {
 test {
     useJUnitPlatform()
 }
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 
 kotlin {
     jvmToolchain(17)
