@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models.submission
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
-import gov.cdc.ocio.database.models.dao.StageInfoDao
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
@@ -73,7 +72,7 @@ data class StageInfo(
         /**
          * Convenience function to convert a database object to a StageInfo object
          */
-        fun fromStageInfoDao(dao: StageInfoDao?) = StageInfo().apply {
+        fun fromStageInfoDao(dao: gov.cdc.ocio.database.models.dao.StageInfoDao?) = StageInfo().apply {
             this.service = dao?.service
             this.action = dao?.action
             this.version = dao?.version
@@ -84,7 +83,7 @@ data class StageInfo(
             }
             this.issues = dao?.issues?.map { Issue.fromIssueDao(it) }
             this.startProcessingTime = dao?.startProcessingTime?.atOffset(ZoneOffset.UTC)
-            this.endProcessingTime = dao?.endProcessingTime?.atOffset(ZoneOffset.UTC)
+            this.endProcessingTime =  dao?.endProcessingTime?.atOffset(ZoneOffset.UTC)
         }
     }
 }

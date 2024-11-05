@@ -1,9 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
-import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.DataStream
 import gov.cdc.ocio.processingstatusapi.models.SortOrder
 import gov.cdc.ocio.processingstatusapi.models.Report
