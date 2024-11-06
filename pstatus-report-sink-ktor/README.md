@@ -12,7 +12,7 @@ The `DATABASE` environment variables is used to specify the database used for pe
 Set this variable to one of the following values:
 - `cosmos`
 - `dynamo`
-- `couchase`
+- `couchbase`
 - `mongo`
 
 For Cosmos DB only, set the following environment variables:
