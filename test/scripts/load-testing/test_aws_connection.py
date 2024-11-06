@@ -9,6 +9,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def test_aws_connection():
     try:
         # Load configuration
@@ -36,6 +37,7 @@ def test_aws_connection():
 
     except Exception as e:
         logger.error(f"Error connecting to AWS: {str(e)}", exc_info=True)
+
 
 if __name__ == "__main__":
     test_aws_connection()
