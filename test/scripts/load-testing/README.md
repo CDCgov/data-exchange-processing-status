@@ -1,7 +1,22 @@
 # Overview
-These python scripts enables us to send the messages to the respective Messaging system based on the configurations for the cloud. When we try to send the messages, they are first sent to RabbitMQ. The RabbitMQ consumer,then, sends them to either the AWS Queue or Azure Service Bus queue depending on the configuration. 
+The `pstatus_load_test.py` script enables us to send messages to the respective Messaging System based on the configurations. 
+
+### Supported Messaging Systems
+- RabbitMQ
+- AWS (SQS Queue/ SNS Topic)
+- Azure (Service Bus Queue/ Topic)
 
 ### Environment Variable Setup
+Set the following environment variables
+#### Configuration to specify which cloud provider to use
+The message_system can either be `aws` or `azure` or `rabbitmq`.
+- `message_system` - The cloud provider we will be using (Set to either 'aws' or 'azure' based on which service provider we want to connect to).
+
+#### Configuration to specify whether to send to the queue or topic
+The use_queue is true for queues(AWS/Azure) AND false for topics (AWS/Azure).
+The use_queue is true for RabbitMQ.
+- `use_queue` - A string value set to either 'true' or 'false' to indicate whether to use a queue or a topic. Default value is set to 'true'.
+
 #### RabbbitMQ
 For RabbitMQ(Local Runs) only,  set the following environment variables:
 - `rabbitmq_host` - if not provided, `localhost` will be used.
@@ -10,11 +25,7 @@ For RabbitMQ(Local Runs) only,  set the following environment variables:
 - `rabbitmq_vhost` - if not provided, default virtual host `/` will be used.
 - `rabbitmq_exchange_name` - Your RabbitMQ exchange name.
 - `rabbitmq_queue_name` - Your RabbitMQ queue name bound to the desired exchange topic.
-
-#### Configuration to specifiy which cloud provider to use
-Set the following environment variables:
-- `target_service` - The cloud provider we will be using (Set to either 'aws' or 'azure' based on which service provider we want to connect to).
-- `use_queue` - A string value set to either 'true' or 'false' to indicate whether to use a queue or a topic. Default value is set to 'true'
+- `rabbitmq_routing_key` - Your RabbitMQ routing key.
 
 #### Azure Service Bus
 For Azure Service Bus only, set the following environment variables:
@@ -30,8 +41,8 @@ For AWS SNS/SQS only, set the following environment variables:
 - `aws_queue_url` - URL of the Amazon Simple Queue Service(SQS) queue.
 - `aws_topic_arn` - Value of the Amazon Simple Notification Service(SNS) topic.
 
+### Steps to run the scripts
 Steps to set up and send messages to AWS(SQS/SNS) or Azure Service Bus (Queue/Topic) from the Python Script files:
 - Install Python.
 - Please install all the dependencies from the requirements.txt file.
-- Run the following command, 'python .\rabbitmq_consumer.py' in a separate window.
-- Run the following command, 'python .\message_publisher.py' in a separate window.
+- Run the following command, 'python .\rabbitmq_consumer.py' in a Terminal or in Windows powershell.
