@@ -9,7 +9,6 @@ import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import io.ktor.util.logging.*
-import mu.KotlinLogging
 import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
@@ -113,7 +112,9 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
         message.body
     )
     try {
-        ServiceBusProcessor().withMessage(message)
+        val serviceBusProcessor = ServiceBusProcessor()
+        val messageToString = String(message.body.toBytes())
+        serviceBusProcessor.processMessage(messageToString)
     }
     catch (e: BadRequestException) {
         logger.warn("Unable to parse the message: {}", e.localizedMessage)
