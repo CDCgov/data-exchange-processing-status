@@ -78,24 +78,24 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
     private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
         /** Get today's date in UTC **/
         val today = LocalDate.now(ZoneId.of("UTC"))
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-
-        val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
-        val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd)
-
+        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
         val reportsCollection =repository.reportsCollection
         val collectionName =reportsCollection.collectionNameForQuery
         val cVar = reportsCollection.collectionVariable
         val cPrefix =reportsCollection.collectionVariablePrefix
+
+        val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
+        val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
+        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd,cPrefix)
+
+
         val notificationQuery = """
            SELECT ${cPrefix}id 
            FROM $collectionName $cVar 
            WHERE ${cPrefix}dataStreamId = '$dataStreamId' 
                AND ${cPrefix}jurisdiction = '$jurisdiction' 
-               AND ${cPrefix}dexIngestDateTime >= '$dateStart' 
-               AND ${cPrefix}dexIngestDateTime < '$dateEnd'
-         """.trimIndent()
+               AND $timeRangeWhereClause 
+           """.trimIndent()
 
         logger.info("notification Query: $notificationQuery")
 
@@ -106,10 +106,10 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             )
             logger.info("notification Query results: ${results.size}")
             results.isNotEmpty() // Returns true if there are results, false if none
-           } catch (ex: Exception) {
+        } catch (ex: Exception) {
             logger.error("Error occurred while checking upload for $dataStreamId and $jurisdiction: ${ex.message}")
             throw Exception("Error occurred in checking upload")
-           }
+        }
     }
 
 

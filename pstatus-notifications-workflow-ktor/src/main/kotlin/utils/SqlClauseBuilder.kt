@@ -17,7 +17,7 @@ class SqlClauseBuilder {
     @Throws(NumberFormatException::class, BadRequestException::class)
     fun buildSqlClauseForDateRange(daysInterval: Int?,
                                    dateStart: String?,
-                                   dateEnd: String?): String {
+                                   dateEnd: String?,  cPrefix: String): String {
 
         val timeRangeSqlPortion = StringBuilder()
         if (daysInterval != null) {
@@ -31,11 +31,11 @@ class SqlClauseBuilder {
         } else {
             dateStart?.run {
                 val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
-                timeRangeSqlPortion.append("r.timestamp >= $dateStartEpochSecs")
+                timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= $dateStartEpochSecs")
             }
             dateEnd?.run {
                 val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd, "date_end")
-                timeRangeSqlPortion.append(" and r.timestamp < $dateEndEpochSecs")
+                timeRangeSqlPortion.append(" and ${cPrefix}dexIngestDateTime < $dateEndEpochSecs")
             }
         }
         return timeRangeSqlPortion.toString()
