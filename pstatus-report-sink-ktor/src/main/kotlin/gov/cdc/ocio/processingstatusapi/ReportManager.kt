@@ -371,31 +371,11 @@ class ReportManager: KoinComponent {
         val deadLetterReport = ReportDeadLetter().apply {
             this.id = deadLetterReportId
             this.deadLetterReasons = listOf(deadLetterReason)
+            this.source= source.toString()
         }
         return createReportItem(null, deadLetterReportId, deadLetterReport)
     }
 
-    /** Function to check whether the value is null or empty based on its type
-     * @param value Any
-     */
-    private fun isNullOrEmpty(value: Any?): Boolean {
-        return when (value) {
-            null -> true
-            is String -> value.isEmpty()
-            is Collection<*> -> value.isEmpty()
-            is Map<*, *> -> value.isEmpty()
-            else -> false // You can adjust this to your needs
-        }
-    }
-
-    /**
-     * The function which checks whether the passed string is Base64 Encoded or not using Regex
-     * @param value String
-     */
-    private fun isBase64Encoded(value: String): Boolean {
-        val base64Pattern = "^[A-Za-z0-9+/]+={0,2}$"
-        return value.matches(base64Pattern.toRegex())
-    }
 
     /**
      * The common function which writes to cosmos container based on the report type
