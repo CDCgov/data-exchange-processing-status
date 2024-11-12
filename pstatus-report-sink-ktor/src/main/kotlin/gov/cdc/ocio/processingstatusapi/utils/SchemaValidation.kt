@@ -63,6 +63,7 @@ class SchemaValidation {
             logger.info("Creating report for uploadId = $uploadId with stageName = $stageName and source = $source")
 
             ReportManager().createReportWithUploadId(
+                createReportMessage.reportSchemaVersion!!,
                 uploadId!!,
                 createReportMessage.dataStreamId!!,
                 createReportMessage.dataStreamRoute!!,
@@ -118,6 +119,7 @@ class SchemaValidation {
             //This should not run for unit tests
             if (System.getProperty("isTestEnvironment") != "true") {
                 ReportManager().createDeadLetterReport(
+                    createReportMessage.reportSchemaVersion,
                     createReportMessage.uploadId,
                     createReportMessage.dataStreamId,
                     createReportMessage.dataStreamRoute,

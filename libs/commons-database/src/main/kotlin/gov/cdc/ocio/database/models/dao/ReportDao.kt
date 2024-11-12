@@ -43,6 +43,8 @@ import java.util.*
 open class ReportDao(
     @JsonProperty("id")
     var id : String? = null,
+    @JsonProperty("reportSchemaVersion")
+    var reportSchemaVersion : String? = null,
     @JsonProperty("uploadId")
     var uploadId: String? = null,
     @JsonProperty("reportId")

@@ -21,6 +21,8 @@ import java.util.*
 data class ReportDeadLetterDao(
     @JsonProperty("id")
     var id : String? = null,
+    @JsonProperty("reportSchemaVersion")
+    var reportSchemaVersion : String? = null,
     @JsonProperty("uploadId")
     var uploadId: String? = null,
     @JsonProperty("reportId")

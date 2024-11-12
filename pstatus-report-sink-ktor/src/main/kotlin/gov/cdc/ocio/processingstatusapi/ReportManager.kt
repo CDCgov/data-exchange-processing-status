@@ -31,6 +31,7 @@ class ReportManager: KoinComponent {
     /**
      * Create a report located with the provided upload ID.
      *
+     * @param reportSchemaVersion String
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
@@ -52,6 +53,7 @@ class ReportManager: KoinComponent {
      */
     @Throws(BadStateException::class, BadRequestException::class)
     fun createReportWithUploadId(
+        reportSchemaVersion:String,
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
@@ -70,6 +72,7 @@ class ReportManager: KoinComponent {
     ): String {
         if (System.getProperty("isTestEnvironment") != "true") {
             return createReport(
+                reportSchemaVersion,
                 uploadId,
                 dataStreamId,
                 dataStreamRoute,
@@ -112,6 +115,7 @@ class ReportManager: KoinComponent {
      * @return String - report identifier
      */
     private fun createReport(
+        reportSchemaVersion: String,
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
@@ -163,6 +167,7 @@ class ReportManager: KoinComponent {
 
                 // Now create the new stage report
                 return createStageReport(
+                    reportSchemaVersion,
                     uploadId,
                     dataStreamId,
                     dataStreamRoute,
@@ -182,6 +187,7 @@ class ReportManager: KoinComponent {
             DispositionType.ADD -> {
                 logger.info("Creating report for stage name = $stageInfo?.stage")
                 return createStageReport(
+                    reportSchemaVersion,
                     uploadId,
                     dataStreamId,
                     dataStreamRoute,
@@ -204,6 +210,7 @@ class ReportManager: KoinComponent {
     /**
      * Creates a report for the given stage.
      *
+     * @param reportSchemaVersion String
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
@@ -223,6 +230,7 @@ class ReportManager: KoinComponent {
      */
     @Throws(BadStateException::class)
     private fun createStageReport(
+        reportSchemaVersion: String,
         uploadId: String,
         dataStreamId: String,
         dataStreamRoute: String,
@@ -240,6 +248,7 @@ class ReportManager: KoinComponent {
     ): String {
         val stageReportId = UUID.randomUUID().toString()
         val stageReport = Report().apply {
+            this.reportSchemaVersion= reportSchemaVersion
             this.id = stageReportId
             this.uploadId = uploadId
             this.reportId = stageReportId
@@ -286,6 +295,7 @@ class ReportManager: KoinComponent {
      */
     @Throws(BadStateException::class)
     fun createDeadLetterReport(
+        reportSchemaVersion: String?,
         uploadId: String?,
         dataStreamId: String?,
         dataStreamRoute: String?,
@@ -308,6 +318,7 @@ class ReportManager: KoinComponent {
         val deadLetterReportId = UUID.randomUUID().toString()
         val deadLetterReport = ReportDeadLetter().apply {
             this.id = deadLetterReportId
+            this.reportSchemaVersion= reportSchemaVersion
             this.uploadId = uploadId
             this.reportId = deadLetterReportId
             this.dataStreamId = dataStreamId
@@ -375,27 +386,6 @@ class ReportManager: KoinComponent {
         return createReportItem(null, deadLetterReportId, deadLetterReport)
     }
 
-    /** Function to check whether the value is null or empty based on its type
-     * @param value Any
-     */
-    private fun isNullOrEmpty(value: Any?): Boolean {
-        return when (value) {
-            null -> true
-            is String -> value.isEmpty()
-            is Collection<*> -> value.isEmpty()
-            is Map<*, *> -> value.isEmpty()
-            else -> false // You can adjust this to your needs
-        }
-    }
-
-    /**
-     * The function which checks whether the passed string is Base64 Encoded or not using Regex
-     * @param value String
-     */
-    private fun isBase64Encoded(value: String): Boolean {
-        val base64Pattern = "^[A-Za-z0-9+/]+={0,2}$"
-        return value.matches(base64Pattern.toRegex())
-    }
 
     /**
      * The common function which writes to cosmos container based on the report type
