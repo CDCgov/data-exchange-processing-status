@@ -1,6 +1,7 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
-import java.io.File
+import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
+
 
 /**
  * The class which loads the schema files from the class path
@@ -8,13 +9,16 @@ import java.io.File
 class FileSchemaLoader : SchemaLoader {
 
     /**
-     * The function which loads the schema based on the file name path and returns a File or null
+     * The function which loads the schema based on the file name path and returns a [SchemaFile]
      * @param fileName String
-     * @return File?
+     * @return [SchemaFile]
      */
-    override fun loadSchemaFile(fileName: String): File? {
+    override fun loadSchemaFile(fileName: String): SchemaFile {
         val schemaDirectoryPath = "schema"
-        val schemaFilePath = javaClass.classLoader.getResource("$schemaDirectoryPath/$fileName")
-        return schemaFilePath?.let { File(it.toURI()) }?.takeIf { it.exists() }
+        return SchemaFile(
+            fileName = fileName,
+            inputStream = javaClass.classLoader.getResourceAsStream("$schemaDirectoryPath/$fileName")
+        )
     }
+
 }
