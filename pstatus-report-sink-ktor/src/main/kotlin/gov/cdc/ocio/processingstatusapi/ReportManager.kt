@@ -327,7 +327,7 @@ class ReportManager: KoinComponent {
             this.contentType = contentType
             this.deadLetterReasons= deadLetterReasons
             this.validationSchemas= validationSchemaFileNames
-            this.content = getContent(contentType, content)
+            this.content =  contentType?.let { getContent(contentType, content) }
         }
 
         return createReportItem(uploadId, deadLetterReportId, deadLetterReport)
