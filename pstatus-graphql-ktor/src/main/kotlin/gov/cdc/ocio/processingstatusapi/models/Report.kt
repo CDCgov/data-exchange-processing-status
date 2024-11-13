@@ -34,6 +34,9 @@ data class Report(
     @GraphQLDescription("Identifier of the report recorded by the database")
     var id : String? = null,
 
+    @GraphQLDescription("Report schema version this report belongs to")
+    var reportSchemaVersion:String?=null,
+
     @GraphQLDescription("Upload identifier this report belongs to")
     var uploadId: String? = null,
 
@@ -85,6 +88,7 @@ data class Report(
          */
         fun fromReportDao(dao: gov.cdc.ocio.database.models.dao.ReportDao) = Report().apply {
             this.id = dao.id
+            this.reportSchemaVersion= dao.reportSchemaVersion
             this.uploadId = dao.uploadId
             this.reportId = dao.reportId
             this.dataStreamId = dao.dataStreamId

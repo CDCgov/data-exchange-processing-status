@@ -23,6 +23,9 @@ import java.time.Instant
  */
 class CreateReportMessage: MessageBase() {
 
+    @SerializedName("report_schema_version")
+    var reportSchemaVersion: String? = null
+
     @SerializedName("upload_id")
     var uploadId: String? = null
 
