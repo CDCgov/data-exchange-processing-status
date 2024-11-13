@@ -110,6 +110,7 @@ class SchemaValidation {
      * @throws BadRequestException
      */
     fun sendToDeadLetter(
+        source: Source,
         invalidData: MutableList<String>,
         validationSchemaFileNames: MutableList<String>,
         createReportMessage: CreateReportMessage
@@ -132,7 +133,7 @@ class SchemaValidation {
                     createReportMessage.jurisdiction,
                     createReportMessage.senderId,
                     createReportMessage.dataProducerId,
-                    createReportMessage.source,
+                    source,
                     invalidData,
                     validationSchemaFileNames
                 )
