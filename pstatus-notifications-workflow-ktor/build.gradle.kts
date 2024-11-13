@@ -33,6 +33,7 @@ application {
 
 dependencies {
     implementation(project(":libs:commons-database"))
+    implementation(project(":libs:commons-types"))
     implementation("io.temporal:temporal-sdk:1.15.1")
     implementation("com.sendgrid:sendgrid-java:4.9.2")
     implementation ("io.ktor:ktor-server-core:2.3.2")
