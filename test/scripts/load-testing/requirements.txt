@@ -14,5 +14,5 @@ python-dotenv==1.0.0
 
 # Optional: for development
 pytest==7.4.3
-black==23.12.1
+black==24.3.0
 pylint==3.0.3
