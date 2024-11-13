@@ -1,0 +1,14 @@
+# General settings
+export CLOUD_PROVIDER="aws"
+export AWS_S3_REGION="us-east-1"
+
+# AWS SQS 
+export AWS_QUEUE_NAME="test-queue"
+export AWS_QUEUE_URL="http://localhost:4566/000000000000/test-queue"
+export AWS_SQS_REGION="us-east-1"
+
+# AWS S3
+export AWS_S3_ENDPOINT_URL=http://localhost:4566
+export AWS_S3_BUCKET_NAME="test-bucket"
+export AWS_ACCESS_KEY_ID="dummyAccessKey"
+export AWS_SECRET_ACCESS_KEY="dummyAccessKey"

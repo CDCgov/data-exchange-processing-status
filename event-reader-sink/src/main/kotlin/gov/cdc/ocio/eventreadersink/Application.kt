@@ -73,6 +73,7 @@ private fun loadAwsConfig(environment: ApplicationEnvironment): CloudConfig {
             sqsQueueName = environment.config.property("cloud.aws.sqs.queue_name").getString(),
             sqsQueueURL = environment.config.property("cloud.aws.sqs.queue_url").getString(),
             sqsRegion = environment.config.property("cloud.aws.sqs.region").getString(),
+            s3EndpointURL = environment.config.propertyOrNull("cloud.aws.s3.endpoint_url")?.getString(),
             s3BucketName = environment.config.property("cloud.aws.s3.bucket_name").getString(),
             s3Region = environment.config.property("cloud.aws.s3.region").getString()
         )
@@ -107,7 +108,8 @@ private fun loadAzureConfig(environment: ApplicationEnvironment): CloudConfig {
             subscriptionName = environment.config.property("cloud.azure.service_bus.subscription_name").getString(),
             containerName = environment.config.property("cloud.azure.blob_storage.container_name").getString(),
             storageAccountKey = environment.config.property("cloud.azure.blob_storage.storage_account_key").getString(),
-            storageAccountName = environment.config.property("cloud.azure.blob_storage.storage_account_name").getString()
+            storageAccountName = environment.config.property("cloud.azure.blob_storage.storage_account_name").getString(),
+            storageEndpointURL = environment.config.property("cloud.azure.blob_storage.storage_endpoint_url").getString()
         )
 
         CloudConfig(provider = CloudProviderType.AZURE, azureConfig = azureConfig)

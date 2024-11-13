@@ -54,6 +54,7 @@ class CamelProcessor {
                         logger.info ("Sinking message to Blob Storage for Azure configuration.")
                         AzureSink().sinkAsbTopicSubscriptionToBlob(
                             azureConfig.connectionString,
+                            azureConfig.storageEndpointURL,
                             azureConfig.storageAccountName,
                             azureConfig.storageAccountKey,
                             azureConfig.containerName,
