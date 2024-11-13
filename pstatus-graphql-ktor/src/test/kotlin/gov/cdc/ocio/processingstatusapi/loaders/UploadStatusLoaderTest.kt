@@ -5,7 +5,7 @@ import gov.cdc.ocio.database.cosmos.CosmosCollection
 import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCounts
 import io.mockk.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull

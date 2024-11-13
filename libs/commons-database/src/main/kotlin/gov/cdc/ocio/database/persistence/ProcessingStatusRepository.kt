@@ -32,6 +32,8 @@ abstract class ProcessingStatusRepository {
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .create()
 
+    open val supportsGroupBy = true
+
     /**
      * Interface and default implementation for doing report content transformations from the map to whatever type
      * the database is expecting.

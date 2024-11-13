@@ -7,7 +7,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.database.models.dao.ReportDao
-import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCounts
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SortUtils

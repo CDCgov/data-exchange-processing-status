@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCounts
 import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import mu.KotlinLogging
@@ -41,12 +42,6 @@ class UploadStatsLoader: KoinComponent {
             cPrefix
         )
 
-        val numUniqueUploadsQuery = (
-                "select ${cPrefix}uploadId from $cName $cVar "
-                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "$timeRangeWhereClause group by ${cPrefix}uploadId"
-                )
-
         val numUploadsWithStatusQuery = (
                 "select value count(1) "
                         + "from $cName $cVar "
@@ -83,12 +78,31 @@ class UploadStatsLoader: KoinComponent {
                         + ") $cVar where ${cPrefix}totalCount > 1"
                 )
 
-        val uniqueUploadIdsResult = reportsCollection.queryItems(
-            numUniqueUploadsQuery,
-            UploadCounts::class.java
-        )
-
-        val uniqueUploadIdsCount = uniqueUploadIdsResult.count()
+        val uniqueUploadIdsCount = if (repository.supportsGroupBy) {
+            val numUniqueUploadsQuery = (
+                    "select ${cPrefix}uploadId from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + "$timeRangeWhereClause group by ${cPrefix}uploadId"
+                    )
+            val uniqueUploadIdsResult =
+                reportsCollection.queryItems(
+                    numUniqueUploadsQuery,
+                    UploadCounts::class.java
+                )
+            uniqueUploadIdsResult.count()
+        } else {
+            // Less efficient than with group by, but same result
+            val numUploadsQuery = (
+                    "select * from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + timeRangeWhereClause
+                    )
+            val uploadIdsResult = reportsCollection.queryItems(
+                numUploadsQuery,
+                UploadCounts::class.java
+            )
+            uploadIdsResult.distinctBy { it.uploadId }.size
+        }
 
         val uploadsWithStatusResult = reportsCollection.queryItems(
             numUploadsWithStatusQuery,

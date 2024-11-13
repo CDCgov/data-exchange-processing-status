@@ -1,5 +1,6 @@
-package gov.cdc.ocio.processingstatusapi.models.query
+package gov.cdc.ocio.processingstatusapi.models.dao
 
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 
 
@@ -12,6 +13,7 @@ import java.time.Instant
  * @property senderId String?
  * @constructor
  */
+@DynamoDbBean
 data class UploadCounts(
 
     var reportCounts: Int? = null,
