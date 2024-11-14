@@ -72,4 +72,7 @@ interface Collection {
 
     val timeConversionForQuery: (Long) -> String
         get() = { timeEpoch: Long -> timeEpoch.toString() }
+
+    val isArrayNotEmptyOrNull
+        get() = "ARRAY_LENGTH"
 }

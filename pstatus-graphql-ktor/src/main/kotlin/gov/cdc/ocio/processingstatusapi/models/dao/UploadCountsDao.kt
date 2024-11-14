@@ -5,7 +5,8 @@ import java.time.Instant
 
 
 /**
- * DEX Upload Counts model, which is the structure returned from the uploads data projection cosmosdb query.
+ * Upload counts model, which is the structure returned from the uploads data projection query.
+ *
  * @property reportCounts Int?
  * @property uploadId String?
  * @property latestTimestamp Instant?
@@ -14,7 +15,7 @@ import java.time.Instant
  * @constructor
  */
 @DynamoDbBean
-data class UploadCounts(
+data class UploadCountsDao(
 
     var reportCounts: Int? = null,
 

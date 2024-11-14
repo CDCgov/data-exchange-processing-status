@@ -5,7 +5,6 @@ import gov.cdc.ocio.database.persistence.Collection
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.protocols.jsoncore.JsonNode

@@ -5,7 +5,7 @@ import gov.cdc.ocio.database.cosmos.CosmosCollection
 import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.dao.UploadCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCountsDao
 import io.mockk.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -172,8 +172,8 @@ class UploadStatusLoaderTest : KoinTest {
         // Setup mocks
         //Return PageIterable of type UploadCounts
         val uploadCounts = listOf(
-            UploadCounts(4, "uploadId1", Instant.now(), "jurisdiction1", "senderId1"),
-            UploadCounts(2, "uploadId2",Instant.now(), "jurisdiction2","senderId2")
+            UploadCountsDao(4, "uploadId1", Instant.now(), "jurisdiction1", "senderId1"),
+            UploadCountsDao(2, "uploadId2",Instant.now(), "jurisdiction2","senderId2")
         )
         val uploadCountsIterator = uploadCounts.iterator()
 
@@ -181,7 +181,7 @@ class UploadStatusLoaderTest : KoinTest {
         every {
             mockReportsCollection.queryItems(
                 any<String>(),
-               UploadCounts::class.java
+               UploadCountsDao::class.java
             )
         } returns listOf()
 

@@ -137,4 +137,6 @@ class DynamoCollection<R>(
         // Format the Instant to ISO 8601 string
         DateTimeFormatter.ISO_INSTANT.format(instant)
     }
+
+    override val isArrayNotEmptyOrNull = "SIZE"
 }

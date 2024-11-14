@@ -7,7 +7,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.database.models.dao.ReportDao
-import gov.cdc.ocio.processingstatusapi.models.dao.UploadCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCountsDao
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SortUtils
@@ -150,7 +150,7 @@ class UploadStatusLoader: KoinComponent {
         try {
             val count = reportsCollection.queryItems(
                 countQuery,
-                UploadCounts::class.java
+                UploadCountsDao::class.java
             )
             totalItems = count.count()
             logger.info("Upload status matched count = $totalItems")
@@ -185,7 +185,7 @@ class UploadStatusLoader: KoinComponent {
             logger.info("upload status data query = $dataSqlQuery")
             val results = reportsCollection.queryItems(
                 dataSqlQuery,
-                UploadCounts::class.java
+                UploadCountsDao::class.java
             ).toList()
 
             results.forEach { report ->

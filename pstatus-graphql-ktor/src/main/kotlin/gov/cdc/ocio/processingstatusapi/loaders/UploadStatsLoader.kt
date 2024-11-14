@@ -3,7 +3,8 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.models.dao.UploadCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCountsDao
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadIdDao
 import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import mu.KotlinLogging
@@ -24,7 +25,8 @@ class UploadStatsLoader: KoinComponent {
     private val cPrefix = reportsCollection.collectionVariablePrefix
     private val openBkt = reportsCollection.openBracketChar
     private val closeBkt = reportsCollection.closeBracketChar
-    private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val cElFunc = reportsCollection.collectionElementForQuery
+    private val cArrayNotNullOrEmpty = reportsCollection.isArrayNotEmptyOrNull
 
     @Throws(BadRequestException::class, ContentException::class)
     fun getUploadStats(
@@ -43,7 +45,7 @@ class UploadStatsLoader: KoinComponent {
         )
 
         val numUploadsWithStatusQuery = (
-                "select value count(1) "
+                "select uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-status' and "
@@ -51,15 +53,15 @@ class UploadStatsLoader: KoinComponent {
                 )
 
         val badMetadataCountQuery = (
-                "select value count(1) "
+                "select uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
-                        + "ARRAY_LENGTH(${cPrefix}stageInfo.issues) > 0 and $timeRangeWhereClause"
+                        + "$cArrayNotNullOrEmpty(${cPrefix}stageInfo.issues) > 0 and $timeRangeWhereClause"
                 )
 
         val completedUploadsCountQuery = (
-                "select value count(1) "
+                "select uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' and "
@@ -87,7 +89,7 @@ class UploadStatsLoader: KoinComponent {
             val uniqueUploadIdsResult =
                 reportsCollection.queryItems(
                     numUniqueUploadsQuery,
-                    UploadCounts::class.java
+                    UploadCountsDao::class.java
                 )
             uniqueUploadIdsResult.count()
         } else {
@@ -99,24 +101,24 @@ class UploadStatsLoader: KoinComponent {
                     )
             val uploadIdsResult = reportsCollection.queryItems(
                 numUploadsQuery,
-                UploadCounts::class.java
+                UploadCountsDao::class.java
             )
             uploadIdsResult.distinctBy { it.uploadId }.size
         }
 
         val uploadsWithStatusResult = reportsCollection.queryItems(
             numUploadsWithStatusQuery,
-            Float::class.java
+            UploadIdDao::class.java
         )
 
-        val uploadsWithStatusCount = uploadsWithStatusResult.firstOrNull() ?: 0
+        val uploadsWithStatusCount = uploadsWithStatusResult.count()
 
         val badMetadataCountResult = reportsCollection.queryItems(
             badMetadataCountQuery,
-            Float::class.java
+            UploadIdDao::class.java
         )
 
-        val badMetadataCount = badMetadataCountResult.firstOrNull() ?: 0
+        val badMetadataCount = badMetadataCountResult.count()
 
         val duplicateFilenameCountResult = reportsCollection.queryItems(
             duplicateFilenameCountQuery,
@@ -131,10 +133,10 @@ class UploadStatsLoader: KoinComponent {
 
         val completedUploadsCountResult = reportsCollection.queryItems(
             completedUploadsCountQuery,
-            Float::class.java
+            UploadIdDao::class.java
         )
 
-        val completedUploadsCount = completedUploadsCountResult.firstOrNull() ?: 0
+        val completedUploadsCount = completedUploadsCountResult.count()
 
         val undeliveredUploads = getUndeliveredUploads(dataStreamId, dataStreamRoute, timeRangeWhereClause)
         val pendingUploads = getPendingUploads(dataStreamId, dataStreamRoute, timeRangeWhereClause)
@@ -276,7 +278,8 @@ class UploadStatsLoader: KoinComponent {
         dataStreamRoute: String,
         expectedAction: String,
         missingAction: String,
-        timeRangeWhereClause: String): List<String> {
+        timeRangeWhereClause: String
+    ): List<String> {
 
         try{
 
