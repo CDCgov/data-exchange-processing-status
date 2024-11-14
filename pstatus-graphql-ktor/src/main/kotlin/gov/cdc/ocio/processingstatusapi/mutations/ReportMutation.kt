@@ -24,12 +24,12 @@ import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
 class ReportMutation() : Mutation {
 
     /**
-     * Upserts a report based on the provided input and action.
+     * Creates a new report or updates existing report based on action.
      *
      * This function serves as a GraphQL mutation to create a new report or replace an existing one.
      * It delegates the actual upsert logic to the ReportMutation class.
      *
-     * @param input The ReportInput containing details of the report to be created or replaced.
+     * @param input The report to be created or updated.
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The result of the upsert operation, handled by the ReportMutation class.
      */

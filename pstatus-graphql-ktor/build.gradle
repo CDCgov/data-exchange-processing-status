@@ -44,6 +44,8 @@ repositories{
 tasks.register("prepareKotlinBuildScriptModel"){}
 dependencies {
     implementation(project(":libs:commons-database"))
+    implementation project(':libs:schema-validation')
+    implementation project(':libs:commons-types')
     implementation "io.ktor:ktor-server-core-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-netty-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-cors:$ktor_version"
