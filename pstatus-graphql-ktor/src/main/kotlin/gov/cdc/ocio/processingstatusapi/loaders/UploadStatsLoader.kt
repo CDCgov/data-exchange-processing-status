@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
+import gov.cdc.ocio.processingstatusapi.models.query.DuplicateFilenameCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.ReceivedFilenameDao
 import gov.cdc.ocio.processingstatusapi.models.dao.UploadCountsDao
 import gov.cdc.ocio.processingstatusapi.models.dao.UploadIdDao
 import gov.cdc.ocio.processingstatusapi.models.query.*
@@ -69,17 +71,6 @@ class UploadStatsLoader: KoinComponent {
                         + "$timeRangeWhereClause "
                 )
 
-        val duplicateFilenameCountQuery = (
-                "select * from "
-                        + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
-                        + "$timeRangeWhereClause "
-                        + "group by ${cPrefix}content.metadata.received_filename"
-                        + ") $cVar where ${cPrefix}totalCount > 1"
-                )
-
         val uniqueUploadIdsCount = if (repository.supportsGroupBy) {
             val numUniqueUploadsQuery = (
                     "select ${cPrefix}uploadId from $cName $cVar "
@@ -120,16 +111,46 @@ class UploadStatsLoader: KoinComponent {
 
         val badMetadataCount = badMetadataCountResult.count()
 
-        val duplicateFilenameCountResult = reportsCollection.queryItems(
-            duplicateFilenameCountQuery,
-            DuplicateFilenameCounts::class.java
-        )
-
-        val duplicateFilenames =
-            if (duplicateFilenameCountResult.isNotEmpty())
-                duplicateFilenameCountResult.toList()
-            else
-                listOf()
+        val duplicateFilenames: List<DuplicateFilenameCounts>
+        if (repository.supportsGroupBy) {
+            val duplicateFilenameCountQuery = (
+                    "select * from "
+                            + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
+                            + "from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
+                            + "$timeRangeWhereClause "
+                            + "group by ${cPrefix}content.metadata.received_filename"
+                            + ") $cVar where ${cPrefix}totalCount > 1"
+                    )
+            val duplicateFilenameCountResult = reportsCollection.queryItems(
+                duplicateFilenameCountQuery,
+                DuplicateFilenameCounts::class.java
+            )
+            duplicateFilenames = duplicateFilenameCountResult.toMutableList()
+        } else {
+            // Much less efficient way
+            val duplicateFilenameCountQuery = (
+                    "select ${cPrefix}content.metadata.received_filename "
+                            + "from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
+                            + timeRangeWhereClause
+                    )
+            val duplicateFilenameCountResult = reportsCollection.queryItems(
+                duplicateFilenameCountQuery,
+                ReceivedFilenameDao::class.java
+            )
+            val result = duplicateFilenameCountResult
+                .groupBy { it.receivedFilename } // group by filename
+                .filter { it.value.size > 1 } // filter only duplicates (more than one of the same filename)
+            duplicateFilenames = result.map {
+                DuplicateFilenameCounts().apply {
+                    this.filename = it.key
+                    this.totalCount = it.value.size.toLong()
+                }
+            }
+        }
 
         val completedUploadsCountResult = reportsCollection.queryItems(
             completedUploadsCountQuery,
