@@ -1,4 +1,6 @@
-package gov.cdc.ocio.processingstatusapi.models.query
+package gov.cdc.ocio.processingstatusapi.models.dao
+
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 /**
  * Represents the state of an upload operation in the system.
@@ -14,7 +16,8 @@ package gov.cdc.ocio.processingstatusapi.models.query
  *
  * Note: All properties are nullable to support partial database mappings
  */
-data class Upload(
+@DynamoDbBean
+data class UploadDao(
     var uploadId: String? = null,
     var action: String? = null,
     var status: String? = null
