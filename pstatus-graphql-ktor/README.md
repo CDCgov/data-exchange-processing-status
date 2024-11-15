@@ -1,12 +1,5 @@
 # Overview
 The `GraphQL` service is designed to offer users a detailed view of their data across various stages, from upload and routing to validation, through `GraphQL Queries`. Users can also leverage `GraphQL Mutations` to create new reports, validate them, persist them to the database, or update existing reports. Additionally, the service provides the ability to `subscribe` to or `unsubscribe` from different types of notifications.
-## Key Features
-### GraphQL Queries:
-Provides range of query endpoints that enable user to search for existing reports based on search criteria.
-
-### GraphQL Mutations:
-Provides range of Mutation endpoints that allow users to create, validate, and persist new reports. Additionally, it provides functionality for users to manage their notification preferences, subscribing to or unsubscribing from various types of notifications.
-
 ## Supported `Mutation` Endpoint Documentation:
 | Name                                            | Return                         | Description                                                                                                                                                               |
 |-------------------------------------------------|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
