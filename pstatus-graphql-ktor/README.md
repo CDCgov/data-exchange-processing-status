@@ -1,33 +1,50 @@
 # Overview
-TO DO- combine below Reports, DeadLetterReports, Notifications section into an overview
+The `GraphQL` service is designed to offer users a detailed view of their data across various stages, from upload and routing to validation, through `GraphQL Queries`. Users can also leverage `GraphQL Mutations` to create new reports, validate them, persist them to the database, or update existing reports. Additionally, the service provides the ability to `subscribe` to or `unsubscribe` from different types of notifications.
+## Key Features
+### GraphQL Queries:
+Provides range of query endpoints that enable user to search for existing reports based on search criteria.
 
-### Reports:
-Ability to query for existing reports, uploads, upload status.
-Validating the messages, and, if validated, persists them to CosmosDB. 
+### GraphQL Mutations:
+Provides range of Mutation endpoints that allow users to create, validate, and persist new reports. Additionally, it provides functionality for users to manage their notification preferences, subscribing to or unsubscribing from various types of notifications.
 
-### DeadLetterReports:
-- Ability to look for dead letter reports based on the search criteria.
-- Ability to retrieve dead letter reports stats based on the search criteria.
+## Supported `Mutation` Endpoint Documentation:
+| Name                                            | Return                         | Description                                                                                                                                                               |
+|-------------------------------------------------|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| subscribeEmail(..)                              | SubscriptionResult             | Subscribe Email Notifications.                                                                                                                                            |
+| unsubscribeEmail(..)                            | SubscriptionResult             | Unsubscribe Email Notifications.                                                                                                                                          |
+| subscribeWebhook(..)                            | SubscriptionResult             | Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm.                                                           |
+| unsubscribeWebhook(..)                          | SubscriptionResult             | UnSubscribe Deadline Check lets you unsubscribe from getting notifications when an upload from jurisdictions has not happened by 12pm.                                    |
+| subscribeDataStreamTopErrorsNotification(..)    | NotificationSubscriptionResult | Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload.                                   |
+| unsubscribesDataStreamTopErrorsNotification(..) | NotificationSubscriptionResult | UnSubscribe data stream top errors lets you unsubscribe from getting notifications for top data stream errors and its frequency during an upload.                         |
+| subscribeDeadlineCheck(..)                      | NotificationSubscriptionResult | Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm.                                                           |
+| unsubscribeDeadlineCheck(..)                    | NotificationSubscriptionResult | UnSubscribe Deadline Check lets you unsubscribe from getting notifications when an upload from jurisdictions has not happened by 12pm.                                    |
+| subscribeUploadErrorsNotification(..)           | NotificationSubscriptionResult | Subscribe upload errors lets you get notifications when there are errors in an upload.                                                                                    |
+| unsubscribeUploadErrorsNotification(..)         | NotificationSubscriptionResult | UnSubscribe upload errors lets you unsubscribe from getting notifications when there are errors during an upload.                                                         |
+| subscribeUploadDigestCounts(..)                 | NotificationSubscriptionResult | Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past.   |
+| unsubscribeUploadDigestCounts(..)               | NotificationSubscriptionResult | UnSubscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past. |
+| upsertReport(..)                                | Report                         | Creates a new report or replace an existing one based on specified action.                                                                                                |
 
-### Notifications:
-Provides the feature for a user to subscribe or unsubscribe to different types of Notifications as follows:
+## Supported `Query` Endpoint Documentation:
+| Name                                      | Return                              | Description                                                                                                                 |
+|-------------------------------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| getHealth(..)                             | GraphQLHealthCheck                  | Health status.                                                                                                              |
+| getReports(..)                            | list of reports                     | Reports associated with the provided upload ID..                                                                            |
+| getSubmissionDetails(..)                  | SubmissionDetails                   | Submission details for the provided upload ID.                                                                              |
+| searchReports(..)                         | list of reports                     | List of reports based on ReportSearchParameters options.                                                                    |
+| hl7DirectIndirectMessageCounts(..)        | HL7DirectIndirectMessageCounts      | HL7v2 message counts using both a direct and an indirect counting method for the provided parameters.                       |
+| hl7InvalidMessageCounts(..)               | HL7InvalidMessageCounts             | HL7v2 invalid message counts using both a direct and an indirect counting method for the provided parameters.               |
+| hl7InvalidStructureValidationCounts(..)   | hl7InvalidStructureValidationCounts | HL7v2 invalid structure counts for the provided parameters.                                                                 |
+| processingCounts(..)                      | ProcessingCounts                    | Processing counts for the provided parameters.                                                                              |
+| reportCountsWithParams(..)                | AggregateReportCounts               | Detailed counts within each stage for each matching upload with the provided parameters.                                    |
+| reportCountsWithUploadId(..)              | ReportCounts                        | Detailed counts within each stage for the provided uploadId.                                                                |
+| rollupCountsByStage(..)                   | list of stage counts                | Rolled up counts by stage for the provided parameters.                                                                      |
+| getDeadLetterReportsByDataStream(..)      | list of dead letter reports         | All the dead-letter reports associated with the provided datastreamId, datastreamroute and timestamp date range.            |
+| getDeadLetterReportsByUploadId(..)        | list of dead letter reports         | All the dead-letter reports associated with the provided uploadId.                                                          |
+| getDeadLetterReportsCountByDataStream(..) | int, number of reports              | Count of dead-letter reports associated with the provided datastreamId, (optional) datastreamroute and timestamp date range |
+| searchDeadLetterReports(..)               | list of dead letter reports         | Dead-letter reports based on ReportSearchParameters options.                                                                |
+| getUploadStats(..)                        | UploadStats                         | Various uploads statistics.                                                                                                 |
+| getUploads(..)                            | UploadsStatus                       | Upload statuses for the given filter, sort, and pagination criteria.                                                        |
 
-- Top data stream errors and its frequency during an upload.
-- Upload errors when there are errors in an upload.
-- Email Notifications.
-- Webhook Notifications.
-- Deadline Checks.
-
-## Graphql Service supported `Mutation` Endpoint Documentation:
-| Name         | Description                                    |
-|--------------|------------------------------------------------|
-| upsertReport | Create a new report or replace an existing one |
-
-## Graphql Service supported `Query` Endpoint Documentation
-
-| Name      | Description  |
-|-----------|--------------|
-| getHealth | health check |
 
 
 
