@@ -63,6 +63,7 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
 
     override val supportsGroupBy = false
     override val supportsDistinct = false
+    override val supportsCount = false
 
     /**
      * Dynamodb implementation of converting the content map to a JsonNode.

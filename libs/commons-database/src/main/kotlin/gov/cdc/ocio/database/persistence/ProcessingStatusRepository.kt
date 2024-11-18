@@ -34,6 +34,7 @@ abstract class ProcessingStatusRepository {
 
     open val supportsGroupBy = true
     open val supportsDistinct = true
+    open val supportsCount = true
 
     /**
      * Interface and default implementation for doing report content transformations from the map to whatever type

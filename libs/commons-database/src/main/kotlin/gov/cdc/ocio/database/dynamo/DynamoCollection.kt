@@ -129,14 +129,5 @@ class DynamoCollection<R>(
     // Elements "sometimes" need to be surrounded by quotes for dynamodb, so do it always.
     override val collectionElementForQuery = { name: String -> "\"$name\"" }
 
-    override val timeConversionForQuery: (Long) -> String = { epochMillis ->
-        val instant = Instant
-            .ofEpochMilli(epochMillis)
-            .atZone(ZoneId.of("GMT"))
-
-        // Format the Instant to ISO 8601 string
-        DateTimeFormatter.ISO_INSTANT.format(instant)
-    }
-
     override val isArrayNotEmptyOrNull = "SIZE"
 }
