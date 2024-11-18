@@ -13,7 +13,7 @@ services:
       COUCHBASE_PASSWORD: "password"
       PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
     depends_on:
-      - couchbase-setup
+      - couchbase
     restart: "always"
 
   report-sink:
@@ -35,7 +35,7 @@ services:
       RABBITMQ_PASSWORD: "guest"
       RABBITMQ_VIRTUAL_HOST: "/"
     depends_on:
-      - couchbase-setup
+      - couchbase
       - rabbitmq
     restart: "always"
 
