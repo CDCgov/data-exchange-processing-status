@@ -30,6 +30,7 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
     private val accessKeyID = config.tryGetString("${configPath}access_key_id") ?: ""
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
+    private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
 
     fun createSQSClient(): SqsClient{
         return SqsClient{
