@@ -17,11 +17,12 @@ class HealthCheckTemporalServer : HealthCheckSystem("Temporal Server") {
      */
 
     override fun doHealthCheck() {
+        try {
         val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-            .setTarget("https://temporaldev-frontend:7233") // Temporal server address //System.getenv().get("")
+            .setTarget("http://temporal-frontend:7233") // Temporal server address //System.getenv().get("")
             .build()
         val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
-        try {
+
             val isDown = serviceStubs.isShutdown || serviceStubs.isTerminated
             if (isDown) {
                 this.status = HealthStatusType.STATUS_DOWN
