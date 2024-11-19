@@ -18,7 +18,7 @@ class HealthCheckTemporalServer : HealthCheckSystem("Temporal Server") {
 
     override fun doHealthCheck() {
         val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-            .setTarget("temporaldev-frontend:7233") // Temporal server address //System.getenv().get("")
+            .setTarget("https://temporaldev-frontend:7233") // Temporal server address //System.getenv().get("")
             .build()
         val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
         try {
