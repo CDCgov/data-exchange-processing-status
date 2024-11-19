@@ -6,6 +6,7 @@ import aws.sdk.kotlin.runtime.ClientException
 import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
+import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
