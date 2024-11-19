@@ -1,5 +1,6 @@
 package gov.cdc.ocio.database.models
 
+import com.datastax.driver.mapping.annotations.Table
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
@@ -29,6 +30,7 @@ import java.time.Instant
  * @property timestamp Instant
  * @constructor
  */
+@Table(name = "Reports")
 @DynamoDbBean(converterProviders = [
     ReportConverterProvider::class
 ])

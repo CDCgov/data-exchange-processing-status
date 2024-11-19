@@ -9,6 +9,7 @@ import gov.cdc.ocio.database.dynamo.DynamoRepository
 import gov.cdc.ocio.database.mongo.MongoConfiguration
 import gov.cdc.ocio.database.mongo.MongoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.scylla.ScyllaRepository
 import io.ktor.server.application.*
 import mu.KotlinLogging
 import org.koin.core.module.Module
@@ -79,6 +80,14 @@ class DatabaseKoinCreator {
                             DynamoRepository(dynamoTablePrefix)
                         }
                         databaseType = DatabaseType.DYNAMO
+                    }
+
+                    DatabaseType.SCYLLA.value -> {
+                        val uri = environment.config.property("scylla.uri").getString()
+                        single<ProcessingStatusRepository>(createdAtStart = true) {
+                            ScyllaRepository(uri)
+                        }
+                        databaseType = DatabaseType.SCYLLA
                     }
 
                     else -> logger.error("Unsupported database requested: $databaseType")

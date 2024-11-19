@@ -1,13 +1,16 @@
 package gov.cdc.ocio.database.models.dao
 
+import com.datastax.driver.mapping.annotations.PartitionKey
+import com.datastax.driver.mapping.annotations.Table
+import com.datastax.oss.driver.api.mapper.annotations.*
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
-import gov.cdc.ocio.database.utils.EpochToInstantConverter
 import gov.cdc.ocio.database.extensions.convertToNumber
+import gov.cdc.ocio.database.utils.EpochToInstantConverter
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.protocols.jsoncore.JsonNode
 import software.amazon.awssdk.protocols.jsoncore.internal.ObjectJsonNode
@@ -37,10 +40,13 @@ import java.util.*
  * @property contentAsString String?
  * @constructor
  */
+@Table(name = "Reports")
+@Entity
 @DynamoDbBean(converterProviders = [
     ReportConverterProvider::class
 ])
 open class ReportDao(
+    @PartitionKey
     @JsonProperty("id")
     var id : String? = null,
     @JsonProperty("reportSchemaVersion")
@@ -156,4 +162,23 @@ open class ReportDao(
         }
     }
 
+}
+
+//@Dao
+//interface ReportDao1 {
+//    fun save(report: ReportDao?)
+//}
+//
+//@DaoFactory
+//interface ReportMapperFactory {
+//    fun reportDao(): ReportDao1?
+//}
+
+@Dao
+interface ReportDao1 {
+    @Insert
+    fun save(report: ReportDao)
+
+//    @Select
+//    fun findById(id: UUID): ReportDao?
 }

@@ -11,5 +11,6 @@ enum class DatabaseType(val value: String) {
     COUCHBASE("couchbase"),
     COSMOS("cosmos"),
     DYNAMO("dynamo"),
+    SCYLLA("scylla"),
     UNKNOWN("unknown")
 }

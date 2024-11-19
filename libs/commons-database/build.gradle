@@ -41,6 +41,15 @@ dependencies {
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
     implementation 'software.amazon.awssdk:aws-json-protocol:2.29.3'
 
+    // ScyllaDB
+    implementation 'com.scylladb:scylla-driver-core:3.11.2.0'
+    implementation 'com.scylladb:scylla-driver-mapping:3.11.2.0'
+    implementation 'com.scylladb:scylla-driver-extras:3.11.2.0'
+    implementation 'com.datastax.oss:java-driver-mapper-processor:4.17.0'
+    implementation("com.datastax.oss:java-driver-core:4.17.0")
+    implementation("com.datastax.oss:java-driver-mapper-runtime:4.17.0")
+    implementation 'com.codahale.metrics:metrics-core:3.0.2'
+
     implementation project(':libs:commons-types')
 
     implementation 'org.owasp.encoder:encoder:1.2.3'
