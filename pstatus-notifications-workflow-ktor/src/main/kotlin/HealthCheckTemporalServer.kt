@@ -10,16 +10,18 @@ import io.temporal.serviceclient.WorkflowServiceStubsOptions
  * health check implementation of Temporal
  */
 
-class HealthCheckTemporalServer : HealthCheckSystem("Temporal Server") {
+class HealthCheckTemporalServer(temporalTarget: String) : HealthCheckSystem("Temporal Server") {
 
+    private val target = temporalTarget
     /**
      * Checks and sets TemporalHealth status
      */
 
     override fun doHealthCheck() {
         try {
-        val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-            .setTarget("http://temporaldev-frontend:7233") // Temporal server address //System.getenv().get("")
+
+            val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
+            .setTarget(target)
             .build()
         val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
 

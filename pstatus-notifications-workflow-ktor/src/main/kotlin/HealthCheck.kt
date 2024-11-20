@@ -15,6 +15,7 @@ import gov.cdc.ocio.database.health.*
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 
+
 /**
  * Abstract class used for modeling the health issues of an individual service.
  *
@@ -54,6 +55,7 @@ class HealthCheck {
 class HealthCheckService : KoinComponent {
     private val logger = KotlinLogging.logger {}
     private val databaseType: DatabaseType by inject()
+    private val temporalServiceTarget: String by inject() // Injected value
 
     /**
      * Returns a HealthCheck object with the overall health of temporal server and its dependencies.
@@ -61,7 +63,8 @@ class HealthCheckService : KoinComponent {
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
-        val temporalHealth = HealthCheckTemporalServer()
+
+        val temporalHealth = HealthCheckTemporalServer(temporalServiceTarget)
         val databaseHealthCheck: HealthCheckSystem?
 
         val time = measureTimeMillis {
