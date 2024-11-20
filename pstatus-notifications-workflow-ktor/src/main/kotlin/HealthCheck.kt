@@ -65,7 +65,7 @@ class HealthCheckService : KoinComponent {
      */
     fun getHealth(): HealthCheck {
 
-        val temporalHealth = HealthCheckTemporalServer(temporalConfig.temporalServiceTarget)
+        val temporalHealth = HealthCheckTemporalServer(temporalConfig)
         val databaseHealthCheck: HealthCheckSystem?
 
         val time = measureTimeMillis {
