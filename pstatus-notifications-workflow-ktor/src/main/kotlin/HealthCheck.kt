@@ -12,6 +12,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 import gov.cdc.ocio.database.health.*
+import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 
@@ -55,7 +56,7 @@ class HealthCheck {
 class HealthCheckService : KoinComponent {
     private val logger = KotlinLogging.logger {}
     private val databaseType: DatabaseType by inject()
-    private val temporalServiceTarget: String by inject() // Injected value
+    private val temporalConfig: TemporalConfig by inject()
 
     /**
      * Returns a HealthCheck object with the overall health of temporal server and its dependencies.
@@ -64,7 +65,7 @@ class HealthCheckService : KoinComponent {
      */
     fun getHealth(): HealthCheck {
 
-        val temporalHealth = HealthCheckTemporalServer(temporalServiceTarget)
+        val temporalHealth = HealthCheckTemporalServer(temporalConfig.temporalServiceTarget)
         val databaseHealthCheck: HealthCheckSystem?
 
         val time = measureTimeMillis {
