@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications
 
+import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import io.temporal.api.workflowservice.v1.GetSystemInfoRequest
@@ -8,18 +9,22 @@ import io.temporal.serviceclient.WorkflowServiceStubsOptions
 
 /**
  * health check implementation of Temporal
+ * @param temporalConfig TemporalConfig
  */
 
-class HealthCheckTemporalServer : HealthCheckSystem("Temporal Server") {
+class HealthCheckTemporalServer(temporalConfig: TemporalConfig) : HealthCheckSystem("Temporal Server") {
 
+    private val target = temporalConfig.temporalServiceTarget
     /**
      * Checks and sets TemporalHealth status
      */
 
     override fun doHealthCheck() {
         try {
-        val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-            .setTarget("temporaldev-frontend:7233") // Temporal server address //System.getenv().get("")
+
+
+            val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
+            .setTarget(target)   
             .build()
         val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
 
