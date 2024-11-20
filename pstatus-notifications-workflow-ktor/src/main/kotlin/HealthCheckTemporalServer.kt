@@ -22,8 +22,9 @@ class HealthCheckTemporalServer(temporalConfig: TemporalConfig) : HealthCheckSys
     override fun doHealthCheck() {
         try {
 
+
             val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-            .setTarget(target)
+            .setTarget(target)   
             .build()
         val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
 
