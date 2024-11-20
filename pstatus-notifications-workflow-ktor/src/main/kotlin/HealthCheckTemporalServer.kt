@@ -8,6 +8,7 @@ import io.temporal.serviceclient.WorkflowServiceStubsOptions
 
 /**
  * health check implementation of Temporal
+ * @param temporalTarget String
  */
 
 class HealthCheckTemporalServer(temporalTarget: String) : HealthCheckSystem("Temporal Server") {
