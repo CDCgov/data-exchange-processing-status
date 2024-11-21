@@ -76,6 +76,7 @@ class HealthCheckService : KoinComponent {
                 else -> HealthCheckUnsupportedDb()
             }
             databaseHealthCheck.doHealthCheck()
+            temporalHealthCheck.doHealthCheck()
         }
 
 
@@ -84,6 +85,7 @@ class HealthCheckService : KoinComponent {
                 && temporalHealthCheck.status == HealthStatusType.STATUS_UP
             )
                 HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
+
 
              totalChecksDuration = formatMillisToHMS(time)
              databaseHealthCheck?.let {dependencyHealthChecks.add(it)}
