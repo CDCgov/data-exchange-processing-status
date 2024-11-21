@@ -40,7 +40,7 @@ class HealthCheckSystem {
  */
 class HealthCheck {
 
-    var status: String = "DOWN"
+    var status = HealthStatusType.STATUS_DOWN
     var totalChecksDuration: String? = null
 
     //val service = "Cosmos DB"
@@ -65,7 +65,7 @@ class HealthCheckService : KoinComponent {
      */
     fun getHealth(): HealthCheck {
 
-        val temporalHealth = HealthCheckTemporalServer(temporalConfig)
+        val temporalHealthCheck = HealthCheckTemporalServer(temporalConfig)
         val databaseHealthCheck: HealthCheckSystem?
 
         val time = measureTimeMillis {
@@ -80,15 +80,16 @@ class HealthCheckService : KoinComponent {
 
 
         return HealthCheck().apply {
-            status = temporalHealth.doHealthCheck().toString()
+            status = if (databaseHealthCheck?.status == HealthStatusType.STATUS_UP
+                && temporalHealthCheck.status == HealthStatusType.STATUS_UP
+            )
+                HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
 
-            status = if (databaseHealthCheck?.status == HealthStatusType.STATUS_UP)
-                databaseType.toString() + " is " + HealthStatusType.STATUS_UP.value
-            else
-                HealthStatusType.STATUS_DOWN.value
-            totalChecksDuration = formatMillisToHMS(time)
-            dependencyHealthChecks.add(temporalHealth)
-        }
+             totalChecksDuration = formatMillisToHMS(time)
+             databaseHealthCheck?.let {dependencyHealthChecks.add(it)}
+             temporalHealthCheck.let {dependencyHealthChecks.add(it)}
+
+          }
     }
 
     /**
