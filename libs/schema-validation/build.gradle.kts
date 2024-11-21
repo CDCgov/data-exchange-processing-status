@@ -52,6 +52,8 @@ dependencies {
     testImplementation ("org.mockito:mockito-inline:3.11.2")
     testImplementation ("io.mockk:mockk:1.13.9")
     testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+
 
 }
 
