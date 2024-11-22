@@ -59,7 +59,10 @@ class SchemaValidationService(
                 invalidData
             )
             if (!validationSchemaResult.status) return validationSchemaResult
-            // validate content type
+            // if content type is not json, return the ValidationSchemaResult
+            val contentType = reportJsonNode.get("content_type").asText()
+            if (contentType != "application/json" && contentType != "json") return validationSchemaResult
+
             validationSchemaResult = validateContentType(reportJsonNode, schemaFileNames, invalidData)
             if (!validationSchemaResult.status) return validationSchemaResult
             // validate content
@@ -155,7 +158,6 @@ class SchemaValidationService(
         }
         //initialize content type
         val contentType = contentTypeNode.asText()
-
         //check for base64 content type
         if (contentType.equals("application/base64", true) || contentType.contains("base64", ignoreCase = true)) {
             reason = "The content type provided is valid base64 encoded"
