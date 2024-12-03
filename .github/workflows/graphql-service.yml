@@ -19,5 +19,5 @@ jobs:
     uses: ./.github/workflows/remote-cd-trigger-template.yml
     with:
       WORKFLOW: graphql-build-pushImage-dev.yml 
-      REF: ${{ inputs.REF }}
+      REF: ${{ inputs.REF }} ## TODO: Remove this or update remote trigger template to use it
     secrets: inherit
