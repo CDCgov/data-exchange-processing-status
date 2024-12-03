@@ -87,7 +87,7 @@ fun validateJsonSchema(message: String, source: Source) {
 
 ```
 ### Cloud Schema Loader Usage
-In order to use the Cloud Schema Loader from report-sink service or any other service, please follow the following steps
+In order to use the Cloud Schema Loader from report-sink service or any other service, please follow these steps
 ```kotlin
 Usage for S3
 ------------
