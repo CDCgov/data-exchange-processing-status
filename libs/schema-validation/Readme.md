@@ -17,6 +17,8 @@ Utility interface for JSON operations (parsing, MIME type checks, etc.).
 ## Classes 
 ### SchemaValidationService: 
 Core service that uses the above interfaces to perform validation and processing.
+### CloudSchemaLoader
+A loader that retrieves schema files from cloud storage solutions like S3 or Azure Blob Storage.
 ### FileSchemaLoader: 
 Loads schema files from the classpath.
 ### JsonSchemaValidator: 
@@ -82,4 +84,53 @@ fun validateJsonSchema(message: String, source: Source) {
         throw e
     }
 } 
+
 ```
+### Cloud Schema Loader Usage
+In order to use the Cloud Schema Loader from report-sink service or any other service, please follow the following steps
+```kotlin
+Usage for S3
+------------
+Env Vars for S3
+---------------
+You need to specify these 2 in the configs or env vars 
+a) Bucket Name
+b) Region
+
+REPORT_SCHEMA_S3_BUCKET ="dex-ps-api-reports-schema-bucket"
+REPORT_SCHEMA_S3_REGION="us-east-1"
+
+Sample code 
+-----------
+val config=mapOf(
+"REPORT_SCHEMA_S3_BUCKET"to REPORT_SCHEMA_S3_BUCKET,
+"REPORT_SCHEMA_S3_REGION"to REPORT_SCHEMA_S3_REGION
+)
+//for example to get the contents of base.0.0.1.schema.json
+val fileName="base.0.0.1.schema.json"
+val loader=CloudSchemaLoader("s3",config)
+val schemaFile:SchemaFile=loader.loadSchemaFile(fileName)
+
+Usage for Blob Storage
+------------
+Env Vars for Blob
+---------------
+You need to specify these 2 in the configs or env vars 
+a) Blob Connection String
+b) Container Name
+
+REPORT_SCHEMA_BLOB_CONNECTION_STR = "DefaultEndpointsProtocol=https;AccountName=ocioedeprocstatusdev;AccountKey=xxxxxxx"
+REPORT_SCHEMA_BLOB_CONTAINER="dex-ps-api-reports-schema"
+
+//Make sure to get the AccountKey from azure blob storage(for dev- ocioedeprocstatusdev)
+Sample code 
+-----------
+val config=mapOf(
+"REPORT_SCHEMA_BLOB_CONNECTION_STR"to REPORT_SCHEMA_BLOB_CONNECTION_STR,
+"REPORT_SCHEMA_BLOB_CONTAINER"to REPORT_SCHEMA_BLOB_CONTAINER
+)
+
+//for example to get the contents of base.0.0.1.schema.json
+val fileName="base.0.0.1.schema.json"
+val loader= CloudSchemaLoader("blob_storage",config)
+val schemaFile:SchemaFile=loader.loadSchemaFile(fileName)
