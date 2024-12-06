@@ -16,6 +16,7 @@ import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
+    val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
     val temporalConfigModule = module {
         single {
             val appConfig: ApplicationConfig = get()
@@ -23,7 +24,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             appConfig.property("temporal.temporal_service_target").getString())
         }
     }
-    return modules(listOf(databaseModule, temporalConfigModule, module {single{environment.config}}))
+    return modules(listOf(databaseModule, healthCheckDatabaseModule, temporalConfigModule, module {single{environment.config}}))
 }
 
 
