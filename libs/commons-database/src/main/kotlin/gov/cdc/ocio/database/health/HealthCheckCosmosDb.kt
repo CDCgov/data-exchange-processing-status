@@ -2,13 +2,9 @@ package gov.cdc.ocio.database.health
 
 import com.azure.cosmos.CosmosClient
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import gov.cdc.ocio.database.cosmos.CosmosClientManager
-import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-
 
 /**
  * Concrete implementation of the cosmosdb health check.

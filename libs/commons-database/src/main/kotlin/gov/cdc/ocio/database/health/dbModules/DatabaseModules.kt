@@ -1,9 +1,7 @@
 package gov.cdc.ocio.database.health.dbModules
 
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
-import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
-import gov.cdc.ocio.database.dynamo.DynamoRepository
 import gov.cdc.ocio.database.health.HealthCheckCosmosDb
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.health.HealthCheckDynamoDb
@@ -13,7 +11,6 @@ import gov.cdc.ocio.database.health.dbClientFactory.CouchbaseClusterFactory
 import gov.cdc.ocio.database.health.dbClientFactory.DynamoDbClientFactory
 import gov.cdc.ocio.database.health.dbClientFactory.MongoDbClientFactory
 import gov.cdc.ocio.database.mongo.MongoConfiguration
-import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import org.koin.dsl.module
 
 /**
