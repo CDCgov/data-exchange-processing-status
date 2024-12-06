@@ -73,7 +73,6 @@ dependencies {
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
     implementation "io.ktor:ktor-client-logging:2.1.0"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
-    implementation "aws.sdk.kotlin:sts:1.3.88"
     implementation project(':libs:commons-database')
     implementation project(':libs:commons-types')
 
