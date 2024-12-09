@@ -11,28 +11,30 @@ import java.nio.file.Path
 /**
  * Concrete implementation of the dynamodb health check.
  */
-class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB") {
+class HealthCheckDynamoDb(
+    private val dynamoDbClient: DynamoDbClient? = null // Injected client - optional
+) : HealthCheckSystem("Dynamo DB") {
 
-    private val awsCredentialProvider: WebIdentityTokenFileCredentialsProvider by lazy {
-        WebIdentityTokenFileCredentialsProvider.builder()
-        .roleArn(System.getenv("AWS_ROLE_ARN"))
-        .webIdentityTokenFile(Path.of(System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")))
-        .build()
-    }
 
-    // Lazily initialized DynamoDB client
-    private val dynamoDbClient: DynamoDbClient by lazy {
+    // Lazily initialize the client if none is provided
+    private val defaultDynamoDbClient: DynamoDbClient by lazy {
         DynamoDbClient.builder()
-        .region(Region.US_EAST_1)
-        .credentialsProvider(awsCredentialProvider)
-        .build()
+            .region(Region.US_EAST_1)
+            .credentialsProvider(
+                WebIdentityTokenFileCredentialsProvider.builder()
+                    .roleArn(System.getenv("AWS_ROLE_ARN"))
+                    .webIdentityTokenFile(Path.of(System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")))
+                    .build()
+            )
+            .build()
     }
     /**
      * Perform the dynamodb health check operations.
      */
     override fun doHealthCheck() {
+        val client = dynamoDbClient ?: defaultDynamoDbClient // Use provided or default client
         val result = runCatching {
-            dynamoDbClient.listTables()
+            client.listTables()
         }
         if (result.isSuccess)
             status = HealthStatusType.STATUS_UP

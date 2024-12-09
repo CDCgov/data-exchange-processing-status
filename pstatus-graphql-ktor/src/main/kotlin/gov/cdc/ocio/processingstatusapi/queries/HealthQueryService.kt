@@ -76,10 +76,10 @@ class HealthCheckService: KoinComponent {
 
         val time = measureTimeMillis {
             databaseHealthCheck = when (databaseType) {
-                DatabaseType.COSMOS -> HealthCheckCosmosDb()
-                DatabaseType.MONGO -> HealthCheckMongoDb()
-                DatabaseType.COUCHBASE -> HealthCheckCouchbaseDb()
-                DatabaseType.DYNAMO -> HealthCheckDynamoDb()
+                DatabaseType.COSMOS -> getKoin().get<HealthCheckCosmosDb>()
+                DatabaseType.MONGO -> getKoin().get<HealthCheckMongoDb>()
+                DatabaseType.COUCHBASE -> getKoin().get<HealthCheckCouchbaseDb>()
+                DatabaseType.DYNAMO -> getKoin().get<HealthCheckDynamoDb>()
                 else -> HealthCheckUnsupportedDb()
             }
             databaseHealthCheck.doHealthCheck()
