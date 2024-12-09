@@ -76,6 +76,8 @@ dependencies {
     implementation project(':libs:commons-database')
     implementation project(':libs:commons-types')
 
+    implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
+
     testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 

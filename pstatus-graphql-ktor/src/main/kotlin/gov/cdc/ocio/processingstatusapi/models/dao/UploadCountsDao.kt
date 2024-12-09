@@ -1,10 +1,12 @@
-package gov.cdc.ocio.processingstatusapi.models.query
+package gov.cdc.ocio.processingstatusapi.models.dao
 
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 
 
 /**
- * DEX Upload Counts model, which is the structure returned from the uploads data projection cosmosdb query.
+ * Upload counts model, which is the structure returned from the uploads data projection query.
+ *
  * @property reportCounts Int?
  * @property uploadId String?
  * @property latestTimestamp Instant?
@@ -12,7 +14,8 @@ import java.time.Instant
  * @property senderId String?
  * @constructor
  */
-data class UploadCounts(
+@DynamoDbBean
+data class UploadCountsDao(
 
     var reportCounts: Int? = null,
 

@@ -144,4 +144,4 @@ def create_routing(upload_id, dex_ingest_datetime):
 }
 """ % (datetime.utcnow().replace(microsecond=0).isoformat() + 'Z')
 
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "", dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(upload_id, "UPLOAD API", "blob-file-copy", dex_ingest_datetime, False, False, content)

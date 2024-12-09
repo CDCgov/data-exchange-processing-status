@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
+import gov.cdc.ocio.processingstatusapi.models.dao.*
+import gov.cdc.ocio.processingstatusapi.models.query.DuplicateFilenameCounts
 import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import mu.KotlinLogging
@@ -10,6 +12,21 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.*
 
+
+/**
+ * Upload statistics loader.
+ *
+ * @property logger KLogger
+ * @property repository ProcessingStatusRepository
+ * @property reportsCollection Collection
+ * @property cName String
+ * @property cVar String
+ * @property cPrefix String
+ * @property openBkt Char
+ * @property closeBkt Char
+ * @property cElFunc Function1<String, String>
+ * @property cArrayNotNullOrEmpty String
+ */
 class UploadStatsLoader: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
@@ -23,7 +40,8 @@ class UploadStatsLoader: KoinComponent {
     private val cPrefix = reportsCollection.collectionVariablePrefix
     private val openBkt = reportsCollection.openBracketChar
     private val closeBkt = reportsCollection.closeBracketChar
-    private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val cElFunc = reportsCollection.collectionElementForQuery
+    private val cArrayNotNullOrEmpty = reportsCollection.isArrayNotEmptyOrNull
 
     @Throws(BadRequestException::class, ContentException::class)
     fun getUploadStats(
@@ -41,14 +59,8 @@ class UploadStatsLoader: KoinComponent {
             cPrefix
         )
 
-        val numUniqueUploadsQuery = (
-                "select ${cPrefix}uploadId from $cName $cVar "
-                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "$timeRangeWhereClause group by ${cPrefix}uploadId"
-                )
-
         val numUploadsWithStatusQuery = (
-                "select value count(1) "
+                "select uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-status' and "
@@ -56,15 +68,15 @@ class UploadStatsLoader: KoinComponent {
                 )
 
         val badMetadataCountQuery = (
-                "select value count(1) "
+                "select uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
-                        + "ARRAY_LENGTH(${cPrefix}stageInfo.issues) > 0 and $timeRangeWhereClause"
+                        + "$cArrayNotNullOrEmpty(${cPrefix}stageInfo.issues) > 0 and $timeRangeWhereClause"
                 )
 
         val completedUploadsCountQuery = (
-                "select value count(1) "
+                "select uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' and "
@@ -72,55 +84,93 @@ class UploadStatsLoader: KoinComponent {
                         + "$timeRangeWhereClause "
                 )
 
-        val duplicateFilenameCountQuery = (
-                "select * from "
-                        + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
-                        + "$timeRangeWhereClause "
-                        + "group by ${cPrefix}content.metadata.received_filename"
-                        + ") $cVar where ${cPrefix}totalCount > 1"
+        val uniqueUploadIdsCount = if (repository.supportsGroupBy) {
+            val numUniqueUploadsQuery = (
+                    "select ${cPrefix}uploadId from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + "$timeRangeWhereClause group by ${cPrefix}uploadId"
+                    )
+            val uniqueUploadIdsResult =
+                reportsCollection.queryItems(
+                    numUniqueUploadsQuery,
+                    UploadCountsDao::class.java
                 )
-
-        val uniqueUploadIdsResult = reportsCollection.queryItems(
-            numUniqueUploadsQuery,
-            UploadCounts::class.java
-        )
-
-        val uniqueUploadIdsCount = uniqueUploadIdsResult.count()
+            uniqueUploadIdsResult.count()
+        } else {
+            // Less efficient than with group by, but same result
+            val numUploadsQuery = (
+                    "select * from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + timeRangeWhereClause
+                    )
+            val uploadIdsResult = reportsCollection.queryItems(
+                numUploadsQuery,
+                UploadCountsDao::class.java
+            )
+            uploadIdsResult.distinctBy { it.uploadId }.size
+        }
 
         val uploadsWithStatusResult = reportsCollection.queryItems(
             numUploadsWithStatusQuery,
-            Float::class.java
+            UploadIdDao::class.java
         )
 
-        val uploadsWithStatusCount = uploadsWithStatusResult.firstOrNull() ?: 0
+        val uploadsWithStatusCount = uploadsWithStatusResult.count()
 
         val badMetadataCountResult = reportsCollection.queryItems(
             badMetadataCountQuery,
-            Float::class.java
+            UploadIdDao::class.java
         )
 
-        val badMetadataCount = badMetadataCountResult.firstOrNull() ?: 0
+        val badMetadataCount = badMetadataCountResult.count()
 
-        val duplicateFilenameCountResult = reportsCollection.queryItems(
-            duplicateFilenameCountQuery,
-            DuplicateFilenameCounts::class.java
-        )
-
-        val duplicateFilenames =
-            if (duplicateFilenameCountResult.isNotEmpty())
-                duplicateFilenameCountResult.toList()
-            else
-                listOf()
+        val duplicateFilenames: List<DuplicateFilenameCounts>
+        if (repository.supportsGroupBy) {
+            val duplicateFilenameCountQuery = (
+                    "select * from "
+                            + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
+                            + "from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
+                            + "$timeRangeWhereClause "
+                            + "group by ${cPrefix}content.metadata.received_filename"
+                            + ") $cVar where ${cPrefix}totalCount > 1"
+                    )
+            val duplicateFilenameCountResult = reportsCollection.queryItems(
+                duplicateFilenameCountQuery,
+                DuplicateFilenameCountsDao::class.java
+            )
+            duplicateFilenames = duplicateFilenameCountResult.map { it.toDuplicateFilenameCounts() }
+        } else {
+            // Much less efficient way
+            val duplicateFilenameCountQuery = (
+                    "select ${cPrefix}content.metadata.received_filename "
+                            + "from $cName $cVar "
+                            + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
+                            + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
+                            + timeRangeWhereClause
+                    )
+            val duplicateFilenameCountResult = reportsCollection.queryItems(
+                duplicateFilenameCountQuery,
+                ReceivedFilenameDao::class.java
+            )
+            val result = duplicateFilenameCountResult
+                .groupBy { it.receivedFilename } // group by filename
+                .filter { it.value.size > 1 } // filter only duplicates (more than one of the same filename)
+            duplicateFilenames = result.map {
+                DuplicateFilenameCounts().apply {
+                    this.filename = it.key
+                    this.totalCount = it.value.size.toLong()
+                }
+            }
+        }
 
         val completedUploadsCountResult = reportsCollection.queryItems(
             completedUploadsCountQuery,
-            Float::class.java
+            UploadIdDao::class.java
         )
 
-        val completedUploadsCount = completedUploadsCountResult.firstOrNull() ?: 0
+        val completedUploadsCount = completedUploadsCountResult.count()
 
         val undeliveredUploads = getUndeliveredUploads(dataStreamId, dataStreamRoute, timeRangeWhereClause)
         val pendingUploads = getPendingUploads(dataStreamId, dataStreamRoute, timeRangeWhereClause)
@@ -153,29 +203,29 @@ class UploadStatsLoader: KoinComponent {
      * @throws ContentException If there's an error accessing or processing the content
      * @throws BadRequestException If the request parameters are invalid or processing fails
      */
-    @Throws(ContentException::class, BadRequestException :: class)
+    @Throws(ContentException::class, BadRequestException::class)
     private fun getUndeliveredUploads(
         dataStreamId: String,
         dataStreamRoute: String,
         timeRangeWhereClause: String
     ): List<UndeliveredUpload> {
         try {
-
-            //All the uploadIds that can be categorized as undelivered
-            //Query - Get all the uploads with an item for upload-complete or blob-file-copy
-            val uploadsByStateQuery = buildUploadsByStateQuery(dataStreamId, dataStreamRoute, timeRangeWhereClause)
-            logger.info("UploadsStats, fetch uploadsByStateQuery query = $uploadsByStateQuery")
-
-            val uploadsByState = executeUploadsByStateQuery(uploadsByStateQuery)
+            // Determine all the uploadIds that can be categorized as undelivered
+            // First, get all the uploads with an item for upload-complete or blob-file-copy
+            val uploadsByState = getUploadsByState(dataStreamId, dataStreamRoute, timeRangeWhereClause)
             val uploadIdsWithIssues = identifyUndeliveredUploads(uploadsByState)
 
             val quotedIds = uploadIdsWithIssues.joinToString("\",\"", "\"", "\"")
 
-            //Query to get the respective filenames for the above uploadIds with the select criteria
-            val unDeliveredUploadsQuery = buildUploadsQuery(dataStreamId, dataStreamRoute, quotedIds, timeRangeWhereClause)
-            logger.info("UploadsStats, fetch all undelivered uploads query = $unDeliveredUploadsQuery")
+            // Query to get the respective filenames for the above uploadIds with the select criteria
+            val undeliveredUploadsQuery = buildUploadsQuery(dataStreamId, dataStreamRoute, quotedIds, timeRangeWhereClause)
+            logger.info("UploadsStats, fetch all undelivered uploads query = $undeliveredUploadsQuery")
 
-            val undeliveredUploads = executeUploadsQuery(unDeliveredUploadsQuery)
+            val undeliveredUploads = executeQuery(
+                undeliveredUploadsQuery,
+                UndeliveredUploadDao::class.java
+            ).map { it.toUndeliveredUpload() }
+
             return undeliveredUploads
 
         } catch (e: ContentException) {
@@ -190,7 +240,6 @@ class UploadStatsLoader: KoinComponent {
             throw BadRequestException("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}")
         }
     }
-
 
     /**
      * Retrieves uploads that have started the metadata verification process but haven't completed the upload process.
@@ -234,7 +283,11 @@ class UploadStatsLoader: KoinComponent {
             val uploadsWithIssuesQuery = buildUploadsQuery(dataStreamId, dataStreamRoute, quotedIds, timeRangeWhereClause)
             logger.info("UploadsStats, uploadsWithIssuesQuery query = $uploadsWithIssuesQuery")
 
-            val uploadsWithIssues = executeUploadsQuery(uploadsWithIssuesQuery)
+            val uploadsWithIssues = executeQuery(
+                uploadsWithIssuesQuery,
+                UndeliveredUploadDao::class.java
+            ).map { it.toUndeliveredUpload() }
+
             return uploadsWithIssues
 
         } catch (e: Exception) {
@@ -246,53 +299,49 @@ class UploadStatsLoader: KoinComponent {
         }
     }
 
-
     /**
      * Fetches the unmatched uploadIds for all the items without an associated item for blob-file-copy.
      *
-     * @param dataStreamId The ID of the data stream.
-     * @param dataStreamRoute The route of the data stream.
-     * @param timeRangeWhereClause The SQL clause for the time range.
-     * @return A list of undelivered uploadIds.
-     * @throws ContentException, BadRequestException If an error occurs while fetching the undelivered upload IDs for blob-file-copy.
+     * @param dataStreamId [String] - The ID of the data stream.
+     * @param dataStreamRoute [String] - The route of the data stream.
+     * @param expectedAction [String] - Expected "action" for a metadata-verify.
+     * @param missingAction [String] - Missing "action" for a completed upload.
+     * @param timeRangeWhereClause [String] - The SQL clause for the time range.
+     * @return List<[String]> - A list of undelivered uploadIds.
+     * @throws ContentException - If an error occurs while fetching results.
+     * @throws BadRequestException - If an unknown error occurs while fetching results.
      */
-    @Throws(ContentException::class, BadRequestException :: class, Exception:: class)
+    @Throws(ContentException::class, BadRequestException::class)
     private fun getUploadIdsWithIssues(
         dataStreamId: String,
         dataStreamRoute: String,
         expectedAction: String,
         missingAction: String,
-        timeRangeWhereClause: String): List<String> {
+        timeRangeWhereClause: String
+    ): List<String> {
 
-        try{
-
-            // Query to retrieve the uploads with 'metadata-verify' with the provided search criteria
+        try {
+            // Query to retrieve the uploads with 'metadata-verify' action with the provided search criteria
             val expectedActionQuery = buildUploadByActionQuery(dataStreamId, dataStreamRoute, expectedAction, timeRangeWhereClause)
 
-            // Query to retrieve the uploads with 'blob-file-copy' with the provided search criteria
+            // Query to retrieve the uploads with missing 'upload-completed' action with the provided search criteria
             val missingActionQuery = buildUploadByActionQuery(dataStreamId, dataStreamRoute, missingAction, timeRangeWhereClause)
 
-            // Fetch the list of undelivered uploadIds
+            // Fetch the list of uploadIds
             val expectedActionIds = executeUploadsWithIssuesQuery(expectedActionQuery)
             val missingActionIds = executeUploadsWithIssuesQuery(missingActionQuery)
 
             return (expectedActionIds - missingActionIds).toList()
 
-        }catch (e: ContentException) {
-            logger.error("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}", e)
+        } catch (e: ContentException) {
+            logger.error("Error in getUploadIdsWithIssues: ${e.message}", e)
             throw e
-
-        } catch (e: BadRequestException) {
-            logger.error("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}", e)
-            throw e
-
-        }catch (e: Exception) {
-            logger.error("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}", e)
+        } catch (e: Exception) {
+            logger.error("Error in getUploadIdsWithIssues: ${e.message}", e)
             throw BadRequestException("Error fetching undelivered upload IDs for blob-file-copy: ${e.message}")
         }
 
     }
-
 
     /**
      * Executes an undelivered upload query and returns the set of uploadIds.
@@ -306,7 +355,7 @@ class UploadStatsLoader: KoinComponent {
         try {
             return reportsCollection.queryItems(
                 query,
-                UndeliveredUpload::class.java
+                UndeliveredUploadDao::class.java
             )
                 .mapNotNull { it.uploadId }
                 .toSet()
@@ -317,30 +366,6 @@ class UploadStatsLoader: KoinComponent {
             logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
             throw ContentException("Error executing undelivered uploads counts query: ${e.message}")
         }
-
-    }
-
-    /**
-     * Executes a query against the reports collection to retrieve upload state information.
-     * Converts the query results into a list of Upload objects representing upload states.
-     *
-     * @param query The SQL query string to execute against the reports collection
-     * @return List<Upload> containing the query results. Returns empty list if no results found
-     *
-     * @throws ContentException If there's an error executing the query or processing the results
-     */
-    @Throws(ContentException::class)
-    private fun executeUploadsByStateQuery(query: String): List<Upload> {
-        try {
-            return reportsCollection.queryItems(query, Upload::class.java).toList()
-        } catch (e: ContentException) {
-            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
-            throw e
-        } catch (e: Exception) {
-            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
-            throw ContentException("Error executing undelivered uploads counts query: ${e.message}")
-        }
-
     }
 
     /**
@@ -359,30 +384,31 @@ class UploadStatsLoader: KoinComponent {
         timeRangeWhereClause: String
     ): String {
         return (
-                "select distinct ${cPrefix}uploadId "
+                "select ${cPrefix}uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.${cElFunc("action")} = '$action' and "
                         + timeRangeWhereClause
-                ).trimIndent()
+                )
     }
 
     /**
-     * Builds a SQL query to retrieve the uploads with an item for blob-file-copy and a status of failure.
+     * Retrieve the uploads with either an upload-completed or blob-file-copy report.
      *
      * @param dataStreamId The ID of the data stream.
      * @param dataStreamRoute The route of the data stream.
      * @param timeRangeWhereClause The SQL clause for the time range.
-     * @return The SQL query string.
+     * @return Matching uploads by state
      */
-    private fun buildUploadsByStateQuery(
+    private fun getUploadsByState(
         dataStreamId: String,
         dataStreamRoute: String,
         timeRangeWhereClause: String
-    ): String {
-        return (
-                "select distinct ${cPrefix}uploadId, "
+    ): List<UploadDao> {
+
+        val uploadsByStateQuery = (
+                "select ${cPrefix}uploadId, "
                         + "${cPrefix}stageInfo.${cElFunc("action")}, "
                         + "${cPrefix}stageInfo.${cElFunc("status")} "
                         + "from $cName $cVar "
@@ -390,8 +416,10 @@ class UploadStatsLoader: KoinComponent {
                         + "${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "( ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' or ${cPrefix}stageInfo.${cElFunc("action")} = 'blob-file-copy' ) and "
-                        + "$timeRangeWhereClause "
+                        + timeRangeWhereClause
                 )
+        logger.info("UploadsStats, fetch uploadsByStateQuery query = $uploadsByStateQuery")
+        return reportsCollection.queryItems(uploadsByStateQuery, UploadDao::class.java).toList()
     }
 
     /**
@@ -408,34 +436,34 @@ class UploadStatsLoader: KoinComponent {
         quotedIds: String,
         timeRangeWhereClause: String
     ): String {
-        return """
-            SELECT distinct ${cPrefix}uploadId, ${cPrefix}content.filename 
-            FROM $cName $cVar 
-            WHERE ${cPrefix}dataStreamId = '$dataStreamId' 
-            AND ${cPrefix}dataStreamRoute = '$dataStreamRoute' 
-            AND ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' 
-            AND ${cPrefix}uploadId IN ${openBkt}$quotedIds${closeBkt} 
-            AND $timeRangeWhereClause
-        """.trimIndent()
+        return (
+                "select ${cPrefix}uploadId, ${cPrefix}content.filename "
+                        + "from $cName $cVar "
+                        + "where ${cPrefix}dataStreamId = '$dataStreamId' "
+                        + "and ${cPrefix}dataStreamRoute = '$dataStreamRoute' "
+                        + "and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' "
+                        + "and ${cPrefix}uploadId IN ${openBkt}$quotedIds${closeBkt} "
+                        + "and $timeRangeWhereClause"
+                )
     }
 
     /**
-     * Executes an undelivered upload query and returns the set of uploadIds.
+     * Executes a query and returns the result.
      *
      * @param query The SQL query to execute.
-     * @return A set of undelivered uploadIds.
-     * @throws ContentException If an error occurs while executing the undelivered upload query.
+     * @return A set of results.
+     * @throws ContentException If an error occurs while executing the query.
      */
     @Throws(ContentException::class)
-    private fun executeUploadsQuery(query: String): List<UndeliveredUpload> {
+    private fun <T> executeQuery(query: String, classType: Class<T>?): List<T> {
         try {
-            return reportsCollection.queryItems(query, UndeliveredUpload::class.java).toList()
+            return reportsCollection.queryItems(query, classType).toList()
         } catch (e: ContentException) {
-            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
+            logger.error("Error executing query, \"$query\": ${e.message}", e)
             throw e
         } catch (e: Exception) {
-            logger.error("Error executing undelivered uploads counts query: ${e.message}", e)
-            throw ContentException("Error executing undelivered uploads counts query: ${e.message}")
+            logger.error("Error executing query, \"$query\": ${e.message}", e)
+            throw ContentException("Error executing query, \"$query\": ${e.message}")
         }
     }
 
@@ -448,7 +476,7 @@ class UploadStatsLoader: KoinComponent {
      * @param documents List of Upload objects to analyze
      * @return Set of uploadIds requiring attention
      */
-    private fun identifyUndeliveredUploads(documents: List<Upload>): Set<String?> {
+    private fun identifyUndeliveredUploads(documents: List<UploadDao>): Set<String?> {
         // Track status for each uploadId
         data class UploadStatus(
             var hasCompleted: Boolean = false,

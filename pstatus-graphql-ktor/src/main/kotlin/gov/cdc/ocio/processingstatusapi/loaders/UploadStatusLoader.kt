@@ -7,7 +7,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.database.models.dao.ReportDao
-import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
+import gov.cdc.ocio.processingstatusapi.models.dao.UploadCountsDao
 import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SortUtils
@@ -16,6 +16,18 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 
+/**
+ * Upload status loader.
+ *
+ * @property logger KLogger
+ * @property repository ProcessingStatusRepository
+ * @property reportsCollection Collection
+ * @property cName String
+ * @property cVar String
+ * @property cPrefix String
+ * @property cElFunc Function1<String, String>
+ * @property timeFunc Function1<Long, String>
+ */
 class UploadStatusLoader: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
@@ -89,7 +101,9 @@ class UploadStatusLoader: KoinComponent {
             sqlQuery.append(" and ${cPrefix}dexIngestDateTime < $dateEndEpochMillis")
         }
 
-        sqlQuery.append(" group by ${cPrefix}uploadId, ${cPrefix}jurisdiction, ${cPrefix}senderId")
+        if (repository.supportsGroupBy) {
+            sqlQuery.append(" group by ${cPrefix}uploadId, ${cPrefix}jurisdiction, ${cPrefix}senderId")
+        }
 
         // Check the sort field as well to add them to the group by clause
         val sortByQueryStr = StringBuilder()
@@ -110,7 +124,7 @@ class UploadStatusLoader: KoinComponent {
                         }
                     }
                     //Add the sort by fields to grouping
-                    sqlQuery.append(" , ${cPrefix}$sortField")
+//                    sqlQuery.append(" , ${cPrefix}$sortField")
 
                     var sortOrderVal = DEFAULT_SORT_ORDER
 
@@ -126,21 +140,30 @@ class UploadStatusLoader: KoinComponent {
                         }
 
                     }
-                    //Sort By/ Order By the given sort field
-                    sortByQueryStr.append(" order by ${cPrefix}$sortField $sortOrderVal")
+                    // Sort By/ Order By the given sort field
+//                    sortByQueryStr.append(" order by ${cPrefix}$sortField $sortOrderVal")
                 }
             }
         }
 
         logger.info("Upload Status, sqlQuery = $sqlQuery")
         // Query for getting counts in the structure of UploadCounts object.  Note the MAX aggregate which is used to
-        // get the latest timestamp from t._ts.
-        val countQuery = (
-                "select count(1) as reportCounts, ${cPrefix}uploadId, "
-                        + "MAX(${cPrefix}dexIngestDateTime) as latestTimestamp, "
-                        + "${cPrefix}jurisdiction as jurisdiction, "
-                        + "${cPrefix}senderId as senderId $sqlQuery"
-                )
+        // get the latest timestamp from dexIngestDateTime.
+        val countQuery = if (repository.supportsCount) {
+            (
+                    "select count(1) as reportCounts, ${cPrefix}uploadId, "
+                            + "MAX(${cPrefix}dexIngestDateTime) as latestTimestamp, "
+                            + "${cPrefix}jurisdiction as jurisdiction, "
+                            + "${cPrefix}senderId as senderId $sqlQuery"
+                    )
+        } else {
+            (
+                    "select ${cPrefix}uploadId, "
+                            + "${cPrefix}dexIngestDateTime, "
+                            + "${cPrefix}jurisdiction, "
+                            + "${cPrefix}senderId $sqlQuery"
+                    )
+        }
         logger.info("upload status count query = $countQuery")
 
         var totalItems = 0
@@ -150,7 +173,7 @@ class UploadStatusLoader: KoinComponent {
         try {
             val count = reportsCollection.queryItems(
                 countQuery,
-                UploadCounts::class.java
+                UploadCountsDao::class.java
             )
             totalItems = count.count()
             logger.info("Upload status matched count = $totalItems")
@@ -162,7 +185,6 @@ class UploadStatusLoader: KoinComponent {
             // no items found or problem with query
             logger.error(ex.localizedMessage)
         }
-
 
         val numberOfPages: Int
         val pageNumberAsInt: Int
@@ -176,16 +198,25 @@ class UploadStatusLoader: KoinComponent {
             sqlQuery.append(sortByQueryStr)
 
             val offset = (pageNumberAsInt - 1) * pageSize
-            val dataSqlQuery = (
-                    "select count(1) as reportCounts, ${cPrefix}uploadId, "
-                            + "MAX(${cPrefix}dexIngestDateTime) as latestTimestamp, "
-                            + "${cPrefix}jurisdiction as jurisdiction, ${cPrefix}senderId as senderId "
-                            + "$sqlQuery offset $offset limit $pageSizeAsInt"
-                    )
+            val dataSqlQuery = if (repository.supportsCount) {
+                (
+                        "select count(1) as reportCounts, ${cPrefix}uploadId, "
+                                + "MAX(${cPrefix}dexIngestDateTime) as latestTimestamp, "
+                                + "${cPrefix}jurisdiction as jurisdiction, ${cPrefix}senderId as senderId "
+                                + "$sqlQuery offset $offset limit $pageSizeAsInt"
+                        )
+            } else {
+                (
+                        "select ${cPrefix}uploadId, "
+                                + "${cPrefix}dexIngestDateTime, "
+                                + "${cPrefix}jurisdiction, ${cPrefix}senderId "
+                                + "$sqlQuery offset $offset limit $pageSizeAsInt"
+                        )
+            }
             logger.info("upload status data query = $dataSqlQuery")
             val results = reportsCollection.queryItems(
                 dataSqlQuery,
-                UploadCounts::class.java
+                UploadCountsDao::class.java
             ).toList()
 
             results.forEach { report ->
