@@ -6,6 +6,7 @@ import aws.sdk.kotlin.runtime.ClientException
 import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
+import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
@@ -30,12 +31,17 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
     private val accessKeyID = config.tryGetString("${configPath}access_key_id") ?: ""
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
+    private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
 
     fun createSQSClient(): SqsClient{
-        return SqsClient{ credentialsProvider = StaticCredentialsProvider {
-            accessKeyId = this@AWSSQServiceConfiguration.accessKeyID
-            secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
-        }; region = this@AWSSQServiceConfiguration.region }
+        return SqsClient{
+            credentialsProvider = StaticCredentialsProvider {
+                accessKeyId = this@AWSSQServiceConfiguration.accessKeyID
+                secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+            }
+            region = this@AWSSQServiceConfiguration.region
+            endpointUrl = this@AWSSQServiceConfiguration.endpoint
+        }
     }
 }
 

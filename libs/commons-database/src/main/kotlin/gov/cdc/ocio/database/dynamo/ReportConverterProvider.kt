@@ -14,7 +14,8 @@ import java.util.stream.Collectors
 class ReportConverterProvider : AttributeConverterProvider {
 
     private val customConverters = listOf<AttributeConverter<*>>(
-        AnyAttributeConverter()
+        AnyAttributeConverter(),
+        InstantToEpochConverter()
     )
 
     private val customConvertersMap =

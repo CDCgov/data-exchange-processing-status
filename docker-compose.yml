@@ -13,13 +13,13 @@ services:
       COUCHBASE_PASSWORD: "password"
       PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
     depends_on:
-      - couchbase-setup
+      - couchbase
     restart: "always"
 
   report-sink:
     image: quay.io/us-cdcgov/phdo/pstatus-report-sink:latest
     ports:
-      - "127.0.0.1:8080:8080" # Rest API listener port
+      - "127.0.0.1:${SINK_PORT:-8080}:8080" # Rest API listener port
     environment:
       DATABASE: "couchbase"
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
@@ -35,7 +35,7 @@ services:
       RABBITMQ_PASSWORD: "guest"
       RABBITMQ_VIRTUAL_HOST: "/"
     depends_on:
-      - couchbase-setup
+      - couchbase
       - rabbitmq
     restart: "always"
 
@@ -50,7 +50,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4G  # Set the memory limit here
+          memory: 4G # Set the memory limit here
 
   couchbase-setup:
     image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
@@ -58,8 +58,8 @@ services:
       - couchbase
     restart: "no"
     volumes:
-      - ./couchbase-init.sh:/scripts/couchbase-init.sh  # Mount the setup script
-    entrypoint: [ "bash", "-c", "/scripts/couchbase-init.sh" ]
+      - ./couchbase-init.sh:/scripts/couchbase-init.sh # Mount the setup script
+    entrypoint: ["bash", "-c", "/scripts/couchbase-init.sh"]
 
   rabbitmq:
     image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service

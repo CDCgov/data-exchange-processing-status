@@ -17,29 +17,23 @@ class HealthCheckCouchbaseDb: HealthCheckSystem("Couchbase DB"), KoinComponent {
 
     private val config by inject<CouchbaseConfiguration>()
 
+    // Lazily initialized Couchbase Cluster instance
+    private val cluster: Cluster by lazy {
+        Cluster.connect(config.connectionString, config.username, config.password)
+    }
+
     /**
      * Checks and sets couchbase status
      */
     override fun doHealthCheck() {
         try {
-            if (isCouchbaseDBHealthy()) {
-                status = HealthStatusType.STATUS_UP
-            }
+            cluster.ping() // Perform a lightweight health check like a ping
+            status = HealthStatusType.STATUS_UP
+
         } catch (ex: Exception) {
             logger.error("Cosmos DB is not healthy $ex.message")
             healthIssues = ex.message
         }
     }
 
-    /**
-     * Check whether couchbase is healthy.
-     *
-     * @return Boolean
-     */
-    private fun isCouchbaseDBHealthy(): Boolean {
-        return if (Cluster.connect(config.connectionString, config.username, config.password) == null)
-            throw Exception("Failed to establish a couchbase client.")
-        else
-            true
-    }
 }

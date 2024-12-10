@@ -102,7 +102,9 @@ There are two interfaces for creating reports in PS API:
 The supported Message Systems include Azure Service Bus, AWS SNS/SQS, and RabbitMQ.  We are going to create a report using RabbitMQ Message System to show complete end-to-end functionality of the API.
 
 ##### Steps:
-1. Go to the [Rabbit MQ web app](http://localhost:15672) embedded web app.
+1. Go to the [Rabbit MQ web app](http://localhost:15672) embedded web app.  The username and password for logging in are:
+   - Username: guest
+   - Password: guest
 2. Navigate to the "Exchanges" tab and select "PSAPIExchange" from the table.  You should see the following:
    ![PS API RabbitMQ Exchange](./resources/ps-api-rabbitmq-exchange.png)
 3. Scroll down to the "Publish message" section.

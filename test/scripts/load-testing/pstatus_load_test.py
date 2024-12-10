@@ -1,11 +1,17 @@
 import asyncio
 import uuid
-import time
 from datetime import datetime, timezone
-import reports
+import pika
+import boto3
 from azure.servicebus.aio import ServiceBusClient
-from azure.servicebus import ServiceBusMessage
-from azure.servicebus import TransportType
+from azure.servicebus import ServiceBusMessage, TransportType
+from abc import ABC, abstractmethod
+import reports
+from config import load_config
+from pika.exceptions import (
+    ChannelClosedByBroker
+)
+
 
 ############################################################################################
 # -- INSTRUCTIONS --
@@ -13,82 +19,343 @@ from azure.servicebus import TransportType
 # 2. In the .env file, set the variables according to your environment and desired settings.
 ############################################################################################
 
-# Queue name is always the same regardless of environment
-QUEUE_NAME = "processing-status-cosmos-db-report-sink-queue"
-TOPIC_NAME = "processing-status-cosmos-db-report-sink-topics"
-USE_QUEUE = False
+class MessageSystem(ABC):
+    """Abstract base class for message systems"""
 
-env = {}
-with open("../.env") as envfile:
-    for line in envfile:
-        name, var = line.partition("=")[::2]
-        var = var.strip()
-        if var.startswith('"') and var.endswith('"'):
-            var = var[1:-1]
-        env[name.strip()] = var
+    @abstractmethod
+    async def initialize(self):
+        """Initialize the message system connection"""
+        pass
 
-async def send_single_message(sender, message):
-    # Create a Service Bus message and send it to the queue
-    message = ServiceBusMessage(message)
-    await sender.send_messages(message)
+    @abstractmethod
+    async def send_message(self, message: str):
+        """Send a message to the message system"""
+        pass
 
-async def run():
-    # Generate a unqiue upload ID
-    upload_id = str(uuid.uuid4())
-    dex_ingest_datetime = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    print("Upload ID = " + upload_id)
-    print("Sending simulated messages via the service bus...")
+    @abstractmethod
+    async def close(self):
+        """Close the message system connection"""
+        pass
 
-    # create a Service Bus client using the connection string
-    async with ServiceBusClient.from_connection_string(
-        conn_str=env["service_bus_connection_str"],
-        transport_type=TransportType.AmqpOverWebsocket,
-        logging_enable=False) as servicebus_client:
-        if USE_QUEUE == True:
-            # Get a Queue Sender object to send messages to the queue
-            sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
-            async with sender:
-                await simulate(sender, upload_id, dex_ingest_datetime)
+
+class RabbitMQSystem(MessageSystem):
+    def __init__(self, config: dict):
+        self.config = config
+        self.connection = None
+        self.channel = None
+        self.queue_name = config.get('rabbitmq_queue_name')
+        self.routing_key = config.get('rabbitmq_routing_key')
+        self.exchange_name = config.get('rabbitmq_exchange_name')
+        self.vhost = config.get('rabbitmq_vhost', '/')
+
+    async def initialize(self):
+        try:
+            # Setup connection
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=self.config.get('rabbitmq_host', 'localhost'),
+                    credentials=pika.PlainCredentials(
+                        username=self.config.get('rabbitmq_user', 'guest'),
+                        password=self.config.get('rabbitmq_password', 'guest')
+                    ),
+                    virtual_host=self.vhost
+                )
+            )
+            self.channel = self.connection.channel()
+
+            # Setup exchange
+            try:
+                # Check if exchange exists by declaring it passively
+                self.channel.exchange_declare(
+                    exchange=self.exchange_name,
+                    exchange_type='direct',
+                    passive=True
+                )
+                print(f"Exchange {self.exchange_name} already exists")
+            except pika.exceptions.ChannelClosedByBroker:
+                # Re-open channel as it was closed by the failed passive declaration
+                self.channel = self.connection.channel()
+                # Create exchange as it doesn't exist
+                self.channel.exchange_declare(
+                    exchange=self.exchange_name,
+                    exchange_type='direct',
+                    durable=True,
+                    auto_delete=False
+                )
+                print(f"Created exchange {self.exchange_name}")
+
+            # Setup queue
+            try:
+                # Check if queue exists by declaring it passively
+                self.channel.queue_declare(
+                    queue=self.queue_name,
+                    passive=True
+                )
+                print(f"Queue {self.queue_name} already exists")
+            except pika.exceptions.ChannelClosedByBroker:
+                # Re-open channel as it was closed by the failed passive declaration
+                self.channel = self.connection.channel()
+                # Create queue as it doesn't exist
+                self.channel.queue_declare(
+                    queue=self.queue_name,
+                    durable=True,
+                    auto_delete=False,
+                    arguments={
+                        'x-queue-type': 'classic'
+                    }
+                )
+                print(f"Created queue {self.queue_name}")
+
+            # Ensure binding exists (idempotent operation, safe to repeat)
+            self.channel.queue_bind(
+                exchange=self.exchange_name,
+                queue=self.queue_name,
+                routing_key=self.routing_key
+            )
+            print(f"Ensured binding between exchange {self.exchange_name} and queue {self.queue_name}")
+
+            # Set channel prefetch count (optional, for better load distribution)
+            self.channel.basic_qos(prefetch_count=1)
+
+        except Exception as e:
+            print(f"Failed to initialize RabbitMQ: {str(e)}")
+            if self.connection and not self.connection.is_closed:
+                self.connection.close()
+            raise
+
+    async def send_message(self, message: str):
+        try:
+            if self.channel is None or self.channel.is_closed:
+                print("Channel is closed, attempting to reconnect...")
+                await self.initialize()
+
+            self.channel.basic_publish(
+                exchange=self.exchange_name,
+                routing_key=self.routing_key,
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # Make message persistent
+                    content_type='application/json'
+                ),
+                mandatory=True  # Ensure message is routable
+            )
+        except pika.exceptions.UnroutableError:
+            print("Message was returned as unroutable")
+            raise
+        except pika.exceptions.AMQPConnectionError as e:
+            print(f"Connection error while sending message: {str(e)}")
+            await self.initialize()  # Try to reconnect
+            raise
+        except Exception as e:
+            print(f"Failed to send message: {str(e)}")
+            raise
+
+    async def close(self):
+        try:
+            if self.channel and not self.channel.is_closed:
+                try:
+                    # Ensure all messages are delivered before closing
+                    self.channel.close()
+                except Exception as e:
+                    print(f"Error closing channel: {str(e)}")
+
+            if self.connection and not self.connection.is_closed:
+                try:
+                    self.connection.close()
+                except Exception as e:
+                    print(f"Error closing connection: {str(e)}")
+
+            print("RabbitMQ connection closed")
+        except Exception as e:
+            print(f"Error during cleanup: {str(e)}")
+            raise
+
+    def check_connection(self) -> bool:
+        """Check if connection is still valid"""
+        return (
+                self.connection is not None
+                and not self.connection.is_closed
+                and self.channel is not None
+                and not self.channel.is_closed
+        )
+
+    async def ensure_connection(self):
+        """Ensure connection is valid, reconnect if needed"""
+        if not self.check_connection():
+            print("Connection lost, reconnecting...")
+            await self.initialize()
+
+
+class AWSSystem(MessageSystem):
+    def __init__(self, config: dict):
+        self.use_queue = config.get('use_queue', 'true').lower() == 'true'
+        self.sqs = boto3.client(
+            'sqs',
+            aws_access_key_id=config['aws_access_key_id'],
+            aws_secret_access_key=config['aws_secret_access_key'],
+            region_name=config['aws_region']
+        )
+        self.sns = boto3.client(
+            'sns',
+            aws_access_key_id=config['aws_access_key_id'],
+            aws_secret_access_key=config['aws_secret_access_key'],
+            region_name=config['aws_region']
+        )
+        self.queue_url = config['aws_queue_url']
+        self.topic_arn = config['aws_topic_arn']
+
+    async def initialize(self):
+        print(f"AWS initialized with {'queue' if self.use_queue else 'topic'}")
+
+    async def send_message(self, message: str):
+        if self.use_queue:
+            self.sqs.send_message(
+                QueueUrl=self.queue_url,
+                MessageBody=message
+            )
         else:
-            # Get a Topic Sender object to send messages to the queue
-            sender = servicebus_client.get_topic_sender(topic_name=TOPIC_NAME)
-            async with sender:
-                await simulate(sender, upload_id, dex_ingest_datetime)
+            self.sns.publish(
+                TopicArn=self.topic_arn,
+                Message=message
+            )
 
-async def simulate(sender, upload_id, dex_ingest_datetime):
-    print("Sending simulated UPLOAD reports...")
-    
-    # Send metadata verify message
+    async def close(self):
+        pass
+
+
+class AzureSystem(MessageSystem):
+    def __init__(self, config: dict):
+        self.connection_str = config['azure_service_bus_connection_str']
+        self.use_queue = config.get('use_queue', 'true').lower() == 'true'
+        self.queue_name = config.get('azure_queue_name')
+        self.topic_name = config.get('azure_topic_name')
+        self.client = None
+        self.sender = None
+        self.messages_sent = 0
+
+    async def initialize(self):
+        try:
+            # Create new client instance
+            self.client = ServiceBusClient.from_connection_string(
+                conn_str=self.connection_str,
+                transport_type=TransportType.AmqpOverWebsocket
+            )
+            # Create sender at initialization
+            if self.use_queue:
+                self.sender = self.client.get_queue_sender(queue_name=self.queue_name)
+            else:
+                self.sender = self.client.get_topic_sender(topic_name=self.topic_name)
+
+            print(f"Azure Service Bus initialized with {'queue' if self.use_queue else 'topic'}")
+
+        except Exception as e:
+            print(f"Failed to initialize Azure Service Bus: {str(e)}")
+            raise
+
+    async def send_message(self, message: str):
+        try:
+            # Create a new message object
+            message_obj = ServiceBusMessage(message)
+
+            # Send message using the existing sender
+            await self.sender.send_messages(message_obj)
+
+            self.messages_sent += 1
+            print(f"Message {self.messages_sent} sent to {'queue' if self.use_queue else 'topic'}: "
+                  f"{self.queue_name if self.use_queue else self.topic_name}")
+
+        except Exception as e:
+            print(f"Failed to send message {self.messages_sent + 1}: {str(e)}")
+            # Try to reinitialize and resend
+            try:
+                await self.initialize()
+                await self.sender.send_messages(ServiceBusMessage(message))
+                self.messages_sent += 1
+                print(f"Message {self.messages_sent} sent after reconnection")
+            except Exception as retry_error:
+                print(f"Failed to send message even after reconnection: {str(retry_error)}")
+                raise
+
+    async def close(self):
+        try:
+            if self.sender:
+                await self.sender.close()
+            if self.client:
+                await self.client.close()
+            print(f"Azure Service Bus connection closed. Total messages sent: {self.messages_sent}")
+        except Exception as e:
+            print(f"Error closing Azure Service Bus connection: {str(e)}")
+            raise
+
+
+async def simulate(message_system: MessageSystem, upload_id: str, dex_ingest_datetime: str):
+    print("Sending simulated reports...")
+
+    # Send metadata verify
     print("Sending METADATA-VERIFY report...")
     message = reports.create_metadata_verify(upload_id, dex_ingest_datetime)
-    await send_single_message(sender, message)
+    await message_system.send_message(message)
 
-    # Send upload started message
+    # Send upload started
     print("Sending UPLOAD-STARTED report...")
     message = reports.create_upload_started(upload_id, dex_ingest_datetime)
-    await send_single_message(sender, message)
+    await message_system.send_message(message)
 
     # Send upload status messages
     num_chunks = 4
     size = 27472691
     for index in range(num_chunks):
-        offset = int((index+1) * size / num_chunks)
+        offset = int((index + 1) * size / num_chunks)
         print(f"Sending UPLOAD-STATUS ({offset} of {size} bytes) report...")
         message = reports.create_upload_status(upload_id, dex_ingest_datetime, offset, size)
-        #print(f"Sending: {message}")
-        await send_single_message(sender, message)
-        time.sleep(1)
+        await message_system.send_message(message)
+        await asyncio.sleep(1)
 
-    # Send upload completed message
+    # Send upload completed
     print("Sending UPLOAD-COMPLETED report...")
     message = reports.create_upload_completed(upload_id, dex_ingest_datetime)
-    await send_single_message(sender, message)
+    await message_system.send_message(message)
 
-    # Send upload routing message
+    # Send routing message
     print("Sending UPLOAD-ROUTED report...")
     message = reports.create_routing(upload_id, dex_ingest_datetime)
-    #print(f"Sending: {message}")
-    await send_single_message(sender, message)
+    await message_system.send_message(message)
+
+
+async def run():
+    # Load configuration using the config module
+    config = load_config()
+
+    # Create appropriate message system based on configuration
+    message_system = None
+    system_type = config.get('message_system', 'azure').lower()
+
+    try:
+        if system_type == 'rabbitmq':
+            message_system = RabbitMQSystem(config)
+        elif system_type == 'aws':
+            message_system = AWSSystem(config)
+        elif system_type == 'azure':
+            message_system = AzureSystem(config)
+        else:
+            raise ValueError(f"Unsupported message system: {system_type}")
+
+        # Initialize the message system
+        await message_system.initialize()
+
+        # Generate upload ID and timestamp
+        upload_id = str(uuid.uuid4())
+        dex_ingest_datetime = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        print(f"Upload ID = {upload_id}")
+        print(f"Using message system: {system_type}")
+
+        # Run simulation
+        await simulate(message_system, upload_id, dex_ingest_datetime)
+
+    finally:
+        if message_system:
+            await message_system.close()
+
 
 asyncio.run(run())
 print("Done sending messages")

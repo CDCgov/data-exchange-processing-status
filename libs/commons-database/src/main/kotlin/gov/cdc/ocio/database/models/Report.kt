@@ -11,6 +11,7 @@ import java.time.Instant
  *
  * @property id String?
  * @property uploadId String?
+ * @property reportSchemaVersion String?
  * @property reportId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
@@ -35,6 +36,8 @@ open class Report(
 
     @get:DynamoDbPartitionKey
     var id : String? = null,
+
+    var reportSchemaVersion:String?=null,
 
     var uploadId: String? = null,
 

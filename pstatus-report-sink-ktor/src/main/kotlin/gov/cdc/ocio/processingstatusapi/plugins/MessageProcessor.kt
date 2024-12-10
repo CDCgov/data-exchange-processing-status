@@ -55,6 +55,7 @@ abstract class MessageProcessor {
                 } else {
                     components.logger.info { "The message failed to validate, creating dead-letter report." }
                     SchemaValidation().sendToDeadLetter(
+                        source,
                         validationResult.invalidData,
                         validationResult.schemaFileNames,
                         components.gson.fromJson(message, CreateReportMessage::class.java)

@@ -2,7 +2,6 @@ package gov.cdc.ocio.database.health
 
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 
@@ -11,12 +10,16 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
  */
 class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB") {
 
+    // Lazily initialized DynamoDB client
+    private val dynamoDbClient: DynamoDbClient by lazy {
+        DynamoDbClient.builder().build()
+    }
     /**
      * Perform the dynamodb health check operations.
      */
     override fun doHealthCheck() {
         val result = runCatching {
-            getDynamoDbClient().listTables()
+            dynamoDbClient.listTables()
         }
         if (result.isSuccess)
             status = HealthStatusType.STATUS_UP
@@ -24,14 +27,5 @@ class HealthCheckDynamoDb: HealthCheckSystem("Dynamo DB") {
             healthIssues = result.exceptionOrNull()?.message
     }
 
-    /**
-     * Return a dynamodb client from the environment variables.
-     *
-     * @return DynamoDbClient
-     */
-    private fun getDynamoDbClient() : DynamoDbClient {
-        // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
-        return DynamoDbClient.builder()
-            .build()
-    }
+
 }
