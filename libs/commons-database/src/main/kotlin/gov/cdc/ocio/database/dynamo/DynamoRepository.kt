@@ -5,10 +5,12 @@ import gov.cdc.ocio.database.persistence.Collection
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.protocols.jsoncore.JsonNode
+import java.nio.file.Path
 
 
 /**
@@ -28,9 +30,9 @@ import software.amazon.awssdk.protocols.jsoncore.JsonNode
  *
  * @see [ProcessingStatusRepository]
  */
-class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
+class DynamoRepository(tablePrefix: String, roleArn:String?, webIdentityTokenFile:String?): ProcessingStatusRepository() {
 
-    private val ddbClient = getDynamoDbClient()
+    private val ddbClient = getDynamoDbClient(roleArn, webIdentityTokenFile)
 
     private val ddbEnhancedClient = getDynamoDbEnhancedClient()
 
@@ -76,13 +78,26 @@ class DynamoRepository(tablePrefix: String): ProcessingStatusRepository() {
     }
 
     /**
-     * Obtain a dynamodb client using the environment variable credentials provider.
+     * Obtain a dynamodb client using the environment variable credentials' provider.
      *
      * @return DynamoDbClient
      */
-    private fun getDynamoDbClient() : DynamoDbClient {
+    private fun getDynamoDbClient(roleArn:String?, webIdentityTokenFile:String?) : DynamoDbClient {
+
+        val credentialsProvider =    if (roleArn.isNullOrEmpty() ||
+            webIdentityTokenFile.isNullOrEmpty()) {
+            // Fallback to default credentials provider (access key and secret)
+            DefaultCredentialsProvider.create()
+        } else {
+            // Use Web Identity Token
+            WebIdentityTokenFileCredentialsProvider.builder()
+                .roleArn(roleArn)
+                .webIdentityTokenFile(webIdentityTokenFile.let { Path.of(it) })
+                .build()
+        }
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return DynamoDbClient.builder()
+            .credentialsProvider(credentialsProvider)
             .build()
     }
 
