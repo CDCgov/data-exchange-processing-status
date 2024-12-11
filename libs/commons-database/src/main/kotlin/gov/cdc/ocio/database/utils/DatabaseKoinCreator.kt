@@ -12,7 +12,6 @@ import gov.cdc.ocio.database.mongo.MongoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import io.ktor.server.application.*
 import mu.KotlinLogging
-import org.koin.core.context.loadKoinModules
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -77,8 +76,10 @@ class DatabaseKoinCreator {
 
                     DatabaseType.DYNAMO.value -> {
                         val dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString()
+                        val roleArn = environment.config.property("aws.role_arn").getString()
+                        val webIdentityTokenFile = environment.config.property("aws.web_identity_token_file").getString()
                         single<ProcessingStatusRepository>(createdAtStart = true) {
-                            DynamoRepository(dynamoTablePrefix)
+                            DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
                         }
                         databaseType = DatabaseType.DYNAMO
                     }
