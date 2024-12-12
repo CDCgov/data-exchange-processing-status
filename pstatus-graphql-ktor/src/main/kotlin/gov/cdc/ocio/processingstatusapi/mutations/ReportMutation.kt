@@ -46,6 +46,6 @@ class ReportMutation() : Mutation {
         @GraphQLDescription(
             "*Report* to be created or updated.\n"
         )
-        input: ReportInput
-        ) = ReportMutationService().upsertReport(action, input)
+        report: ReportInput
+        ) = ReportMutationService().upsertReport(action, report)
 }

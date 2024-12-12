@@ -18,8 +18,8 @@ class CustomGraphQLContextFactory : DefaultKtorGraphQLContextFactory() {
      * @return GraphQLContext
      */
     override suspend fun generateContext(request: ApplicationRequest): GraphQLContext =
-        super.generateContext(request).plus(
+        super.generateContext(request)/*.plus(
             // Add the AuthContext to the graphql context
             mapOf("AuthContext" to (request.call.attributes.getOrNull(AttributeKey("AuthContext"))))
-        )
+        )*/
 }

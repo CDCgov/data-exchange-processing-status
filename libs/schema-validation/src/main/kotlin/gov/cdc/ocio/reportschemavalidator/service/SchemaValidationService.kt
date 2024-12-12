@@ -267,10 +267,6 @@ class SchemaValidationService(
             reason =
                 "Content schema file found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'"
         }
-        else {
-            status = true
-            reason = "Content schema file found for content schema name '$contentSchemaName' and schema version '$contentSchemaVersion'"
-        }
         return Pair(contentSchemaFile, ValidationSchemaResult(reason, status, schemaFileNames, invalidData))
     }
 
