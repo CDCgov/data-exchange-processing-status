@@ -16,11 +16,23 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 
+/**
+ * Converts an [ObjectValue] to a [BasicHashMap].
+ *
+ * @param objectValue ObjectValue
+ * @return BasicHashMap<String, Any?>
+ */
 fun objectValueToHashMap(objectValue: ObjectValue): BasicHashMap<String, Any?> {
     val jsonNode = objectValueToJsonNode(objectValue)
     return jsonNodeToHashMap(jsonNode)
 }
 
+/**
+ * Generates a [BasicHashMap] from a provided [JsonNode].
+ *
+ * @param jsonNode JsonNode
+ * @return BasicHashMap<String, Any?>
+ */
 fun jsonNodeToHashMap(jsonNode: JsonNode): BasicHashMap<String, Any?> {
     val hashMap = BasicHashMap<String, Any?>()
 
@@ -44,6 +56,12 @@ fun jsonNodeToHashMap(jsonNode: JsonNode): BasicHashMap<String, Any?> {
     return hashMap
 }
 
+/**
+ * Converts an [ObjectValue] to a [JsonNode].
+ *
+ * @param objectValue ObjectValue
+ * @return JsonNode
+ */
 fun objectValueToJsonNode(objectValue: ObjectValue): JsonNode {
     val objectNode = ObjectMapper().createObjectNode()
 
@@ -56,6 +74,12 @@ fun objectValueToJsonNode(objectValue: ObjectValue): JsonNode {
     return objectNode
 }
 
+/**
+ * Converts a [Value] generic to a [JsonNode].
+ *
+ * @param value Value<*>
+ * @return JsonNode
+ */
 private fun convertValue(value: Value<*>): JsonNode {
     return when (value) {
         is StringValue -> JsonNodeFactory.instance.textNode(value.value)
@@ -74,10 +98,22 @@ private fun convertValue(value: Value<*>): JsonNode {
     }
 }
 
+/**
+ * Implementation of a basic hash map scalar.
+ */
 val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
     .name("BasicHashmap")
     .description("A basic hash map scalar")
     .coercing(object : Coercing<BasicHashMap<String, Any?>, JsonNode> {
+        /**
+         * Coerces a [Value] generic to a [BasicHashMap].
+         *
+         * @param input Value<*>
+         * @param variables CoercedVariables
+         * @param graphQLContext GraphQLContext
+         * @param locale Locale
+         * @return BasicHashMap<String, Any?>
+         */
         override fun parseLiteral(
             input: Value<*>,
             variables: CoercedVariables,
