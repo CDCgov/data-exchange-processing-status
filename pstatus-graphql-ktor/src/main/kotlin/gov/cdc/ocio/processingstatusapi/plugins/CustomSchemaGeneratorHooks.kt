@@ -4,22 +4,25 @@ import com.expediagroup.graphql.generator.hooks.SchemaGeneratorHooks
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import graphql.GraphQLContext
+import graphql.execution.CoercedVariables
 import graphql.language.*
 import graphql.scalars.ExtendedScalars
 import graphql.scalars.datetime.DateTimeScalar
 import graphql.schema.*
 import java.time.OffsetDateTime
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 
-fun objectValueToHashMap(objectValue: ObjectValue): CustomHashMap<String, Any?> {
+fun objectValueToHashMap(objectValue: ObjectValue): BasicHashMap<String, Any?> {
     val jsonNode = objectValueToJsonNode(objectValue)
     return jsonNodeToHashMap(jsonNode)
 }
 
-fun jsonNodeToHashMap(jsonNode: JsonNode): CustomHashMap<String, Any?> {
-    val hashMap = CustomHashMap<String, Any?>()
+fun jsonNodeToHashMap(jsonNode: JsonNode): BasicHashMap<String, Any?> {
+    val hashMap = BasicHashMap<String, Any?>()
 
     jsonNode.fields().forEach { (key, value) ->
         hashMap.put(key, when {
@@ -71,16 +74,20 @@ private fun convertValue(value: Value<*>): JsonNode {
     }
 }
 
-val customHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
-    .name("customHashMapScalar")
-    .description("A custom hash map scalar")
-    .coercing(object: Coercing<CustomHashMap<String, Any?>, JsonNode> {
-        @Deprecated("Deprecated in Java")
-        override fun parseLiteral(input: Any): CustomHashMap<String, Any?> {
+val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
+    .name("BasicHashmap")
+    .description("A basic hash map scalar")
+    .coercing(object : Coercing<BasicHashMap<String, Any?>, JsonNode> {
+        override fun parseLiteral(
+            input: Value<*>,
+            variables: CoercedVariables,
+            graphQLContext: GraphQLContext,
+            locale: Locale
+        ): BasicHashMap<String, Any?> {
             if (input is ObjectValue) {
                 return objectValueToHashMap(input)
             } else {
-                throw CoercingParseLiteralException("Expected a StringValue")
+                throw CoercingParseLiteralException("Expected an ObjectValue")
             }
         }
     })
@@ -109,7 +116,7 @@ class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
         OffsetDateTime::class -> DateTimeScalar.INSTANCE
         Long::class -> graphqlLongClassType
         Map::class -> ExtendedScalars.Json
-        CustomHashMap::class -> customHashMapScalar
+        BasicHashMap::class -> basicHashMapScalar
         else -> null
     }
 

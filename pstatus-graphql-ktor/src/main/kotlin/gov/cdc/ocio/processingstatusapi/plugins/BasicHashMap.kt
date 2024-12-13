@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import kotlin.math.absoluteValue
 
 
-class CustomHashMap<K, V> {
+class BasicHashMap<K, V> {
     private data class Entry<K, V>(val key: K, var value: V)
 
     private val buckets = Array<MutableList<Entry<K, V>>?>(16) { null }
@@ -76,8 +76,8 @@ class CustomHashMap<K, V> {
             if (bucket != null) {
                 for (entry in bucket) {
                     when (entry.value) {
-                        is CustomHashMap<*, *> -> {
-                            val copy = entry.value as CustomHashMap<*, *>
+                        is BasicHashMap<*, *> -> {
+                            val copy = entry.value as BasicHashMap<*, *>
                             val valueMap = copy.toHashMap()
                             hashmap[entry.key] = valueMap as V
                         }
