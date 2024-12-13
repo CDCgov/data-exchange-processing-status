@@ -15,6 +15,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.mutations.models.UpsertReportResult
+import gov.cdc.ocio.processingstatusapi.mutations.models.ValidatedReportResult
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
@@ -96,7 +97,8 @@ class ReportMutationService : KoinComponent {
             val actionType = validateAction(action)
 
             // Validate the report
-            val validatedReport = validateReport(mapOfContent)
+            val validationResult = validateReport(mapOfContent)
+            val validatedReport = validationResult.report!!
 
             // Assign the report ids
             val reportId = generateNewId()
@@ -111,7 +113,8 @@ class ReportMutationService : KoinComponent {
             return UpsertReportResult(
                 result = "SUCCESS",
                 uploadId = validatedReport.uploadId ?: "unknown",
-                reportId = validatedReport.reportId ?: "unknown"
+                reportId = validatedReport.reportId ?: "unknown",
+                schemaFileNames = validationResult.validationSchemaResult?.schemaFileNames
             )
         }
 
@@ -134,7 +137,7 @@ class ReportMutationService : KoinComponent {
         }
     }
 
-    private fun validateReport(input: Map<String, Any?>?): Report {
+    private fun validateReport(input: Map<String, Any?>?): ValidatedReportResult {
         try {
             logger.info("The report received: $input and will be converted to Json")
             val snakeCaseKeyReportJson = gson.toJson(input)
@@ -156,7 +159,10 @@ class ReportMutationService : KoinComponent {
                 val camelCaseKeyMap = mapKeysToCamelCase(input)
                 val reportJson = gson.toJson(camelCaseKeyMap)
                 val report = gson.fromJson(reportJson, Report::class.java)
-                return report
+                return ValidatedReportResult(
+                    validationSchemaResult = validationResult,
+                    report = report
+                )
             } else {
                 throw ValidationException(
                     issues = validationResult.invalidData,
