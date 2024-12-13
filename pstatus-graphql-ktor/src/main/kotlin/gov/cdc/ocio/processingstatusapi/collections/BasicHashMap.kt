@@ -4,10 +4,10 @@ import kotlin.math.absoluteValue
 
 
 /**
- * The basic hash map provided her is a simpler implementation of HashMap that works with GraphQL scalars.  The
- * reason for this is that the Map family, included HashMap, LinkedHashMap, TreeMap, etc. are not compatible with
- * GraphQL as they do not provide any public constructors.  Many attempts were made to utilize these Maps for
- * taking in a JSON input to GraphQL, but this was the only solution that worked.
+ * The BasicHashMap is a simpler implementation of [HashMap] that works with GraphQL scalars.  The reason for this is
+ * that the Map family, included HashMap, LinkedHashMap, TreeMap, etc. are not compatible with GraphQL as they do not
+ * provide any public constructors.  Many attempts were made to utilize these Maps for taking in a JSON input to
+ * GraphQL, but this was the only solution found that worked.
  *
  * @param K
  * @param V
