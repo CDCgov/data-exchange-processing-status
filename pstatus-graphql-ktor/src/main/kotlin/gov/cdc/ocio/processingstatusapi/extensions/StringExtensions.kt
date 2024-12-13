@@ -1,6 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.extensions
 
 
+/**
+ * Convert this string from snake case to camel case, where the first word is not capitalized.
+ *
+ * @receiver [String] - this string, which is assumed to be a snake case string.
+ * @return [String] - this string converted to camel case.
+ */
 fun String.snakeToCamelCase(): String {
     val words = split("_")
     return buildString {
@@ -11,6 +17,12 @@ fun String.snakeToCamelCase(): String {
     }
 }
 
+/**
+ * Convert this string from camel case to snake case.
+ *
+ * @receiver [String] - this string, which is assumed to be a camel case string.
+ * @return [String] - this string converted to snake case.
+ */
 fun String.camelToSnakeCase(): String {
     val sb = StringBuilder()
     for (char in this) {
