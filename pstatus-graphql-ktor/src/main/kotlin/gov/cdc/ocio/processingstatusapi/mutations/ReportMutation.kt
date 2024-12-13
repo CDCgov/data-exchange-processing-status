@@ -4,7 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
+import gov.cdc.ocio.processingstatusapi.plugins.CustomHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
 
 /**
@@ -46,6 +46,6 @@ class ReportMutation() : Mutation {
         @GraphQLDescription(
             "*Report* to be created or updated.\n"
         )
-        report: ReportInput
+        report: CustomHashMap<String, Any?>
         ) = ReportMutationService().upsertReport(action, report)
 }

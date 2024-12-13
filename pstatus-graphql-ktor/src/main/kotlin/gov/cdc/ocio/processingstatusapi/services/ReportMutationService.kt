@@ -13,7 +13,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase
-import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
+import gov.cdc.ocio.processingstatusapi.plugins.CustomHashMap
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
@@ -86,10 +86,10 @@ class ReportMutationService : KoinComponent {
      * @throws ContentException If there is an error with the content format.
      */
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(action: String, input: ReportInput): Map<String, Any> {
+    fun upsertReport(action: String, input: CustomHashMap<String, Any?>): Map<String, Any> {
         val result = runCatching {
             // Convert to a standard hash map
-            val mapOfContent = input.content?.toHashMap()
+            val mapOfContent = input.toHashMap()
 
             // Validate action
             val actionType = validateAction(action)
