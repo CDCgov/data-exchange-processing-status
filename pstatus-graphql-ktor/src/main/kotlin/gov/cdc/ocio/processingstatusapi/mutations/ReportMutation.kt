@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
 
+
 /**
  * ReportMutationService class handles GraphQL mutations for report creation and replacement.
  *
@@ -21,7 +22,7 @@ import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
  * - ReportInput: Represents the input model for report data.
  */
 @GraphQLDescription("A Mutation Service to either create a new report or replace an existing report")
-class ReportMutation() : Mutation {
+class ReportMutation : Mutation {
 
     /**
      * Creates a new report or updates existing report based on action.
@@ -44,7 +45,7 @@ class ReportMutation() : Mutation {
         action: String,
 
         @GraphQLDescription(
-            "*Report* to be created or updated.\n"
+            "*Report* to be created or updated, which is the JSON of the report provided.\n"
         )
         report: BasicHashMap<String, Any?>
         ) = ReportMutationService().upsertReport(action, report)
