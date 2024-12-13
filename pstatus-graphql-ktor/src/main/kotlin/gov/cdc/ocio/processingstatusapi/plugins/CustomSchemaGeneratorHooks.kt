@@ -103,7 +103,7 @@ private fun convertValue(value: Value<*>): JsonNode {
  * Implementation of a basic hash map scalar.
  */
 val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
-    .name("BasicHashmap")
+    .name("BasicHashMap")
     .description("A basic hash map scalar")
     .coercing(object : Coercing<BasicHashMap<String, Any?>, JsonNode> {
         /**
