@@ -14,8 +14,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 
-fun objectValueToHashMap(objectValue: ObjectValue, objectMapper: ObjectMapper): CustomHashMap<String, Any?> {
-    val jsonNode = objectValueToJsonNode(objectValue, objectMapper)
+fun objectValueToHashMap(objectValue: ObjectValue): CustomHashMap<String, Any?> {
+    val jsonNode = objectValueToJsonNode(objectValue)
     return jsonNodeToHashMap(jsonNode)
 }
 
@@ -42,19 +42,19 @@ fun jsonNodeToHashMap(jsonNode: JsonNode): CustomHashMap<String, Any?> {
     return hashMap
 }
 
-fun objectValueToJsonNode(objectValue: ObjectValue, objectMapper: ObjectMapper): JsonNode {
-    val objectNode = objectMapper.createObjectNode()
+fun objectValueToJsonNode(objectValue: ObjectValue): JsonNode {
+    val objectNode = ObjectMapper().createObjectNode()
 
     objectValue.objectFields.forEach { field ->
         val key = field.name
-        val value = convertValue(field.value, objectMapper)
+        val value = convertValue(field.value)
         objectNode.set<JsonNode>(key, value)
     }
 
     return objectNode
 }
 
-private fun convertValue(value: Value<*>, objectMapper: ObjectMapper): JsonNode {
+private fun convertValue(value: Value<*>): JsonNode {
     return when (value) {
         is StringValue -> JsonNodeFactory.instance.textNode(value.value)
         is IntValue -> JsonNodeFactory.instance.numberNode(value.value)
@@ -63,11 +63,11 @@ private fun convertValue(value: Value<*>, objectMapper: ObjectMapper): JsonNode 
         is EnumValue -> JsonNodeFactory.instance.textNode(value.name)
         is NullValue -> JsonNodeFactory.instance.nullNode()
         is ArrayValue -> {
-            val arrayNode = JsonNodeFactory.instance.arrayNode()// objectMapper.createArrayNode()
-            value.values.forEach { arrayNode.add(convertValue(it, objectMapper)) }
+            val arrayNode = JsonNodeFactory.instance.arrayNode()
+            value.values.forEach { arrayNode.add(convertValue(it)) }
             arrayNode
         }
-        is ObjectValue -> objectValueToJsonNode(value, objectMapper)
+        is ObjectValue -> objectValueToJsonNode(value)
         else -> throw IllegalArgumentException("Unsupported GraphQL value type: ${value.javaClass}")
     }
 }
@@ -76,11 +76,10 @@ val customHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
     .name("customHashMapScalar")
     .description("A custom hash map scalar")
     .coercing(object: Coercing<CustomHashMap<String, Any?>, JsonNode> {
-        private val mapper = ObjectMapper()
         @Deprecated("Deprecated in Java")
         override fun parseLiteral(input: Any): CustomHashMap<String, Any?> {
             if (input is ObjectValue) {
-                return objectValueToHashMap(input, mapper)
+                return objectValueToHashMap(input)
             } else {
                 throw CoercingParseLiteralException("Expected a StringValue")
             }
