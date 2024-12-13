@@ -1,9 +1,13 @@
 
 
+
 plugins {
-    kotlin("jvm") version "1.9.23"
-   // id ("org.jetbrains.kotlin.jvm") version "1.9.24"
+    id ("org.jetbrains.kotlin.jvm") version "1.9.23"
+    id ("java-library")
+//    kotlin("jvm") version "1.9.23"
+    // id ("org.jetbrains.kotlin.jvm") version "1.9.24"
     id ("io.ktor.plugin") version "2.3.11"
+
 }
 
 group = "gov.cdc.ocio"
@@ -13,6 +17,9 @@ repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("gov.cdc.ocio.reportschemavalidator.service") // Replace with your main class
+}
 
 dependencies {
     // JSON validations
@@ -27,6 +34,17 @@ dependencies {
     implementation ("ch.qos.logback.contrib", "logback-jackson", "0.1.5")
     implementation ("com.google.code.gson:gson:2.10.1")
     implementation ("com.sun.activation:javax.activation:1.2.0")
+
+    // AWS SDK for S3
+    implementation("software.amazon.awssdk:s3:2.20.91")
+    implementation("software.amazon.awssdk:auth:2.20.91")
+    implementation("software.amazon.awssdk:regions:2.20.91")
+
+    // Azure Blob Storage SDK
+    implementation("com.azure:azure-storage-blob:12.25.0")
+    implementation("com.azure:azure-identity:1.11.0")
+
+
     testImplementation(kotlin("test"))
    // testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.23")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
@@ -34,6 +52,8 @@ dependencies {
     testImplementation ("org.mockito:mockito-inline:3.11.2")
     testImplementation ("io.mockk:mockk:1.13.9")
     testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+
 
 }
 
@@ -56,4 +76,6 @@ java {
 kotlin {
     jvmToolchain(17)
 }
+
+
 

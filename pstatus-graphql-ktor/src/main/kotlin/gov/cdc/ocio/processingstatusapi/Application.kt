@@ -16,8 +16,8 @@ import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-
-    return modules(listOf(databaseModule))
+    val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
+    return modules(listOf(databaseModule, healthCheckDatabaseModule))
 }
 
 fun main(args: Array<String>) {

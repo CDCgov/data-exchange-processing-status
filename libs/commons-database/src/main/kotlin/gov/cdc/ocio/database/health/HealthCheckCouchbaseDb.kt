@@ -13,12 +13,12 @@ import org.koin.core.component.inject
  * Concrete implementation of the couchbase health check.
  */
 @JsonIgnoreProperties("koin")
-class HealthCheckCouchbaseDb: HealthCheckSystem("Couchbase DB"), KoinComponent {
+class HealthCheckCouchbaseDb(private val couchbaseCluster: Cluster? = null) : HealthCheckSystem("Couchbase DB"), KoinComponent {
 
     private val config by inject<CouchbaseConfiguration>()
 
     // Lazily initialized Couchbase Cluster instance
-    private val cluster: Cluster by lazy {
+    private val defaultCluster: Cluster by lazy {
         Cluster.connect(config.connectionString, config.username, config.password)
     }
 
@@ -27,6 +27,7 @@ class HealthCheckCouchbaseDb: HealthCheckSystem("Couchbase DB"), KoinComponent {
      */
     override fun doHealthCheck() {
         try {
+            val cluster = couchbaseCluster ?: defaultCluster // Use injected or default cluster
             cluster.ping() // Perform a lightweight health check like a ping
             status = HealthStatusType.STATUS_UP
 
