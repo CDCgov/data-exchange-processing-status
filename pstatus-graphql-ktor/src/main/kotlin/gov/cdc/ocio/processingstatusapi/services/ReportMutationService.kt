@@ -168,6 +168,12 @@ class ReportMutationService : KoinComponent {
         }
     }
 
+    /**
+     * Re-map the keys of the provided map from snake case to camel case.
+     *
+     * @param map Map<String, Any?>?
+     * @return Map<String, Any?>
+     */
     private fun mapKeysToCamelCase(map: Map<String, Any?>?): Map<String, Any?> {
         val newMap = mutableMapOf<String, Any?>()
 
