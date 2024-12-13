@@ -14,6 +14,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
+import gov.cdc.ocio.processingstatusapi.mutations.models.UpsertReportResult
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
@@ -86,7 +87,7 @@ class ReportMutationService : KoinComponent {
      * @throws ContentException If there is an error with the content format.
      */
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(action: String, input: BasicHashMap<String, Any?>): Map<String, Any> {
+    fun upsertReport(action: String, input: BasicHashMap<String, Any?>): UpsertReportResult {
         val result = runCatching {
             // Convert to a standard hash map
             val mapOfContent = input.toHashMap()
@@ -107,27 +108,27 @@ class ReportMutationService : KoinComponent {
                 Action.REPLACE -> replaceReport(validatedReport)
             }
 
-            return mapOf(
-                "result" to "SUCCESS",
-                "uploadId" to (validatedReport.uploadId ?: "unknown"),
-                "reportId" to (validatedReport.reportId ?: "unknown")
+            return UpsertReportResult(
+                result = "SUCCESS",
+                uploadId = validatedReport.uploadId ?: "unknown",
+                reportId = validatedReport.reportId ?: "unknown"
             )
         }
 
         when (val exception = result.exceptionOrNull()) {
             is ValidationException -> {
-                return mapOf(
-                    "result" to "FAILURE",
-                    "reason" to exception.localizedMessage,
-                    "issues" to exception.issues,
-                    "schemaFileNames" to exception.schemaFileNames
+                return UpsertReportResult(
+                    result = "FAILURE",
+                    reason  = exception.localizedMessage,
+                    issues = exception.issues.toList(),
+                    schemaFileNames = exception.schemaFileNames.toList()
                 )
             }
 
             else -> {
-                return mapOf(
-                    "result" to "FAILURE",
-                    "reason" to (result.exceptionOrNull()?.message ?: "unknown")
+                return UpsertReportResult(
+                    result = "FAILURE",
+                    reason = result.exceptionOrNull()?.message ?: "unknown"
                 )
             }
         }
