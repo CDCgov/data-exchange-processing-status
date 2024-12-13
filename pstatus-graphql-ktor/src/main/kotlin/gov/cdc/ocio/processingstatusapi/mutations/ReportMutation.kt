@@ -4,7 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.plugins.BasicHashMap
+import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
 
 /**

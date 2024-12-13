@@ -4,6 +4,7 @@ import com.expediagroup.graphql.generator.hooks.SchemaGeneratorHooks
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import graphql.GraphQLContext
 import graphql.execution.CoercedVariables
 import graphql.language.*

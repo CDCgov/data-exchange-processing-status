@@ -13,7 +13,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase
-import gov.cdc.ocio.processingstatusapi.plugins.BasicHashMap
+import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
