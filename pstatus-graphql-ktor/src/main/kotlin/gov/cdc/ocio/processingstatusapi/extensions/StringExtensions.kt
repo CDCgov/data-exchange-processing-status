@@ -1,16 +1,15 @@
 package gov.cdc.ocio.processingstatusapi.extensions
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
 
 fun String.snakeToCamelCase(): String {
-    return split("_").joinToString("") { it.capitalize() }
+    val words = split("_")
+    return buildString {
+        append(words[0].lowercase())
+        for (i in 1 until words.size) {
+            append(words[i].replaceFirstChar { it.uppercase() })
+        }
+    }
 }
-
-//fun String.toSnakeCase(): String {
-//    return this.replace(Regex("([a-z])([A-Z])")) {
-//        "${it.groupValues[1]}_${it.groupValues[2].lowercase()}"
-//    }.lowercase()
-//}
 
 fun String.camelToSnakeCase(): String {
     val sb = StringBuilder()

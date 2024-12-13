@@ -12,7 +12,7 @@ import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.extensions.camelToSnakeCase
+import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase
 import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
@@ -135,12 +135,8 @@ class ReportMutationService : KoinComponent {
 
     private fun validateReport(input: Map<String, Any?>?): Report {
         try {
-            // The report input comes in from graphql as camel case, but all the validation schemas are set up for
-            // snake case.
-            val snakeCaseKeyMap = mapKeysToSnakeCase(input)
-
             logger.info("The report received: $input and will be converted to Json")
-            val snakeCaseKeyReportJson = gson.toJson(snakeCaseKeyMap)
+            val snakeCaseKeyReportJson = gson.toJson(input)
 
             logger.info("The report after converting to a Json: $snakeCaseKeyReportJson, report will be validated next")
             val schemaValidationService = SchemaValidationService(
@@ -155,7 +151,9 @@ class ReportMutationService : KoinComponent {
 
             // if status is successful, will persist report to Reports container, otherwise to dlq container
             if (validationResult.status) {
-                val reportJson = gson.toJson(input)
+                // The report input comes in from graphql as snake case, but all the models are set up for camel case.
+                val camelCaseKeyMap = mapKeysToCamelCase(input)
+                val reportJson = gson.toJson(camelCaseKeyMap)
                 val report = gson.fromJson(reportJson, Report::class.java)
                 return report
             } else {
@@ -170,15 +168,15 @@ class ReportMutationService : KoinComponent {
         }
     }
 
-    private fun mapKeysToSnakeCase(map: Map<String, Any?>?): Map<String, Any?> {
+    private fun mapKeysToCamelCase(map: Map<String, Any?>?): Map<String, Any?> {
         val newMap = mutableMapOf<String, Any?>()
 
         if (map != null) {
             for ((key, value) in map) {
-                val newKey = key.camelToSnakeCase() // Example transformation, adjust as needed
+                val newKey = key.snakeToCamelCase() // Example transformation, adjust as needed
 
                 val newValue = when (value) {
-                    is Map<*, *> -> mapKeysToSnakeCase(value as Map<String, Any?>) // Recursively convert nested maps
+                    is Map<*, *> -> mapKeysToCamelCase(value as Map<String, Any?>) // Recursively convert nested maps
                     else -> value
                 }
 
