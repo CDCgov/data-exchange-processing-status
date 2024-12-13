@@ -11,8 +11,7 @@ import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.validators.SchemaValidator
 import mu.KLogger
 import gov.cdc.ocio.reportschemavalidator.utils.JsonUtils
-import java.io.File
-import java.io.InputStream
+
 
 /**
 The core service class that uses the below interfaces to perform validation and processing.
