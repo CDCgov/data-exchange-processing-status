@@ -17,6 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.qpid.proton.TimeoutException
+import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
+import java.nio.file.Path
 
 /**
  * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
@@ -28,16 +30,28 @@ import org.apache.qpid.proton.TimeoutException
 class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
-    private val accessKeyID = config.tryGetString("${configPath}access_key_id") ?: ""
+    private val roleArn: String = config.tryGetString("${configPath}role_arn") ?: ""
+    private val webIdentityTokenFile: String = config.tryGetString("${configPath}web_identity_token_file") ?: ""
+    private val accessKeyId = config.tryGetString("${configPath}access_key_id") ?: ""
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
     private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
 
     fun createSQSClient(): SqsClient{
-        return SqsClient{
-            credentialsProvider = StaticCredentialsProvider {
-                accessKeyId = this@AWSSQServiceConfiguration.accessKeyID
-                secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+        return SqsClient {
+
+            if (accessKeyId.isNotEmpty() && secretAccessKey.isNotEmpty()) {
+                StaticCredentialsProvider {
+                    accessKeyId = this@AWSSQServiceConfiguration.accessKeyId
+                    secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+                }
+            } else if (webIdentityTokenFile.isNotEmpty() && roleArn.isNotEmpty()) {
+                WebIdentityTokenFileCredentialsProvider.builder()
+                    .roleArn(roleArn)
+                    .webIdentityTokenFile(webIdentityTokenFile.let { Path.of(it) })
+                    .build()
+            } else {
+                throw IllegalArgumentException("No valid credentials provided.")
             }
             region = this@AWSSQServiceConfiguration.region
             endpointUrl = this@AWSSQServiceConfiguration.endpoint
