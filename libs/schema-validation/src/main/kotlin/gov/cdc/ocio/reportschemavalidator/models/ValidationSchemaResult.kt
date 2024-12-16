@@ -8,4 +8,9 @@ package gov.cdc.ocio.reportschemavalidator.models
  * @param status Boolean
  * @param invalidData MutableList<String>
  */
-data class ValidationSchemaResult(val reason:String , val status: Boolean, val  schemaFileNames: MutableList<String>, val invalidData: MutableList<String>)
+data class ValidationSchemaResult(
+    val reason: String,
+    val status: Boolean,
+    val schemaFileNames: MutableList<String>,
+    val invalidData: MutableList<String>
+)

@@ -85,7 +85,9 @@ class DatabaseKoinCreator {
                         databaseType = DatabaseType.DYNAMO
                     }
 
-                    else -> logger.error("Unsupported database requested: $databaseType")
+                    else -> {
+                        logger.error("Unsupported database requested: $databaseType")
+                    }
                 }
                 single { databaseType } // add databaseType to Koin Modules
             }
@@ -114,8 +116,10 @@ class DatabaseKoinCreator {
                     password = environment.config.property("couchbase.password").getString()
                 )
                 DatabaseType.DYNAMO.value ->return DatabaseModules.provideDynamoModule(
+
                    roleArn = environment.config.tryGetString("aws.role_arn") ?: "",
                    webIdentityTokenFile =environment.config.tryGetString("aws.web_identity_token_file") ?: ""
+
                 )
                 DatabaseType.MONGO.value ->return DatabaseModules.provideMongoModule(
                     connectionString = environment.config.property("mongo.connection_string").getString(),

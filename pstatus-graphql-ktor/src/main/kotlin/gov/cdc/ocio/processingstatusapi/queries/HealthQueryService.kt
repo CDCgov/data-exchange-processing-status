@@ -11,17 +11,19 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 
-
-@GraphQLDescription("TODO")
+/**
+ * HealthCheck object with  overall health of the graphql service and its dependencies
+ */
+@GraphQLDescription("HealthCheck object with the overall health of the graphql service and its dependencies")
 class GraphQLHealthCheckSystem {
 
-    @GraphQLDescription("TODO")
+    @GraphQLDescription("Name of the service")
     var service: String? = null
 
-    @GraphQLDescription("TODO")
+    @GraphQLDescription("Status of the service")
     var status: String? = null
 
-    @GraphQLDescription("TODO")
+    @GraphQLDescription("Issue related to graphql service dependency")
     var healthIssues: String? = null
 }
 
@@ -32,7 +34,7 @@ class GraphQLHealthCheckSystem {
  * @property totalChecksDuration String?
  * @property dependencyHealthChecks MutableList<HealthCheckSystem>
  */
-@GraphQLDescription("Run health checks for the service.")
+@GraphQLDescription("Run health checks for the service")
 class GraphQLHealthCheck {
 
     @GraphQLDescription("Overall status of the service")

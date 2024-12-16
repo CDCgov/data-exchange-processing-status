@@ -7,7 +7,7 @@
     "if": {
         "properties": {
             "content_type": {
-                "const": "json"
+                "enum": ["json","application/json"]
             }
         }
     },
@@ -15,6 +15,13 @@
         "properties": {
             "content": {
                 "$ref": "#/$defs/jsonContent"
+            }
+        }
+    },
+    "else": {
+        "properties": {
+            "content": {
+                "type": "string"
             }
         }
     },
