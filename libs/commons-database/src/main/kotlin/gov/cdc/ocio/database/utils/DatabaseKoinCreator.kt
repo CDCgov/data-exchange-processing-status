@@ -11,6 +11,7 @@ import gov.cdc.ocio.database.mongo.MongoConfiguration
 import gov.cdc.ocio.database.mongo.MongoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import mu.KotlinLogging
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -76,8 +77,8 @@ class DatabaseKoinCreator {
 
                     DatabaseType.DYNAMO.value -> {
                         val dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString()
-                        val roleArn = environment.config.property("aws.role_arn").getString()
-                        val webIdentityTokenFile = environment.config.property("aws.web_identity_token_file").getString()
+                        val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
+                        val webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file")?: ""
                         single<ProcessingStatusRepository>(createdAtStart = true) {
                             DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
                         }
@@ -103,28 +104,26 @@ class DatabaseKoinCreator {
             val databaseType = DatabaseType.UNKNOWN
             when (database.lowercase()) {
                 DatabaseType.COSMOS.value ->
-                  return  DatabaseModules.provideCosmosModule(
-                    uri = environment.config.property("azure.cosmos_db.client.endpoint").getString(),
-                    authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-                )
+                    return  DatabaseModules.provideCosmosModule(
+                        uri = environment.config.property("azure.cosmos_db.client.endpoint").getString(),
+                        authKey = environment.config.property("azure.cosmos_db.client.key").getString()
+                    )
                 DatabaseType.COUCHBASE.value -> return DatabaseModules.provideCouchbaseModule(
                     connectionString = environment.config.property("couchbase.connection_string").getString(),
                     username = environment.config.property("couchbase.username").getString(),
                     password = environment.config.property("couchbase.password").getString()
                 )
                 DatabaseType.DYNAMO.value ->return DatabaseModules.provideDynamoModule(
-                    dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString(),
-                    region = environment.config.property("aws.region").getString(),
-                    roleArn = environment.config.property("aws.role_arn").getString(),
-                    webIdentityTokenFile =environment.config.property("aws.web_identity_token_file").getString()
+                   roleArn = environment.config.tryGetString("aws.role_arn") ?: "",
+                   webIdentityTokenFile =environment.config.tryGetString("aws.web_identity_token_file") ?: ""
                 )
                 DatabaseType.MONGO.value ->return DatabaseModules.provideMongoModule(
-                     connectionString = environment.config.property("mongo.connection_string").getString(),
-                     databaseName = environment.config.property("mongo.database_name").getString()
+                    connectionString = environment.config.property("mongo.connection_string").getString(),
+                    databaseName = environment.config.property("mongo.database_name").getString()
                 )
                 else -> logger.error("Unsupported database requested: $databaseType")
             }
-           return module { single { DatabaseType.UNKNOWN } }
+            return module { single { DatabaseType.UNKNOWN } }
         }
     }
 }

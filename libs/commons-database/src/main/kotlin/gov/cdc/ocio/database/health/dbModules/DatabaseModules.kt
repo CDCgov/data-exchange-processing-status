@@ -30,10 +30,9 @@ object DatabaseModules {
         single { HealthCheckCouchbaseDb(get()) } // Inject Cluster into the health check
     }
 
-    fun provideDynamoModule(dynamoTablePrefix: String, region: String, roleArn: String?, webIdentityTokenFile: String? ) = module {
+    fun provideDynamoModule(roleArn: String?, webIdentityTokenFile: String? ) = module {
         single {
             DynamoDbClientFactory.createClient(
-                region,
                 roleArn,
                 webIdentityTokenFile
             )
