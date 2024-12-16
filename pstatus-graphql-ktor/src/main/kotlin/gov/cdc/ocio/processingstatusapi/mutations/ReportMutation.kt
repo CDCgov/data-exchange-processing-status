@@ -4,8 +4,9 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
-import gov.cdc.ocio.processingstatusapi.models.reports.inputs.ReportInput
+import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
+
 
 /**
  * ReportMutationService class handles GraphQL mutations for report creation and replacement.
@@ -21,31 +22,31 @@ import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
  * - ReportInput: Represents the input model for report data.
  */
 @GraphQLDescription("A Mutation Service to either create a new report or replace an existing report")
-class ReportMutation() : Mutation {
+class ReportMutation : Mutation {
 
     /**
-     * Upserts a report based on the provided input and action.
+     * Creates a new report or updates existing report based on action.
      *
      * This function serves as a GraphQL mutation to create a new report or replace an existing one.
      * It delegates the actual upsert logic to the ReportMutation class.
      *
-     * @param input The ReportInput containing details of the report to be created or replaced.
+     * @param input The report to be created or updated.
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The result of the upsert operation, handled by the ReportMutation class.
      */
-    @GraphQLDescription("Create a new report or replace an existing report.")
+    @GraphQLDescription("Creates a new report or replace an existing one based on action specified.")
     @Suppress("unused")
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
     fun upsertReport( @GraphQLDescription(
         "*Action*: Can be one of the following values\n"
-                + "`create`: Create new report\n"
-                + "`replace`: Replace existing report\n"
+                + "`create`: Creates a new report.\n"
+                + "`replace`: Replace an existing report.\n"
         )
         action: String,
 
         @GraphQLDescription(
-            "*Report data* to be created or updated:\n"
+            "*Report* to be created or updated, which is the JSON of the report provided.\n"
         )
-        input: ReportInput
-        ) = ReportMutationService().upsertReport(action, input)
+        report: BasicHashMap<String, Any?>
+        ) = ReportMutationService().upsertReport(action, report)
 }

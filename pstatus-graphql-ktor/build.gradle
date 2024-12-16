@@ -44,6 +44,8 @@ repositories{
 tasks.register("prepareKotlinBuildScriptModel"){}
 dependencies {
     implementation(project(":libs:commons-database"))
+    implementation project(':libs:schema-validation')
+    implementation project(':libs:commons-types')
     implementation "io.ktor:ktor-server-core-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-netty-jvm:$ktor_version"
     implementation "io.ktor:ktor-server-cors:$ktor_version"
@@ -67,12 +69,14 @@ dependencies {
     implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
     implementation 'joda-time:joda-time:2.12.7'
     implementation 'org.apache.commons:commons-lang3:3.3.1'
-    implementation "com.expediagroup:graphql-kotlin-server:6.0.0"
-    implementation "com.expediagroup:graphql-kotlin-schema-generator:6.0.0"
+    implementation "com.expediagroup:graphql-kotlin-server:8.2.1"
+    implementation "com.expediagroup:graphql-kotlin-schema-generator:8.2.1"
     implementation "io.ktor:ktor-server-netty:2.1.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
     implementation "io.ktor:ktor-client-logging:2.1.0"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
+
     implementation project(':libs:commons-database')
     implementation project(':libs:commons-types')
 

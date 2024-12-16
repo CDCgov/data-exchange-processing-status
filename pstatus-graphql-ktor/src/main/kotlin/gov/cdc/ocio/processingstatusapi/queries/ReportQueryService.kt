@@ -73,9 +73,9 @@ class ReportQueryService : Query {
      */
     @GraphQLDescription("Return list of reports based on ReportSearchParameters options")
     @Suppress("unused")
-    fun searchReports(params: ReportSearchParameters, dfe: DataFetchingEnvironment): CompletableFuture<List<Report>> =
+    fun searchReports(params: ReportSearchParameters, dfe: DataFetchingEnvironment): CompletableFuture<List<Report>>? =
         dfe.getDataLoader<String, Report>(ReportDataLoader.dataLoaderName)
-            .loadMany(params.ids)
+            ?.loadMany(params.ids)
 }
 
 /**
