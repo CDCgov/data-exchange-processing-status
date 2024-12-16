@@ -140,8 +140,13 @@ class ReportMutationService {
      *
      * @param input Map<String, Any?>?
      * @return ValidatedReportResult
+     * @throws ContentException
+     * @throws Exception
      */
+    @Throws(ContentException::class, Exception::class)
     private fun validateReport(input: Map<String, Any?>?): ValidatedReportResult {
+        if (input.isNullOrEmpty()) throw ContentException("Can't validate a null or empty report")
+
         try {
             logger.info("The report received: $input and will be converted to Json")
             val snakeCaseKeyReportJson = gson.toJson(input)
