@@ -11,6 +11,7 @@ import gov.cdc.ocio.database.mongo.MongoConfiguration
 import gov.cdc.ocio.database.mongo.MongoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import mu.KotlinLogging
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -76,15 +77,17 @@ class DatabaseKoinCreator {
 
                     DatabaseType.DYNAMO.value -> {
                         val dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString()
-                        val roleArn = environment.config.property("aws.role_arn").getString()
-                        val webIdentityTokenFile = environment.config.property("aws.web_identity_token_file").getString()
+                        val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
+                        val webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file")?: ""
                         single<ProcessingStatusRepository>(createdAtStart = true) {
                             DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
                         }
                         databaseType = DatabaseType.DYNAMO
                     }
 
-                    else -> logger.error("Unsupported database requested: $databaseType")
+                    else -> {
+                        logger.error("Unsupported database requested: $databaseType")
+                    }
                 }
                 single { databaseType } // add databaseType to Koin Modules
             }
@@ -115,8 +118,8 @@ class DatabaseKoinCreator {
                 DatabaseType.DYNAMO.value ->return DatabaseModules.provideDynamoModule(
                     dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString(),
                     region = environment.config.property("aws.region").getString(),
-                    roleArn = environment.config.property("aws.role_arn").getString(),
-                    webIdentityTokenFile =environment.config.property("aws.web_identity_token_file").getString()
+                    roleArn = environment.config.tryGetString("aws.role_arn") ?: "",
+                    webIdentityTokenFile =environment.config.tryGetString("aws.web_identity_token_file") ?: ""
                 )
                 DatabaseType.MONGO.value ->return DatabaseModules.provideMongoModule(
                      connectionString = environment.config.property("mongo.connection_string").getString(),
