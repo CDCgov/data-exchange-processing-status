@@ -106,28 +106,28 @@ class DatabaseKoinCreator {
             val databaseType = DatabaseType.UNKNOWN
             when (database.lowercase()) {
                 DatabaseType.COSMOS.value ->
-                  return  DatabaseModules.provideCosmosModule(
-                    uri = environment.config.property("azure.cosmos_db.client.endpoint").getString(),
-                    authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-                )
+                    return  DatabaseModules.provideCosmosModule(
+                        uri = environment.config.property("azure.cosmos_db.client.endpoint").getString(),
+                        authKey = environment.config.property("azure.cosmos_db.client.key").getString()
+                    )
                 DatabaseType.COUCHBASE.value -> return DatabaseModules.provideCouchbaseModule(
                     connectionString = environment.config.property("couchbase.connection_string").getString(),
                     username = environment.config.property("couchbase.username").getString(),
                     password = environment.config.property("couchbase.password").getString()
                 )
                 DatabaseType.DYNAMO.value ->return DatabaseModules.provideDynamoModule(
-                    dynamoTablePrefix = environment.config.property("aws.dynamo.table_prefix").getString(),
-                    region = environment.config.property("aws.region").getString(),
-                    roleArn = environment.config.tryGetString("aws.role_arn") ?: "",
-                    webIdentityTokenFile =environment.config.tryGetString("aws.web_identity_token_file") ?: ""
+
+                   roleArn = environment.config.tryGetString("aws.role_arn") ?: "",
+                   webIdentityTokenFile =environment.config.tryGetString("aws.web_identity_token_file") ?: ""
+
                 )
                 DatabaseType.MONGO.value ->return DatabaseModules.provideMongoModule(
-                     connectionString = environment.config.property("mongo.connection_string").getString(),
-                     databaseName = environment.config.property("mongo.database_name").getString()
+                    connectionString = environment.config.property("mongo.connection_string").getString(),
+                    databaseName = environment.config.property("mongo.database_name").getString()
                 )
                 else -> logger.error("Unsupported database requested: $databaseType")
             }
-           return module { single { DatabaseType.UNKNOWN } }
+            return module { single { DatabaseType.UNKNOWN } }
         }
     }
 }
