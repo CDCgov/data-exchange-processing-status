@@ -4,7 +4,7 @@ import { getSdk } from '@gql';
 
 export { expect };
 
-const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql', rawResponse: false}));
+const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
 
 type WorkerFixtures = {
     gql: ReturnType<typeof getClient>;
