@@ -13,9 +13,7 @@ type WorkerFixtures = {
 export const test = baseTest.extend<{}, WorkerFixtures>({
     gql: [
         async ({}, use) => {
-            const apiContext = await request.newContext({
-                baseURL: 'http://127.0.0.1:8090/graphql/'
-            });
+            const apiContext = await request.newContext({ });
             await use(getClient(apiContext));
         }, { auto: false, scope: 'worker' }
     ]
