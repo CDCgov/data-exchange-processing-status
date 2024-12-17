@@ -119,12 +119,11 @@ class SchemaValidationService(
         val baseSchemaFileName = "base.$reportSchemaVersion.schema.json"
         // load schema file
         val schemaFile = schemaLoader.loadSchemaFile(baseSchemaFileName)
-        if (schemaFile == null) {
-            validationSchemaResult = errorProcessor.processError(
+        if(!schemaFile.exists || schemaFile.fileName.isEmpty()){
+            validationSchemaResult=  errorProcessor.processError(
                 "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
                 schemaFileNames,
-                invalidData
-            )
+                invalidData)
         }
         return Pair(schemaFile, validationSchemaResult)
 

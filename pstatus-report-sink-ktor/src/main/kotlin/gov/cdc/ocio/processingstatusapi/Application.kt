@@ -34,7 +34,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         when (msgType) {
             MessageSystem.AZURE_SERVICE_BUS.toString() -> {
                 single(createdAtStart = true) {
-                    AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus") }
+                    AzureConfiguration(environment.config, configurationPath = "azure") }
 
             }
             MessageSystem.RABBITMQ.toString() -> {
@@ -45,11 +45,13 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
             MessageSystem.AWS.toString() -> {
                 single(createdAtStart = true) {
-                    AWSSQServiceConfiguration(environment.config, configurationPath = "aws")
+                    AWSConfiguration(environment.config, configurationPath = "aws")
                 }
             }
         }
     }
+
+
 
     return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule))
 }
@@ -79,14 +81,14 @@ fun Application.module() {
 
     when (messageSystem) {
         MessageSystem.AZURE_SERVICE_BUS -> {
-            serviceBusModule()
+            azureModule()
         }
         MessageSystem.RABBITMQ -> {
             rabbitMQModule()
         }
 
         MessageSystem.AWS -> {
-            awsSQSModule()
+            awsModule()
         }
         else -> log.error("Invalid message system configuration")
     }

@@ -9,6 +9,7 @@ import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
+import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -27,7 +28,7 @@ import java.nio.file.Path
  * @param config `ApplicationConfig` containing the configuration settings for AWS SQS.
  * @param configurationPath represents prefix used to locate environment variables specific to AWS within the configuration.
  */
-class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+class AWSConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
     private val roleArn: String = config.tryGetString("${configPath}role_arn") ?: ""
@@ -36,14 +37,16 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
     private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
+    private val s3Bucket = config.tryGetString("${configPath}s3.report_schema_bucket") ?: ""
+    private val s3Region = config.tryGetString("${configPath}s3.report_schema_region") ?: ""
 
     fun createSQSClient(): SqsClient{
         return SqsClient {
 
             if (accessKeyId.isNotEmpty() && secretAccessKey.isNotEmpty()) {
                 StaticCredentialsProvider {
-                    accessKeyId = this@AWSSQServiceConfiguration.accessKeyId
-                    secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+                    accessKeyId = this@AWSConfiguration.accessKeyId
+                    secretAccessKey = this@AWSConfiguration.secretAccessKey
                 }
             } else if (webIdentityTokenFile.isNotEmpty() && roleArn.isNotEmpty()) {
                 WebIdentityTokenFileCredentialsProvider.builder()
@@ -53,23 +56,33 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
             } else {
                 throw IllegalArgumentException("No valid credentials provided.")
             }
-            region = this@AWSSQServiceConfiguration.region
-            endpointUrl = this@AWSSQServiceConfiguration.endpoint
+            region = this@AWSConfiguration.region
+            endpointUrl = this@AWSConfiguration.endpoint
         }
+    }
+
+    fun createSchemaLoader():CloudSchemaLoader{
+        val config = mapOf(
+            "REPORT_SCHEMA_S3_BUCKET" to this@AWSConfiguration.s3Bucket,
+            "REPORT_SCHEMA_S3_REGION" to this@AWSConfiguration.s3Region
+        )
+       return CloudSchemaLoader("s3", config)
     }
 }
 
-val AWSSQSPlugin = createApplicationPlugin(
-    name = "AWS SQS",
+val AWSPlugin = createApplicationPlugin(
+    name = "AWS Plugin",
     configurationPath = "aws",
-    createConfiguration = ::AWSSQServiceConfiguration
+    createConfiguration = ::AWSConfiguration
 ) {
     lateinit var sqsClient: SqsClient
     lateinit var queueUrl: String
+    val schemaLoader: CloudSchemaLoader = pluginConfig.createSchemaLoader()
 
     try {
         sqsClient = pluginConfig.createSQSClient()
         queueUrl = pluginConfig.queueURL
+
         SchemaValidation.logger.info("Connection to the AWS SQS was successfully established")
     } catch (e: SqsException) {
         SchemaValidation.logger.error("Failed to create AWS SQS client ${e.message}")
@@ -113,7 +126,7 @@ val AWSSQSPlugin = createApplicationPlugin(
                 SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
                 val awsSQSProcessor = AWSSQSProcessor()
                 message.body?.let {
-                    awsSQSProcessor.processMessage(it)
+                   awsSQSProcessor.processMessage(it,schemaLoader)
                 }
             }
             deleteMessage(receivedMessages)
@@ -186,8 +199,8 @@ private fun cleanupResourcesAndUnsubscribe(application: Application, sqsClient: 
 /**
  * The main application module which runs always
  */
-fun Application.awsSQSModule() {
-    install(AWSSQSPlugin)
+fun Application.awsModule() {
+    install(AWSPlugin)
 }
 
 /**

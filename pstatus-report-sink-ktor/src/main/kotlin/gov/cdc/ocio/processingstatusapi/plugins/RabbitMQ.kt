@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
+import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -9,6 +10,37 @@ import org.apache.qpid.proton.TimeoutException
 import java.io.IOException
 
 
+class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
+    private val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
+    private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
+    private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
+    private val connectionString = environment.config.tryGetString("azure.blob_storage.connection_string") ?: ""
+    private val container = environment.config.tryGetString("azure.blob_storage.container") ?: ""
+
+        fun createSchemaLoader(): CloudSchemaLoader {
+            when (schemaLoaderSystem.lowercase()) {
+                "s3" -> {
+                    val config = mapOf(
+                        "REPORT_SCHEMA_S3_BUCKET" to s3Bucket,
+                        "REPORT_SCHEMA_S3_REGION" to s3Region
+                    )
+                    return CloudSchemaLoader(schemaLoaderSystem, config)
+                }
+
+                "blob_storage" -> {
+                    val config = mapOf(
+                        "REPORT_SCHEMA_BLOB_CONNECTION_STR" to connectionString,
+                        "REPORT_SCHEMA_BLOB_CONTAINER" to container
+                    )
+                    return CloudSchemaLoader(schemaLoaderSystem, config)
+                }
+                else ->throw IllegalArgumentException( "Unsupported schema loader type: $schemaLoaderSystem")
+
+            }
+
+    }
+
+}
 
 /**
  * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings provided in an `ApplicationConfig`.
@@ -28,6 +60,7 @@ class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath:
     private val configPath= if (configurationPath != null) "$configurationPath." else ""
     val queue = config.tryGetString("${configPath}queue_name") ?: ""
 
+
     init {
         connectionFactory.host = config.tryGetString("${configPath}host") ?: DEFAULT_HOST
         connectionFactory.port = config.tryGetString("${configPath}port") ?.toInt()!!
@@ -40,6 +73,7 @@ class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath:
     fun getConnectionFactory(): ConnectionFactory {
         return connectionFactory
     }
+
 }
 
 val RabbitMQPlugin = createApplicationPlugin(
@@ -49,10 +83,11 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
-
+    //val schemaLoader: CloudSchemaLoader = pluginConfig.createSchemaLoader()
     lateinit var connection: Connection
     lateinit var channel: Channel
-
+    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
+    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
     try {
         connection = factory.newConnection()
         SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
@@ -89,7 +124,7 @@ val RabbitMQPlugin = createApplicationPlugin(
 
                     val message = String(body, Charsets.UTF_8)
                     SchemaValidation.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
-                    rabbitMQProcessor.processMessage(message)
+                    rabbitMQProcessor.processMessage(message,schemaLoader)
 
                     // Acknowledge the message
                     channel.basicAck(deliveryTag, false)
@@ -134,5 +169,6 @@ private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connect
  */
 fun Application.rabbitMQModule() {
     install(RabbitMQPlugin)
+
 }
 
