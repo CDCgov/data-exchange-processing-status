@@ -10,7 +10,7 @@ enum class ReportContentType (val type: String){
 
     companion object {
         fun fromString(type: String): ReportContentType {
-            return values().find { it.type.equals(type, ignoreCase = true) }
+            return entries.find { it.type.equals(type, ignoreCase = true) }
                 ?: throw IllegalArgumentException("Unsupported content type: $type")
         }
     }

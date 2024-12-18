@@ -1,13 +1,13 @@
 package data
 
-import gov.cdc.ocio.processingstatusapi.models.dao.ReportDao
+import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
-import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import java.util.*
+
 
 // Define the class to create sample data
 class UploadsStatusDataGenerator {
@@ -87,14 +87,14 @@ class UploadsStatusDataGenerator {
                 reportId = "sampleId1",
                 dataStreamId = "dataStream1",
                 dataStreamRoute = "routeA",
-                dexIngestDateTime = Date(),
+                dexIngestDateTime = Instant.now(),
                 tags = mapOf("tag1" to "value1", "tag2" to "value2"),
                 data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
                 contentType = "application/json",
                 jurisdiction = "jurisdictionXYZ",
                 senderId = "sender123",
                 dataProducerId="dataProducer123",
-                timestamp = Date(),
+                timestamp = Instant.now(),
             ),
             ReportDao(
                 id = "sampleId2",
@@ -102,14 +102,14 @@ class UploadsStatusDataGenerator {
                 reportId = "sampleId2",
                 dataStreamId = "dataStream2",
                 dataStreamRoute = "routeB",
-                dexIngestDateTime = Date(), // current date and time
+                dexIngestDateTime = Instant.now(), // current date and time
                 tags = mapOf("tag1" to "value1", "tag2" to "value2"),
                 data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
                 contentType = "application/json",
                 jurisdiction = "jurisdictionXYZ",
                 senderId = "sender123",
                 dataProducerId="dataProducer123",
-                timestamp = Date(), // current date and time
+                timestamp = Instant.now(), // current date and time
             ), // fill with actual fields  // fill with actual fields
         )
 

@@ -32,16 +32,15 @@ class DeadLineCheckSubscriptionService {
             WorkflowSubscriptionResult {
         try {
             val dataStreamId = subscription.dataStreamId
-            val dataStreamRoute = subscription.dataStreamRoute
             val jurisdiction = subscription.jurisdiction
+            val dataStreamRoute = subscription.dataStreamRoute
             val daysToRun = subscription.daysToRun
             val timeToRun = subscription.timeToRun
             val deliveryReference= subscription.deliveryReference
             val taskQueue = "notificationTaskQueue"
-
-            val workflow =  workflowEngine.setupWorkflow(taskQueue,daysToRun,timeToRun,
+            val workflow :NotificationWorkflow =  workflowEngine.setupWorkflow(taskQueue,daysToRun,timeToRun,
                 NotificationWorkflowImpl::class.java ,notificationActivitiesImpl, NotificationWorkflow::class.java)
-            val execution =    WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, daysToRun, timeToRun, deliveryReference)
+            val execution =    WorkflowClient.start(workflow::checkUploadAndNotify, dataStreamId, jurisdiction, daysToRun, timeToRun, deliveryReference)
             return cacheService.updateSubscriptionPreferences(execution.workflowId,subscription)
         }
         catch (e:Exception){

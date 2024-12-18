@@ -11,7 +11,6 @@ interface NotificationActivities {
     @ActivityMethod
     fun sendNotification(
         dataStreamId: String,
-        dataStreamRoute: String,
         jurisdiction: String,
         deliveryReference: String
     )
@@ -25,4 +24,9 @@ interface NotificationActivities {
         error:String,
         deliveryReference: String
     )
+
+    @ActivityMethod
+    fun sendDigestEmail(
+        emailBody: String,
+        deliveryReference: String)
 }

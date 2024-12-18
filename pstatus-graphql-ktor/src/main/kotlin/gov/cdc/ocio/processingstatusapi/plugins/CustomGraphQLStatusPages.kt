@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.processingstatusapi.loaders.ForbiddenException
+import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
 import io.ktor.http.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*

@@ -4,6 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import gov.cdc.ocio.processingstatusapi.models.submission.MessageMetadata
 import gov.cdc.ocio.processingstatusapi.models.submission.StageInfo
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 
 /**
@@ -34,6 +35,9 @@ data class ReportDeadLetter(
 
     @GraphQLDescription("Identifier of the report recorded by the database")
     var id : String? = null,
+
+    @GraphQLDescription("Report schema version this report belongs to")
+    var reportSchemaVersion:String?=null,
 
     @GraphQLDescription("Upload identifier this report belongs to")
     var uploadId: String? = null,
@@ -88,4 +92,33 @@ data class ReportDeadLetter(
 
     @GraphQLDescription("Schemas used to validate the report")
     var validationSchemas: List<String>? = null,
-)
+) {
+
+    companion object {
+        /**
+         * Convenience function to convert a cosmos data object to a ReportDeadLetter object
+         */
+        fun fromReportDeadLetterDao(dao: gov.cdc.ocio.database.models.dao.ReportDeadLetterDao) = ReportDeadLetter().apply {
+            this.id = dao.id
+            this.reportSchemaVersion= dao.reportSchemaVersion
+            this.uploadId = dao.uploadId
+            this.reportId = dao.reportId
+            this.dataStreamId = dao.dataStreamId
+            this.dataStreamRoute = dao.dataStreamRoute
+            this.dexIngestDateTime = dao.dexIngestDateTime?.atOffset(ZoneOffset.UTC)
+            this.messageMetadata = MessageMetadata.fromMessageMetadataDao(dao.messageMetadata)
+            this.stageInfo = StageInfo.fromStageInfoDao(dao.stageInfo)
+            this.tags = dao.tags
+            this.data = dao.data
+            this.jurisdiction = dao.jurisdiction
+            this.senderId = dao.senderId
+            this.dataProducerId = dao.dataProducerId
+            this.timestamp = dao.timestamp.atOffset(ZoneOffset.UTC)
+            this.contentType = dao.contentType
+            this.content = dao.content as? Map<*, *>
+            this.dispositionType = dao.dispositionType
+            this.deadLetterReasons = dao.deadLetterReasons
+            this.validationSchemas = dao.validationSchemas
+        }
+    }
+}

@@ -32,6 +32,31 @@ fun Route.unsubscribeDeadlineCheck() {
     }
 }
 
+/**
+ * Route to subscribe for upload digest counts
+ */
+fun Route.subscribeUploadDigestCountsRoute() {
+    post("/subscribe/uploadDigestCounts") {
+        val subscription = call.receive<UploadDigestSubscription>()
+        val uploadDigestCountsSubscription = UploadDigestSubscription(subscription.jurisdictionIds, subscription.dataStreamIds,
+            subscription.daysToRun, subscription.timeToRun, subscription.deliveryReference)
+        val result = UploadDigestCountsNotificationSubscriptionService().run(uploadDigestCountsSubscription)
+        call.respond(result)
+
+    }
+}
+/**
+ * Route to unsubscribe for upload digest counts
+ */
+fun Route.unsubscribeUploadDigestCountsRoute() {
+    post("/unsubscribe/uploadDigestCounts") {
+        val subscription = call.receive<UploadDigestUnSubscription>()
+        val result = UploadDigestCountNotificationUnSubscriptionService().run(subscription.subscriptionId)
+        call.respond(result)
+    }
+}
+
+
 
 /**
  * Route to subscribe for upload errors notification subscription
@@ -87,6 +112,6 @@ fun Route.unsubscribesDataStreamTopErrorsNotification() {
  */
 fun Route.healthCheckRoute() {
     get("/health") {
-        call.respond(TemporalHealthCheckService().getHealth())
+        call.respond(HealthCheckService().getHealth())
     }
 }

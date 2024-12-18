@@ -4,26 +4,26 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import gov.cdc.ocio.processingstatusapi.models.submission.Status
 import java.time.OffsetDateTime
 
-@GraphQLDescription("Input type for stage info")
+@GraphQLDescription("StageInfo object")
 data class StageInfoInput(
-    @GraphQLDescription("Service")
+    @GraphQLDescription("Name of the service associated with this report")
     val service: String? = null,
 
-    @GraphQLDescription("Stage name a.k.a action")
+    @GraphQLDescription("Action the stage was conducting when providing this report")
     val action: String? = null,
 
-    @GraphQLDescription("Version")
+    @GraphQLDescription("Version of the stage providing this report")
     val version: String? = null,
 
-    @GraphQLDescription("Status- SUCCESS OR FAILURE")
+    @GraphQLDescription("Enumeration: [SUCCESS, FAILURE]")
     val status: Status? = null,
 
-    @GraphQLDescription("Issues array")
+    @GraphQLDescription("List of issues, null if status is success")
     val issues: List<IssueInput>? = null,
 
-    @GraphQLDescription("Start processing time")
+    @GraphQLDescription("Timestamp of when this stage started")
     val startProcessingTime: OffsetDateTime? = null,
 
-    @GraphQLDescription("End processing time")
+    @GraphQLDescription("Timestamp of when this stage finished")
     val endProcessingTime: OffsetDateTime? = null
 )

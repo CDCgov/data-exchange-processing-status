@@ -1,8 +1,6 @@
 package gov.cdc.ocio.processingstatusapi
 
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosConfiguration
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosDeadLetterRepository
-import gov.cdc.ocio.processingstatusapi.cosmos.CosmosRepository
+import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -13,7 +11,7 @@ import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
-enum class MessageSystem{
+enum class MessageSystem {
     AWS,
     AZURE_SERVICE_BUS,
     RABBITMQ
@@ -21,21 +19,15 @@ enum class MessageSystem{
 
 /**
  * Load the environment configuration values
- * Instantiate a singleton CosmosDatabase container instance
+ *
+ * @receiver KoinApplication
  * @param environment ApplicationEnvironment
+ * @return KoinApplication
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
-    val cosmosModule = module {
-        val uri = environment.config.property("azure.cosmos_db.client.endpoint").getString()
-        val authKey = environment.config.property("azure.cosmos_db.client.key").getString()
-        single(createdAtStart = true) { CosmosRepository(uri, authKey, "Reports", "/uploadId") }
-        single(createdAtStart = true) { CosmosDeadLetterRepository(uri, authKey, "Reports-DeadLetter", "/uploadId") }
-
-        //  Create a CosmosDB config that can be dependency injected (for health checks)
-        single(createdAtStart = true) { CosmosConfiguration(uri, authKey) }
-    }
-
-    val configModule = module {
+    val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
+    val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
+    val messageSystemModule = module {
         val msgType = environment.config.property("ktor.message_system").getString()
         single {msgType} // add msgType to Koin Modules
 
@@ -58,7 +50,8 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
         }
     }
-   return modules(listOf(cosmosModule , configModule))
+
+    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule))
 }
 
 /**

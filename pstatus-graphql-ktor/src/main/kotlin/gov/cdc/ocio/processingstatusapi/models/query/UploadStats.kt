@@ -14,18 +14,23 @@ data class UploadStats(
     @GraphQLDescription("Total number of uploads that were stopped by the upload api due to one or more issues with the metadata received.")
     var badMetadataCount: Long = 0,
 
-    @GraphQLDescription("Number of uploads where we have received at least one chunk of data, but not all of them.")
-    var inProgressUploadsCount: Long = 0,
-
-    @GraphQLDescription("Number of uploads that have been completed.  This means, not only did the upload start, but according to the upload status reports we have received 100% of the expected chunks.")
+    @GraphQLDescription("Number of uploads that have been completed. This means, not only did the upload start, but according to the upload status reports we have received 100% of the expected chunks.")
     var completedUploadsCount: Long = 0,
 
     @GraphQLDescription("Provides a list of all the duplicate filenames that were uploaded and how many.")
     var duplicateFilenames: List<DuplicateFilenameCounts> = listOf(),
 
-    @GraphQLDescription("Provides a list of all the uploads that have not been delivered. This means, the upload started, but according to the upload status reports we did not receive 100% of the expected chunks.")
-    var unDeliveredUploads: UnDeliveredUploadCounts = UnDeliveredUploadCounts(),
+    @GraphQLDescription(
+        "Provides a list of all the uploads that have not been delivered. \n" +
+        "Any upload is considered undelivered when: \n" +
+        "'1. ' Any upload id where an upload-completed report exists, but not a blob-file-copy report. \n" +
+        "'2. ' Any upload id where a blob-file-copy report exists and it's status indicates failure. \n"
+    )
+    var undeliveredUploads: UndeliveredUploadCounts = UndeliveredUploadCounts(),
 
-    @GraphQLDescription("Provides a list of all the uploads that are pending. This means, the upload started, but according to the upload status reports we did not receive 100% of the expected chunks.")
+    @GraphQLDescription(
+        "Provides a list of all the uploads that are pending. \n" +
+        "Any upload id where a metadata-verify report exists but not a report with upload-completed."
+    )
     var pendingUploads: PendingUploadCounts = PendingUploadCounts()
 )

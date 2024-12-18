@@ -9,5 +9,5 @@ data class PendingUploadCounts(
     var totalCount: Long = 0,
 
     @GraphQLDescription("Provides a list of all the uploads that have not been delivered. This means, the upload started, but according to the upload status reports we did not receive 100% of the expected chunks.")
-    var pendingUploads: List<UnDeliveredUpload> = listOf()
+    var pendingUploads: List<UndeliveredUpload> = listOf()
 )

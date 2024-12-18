@@ -26,9 +26,9 @@ class ReportDeadLetterQueryService : Query {
 
     @GraphQLDescription("Return list of dead-letter reports based on ReportSearchParameters options")
     @Suppress("unused")
-    fun searchDeadLetterReports(params: ReportDeadLetterSearchParameters, dfe: DataFetchingEnvironment): CompletableFuture<List<ReportDeadLetter>> =
+    fun searchDeadLetterReports(params: ReportDeadLetterSearchParameters, dfe: DataFetchingEnvironment): CompletableFuture<List<ReportDeadLetter>>? =
         dfe.getDataLoader<String, ReportDeadLetter>(ReportDeadLetterDataLoader.dataLoaderName)
-            .loadMany(params.ids)
+            ?.loadMany(params.ids)
 }
 
 @GraphQLDescription("Parameters for searching for reports")

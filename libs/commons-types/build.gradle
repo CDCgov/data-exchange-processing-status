@@ -1,0 +1,51 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.23'
+    id 'java-library'
+}
+
+group = 'gov.cdc.ocio'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1'
+
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
+    implementation group: 'io.github.microutils', name: 'kotlin-logging-jvm', version: '3.0.5'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.12'
+    implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
+    implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
+
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0'
+
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation "org.testng:testng:7.4.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testImplementation "org.mockito:mockito-inline:3.11.2"
+    testImplementation "io.mockk:mockk:1.13.9"
+}
+
+jar {
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+}
+
+test {
+    useJUnitPlatform()
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+kotlin {
+    jvmToolchain(17)
+}

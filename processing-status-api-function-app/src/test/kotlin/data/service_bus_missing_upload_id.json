@@ -1,7 +1,0 @@
-{
-  "data_stream_route": "test-event1",
-  "stage_name": "dex-stage1",
-  "data_stream_id": "dex-testing",
-  "content_type": "json",
-  "content": ""
-}
