@@ -64,6 +64,7 @@ dependencies {
     implementation ("io.netty:netty-all:4.1.68.Final")
     implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
     implementation("software.amazon.awssdk:dynamodb-enhanced:2.20.70") // Latest Enhanced Client for DynamoDB
+    implementation("software.amazon.awssdk:sts:2.29.34") 
    // implementation("software.amazon.awssdk:dynamodb:2.20.70") // Core DynamoDB SDK dependency
     testImplementation(kotlin("test"))
 
