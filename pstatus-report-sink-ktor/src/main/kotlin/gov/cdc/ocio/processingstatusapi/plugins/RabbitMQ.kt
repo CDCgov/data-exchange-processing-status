@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.processingstatusapi.SchemaLoaderSystem
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
 import io.ktor.server.application.*
@@ -11,7 +12,7 @@ import java.io.IOException
 
 
 class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
-    private val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
+    val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
     private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
     private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
     private val connectionString = environment.config.tryGetString("azure.blob_storage.connection_string") ?: ""
@@ -19,7 +20,7 @@ class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
 
         fun createSchemaLoader(): CloudSchemaLoader {
             when (schemaLoaderSystem.lowercase()) {
-                "s3" -> {
+                SchemaLoaderSystem.S3.toString().lowercase()  -> {
                     val config = mapOf(
                         "REPORT_SCHEMA_S3_BUCKET" to s3Bucket,
                         "REPORT_SCHEMA_S3_REGION" to s3Region
@@ -27,7 +28,7 @@ class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
                     return CloudSchemaLoader(schemaLoaderSystem, config)
                 }
 
-                "blob_storage" -> {
+                SchemaLoaderSystem.BLOB_STORAGE.toString().lowercase() -> {
                     val config = mapOf(
                         "REPORT_SCHEMA_BLOB_CONNECTION_STR" to connectionString,
                         "REPORT_SCHEMA_BLOB_CONTAINER" to container

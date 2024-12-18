@@ -37,8 +37,8 @@ class AWSConfiguration(config: ApplicationConfig, configurationPath: String? = n
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
     private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
-    private val s3Bucket = config.tryGetString("${configPath}s3.report_schema_bucket") ?: ""
-    private val s3Region = config.tryGetString("${configPath}s3.report_schema_region") ?: ""
+    val s3Bucket = config.tryGetString("${configPath}s3.report_schema_bucket") ?: ""
+    val s3Region = config.tryGetString("${configPath}s3.report_schema_region") ?: ""
 
     fun createSQSClient(): SqsClient{
         return SqsClient {

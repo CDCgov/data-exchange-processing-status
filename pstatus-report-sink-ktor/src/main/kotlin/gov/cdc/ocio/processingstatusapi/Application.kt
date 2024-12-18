@@ -17,6 +17,11 @@ enum class MessageSystem {
     RABBITMQ
 }
 
+enum class SchemaLoaderSystem {
+    S3,
+    BLOB_STORAGE
+}
+
 /**
  * Load the environment configuration values
  *
@@ -27,6 +32,7 @@ enum class MessageSystem {
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
+    val schemaLoaderSystem = environment.config.property("ktor.schema_loader_system").getString()
     val messageSystemModule = module {
         val msgType = environment.config.property("ktor.message_system").getString()
         single {msgType} // add msgType to Koin Modules
@@ -42,6 +48,21 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                     RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
                 }
 
+                //For local and/or when the msg system is RabbitMQ -we need to access the cloud storage either blob or s3
+                when (schemaLoaderSystem.lowercase()) {
+                    SchemaLoaderSystem.S3.toString().lowercase()  -> {
+                        single(createdAtStart = true) {
+                            AWSConfiguration(environment.config, configurationPath = "aws")
+                        }
+                    }
+                    SchemaLoaderSystem.BLOB_STORAGE.toString().lowercase() -> {
+                        single(createdAtStart = true) {
+                            AzureConfiguration(environment.config, configurationPath = "azure")
+                        }
+                    }
+                    else ->throw IllegalArgumentException( "Unsupported schema loader type: $schemaLoaderSystem")
+
+                }
             }
             MessageSystem.AWS.toString() -> {
                 single(createdAtStart = true) {
@@ -50,10 +71,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
         }
     }
-
-
-
-    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule))
+ // FOR HEALTH CHECK
+    val schemaLoaderSystemModule = module {
+           single(createdAtStart = true) {
+            SchemaLoaderConfiguration(environment) }
+    }
+    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule, schemaLoaderSystemModule))
 }
 
 /**

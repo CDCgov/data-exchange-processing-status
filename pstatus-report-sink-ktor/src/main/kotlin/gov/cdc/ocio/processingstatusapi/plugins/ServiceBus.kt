@@ -25,8 +25,8 @@ class AzureConfiguration(config: ApplicationConfig, configurationPath: String? =
     val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
     val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
     val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
-    private val blobStorageConnectionString = config.tryGetString("${configPath}blob_storage.connection_string") ?: ""
-    private val container = config.tryGetString("${configPath}blob_storage.container") ?: ""
+    val blobStorageConnectionString = config.tryGetString("${configPath}blob_storage.connection_string") ?: ""
+    val container = config.tryGetString("${configPath}blob_storage.container") ?: ""
 
     fun createSchemaLoader():CloudSchemaLoader{
         val config = mapOf(
