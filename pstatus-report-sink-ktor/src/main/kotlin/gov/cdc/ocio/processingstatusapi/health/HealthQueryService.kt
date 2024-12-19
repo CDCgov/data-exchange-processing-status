@@ -7,6 +7,10 @@ import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckAWSSQS
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckServiceBus
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckUnsupportedMessageSystem
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderSystemType
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
@@ -30,6 +34,8 @@ class HealthQueryService: KoinComponent {
 
     private val msgType: String by inject()
 
+    private val schemaLoaderSystemType:SchemaLoaderSystemType by inject()
+
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
      *
@@ -38,6 +44,7 @@ class HealthQueryService: KoinComponent {
     fun getHealth(): HealthCheck {
         val databaseHealthCheck: HealthCheckSystem?
         val messageSystemHealthCheck: HealthCheckSystem?
+        val schemaLoaderSystemHealthCheck: HealthCheckSystem?
 
         val time = measureTimeMillis {
             databaseHealthCheck = when (databaseType) {
@@ -57,8 +64,15 @@ class HealthQueryService: KoinComponent {
                 else -> HealthCheckUnsupportedMessageSystem()
             }
             messageSystemHealthCheck.doHealthCheck()
+
+            schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
+                SchemaLoaderSystemType.S3.toString().lowercase() -> HealthCheckS3Bucket()
+                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> HealthCheckBlobContainer()
+                else -> HealthCheckUnsupportedSchemaLoaderSystem()
+            }
+            schemaLoaderSystemHealthCheck.doHealthCheck()
         }
-        return compileHealthChecks(databaseHealthCheck, messageSystemHealthCheck, time)
+        return compileHealthChecks(databaseHealthCheck, messageSystemHealthCheck,schemaLoaderSystemHealthCheck, time)
     }
 
     /**
@@ -72,18 +86,22 @@ class HealthQueryService: KoinComponent {
     private fun compileHealthChecks(
         databaseHealth: HealthCheckSystem?,
         messageSystemHealth: HealthCheckSystem?,
+        schemaLoaderSystemHealth:HealthCheckSystem?,
         totalTime: Long
     ): HealthCheck {
 
         return HealthCheck().apply {
             status = if (databaseHealth?.status == HealthStatusType.STATUS_UP
                 && messageSystemHealth?.status == HealthStatusType.STATUS_UP
+                && schemaLoaderSystemHealth?.status == HealthStatusType.STATUS_UP
             )
                 HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
 
             totalChecksDuration = formatMillisToHMS(totalTime)
+
             databaseHealth?.let { dependencyHealthChecks.add(it) }
             messageSystemHealth?.let { dependencyHealthChecks.add(it) }
+            schemaLoaderSystemHealth?.let { dependencyHealthChecks.add(it) }
         }
     }
 

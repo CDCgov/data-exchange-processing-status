@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.*
+import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfigurationKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -17,6 +18,8 @@ enum class MessageSystem {
     RABBITMQ
 }
 
+
+
 /**
  * Load the environment configuration values
  *
@@ -27,6 +30,7 @@ enum class MessageSystem {
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
+    val cloudSchemaConfigurationModule = CloudSchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
     val messageSystemModule = module {
         val msgType = environment.config.property("ktor.message_system").getString()
         single {msgType} // add msgType to Koin Modules
@@ -34,7 +38,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         when (msgType) {
             MessageSystem.AZURE_SERVICE_BUS.toString() -> {
                 single(createdAtStart = true) {
-                    AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus") }
+                    AzureServiceBusConfiguration(environment.config, configurationPath = "azure") }
 
             }
             MessageSystem.RABBITMQ.toString() -> {
@@ -45,13 +49,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
             MessageSystem.AWS.toString() -> {
                 single(createdAtStart = true) {
-                    AWSSQServiceConfiguration(environment.config, configurationPath = "aws")
+                    AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
                 }
             }
         }
     }
-
-    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule))
+    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule,cloudSchemaConfigurationModule)) //, schemaLoaderSystemModule
 }
 
 /**

@@ -9,6 +9,7 @@ import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
+import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -27,7 +28,7 @@ import java.nio.file.Path
  * @param config `ApplicationConfig` containing the configuration settings for AWS SQS.
  * @param configurationPath represents prefix used to locate environment variables specific to AWS within the configuration.
  */
-class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+class AWSSQSServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
     private val roleArn: String = config.tryGetString("${configPath}role_arn") ?: ""
@@ -42,8 +43,8 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
 
             if (accessKeyId.isNotEmpty() && secretAccessKey.isNotEmpty()) {
                 StaticCredentialsProvider {
-                    accessKeyId = this@AWSSQServiceConfiguration.accessKeyId
-                    secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+                    accessKeyId = this@AWSSQSServiceConfiguration.accessKeyId
+                    secretAccessKey = this@AWSSQSServiceConfiguration.secretAccessKey
                 }
             } else if (webIdentityTokenFile.isNotEmpty() && roleArn.isNotEmpty()) {
                 WebIdentityTokenFileCredentialsProvider.builder()
@@ -53,23 +54,28 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
             } else {
                 throw IllegalArgumentException("No valid credentials provided.")
             }
-            region = this@AWSSQServiceConfiguration.region
-            endpointUrl = this@AWSSQServiceConfiguration.endpoint
+            region = this@AWSSQSServiceConfiguration.region
+            endpointUrl = this@AWSSQSServiceConfiguration.endpoint
         }
     }
+
+
 }
 
-val AWSSQSPlugin = createApplicationPlugin(
+val AWSSQSPlugin  = createApplicationPlugin(
     name = "AWS SQS",
     configurationPath = "aws",
-    createConfiguration = ::AWSSQServiceConfiguration
+    createConfiguration = ::AWSSQSServiceConfiguration
 ) {
     lateinit var sqsClient: SqsClient
     lateinit var queueUrl: String
+    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
+    val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
 
     try {
         sqsClient = pluginConfig.createSQSClient()
         queueUrl = pluginConfig.queueURL
+
         SchemaValidation.logger.info("Connection to the AWS SQS was successfully established")
     } catch (e: SqsException) {
         SchemaValidation.logger.error("Failed to create AWS SQS client ${e.message}")
@@ -113,7 +119,7 @@ val AWSSQSPlugin = createApplicationPlugin(
                 SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
                 val awsSQSProcessor = AWSSQSProcessor()
                 message.body?.let {
-                    awsSQSProcessor.processMessage(it)
+                   awsSQSProcessor.processMessage(it,schemaLoader)
                 }
             }
             deleteMessage(receivedMessages)

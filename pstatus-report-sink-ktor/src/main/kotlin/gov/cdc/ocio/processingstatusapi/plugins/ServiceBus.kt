@@ -5,6 +5,8 @@ import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
+import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -20,22 +22,24 @@ import java.util.concurrent.TimeUnit
  */
 class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
-    val connectionString = config.tryGetString("${configPath}connection_string") ?: ""
-    val queueName = config.tryGetString("${configPath}queue_name") ?: ""
-    val topicName = config.tryGetString("${configPath}topic_name") ?: ""
-    val subscriptionName = config.tryGetString("${configPath}subscription_name") ?: ""
+    val connectionString = config.tryGetString("${configPath}service_bus.connection_string") ?: ""
+    val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
+    val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
+    val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
+
 }
 
-val AzureServiceBus = createApplicationPlugin(
+val AzureServiceBus  = createApplicationPlugin(
     name = "AzureServiceBus",
-    configurationPath = "azure.service_bus",
+    configurationPath = "azure",
     createConfiguration = ::AzureServiceBusConfiguration) {
 
     val connectionString = pluginConfig.connectionString
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
-
+    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
+    val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
     // Initialize Service Bus client for queue
     val processorQueueClient by lazy {
         ServiceBusClientBuilder()
@@ -43,7 +47,7 @@ val AzureServiceBus = createApplicationPlugin(
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .queueName(queueName)
-            .processMessage{ context -> processMessage(context) }
+            .processMessage{ context -> processMessage(context,schemaLoader) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
     }
@@ -56,7 +60,7 @@ val AzureServiceBus = createApplicationPlugin(
             .processor()
             .topicName(topicName)
             .subscriptionName(subscriptionName)
-            .processMessage{ context -> processMessage(context) }
+            .processMessage{ context -> processMessage(context,schemaLoader) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
     }
@@ -103,7 +107,7 @@ val AzureServiceBus = createApplicationPlugin(
  *   @throws BadRequestException
  *   @throws Exception generic
  */
-private fun processMessage(context: ServiceBusReceivedMessageContext) {
+private fun processMessage(context: ServiceBusReceivedMessageContext, schemaLoader: CloudSchemaLoader) {
     val message = context.message
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
@@ -112,9 +116,10 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
         message.body
     )
     try {
+
         val serviceBusProcessor = ServiceBusProcessor()
         val messageToString = String(message.body.toBytes())
-        serviceBusProcessor.processMessage(messageToString)
+        serviceBusProcessor.processMessage(messageToString, schemaLoader)
     }
     catch (e: BadRequestException) {
         logger.warn("Unable to parse the message: {}", e.localizedMessage)
@@ -171,7 +176,5 @@ private fun cleanupResourcesAndUnsubscribe(processorQueueClient:  ServiceBusProc
  * The main application module which runs always
  */
 fun Application.serviceBusModule() {
-    install(AzureServiceBus) {
-        // any additional configuration goes here
-    }
+    install(AzureServiceBus)
 }
