@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.health.messagesystem
 import aws.sdk.kotlin.services.sqs.SqsClient
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.plugins.AWSConfiguration
+import gov.cdc.ocio.processingstatusapi.plugins.AWSSQSServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
@@ -16,7 +16,7 @@ import org.koin.core.component.inject
 @JsonIgnoreProperties("koin")
 class HealthCheckAWSSQS : HealthCheckSystem("AWS SQS"), KoinComponent {
 
-    private val awsSqsServiceConfiguration by inject<AWSConfiguration>()
+    private val awsSqsServiceConfiguration by inject<AWSSQSServiceConfiguration>()
 
     /**
      * Checks and sets AWSSQSHealth status
@@ -41,7 +41,7 @@ class HealthCheckAWSSQS : HealthCheckSystem("AWS SQS"), KoinComponent {
      * @return Boolean
      */
     @Throws(BadStateException::class)
-    private fun isAWSSQSHealthy(config: AWSConfiguration): Boolean {
+    private fun isAWSSQSHealthy(config: AWSSQSServiceConfiguration): Boolean {
         val sqsClient: SqsClient?
         return try {
             sqsClient = config.createSQSClient()

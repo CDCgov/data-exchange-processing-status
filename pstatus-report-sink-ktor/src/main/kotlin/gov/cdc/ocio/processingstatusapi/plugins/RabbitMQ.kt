@@ -1,47 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
-import gov.cdc.ocio.processingstatusapi.SchemaLoaderSystem
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import org.apache.qpid.proton.TimeoutException
 import java.io.IOException
-
-
-class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
-    val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
-    private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
-    private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
-    private val connectionString = environment.config.tryGetString("azure.blob_storage.connection_string") ?: ""
-    private val container = environment.config.tryGetString("azure.blob_storage.container") ?: ""
-
-        fun createSchemaLoader(): CloudSchemaLoader {
-            when (schemaLoaderSystem.lowercase()) {
-                SchemaLoaderSystem.S3.toString().lowercase()  -> {
-                    val config = mapOf(
-                        "REPORT_SCHEMA_S3_BUCKET" to s3Bucket,
-                        "REPORT_SCHEMA_S3_REGION" to s3Region
-                    )
-                    return CloudSchemaLoader(schemaLoaderSystem, config)
-                }
-
-                SchemaLoaderSystem.BLOB_STORAGE.toString().lowercase() -> {
-                    val config = mapOf(
-                        "REPORT_SCHEMA_BLOB_CONNECTION_STR" to connectionString,
-                        "REPORT_SCHEMA_BLOB_CONTAINER" to container
-                    )
-                    return CloudSchemaLoader(schemaLoaderSystem, config)
-                }
-                else ->throw IllegalArgumentException( "Unsupported schema loader type: $schemaLoaderSystem")
-
-            }
-
-    }
-
-}
 
 /**
  * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings provided in an `ApplicationConfig`.
@@ -87,8 +52,7 @@ val RabbitMQPlugin = createApplicationPlugin(
     //val schemaLoader: CloudSchemaLoader = pluginConfig.createSchemaLoader()
     lateinit var connection: Connection
     lateinit var channel: Channel
-    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
-    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
+
     try {
         connection = factory.newConnection()
         SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
@@ -125,7 +89,7 @@ val RabbitMQPlugin = createApplicationPlugin(
 
                     val message = String(body, Charsets.UTF_8)
                     SchemaValidation.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
-                    rabbitMQProcessor.processMessage(message,schemaLoader)
+                  //  rabbitMQProcessor.processMessage(message,schemaLoader)
 
                     // Acknowledge the message
                     channel.basicAck(deliveryTag, false)

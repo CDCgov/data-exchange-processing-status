@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.*
+import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfigurationKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -17,10 +18,7 @@ enum class MessageSystem {
     RABBITMQ
 }
 
-enum class SchemaLoaderSystem {
-    S3,
-    BLOB_STORAGE
-}
+
 
 /**
  * Load the environment configuration values
@@ -32,7 +30,7 @@ enum class SchemaLoaderSystem {
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
-    val schemaLoaderSystem = environment.config.property("ktor.schema_loader_system").getString()
+    val cloudSchemaConfigurationModule = CloudSchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
     val messageSystemModule = module {
         val msgType = environment.config.property("ktor.message_system").getString()
         single {msgType} // add msgType to Koin Modules
@@ -40,7 +38,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         when (msgType) {
             MessageSystem.AZURE_SERVICE_BUS.toString() -> {
                 single(createdAtStart = true) {
-                    AzureConfiguration(environment.config, configurationPath = "azure") }
+                    AzureServiceBusConfiguration(environment.config, configurationPath = "azure") }
 
             }
             MessageSystem.RABBITMQ.toString() -> {
@@ -48,35 +46,21 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
                     RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
                 }
 
-                //For local and/or when the msg system is RabbitMQ -we need to access the cloud storage either blob or s3
-                when (schemaLoaderSystem.lowercase()) {
-                    SchemaLoaderSystem.S3.toString().lowercase()  -> {
-                        single(createdAtStart = true) {
-                            AWSConfiguration(environment.config, configurationPath = "aws")
-                        }
-                    }
-                    SchemaLoaderSystem.BLOB_STORAGE.toString().lowercase() -> {
-                        single(createdAtStart = true) {
-                            AzureConfiguration(environment.config, configurationPath = "azure")
-                        }
-                    }
-                    else ->throw IllegalArgumentException( "Unsupported schema loader type: $schemaLoaderSystem")
-
-                }
             }
             MessageSystem.AWS.toString() -> {
                 single(createdAtStart = true) {
-                    AWSConfiguration(environment.config, configurationPath = "aws")
+                    AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
                 }
             }
         }
     }
- // FOR HEALTH CHECK
-    val schemaLoaderSystemModule = module {
-           single(createdAtStart = true) {
-            SchemaLoaderConfiguration(environment) }
-    }
-    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule, schemaLoaderSystemModule))
+// FOR HEALTH CHECK
+/*    val schemaLoaderSystemModule = module {
+        single(createdAtStart = true) {
+            CloudSchemaLoaderConfiguration(environment) }
+    }*/
+
+    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule,cloudSchemaConfigurationModule)) //, schemaLoaderSystemModule
 }
 
 /**
@@ -104,14 +88,14 @@ fun Application.module() {
 
     when (messageSystem) {
         MessageSystem.AZURE_SERVICE_BUS -> {
-            azureModule()
+            serviceBusModule()
         }
         MessageSystem.RABBITMQ -> {
             rabbitMQModule()
         }
 
         MessageSystem.AWS -> {
-            awsModule()
+            awsSQSModule()
         }
         else -> log.error("Invalid message system configuration")
     }

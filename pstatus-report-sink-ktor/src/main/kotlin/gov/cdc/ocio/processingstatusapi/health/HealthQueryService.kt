@@ -3,15 +3,14 @@ package gov.cdc.ocio.processingstatusapi.health
 import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.health.*
 import gov.cdc.ocio.processingstatusapi.MessageSystem
-import gov.cdc.ocio.processingstatusapi.SchemaLoaderSystem
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckAWSSQS
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckServiceBus
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckUnsupportedMessageSystem
-import gov.cdc.ocio.processingstatusapi.health.schemaLoadersystem.HealthCheckBlobContainer
-import gov.cdc.ocio.processingstatusapi.health.schemaLoadersystem.HealthCheckS3Bucket
-import gov.cdc.ocio.processingstatusapi.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
-import gov.cdc.ocio.processingstatusapi.plugins.SchemaLoaderConfiguration
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderSystemType
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
@@ -35,7 +34,7 @@ class HealthQueryService: KoinComponent {
 
     private val msgType: String by inject()
 
-    private val schemaLoaderConfiguration by inject<SchemaLoaderConfiguration>()
+    private val schemaLoaderSystemType:SchemaLoaderSystemType by inject()
 
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
@@ -66,9 +65,9 @@ class HealthQueryService: KoinComponent {
             }
             messageSystemHealthCheck.doHealthCheck()
 
-            schemaLoaderSystemHealthCheck = when (schemaLoaderConfiguration.schemaLoaderSystem) {
-                SchemaLoaderSystem.S3.toString().lowercase() -> HealthCheckS3Bucket()
-                SchemaLoaderSystem.BLOB_STORAGE.toString().lowercase() -> HealthCheckBlobContainer()
+            schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
+                SchemaLoaderSystemType.S3.toString().lowercase() -> HealthCheckS3Bucket()
+                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> HealthCheckBlobContainer()
                 else -> HealthCheckUnsupportedSchemaLoaderSystem()
             }
             schemaLoaderSystemHealthCheck.doHealthCheck()

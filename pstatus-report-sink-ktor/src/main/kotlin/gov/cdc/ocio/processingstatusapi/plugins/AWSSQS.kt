@@ -9,7 +9,7 @@ import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -28,7 +28,7 @@ import java.nio.file.Path
  * @param config `ApplicationConfig` containing the configuration settings for AWS SQS.
  * @param configurationPath represents prefix used to locate environment variables specific to AWS within the configuration.
  */
-class AWSConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+class AWSSQSServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
     private val roleArn: String = config.tryGetString("${configPath}role_arn") ?: ""
@@ -37,16 +37,14 @@ class AWSConfiguration(config: ApplicationConfig, configurationPath: String? = n
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
     private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
-    val s3Bucket = config.tryGetString("${configPath}s3.report_schema_bucket") ?: ""
-    val s3Region = config.tryGetString("${configPath}s3.report_schema_region") ?: ""
 
     fun createSQSClient(): SqsClient{
         return SqsClient {
 
             if (accessKeyId.isNotEmpty() && secretAccessKey.isNotEmpty()) {
                 StaticCredentialsProvider {
-                    accessKeyId = this@AWSConfiguration.accessKeyId
-                    secretAccessKey = this@AWSConfiguration.secretAccessKey
+                    accessKeyId = this@AWSSQSServiceConfiguration.accessKeyId
+                    secretAccessKey = this@AWSSQSServiceConfiguration.secretAccessKey
                 }
             } else if (webIdentityTokenFile.isNotEmpty() && roleArn.isNotEmpty()) {
                 WebIdentityTokenFileCredentialsProvider.builder()
@@ -56,28 +54,23 @@ class AWSConfiguration(config: ApplicationConfig, configurationPath: String? = n
             } else {
                 throw IllegalArgumentException("No valid credentials provided.")
             }
-            region = this@AWSConfiguration.region
-            endpointUrl = this@AWSConfiguration.endpoint
+            region = this@AWSSQSServiceConfiguration.region
+            endpointUrl = this@AWSSQSServiceConfiguration.endpoint
         }
     }
 
-    fun createSchemaLoader():CloudSchemaLoader{
-        val config = mapOf(
-            "REPORT_SCHEMA_S3_BUCKET" to this@AWSConfiguration.s3Bucket,
-            "REPORT_SCHEMA_S3_REGION" to this@AWSConfiguration.s3Region
-        )
-       return CloudSchemaLoader("s3", config)
-    }
+
 }
 
-val AWSPlugin = createApplicationPlugin(
-    name = "AWS Plugin",
+val AWSSQSPlugin  = createApplicationPlugin(
+    name = "AWS SQS",
     configurationPath = "aws",
-    createConfiguration = ::AWSConfiguration
+    createConfiguration = ::AWSSQSServiceConfiguration
 ) {
     lateinit var sqsClient: SqsClient
     lateinit var queueUrl: String
-    val schemaLoader: CloudSchemaLoader = pluginConfig.createSchemaLoader()
+    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
+    val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
 
     try {
         sqsClient = pluginConfig.createSQSClient()
@@ -199,8 +192,8 @@ private fun cleanupResourcesAndUnsubscribe(application: Application, sqsClient: 
 /**
  * The main application module which runs always
  */
-fun Application.awsModule() {
-    install(AWSPlugin)
+fun Application.awsSQSModule() {
+    install(AWSSQSPlugin)
 }
 
 /**

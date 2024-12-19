@@ -6,6 +6,7 @@ import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
 import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -19,34 +20,26 @@ import java.util.concurrent.TimeUnit
  * @param config ApplicationConfig
  *
  */
-class AzureConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val connectionString = config.tryGetString("${configPath}service_bus.connection_string") ?: ""
     val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
     val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
     val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
-    val blobStorageConnectionString = config.tryGetString("${configPath}blob_storage.connection_string") ?: ""
-    val container = config.tryGetString("${configPath}blob_storage.container") ?: ""
 
-    fun createSchemaLoader():CloudSchemaLoader{
-        val config = mapOf(
-            "REPORT_SCHEMA_BLOB_CONNECTION_STR" to this@AzureConfiguration.blobStorageConnectionString,
-            "REPORT_SCHEMA_BLOB_CONTAINER" to this@AzureConfiguration.container
-        )
-        return CloudSchemaLoader("blob_storage", config)
-    }
 }
 
-val AzurePlugin = createApplicationPlugin(
-    name = "AzureConfiguration",
+val AzureServiceBus  = createApplicationPlugin(
+    name = "AzureServiceBus",
     configurationPath = "azure",
-    createConfiguration = ::AzureConfiguration) {
+    createConfiguration = ::AzureServiceBusConfiguration) {
 
     val connectionString = pluginConfig.connectionString
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
-    val schemaLoader: CloudSchemaLoader = pluginConfig.createSchemaLoader()
+    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
+    val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
     // Initialize Service Bus client for queue
     val processorQueueClient by lazy {
         ServiceBusClientBuilder()
@@ -182,6 +175,6 @@ private fun cleanupResourcesAndUnsubscribe(processorQueueClient:  ServiceBusProc
 /**
  * The main application module which runs always
  */
-fun Application.azureModule() {
-    install(AzurePlugin)
+fun Application.serviceBusModule() {
+    install(AzureServiceBus)
 }
