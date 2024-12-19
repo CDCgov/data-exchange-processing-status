@@ -13,8 +13,8 @@ class CloudSchemaLoaderConfiguration(environment: ApplicationEnvironment){
     private val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
     private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
     private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
-    private val connectionString = environment.config.tryGetString("azure.blob_storage.connection_string") ?: ""
-    private val container = environment.config.tryGetString("azure.blob_storage.container") ?: ""
+    private val connectionString = environment.config.tryGetString("azure.blob_storage.report_schema_connection_string") ?: ""
+    private val container = environment.config.tryGetString("azure.blob_storage.report_schema_container") ?: ""
 
     /**
      * The function which instantiates the CloudSchemaLoader based on the schema loader system type

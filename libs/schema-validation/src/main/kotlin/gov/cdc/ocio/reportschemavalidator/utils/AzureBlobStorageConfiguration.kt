@@ -9,7 +9,7 @@ import io.ktor.server.config.*
  */
 class AzureBlobStorageConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
-    val connectionString = config.tryGetString("${configPath}blob_storage.connection_string") ?: ""
-    val container = config.tryGetString("${configPath}blob_storage.container") ?: ""
+    val connectionString = config.tryGetString("${configPath}blob_storage.report_schema_connection_string") ?: ""
+    val container = config.tryGetString("${configPath}blob_storage.report_schema_container") ?: ""
 
 }

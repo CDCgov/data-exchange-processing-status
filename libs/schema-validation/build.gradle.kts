@@ -35,7 +35,6 @@ dependencies {
     implementation ("com.google.code.gson:gson:2.10.1")
     implementation ("com.sun.activation:javax.activation:1.2.0")
 
-    implementation(project(":libs:commons-database"))
     implementation(project(":libs:commons-types"))
     implementation("io.insert-koin:koin-ktor:3.5.6")
     // AWS SDK for S3
