@@ -54,12 +54,6 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
         }
     }
-// FOR HEALTH CHECK
-/*    val schemaLoaderSystemModule = module {
-        single(createdAtStart = true) {
-            CloudSchemaLoaderConfiguration(environment) }
-    }*/
-
     return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule,cloudSchemaConfigurationModule)) //, schemaLoaderSystemModule
 }
 

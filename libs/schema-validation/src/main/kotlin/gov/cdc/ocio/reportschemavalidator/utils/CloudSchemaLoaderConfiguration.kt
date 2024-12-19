@@ -12,6 +12,10 @@ class CloudSchemaLoaderConfiguration(environment: ApplicationEnvironment){
     private val connectionString = environment.config.tryGetString("azure.blob_storage.connection_string") ?: ""
     private val container = environment.config.tryGetString("azure.blob_storage.container") ?: ""
 
+    /**
+     * The function which instantiates the CloudSchemaLoader based on the schema loader system type
+     * @return CloudSchemaLoader
+     */
     fun createSchemaLoader(): CloudSchemaLoader {
         when (schemaLoaderSystem.lowercase()) {
             SchemaLoaderSystemType.S3.toString().lowercase()  -> {
