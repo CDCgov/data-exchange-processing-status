@@ -4,6 +4,10 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.health.*
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderSystemType
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import mu.KotlinLogging
@@ -68,6 +72,7 @@ class HealthCheckService: KoinComponent {
 
     private val msgType: String by inject()
 
+    private val schemaLoaderSystemType:SchemaLoaderSystemType by inject()
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
      *
@@ -75,7 +80,7 @@ class HealthCheckService: KoinComponent {
      */
     fun getHealth(): GraphQLHealthCheck {
         val databaseHealthCheck: HealthCheckSystem?
-
+        val schemaLoaderSystemHealthCheck: HealthCheckSystem?
         val time = measureTimeMillis {
             databaseHealthCheck = when (databaseType) {
                 DatabaseType.COSMOS -> getKoin().get<HealthCheckCosmosDb>()
@@ -85,10 +90,19 @@ class HealthCheckService: KoinComponent {
                 else -> HealthCheckUnsupportedDb()
             }
             databaseHealthCheck.doHealthCheck()
+
+            schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
+                SchemaLoaderSystemType.S3.toString().lowercase() -> HealthCheckS3Bucket()
+                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> HealthCheckBlobContainer()
+                else -> HealthCheckUnsupportedSchemaLoaderSystem()
+            }
+            schemaLoaderSystemHealthCheck.doHealthCheck()
         }
 
         return GraphQLHealthCheck().apply {
-            status = if (databaseHealthCheck?.status == HealthStatusType.STATUS_UP)
+            status = if (databaseHealthCheck?.status == HealthStatusType.STATUS_UP
+                && schemaLoaderSystemHealthCheck?.status == HealthStatusType.STATUS_UP
+            )
                 HealthStatusType.STATUS_UP.value
             else
                 HealthStatusType.STATUS_DOWN.value
@@ -100,6 +114,14 @@ class HealthCheckService: KoinComponent {
                     this.healthIssues = it.healthIssues
                 }
                 dependencyHealthChecks.add(gqlHealthCheckSystem)
+                schemaLoaderSystemHealthCheck?.let {
+                    val schemaLoaderHealthCheckSystem = GraphQLHealthCheckSystem().apply {
+                        this.service = it.service
+                        this.status = it.status.value
+                        this.healthIssues = it.healthIssues
+                    }
+                    dependencyHealthChecks.add(schemaLoaderHealthCheckSystem)
+                }
             }
         }
     }
