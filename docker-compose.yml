@@ -9,8 +9,8 @@ services:
       SECURITY_ENABLED: false
       DATABASE: "couchbase"
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
-      COUCHBASE_USERNAME: "admin"
-      COUCHBASE_PASSWORD: "password"
+      COUCHBASE_USERNAME: ${COUCHBASE_ADMINISTRATOR_USERNAME}
+      COUCHBASE_PASSWORD: ${COUCHBASE_ADMINISTRATOR_PASSWORD}
       PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
     depends_on:
       - couchbase
@@ -23,16 +23,16 @@ services:
     environment:
       DATABASE: "couchbase"
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
-      COUCHBASE_USERNAME: "admin"
-      COUCHBASE_PASSWORD: "password"
+      COUCHBASE_USERNAME: ${COUCHBASE_ADMINISTRATOR_USERNAME}
+      COUCHBASE_PASSWORD: ${COUCHBASE_ADMINISTRATOR_PASSWORD}
       MSG_SYSTEM: "RABBITMQ"
       RABBITMQ_EXCHANGE_TOPIC_NAME: "PSAPIExchange"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: 5672
       RABBITMQ_REPORT_QUEUE_NAME: "PSAPIQueue"
       RABBITMQ_ROUTING_KEY: "psapi1234"
-      RABBITMQ_USERNAME: "guest"
-      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VIRTUAL_HOST: "/"
     depends_on:
       - couchbase
@@ -45,8 +45,8 @@ services:
       - "8091-8096:8091-8096"
       - "11210-11211:11210-11211"
     environment:
-      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
-      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+      - ${COUCHBASE_ADMINISTRATOR_USERNAME}
+      - ${COUCHBASE_ADMINISTRATOR_PASSWORD}
     deploy:
       resources:
         limits:
