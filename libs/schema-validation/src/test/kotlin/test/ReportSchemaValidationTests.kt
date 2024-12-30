@@ -32,8 +32,13 @@ class ReportSchemaValidationTests {
     private val schemaValidator: SchemaValidator = JsonSchemaValidator(logger)
     //  Mock the jsonUtils dependency
     private val jsonUtils: JsonUtils = DefaultJsonUtils(objectMapper)
+
+    private val localFileSystemPath ="C:\\apps\\dex\\data-exchange-processing-status\\reports"
     // Mock the schemaValidator dependency
-    private val schemaLoader: SchemaLoader = FileSchemaLoader()
+    private val schemaLoader: SchemaLoader = FileSchemaLoader(mapOf(
+        "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to localFileSystemPath
+
+    ))
     //Base validation failure reason
     private var reason = "The report could not be validated against the JSON schema: base.1.0.0.schema.json."
 

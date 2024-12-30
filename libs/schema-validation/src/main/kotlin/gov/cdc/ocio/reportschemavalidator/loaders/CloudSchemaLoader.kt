@@ -43,6 +43,7 @@ class CloudSchemaLoader(private val storageType: String, private val config: Map
                 val containerName = config["REPORT_SCHEMA_BLOB_CONTAINER"] ?: "default-container"
                 BlobStorageSchemaClient(connectionString, containerName)
             }
+
             else -> throw IllegalArgumentException("Unsupported storage type: $storageType")
         }
     }

@@ -35,7 +35,11 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    val schemaLoader: FileSchemaLoader by lazy { FileSchemaLoader() }
+    //This will change when we merge from develop
+    val schemaLoader: FileSchemaLoader by lazy { FileSchemaLoader(mapOf(
+            "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to "C:\\apps\\dex\\data-exchange-processing-status\\reports"
+
+            )) }
     val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(logger) }
     val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(logger) }
     val logger: KLogger by lazy { KotlinLogging.logger {} }
@@ -73,7 +77,7 @@ class ReportMutationService {
     private val reportManager = ReportManager()
 
     /**
-     * Upserts a report based on the provided input and action.
+     * Upsert a report based on the provided input and action.
      *
      * This method either creates a new report or replaces an existing one based on the specified action.
      * It validates the input and generates a new ID if the action is "create" and no ID is provided.

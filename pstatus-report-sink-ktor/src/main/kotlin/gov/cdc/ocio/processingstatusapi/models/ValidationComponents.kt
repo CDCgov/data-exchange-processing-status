@@ -23,7 +23,10 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     private val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    private val schemaLoader: FileSchemaLoader by lazy { FileSchemaLoader() }
+    private val schemaLoader: FileSchemaLoader by lazy { FileSchemaLoader(mapOf(
+        "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to "C:\\apps\\dex\\data-exchange-processing-status\\reports"
+
+    )) }
     private val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(SchemaValidation.logger) }
     private val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(SchemaValidation.logger) }
     private val logger: KLogger by lazy { KotlinLogging.logger {} }

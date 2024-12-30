@@ -5,7 +5,7 @@ import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
-import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
@@ -107,7 +107,7 @@ val AzureServiceBus  = createApplicationPlugin(
  *   @throws BadRequestException
  *   @throws Exception generic
  */
-private fun processMessage(context: ServiceBusReceivedMessageContext, schemaLoader: CloudSchemaLoader) {
+private fun processMessage(context: ServiceBusReceivedMessageContext, schemaLoader: SchemaLoader) {
     val message = context.message
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",

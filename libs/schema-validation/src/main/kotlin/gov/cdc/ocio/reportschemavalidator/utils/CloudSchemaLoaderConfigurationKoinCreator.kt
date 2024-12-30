@@ -34,6 +34,11 @@ class CloudSchemaLoaderConfigurationKoinCreator {
                         schemaLoaderSystemType = SchemaLoaderSystemType.BLOB_STORAGE
                     }
 
+                    SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> {
+                        single {  AzureBlobStorageConfiguration(environment.config,configurationPath = "azure") }
+                        schemaLoaderSystemType = SchemaLoaderSystemType.BLOB_STORAGE
+                    }
+
                     else -> {
                         val msg = "Unsupported schema loader type: $schemaLoaderSystem"
                         logger.error { msg }
