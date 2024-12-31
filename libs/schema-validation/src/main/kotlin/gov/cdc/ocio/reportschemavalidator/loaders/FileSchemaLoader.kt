@@ -1,6 +1,7 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
+import java.io.FileNotFoundException
 
 
 /**
@@ -15,9 +16,14 @@ class FileSchemaLoader(private val config: Map<String, String>) : SchemaLoader {
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
         val schemaLocalSystemFilePath = config["REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH"]
+            ?: throw IllegalArgumentException("Local file system path is not configured")
+        val file = java.io.File("$schemaLocalSystemFilePath/$fileName")
+        if (!file.exists()) {
+            throw FileNotFoundException("Report rejected: file - ${fileName} not found for content schema.")
+        }
         return SchemaFile(
             fileName = fileName,
-            inputStream = javaClass.classLoader.getResourceAsStream("$schemaLocalSystemFilePath/$fileName")
+            inputStream = file.inputStream()
         )
     }
 

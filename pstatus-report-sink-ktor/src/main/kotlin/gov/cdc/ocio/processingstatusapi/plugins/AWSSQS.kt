@@ -9,7 +9,7 @@ import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -70,7 +70,7 @@ val AWSSQSPlugin  = createApplicationPlugin(
     lateinit var sqsClient: SqsClient
     lateinit var queueUrl: String
     val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
-    val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
+    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
 
     try {
         sqsClient = pluginConfig.createSQSClient()

@@ -11,7 +11,7 @@ import io.ktor.server.config.*
  * The class which is used to create the schema loader instance based on env vars
  * @param environment ApplicationEnvironment
  */
-class CloudSchemaLoaderConfiguration(environment: ApplicationEnvironment){
+class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
     private val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
     private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
     private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""

@@ -18,10 +18,12 @@ import gov.cdc.ocio.processingstatusapi.mutations.models.ValidatedReportResult
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
-import gov.cdc.ocio.reportschemavalidator.loaders.FileSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
+import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
 import java.time.Instant
@@ -35,11 +37,6 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    //This will change when we merge from develop
-    val schemaLoader: FileSchemaLoader by lazy { FileSchemaLoader(mapOf(
-            "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to "C:\\apps\\dex\\data-exchange-processing-status\\reports"
-
-            )) }
     val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(logger) }
     val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(logger) }
     val logger: KLogger by lazy { KotlinLogging.logger {} }
@@ -70,11 +67,13 @@ object ValidationComponents {
  *   into usable formats.
  *
  */
-class ReportMutationService {
+class ReportMutationService(private val environment: ApplicationEnvironment){
 
     private val logger = KotlinLogging.logger {}
 
     private val reportManager = ReportManager()
+
+
 
     /**
      * Upsert a report based on the provided input and action.
@@ -98,8 +97,11 @@ class ReportMutationService {
             // Validate action
             val actionType = validateAction(action)
 
+            //schema loader
+            val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader()
+
             // Validate the report
-            val validationResult = validateReport(mapOfContent)
+            val validationResult = validateReport(schemaLoader,mapOfContent)
             val validatedReport = validationResult.report!!
 
             // Assign the report ids
@@ -148,7 +150,7 @@ class ReportMutationService {
      * @throws Exception
      */
     @Throws(ContentException::class, Exception::class)
-    private fun validateReport(input: Map<String, Any?>?): ValidatedReportResult {
+    private fun validateReport(schemaLoader: SchemaLoader, input: Map<String, Any?>?): ValidatedReportResult {
         if (input.isNullOrEmpty()) throw ContentException("Can't validate a null or empty report")
 
         try {
@@ -157,7 +159,7 @@ class ReportMutationService {
 
             logger.info("The report after converting to a Json: $snakeCaseKeyReportJson, report will be validated next")
             val schemaValidationService = SchemaValidationService(
-                ValidationComponents.schemaLoader,
+                schemaLoader,
                 ValidationComponents.schemaValidator,
                 ValidationComponents.errorProcessor,
                 ValidationComponents.jsonUtils,

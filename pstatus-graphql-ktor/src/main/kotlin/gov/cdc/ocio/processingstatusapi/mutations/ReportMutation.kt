@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
+import io.ktor.server.application.*
 
 
 /**
@@ -22,7 +23,8 @@ import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
  * - ReportInput: Represents the input model for report data.
  */
 @GraphQLDescription("A Mutation Service to either create a new report or replace an existing report")
-class ReportMutation : Mutation {
+class ReportMutation(private val environment: ApplicationEnvironment) : Mutation {
+
 
     /**
      * Creates a new report or updates existing report based on action.
@@ -30,7 +32,7 @@ class ReportMutation : Mutation {
      * This function serves as a GraphQL mutation to create a new report or replace an existing one.
      * It delegates the actual upsert logic to the ReportMutation class.
      *
-     * @param input The report to be created or updated.
+     * @param report The report to be created or updated.
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The result of the upsert operation, handled by the ReportMutation class.
      */
@@ -41,12 +43,15 @@ class ReportMutation : Mutation {
         "*Action*: Can be one of the following values\n"
                 + "`create`: Creates a new report.\n"
                 + "`replace`: Replace an existing report.\n"
-        )
-        action: String,
+    )
+                      action: String,
 
-        @GraphQLDescription(
-            "*Report* to be created or updated, which is the JSON of the report provided.\n"
-        )
-        report: BasicHashMap<String, Any?>
-        ) = ReportMutationService().upsertReport(action, report)
+                      @GraphQLDescription(
+                          "*Report* to be created or updated, which is the JSON of the report provided.\n"
+                      )
+                      report: BasicHashMap<String, Any?>
+    ) = run {
+        val service = ReportMutationService(environment)
+        service.upsertReport(action, report)
+    }
 }

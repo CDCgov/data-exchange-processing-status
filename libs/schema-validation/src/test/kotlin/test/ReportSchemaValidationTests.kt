@@ -33,7 +33,7 @@ class ReportSchemaValidationTests {
     //  Mock the jsonUtils dependency
     private val jsonUtils: JsonUtils = DefaultJsonUtils(objectMapper)
 
-    private val localFileSystemPath ="C:\\apps\\dex\\data-exchange-processing-status\\reports"
+    private val localFileSystemPath ="C:/apps/dex/data-exchange-processing-status/reports"
     // Mock the schemaValidator dependency
     private val schemaLoader: SchemaLoader = FileSchemaLoader(mapOf(
         "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to localFileSystemPath
@@ -151,7 +151,8 @@ class ReportSchemaValidationTests {
         val testMessage =File("./src/test/kotlin/data/report_schema_contentSchemaVersion_validation.json").readBytes()
         val message = createMessageFromBinary(testMessage)
         val result: ValidationSchemaResult = schemaValidationService.validateJsonSchema(message)
-        val missingContent ="Report rejected: Content schema file not found for content schema name 'hl7v2-debatch' and schema version '2.0.0'."
+        val missingContent ="Report rejected: file - hl7v2-debatch.2.0.0.schema.json not found for content schema."
+        //"Report rejected: file: ${file.absolutePath} not found for content schema"
         Assert.assertTrue(!result.status)
         Assert.assertEquals(result.reason,missingContent)
         Assert.assertNotSame(result.invalidData, mutableListOf<String>())

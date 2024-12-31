@@ -8,9 +8,10 @@ import org.koin.dsl.module
 /**
  * Helper class for creating koin modules for a report schema loader.
  */
-class CloudSchemaLoaderConfigurationKoinCreator {
+class SchemaLoaderConfigurationKoinCreator {
 
     companion object {
+
 
         /**
          * The class which loads the specific cloud schema loader configuration based on the env vars
@@ -35,8 +36,8 @@ class CloudSchemaLoaderConfigurationKoinCreator {
                     }
 
                     SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> {
-                        single {  AzureBlobStorageConfiguration(environment.config,configurationPath = "azure") }
-                        schemaLoaderSystemType = SchemaLoaderSystemType.BLOB_STORAGE
+                        single {  FileSystemConfiguration(environment.config,configurationPath = "file_system") }
+                        schemaLoaderSystemType = SchemaLoaderSystemType.FILE_SYSTEM
                     }
 
                     else -> {
