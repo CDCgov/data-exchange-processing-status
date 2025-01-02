@@ -12,7 +12,7 @@ type WorkerFixtures = {
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
     gql: [
-        async ({}, use) => {
+        async ({}, use) => { // NOSONAR
             const apiContext = await request.newContext({ });
             await use(getClient(apiContext));
         }, { auto: false, scope: 'worker' }
