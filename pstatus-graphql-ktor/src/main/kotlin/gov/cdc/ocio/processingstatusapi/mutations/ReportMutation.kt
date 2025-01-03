@@ -45,8 +45,6 @@ class ReportMutation(private val environment: ApplicationEnvironment) : Mutation
                 + "`replace`: Replace an existing report.\n"
     )
                       action: String,
-
-
                       @GraphQLDescription(
                           "*Report* to be created or updated, which is the JSON of the report provided.\n"
                       )
