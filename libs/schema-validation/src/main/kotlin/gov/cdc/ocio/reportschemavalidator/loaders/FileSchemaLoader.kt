@@ -1,8 +1,10 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
+import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 
 
 /**
@@ -10,13 +12,14 @@ import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
  */
 class FileSchemaLoader : SchemaLoader {
 
+    private val schemaDirectoryPath = "schema"
+
     /**
      * The function which loads the schema based on the file name path and returns a [SchemaFile]
      * @param fileName String
      * @return [SchemaFile]
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
-        val schemaDirectoryPath = "schema"
         return SchemaFile(
             fileName = fileName,
             inputStream = javaClass.classLoader.getResourceAsStream("$schemaDirectoryPath/$fileName")
@@ -38,6 +41,31 @@ class FileSchemaLoader : SchemaLoader {
      *
      * @return SchemaLoaderInfo
      */
-    override fun getInfo() = SchemaLoaderInfo("resources", "schema")
+    override fun getInfo() = SchemaLoaderInfo("resources", schemaDirectoryPath)
+
+    /**
+     * Get the report schema content from the provided information.
+     *
+     * @param schemaFilename [String]
+     * @return [Map]<[String], [Any]>
+     */
+    override fun getSchemaContent(schemaFilename: String): Map<String, Any> {
+        javaClass.classLoader.getResourceAsStream("$schemaDirectoryPath/$schemaFilename")?.use { inputStream ->
+            val jsonContent = inputStream.readAllBytes().decodeToString()
+            return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)
+        }
+        return mapOf()
+    }
+
+    /**
+     * Get the report schema content from the provided information.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [Map]<[String], [Any]>
+     */
+    override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
+        return getSchemaContent("$schemaName.$schemaVersion.schema.json")
+    }
 
 }

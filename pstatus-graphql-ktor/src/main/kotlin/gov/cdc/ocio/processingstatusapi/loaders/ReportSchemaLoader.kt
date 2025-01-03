@@ -33,4 +33,21 @@ class ReportSchemaLoader : KoinComponent {
      * @return List<[ReportSchemaMetadataGql]>
      */
     fun list() = schemaLoader.getSchemaFiles().map { ReportSchemaMetadataGql.from(it) }
+
+    /**
+     * Get the report schema content from the provided information.
+     *
+     * @param schemaFilename [String]
+     * @return [Map]<[String], [Any]>
+     */
+    fun schemaContent(schemaFilename: String) = schemaLoader.getSchemaContent(schemaFilename)
+
+    /**
+     * Get the report schema content from the provided information.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [Map]<[String], [Any]>
+     */
+    fun schemaContent(schemaName: String, schemaVersion: String) = schemaLoader.getSchemaContent(schemaName, schemaVersion)
 }

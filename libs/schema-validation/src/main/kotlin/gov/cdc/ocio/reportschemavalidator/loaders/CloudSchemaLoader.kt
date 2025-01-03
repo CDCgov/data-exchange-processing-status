@@ -3,7 +3,6 @@ package gov.cdc.ocio.reportschemavalidator.loaders
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.schema.SchemaStorageClient
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
-import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.schema.BlobStorageSchemaClient
 import gov.cdc.ocio.reportschemavalidator.schema.S3SchemaStorageClient
 
@@ -12,9 +11,12 @@ import gov.cdc.ocio.reportschemavalidator.schema.S3SchemaStorageClient
 /**
  * A loader that retrieves schema files from cloud storage solutions like S3 or Azure Blob Storage.
  */
-class CloudSchemaLoader(private val storageType: String, private val config: Map<String, String>) : SchemaLoader {
+class CloudSchemaLoader(
+    private val storageType: String,
+    private val config: Map<String, String>
+) : SchemaLoader {
 
-    private val storageClient: SchemaStorageClient = createStorageClient()
+    private val storageClient = createStorageClient()
 
     /**
      * The function which loads the schema based on the file name and returns a [SchemaFile]
@@ -42,6 +44,23 @@ class CloudSchemaLoader(private val storageType: String, private val config: Map
      * @return SchemaLoaderInfo
      */
     override fun getInfo() = storageClient.getInfo()
+
+    /**
+     * Get the report schema content from the provided information.
+     *
+     * @param schemaFilename [String]
+     * @return [Map]<[String], [Any]>
+     */
+    override fun getSchemaContent(schemaFilename: String) = storageClient.getSchemaContent(schemaFilename)
+
+    /**
+     * Get the report schema content from the provided information.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [Map]<[String], [Any]>
+     */
+    override fun getSchemaContent(schemaName: String, schemaVersion: String) = storageClient.getSchemaContent(schemaName, schemaVersion)
 
     /**
      * Factory function to create a storage client based on the provided configuration.
