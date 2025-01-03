@@ -98,7 +98,9 @@ class ReportMutationService(private val environment: ApplicationEnvironment){
             val actionType = validateAction(action)
 
             //schema loader
+
             val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader()
+
 
             // Validate the report
             val validationResult = validateReport(schemaLoader,mapOfContent)
@@ -150,7 +152,9 @@ class ReportMutationService(private val environment: ApplicationEnvironment){
      * @throws Exception
      */
     @Throws(ContentException::class, Exception::class)
+
     private fun validateReport(schemaLoader: SchemaLoader, input: Map<String, Any?>?): ValidatedReportResult {
+
         if (input.isNullOrEmpty()) throw ContentException("Can't validate a null or empty report")
 
         try {

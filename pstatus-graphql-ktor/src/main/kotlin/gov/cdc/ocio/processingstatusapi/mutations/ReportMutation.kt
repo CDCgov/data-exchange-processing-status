@@ -46,6 +46,7 @@ class ReportMutation(private val environment: ApplicationEnvironment) : Mutation
     )
                       action: String,
 
+
                       @GraphQLDescription(
                           "*Report* to be created or updated, which is the JSON of the report provided.\n"
                       )
@@ -55,3 +56,4 @@ class ReportMutation(private val environment: ApplicationEnvironment) : Mutation
         service.upsertReport(action, report)
     }
 }
+
