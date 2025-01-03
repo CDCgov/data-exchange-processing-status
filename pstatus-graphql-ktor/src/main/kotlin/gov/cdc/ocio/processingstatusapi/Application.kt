@@ -17,10 +17,11 @@ import org.koin.ktor.plugin.Koin
 
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
+    val appEnvironmentModule = module { single { environment } }
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
     val cloudSchemaConfigurationModule = CloudSchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    return modules(listOf(databaseModule, healthCheckDatabaseModule,cloudSchemaConfigurationModule))
+    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule, cloudSchemaConfigurationModule))
 }
 
 fun main(args: Array<String>) {
