@@ -38,8 +38,6 @@ class FileSchemaLoader : SchemaLoader {
      *
      * @return SchemaLoaderInfo
      */
-    override fun getInfo(): SchemaLoaderInfo {
-        return SchemaLoaderInfo("resources", "schema")
-    }
+    override fun getInfo() = SchemaLoaderInfo("resources", "schema")
 
 }

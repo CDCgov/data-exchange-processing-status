@@ -34,18 +34,14 @@ class CloudSchemaLoader(private val storageType: String, private val config: Map
      *
      * @return List<[ReportSchemaMetadata]>
      */
-    override fun getSchemaFiles(): List<ReportSchemaMetadata> {
-        return storageClient.getSchemaFiles()
-    }
+    override fun getSchemaFiles() = storageClient.getSchemaFiles()
 
     /**
      * Provides the schema loader information.
      *
      * @return SchemaLoaderInfo
      */
-    override fun getInfo(): SchemaLoaderInfo {
-        return storageClient.getInfo()
-    }
+    override fun getInfo() = storageClient.getInfo()
 
     /**
      * Factory function to create a storage client based on the provided configuration.
