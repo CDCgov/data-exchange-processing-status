@@ -1,7 +1,9 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
+import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.schema.SchemaStorageClient
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
+import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.schema.BlobStorageSchemaClient
 import gov.cdc.ocio.reportschemavalidator.schema.S3SchemaStorageClient
 
@@ -25,6 +27,24 @@ class CloudSchemaLoader(private val storageType: String, private val config: Map
             fileName = fileName,
             inputStream = inputStream
         )
+    }
+
+    /**
+     * Provides a list of the schema files that are available.
+     *
+     * @return List<[ReportSchemaMetadata]>
+     */
+    override fun getSchemaFiles(): List<ReportSchemaMetadata> {
+        return storageClient.getSchemaFiles()
+    }
+
+    /**
+     * Provides the schema loader information.
+     *
+     * @return SchemaLoaderInfo
+     */
+    override fun getInfo(): SchemaLoaderInfo {
+        return storageClient.getInfo()
     }
 
     /**

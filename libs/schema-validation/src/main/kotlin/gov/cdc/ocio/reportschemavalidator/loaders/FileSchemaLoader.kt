@@ -1,6 +1,8 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
+import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
+import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 
 
 /**
@@ -19,6 +21,25 @@ class FileSchemaLoader : SchemaLoader {
             fileName = fileName,
             inputStream = javaClass.classLoader.getResourceAsStream("$schemaDirectoryPath/$fileName")
         )
+    }
+
+    /**
+     * Provides a list of the schema files that are available.
+     *
+     * @return List<[ReportSchemaMetadata]>
+     */
+    override fun getSchemaFiles(): List<ReportSchemaMetadata> {
+        val resources = javaClass.classLoader.getResources("schema").toList()
+        return resources.map { ReportSchemaMetadata(it.file.toString(), "", "", "") }
+    }
+
+    /**
+     * Provides the schema loader information.
+     *
+     * @return SchemaLoaderInfo
+     */
+    override fun getInfo(): SchemaLoaderInfo {
+        return SchemaLoaderInfo("resources", "schema")
     }
 
 }

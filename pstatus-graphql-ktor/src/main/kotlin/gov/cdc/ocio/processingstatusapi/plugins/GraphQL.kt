@@ -89,6 +89,7 @@ fun Application.graphQLModule() {
             queries = listOf(
                 HealthQueryService(),
                 ReportQueryService(),
+                ReportSchemaQueryService(),
                 ReportCountsQueryService(),
                 ReportDeadLetterQueryService(),
                 UploadQueryService()
