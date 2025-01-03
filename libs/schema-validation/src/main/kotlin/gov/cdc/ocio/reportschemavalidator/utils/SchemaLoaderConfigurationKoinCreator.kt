@@ -22,7 +22,7 @@ class SchemaLoaderConfigurationKoinCreator {
             val logger = KotlinLogging.logger {}
 
             val schemaLoaderSystemModule = module {
-                val schemaLoaderSystem = environment.config.property("ktor.schema_loader_system").getString()
+                val schemaLoaderSystem = environment.config.property("ktor.report_schema_loader_system").getString()
                 val schemaLoaderSystemType: SchemaLoaderSystemType
                 when (schemaLoaderSystem.lowercase()) {
                     SchemaLoaderSystemType.S3.toString().lowercase() -> {

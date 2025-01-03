@@ -12,7 +12,7 @@ import io.ktor.server.config.*
  * @param environment ApplicationEnvironment
  */
 class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
-    private val schemaLoaderSystem = environment.config.tryGetString("ktor.schema_loader_system")?: ""
+    private val schemaLoaderSystem = environment.config.tryGetString("ktor.report_schema_loader_system")?: ""
     private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
     private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
     private val connectionString = environment.config.tryGetString("azure.blob_storage.report_schema_connection_string") ?: ""
