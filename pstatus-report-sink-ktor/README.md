@@ -33,6 +33,17 @@ For Mongo DB only, set the following environment variables:
 - `MONGO_CONNECTION_STRING` - URI of the couchbase database.
 - `MONGO_DATABASE_NAME` - Name of the database. For example, "ProcessingStatus".
 
+For report schema loader, set the following environment variables:
+- REPORT_SCHEMA_LOADER_SYSTEM - One of these values (s3, blob_storage or file_system)
+- For `s3` -
+- `REPORT_SCHEMA_S3_BUCKET` - S3 Bucket Name
+- `REPORT_SCHEMA_S3_REGION` - S3 Region.
+- For `blob_storage`
+- `REPORT_SCHEMA_BLOB_CONNECTION_STR` - Connection string of the storage account.
+- `REPORT_SCHEMA_BLOB_CONTAINER` - Blob container name.
+-  For `file_system`
+- `REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH`- The local file system path where the reports schema reside
+
 #### Message System
 - The `MSG_SYSTEM` environment variable is used to determine which system will be loaded dynamically.
 Set this variable to one of the following values:
