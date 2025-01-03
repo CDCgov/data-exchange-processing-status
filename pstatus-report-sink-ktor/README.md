@@ -34,7 +34,7 @@ For Mongo DB only, set the following environment variables:
 - `MONGO_DATABASE_NAME` - Name of the database. For example, "ProcessingStatus".
 
 For report schema loader, set the following environment variables:
-- REPORT_SCHEMA_LOADER_SYSTEM - One of these values (s3, blob_storage or file_system)
+- `REPORT_SCHEMA_LOADER_SYSTEM` - One of these values (s3, blob_storage or file_system)
 - For `s3` -
 - `REPORT_SCHEMA_S3_BUCKET` - S3 Bucket Name
 - `REPORT_SCHEMA_S3_REGION` - S3 Region.
