@@ -62,35 +62,32 @@ object InMemoryCache {
      * @return String
      */
     private fun updateSubscriptionRuleCache(subscriptionRule: String): String {
-        // Try to read from existing cache to see an existing subscription rule
-        val existingSubscriptionId: String?
-        readWriteLock.readLock().lock()
+        // Just using write lock for the entire process to ensure atomicity
+        readWriteLock.writeLock().lock()
         try {
-            existingSubscriptionId = subscriptionRuleCache.get(subscriptionRule)
-        } finally {
-            readWriteLock.readLock().unlock()
-        }
+            // Try to read from the cache
+            val existingSubscriptionId = subscriptionRuleCache[subscriptionRule]
 
-        // if subscription doesn't exist, it will add it else it will return the existing subscription id
-        return if (existingSubscriptionId != null) {
-            logger.debug("Subscription Rule exists")
-            existingSubscriptionId
-        } else {
-            // create unique subscription
+            // If a subscription already exists, return it
+            if (existingSubscriptionId != null) {
+                logger.debug("Subscription Rule exists")
+                return existingSubscriptionId
+            }
+
+            // Create a unique subscription and add it to the cache
             val subscriptionId = generateUniqueSubscriptionId()
             logger.debug("Subscription Id for this new rule has been generated $subscriptionId")
-            readWriteLock.writeLock().lock()
-            try {
-                subscriptionRuleCache.put(subscriptionRule, subscriptionId)
-            } finally {
-                readWriteLock.writeLock().unlock()
-            }
-            subscriptionId
+            subscriptionRuleCache[subscriptionRule] = subscriptionId
+            return subscriptionId
+        } finally {
+            // Always release the lock
+            readWriteLock.writeLock().unlock()
         }
     }
 
+
     /**
-     * This method generates new unique susbscriptionId for caches
+     * This method generates new unique subscriptionId for caches
      * @return String
      */
     internal fun generateUniqueSubscriptionId(): String {
