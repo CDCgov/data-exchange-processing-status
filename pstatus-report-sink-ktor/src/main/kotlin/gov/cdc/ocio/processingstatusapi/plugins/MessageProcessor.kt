@@ -7,7 +7,7 @@ import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.models.Source
 import gov.cdc.ocio.processingstatusapi.models.ValidationComponents
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
 
 
@@ -17,7 +17,7 @@ abstract class MessageProcessor {
 
 
     @Throws(BadRequestException::class,BadStateException::class)
-    fun processMessage(message: String, schemaLoader: CloudSchemaLoader) {
+    fun processMessage(message: String, schemaLoader: SchemaLoader) {
         try {
             components.logger.info { "Received message from $source : $message" }
             val updatedMessage = SchemaValidation().checkAndReplaceDeprecatedFields(message)

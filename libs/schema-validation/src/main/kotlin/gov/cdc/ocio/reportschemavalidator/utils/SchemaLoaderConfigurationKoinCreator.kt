@@ -8,9 +8,10 @@ import org.koin.dsl.module
 /**
  * Helper class for creating koin modules for a report schema loader.
  */
-class CloudSchemaLoaderConfigurationKoinCreator {
+class SchemaLoaderConfigurationKoinCreator {
 
     companion object {
+
 
         /**
          * The class which loads the specific cloud schema loader configuration based on the env vars
@@ -21,7 +22,7 @@ class CloudSchemaLoaderConfigurationKoinCreator {
             val logger = KotlinLogging.logger {}
 
             val schemaLoaderSystemModule = module {
-                val schemaLoaderSystem = environment.config.property("ktor.schema_loader_system").getString()
+                val schemaLoaderSystem = environment.config.property("ktor.report_schema_loader_system").getString()
                 val schemaLoaderSystemType: SchemaLoaderSystemType
                 when (schemaLoaderSystem.lowercase()) {
                     SchemaLoaderSystemType.S3.toString().lowercase() -> {
@@ -32,6 +33,11 @@ class CloudSchemaLoaderConfigurationKoinCreator {
                     SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> {
                         single {  AzureBlobStorageConfiguration(environment.config,configurationPath = "azure") }
                         schemaLoaderSystemType = SchemaLoaderSystemType.BLOB_STORAGE
+                    }
+
+                    SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> {
+                        single {  FileSystemConfiguration(environment.config,configurationPath = "file_system") }
+                        schemaLoaderSystemType = SchemaLoaderSystemType.FILE_SYSTEM
                     }
 
                     else -> {
