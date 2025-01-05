@@ -43,15 +43,15 @@ class ReportMutation(private val environment: ApplicationEnvironment) : Mutation
         "*Action*: Can be one of the following values\n"
                 + "`create`: Creates a new report.\n"
                 + "`replace`: Replace an existing report.\n"
-        )
-        action: String,
-
-        @GraphQLDescription(
-            "*Report* to be created or updated, which is the JSON of the report provided.\n"
-        )
-        report: BasicHashMap<String, Any?>
-        ) = run {
+    )
+                      action: String,
+                      @GraphQLDescription(
+                          "*Report* to be created or updated, which is the JSON of the report provided.\n"
+                      )
+                      report: BasicHashMap<String, Any?>
+    ) = run {
         val service = ReportMutationService(environment)
         service.upsertReport(action, report)
     }
 }
+

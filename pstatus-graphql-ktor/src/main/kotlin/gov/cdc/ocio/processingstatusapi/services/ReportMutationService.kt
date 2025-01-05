@@ -18,9 +18,9 @@ import gov.cdc.ocio.processingstatusapi.mutations.models.ValidatedReportResult
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
-import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
-import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 import io.ktor.server.application.*
@@ -98,7 +98,9 @@ class ReportMutationService(private val environment: ApplicationEnvironment){
             val actionType = validateAction(action)
 
             //schema loader
-            val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader()
+
+            val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader()
+
 
             // Validate the report
             val validationResult = validateReport(schemaLoader,mapOfContent)
@@ -150,7 +152,9 @@ class ReportMutationService(private val environment: ApplicationEnvironment){
      * @throws Exception
      */
     @Throws(ContentException::class, Exception::class)
-    private fun validateReport(schemaLoader: CloudSchemaLoader, input: Map<String, Any?>?): ValidatedReportResult {
+
+    private fun validateReport(schemaLoader: SchemaLoader, input: Map<String, Any?>?): ValidatedReportResult {
+
         if (input.isNullOrEmpty()) throw ContentException("Can't validate a null or empty report")
 
         try {
