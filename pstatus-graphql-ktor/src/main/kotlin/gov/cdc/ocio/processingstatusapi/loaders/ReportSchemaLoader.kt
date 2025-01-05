@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusapi.loaders
 
 import gov.cdc.ocio.processingstatusapi.models.schemas.SchemaLoaderInfoGql
 import gov.cdc.ocio.processingstatusapi.models.schemas.ReportSchemaMetadataGql
-import gov.cdc.ocio.reportschemavalidator.utils.CloudSchemaLoaderConfiguration
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -18,7 +18,7 @@ class ReportSchemaLoader : KoinComponent {
 
     private val environment by inject<ApplicationEnvironment>()
 
-    private val schemaLoader = CloudSchemaLoaderConfiguration(environment).createSchemaLoader()
+    private val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader()
 
     /**
      * Provides the schema loader system information.
