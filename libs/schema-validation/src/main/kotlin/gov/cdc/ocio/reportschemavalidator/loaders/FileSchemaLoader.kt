@@ -6,14 +6,21 @@ import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import java.io.FileNotFoundException
+import java.nio.file.Files
+import java.nio.file.Paths
+import kotlin.io.path.inputStream
+import kotlin.io.path.listDirectoryEntries
 
 
 /**
  * The class which loads the schema files from the class path
  */
-class FileSchemaLoader(private val config: Map<String, String>) : SchemaLoader {
+class FileSchemaLoader(
+    config: Map<String, String>
+) : SchemaLoader {
 
-    private val schemaDirectoryPath = "schema"
+    private val schemaLocalSystemFilePath = config["REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH"]
+        ?: throw IllegalArgumentException("Local file system path is not configured")
 
     /**
      * The function which loads the schema based on the file name path and returns a [SchemaFile]
@@ -21,11 +28,9 @@ class FileSchemaLoader(private val config: Map<String, String>) : SchemaLoader {
      * @return [SchemaFile]
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
-        val schemaLocalSystemFilePath = config["REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH"]
-            ?: throw IllegalArgumentException("Local file system path is not configured")
         val file = java.io.File("$schemaLocalSystemFilePath/$fileName")
         if (!file.exists()) {
-            throw FileNotFoundException("Report rejected: file - ${fileName} not found for content schema.")
+            throw FileNotFoundException("Report rejected: file - $fileName not found for content schema.")
         }
         return SchemaFile(
             fileName = fileName,
@@ -39,8 +44,14 @@ class FileSchemaLoader(private val config: Map<String, String>) : SchemaLoader {
      * @return List<[ReportSchemaMetadata]>
      */
     override fun getSchemaFiles(): List<ReportSchemaMetadata> {
-        val resources = javaClass.classLoader.getResources("schema").toList()
-        return resources.map { ReportSchemaMetadata(it.file.toString(), "", "", "") }
+        val folderPath = Paths.get(schemaLocalSystemFilePath)
+        val files = folderPath.listDirectoryEntries().filter { Files.isRegularFile(it) && it.toFile().extension == "json" }
+
+        return files.map { filePath ->
+            filePath.inputStream().use { inputStream ->
+                ReportSchemaMetadata.from(filePath.toFile().name, inputStream)
+            }
+        }
     }
 
     /**
@@ -48,7 +59,7 @@ class FileSchemaLoader(private val config: Map<String, String>) : SchemaLoader {
      *
      * @return SchemaLoaderInfo
      */
-    override fun getInfo() = SchemaLoaderInfo("resources", schemaDirectoryPath)
+    override fun getInfo() = SchemaLoaderInfo("file_system", schemaLocalSystemFilePath)
 
     /**
      * Get the report schema content from the provided information.
@@ -57,11 +68,11 @@ class FileSchemaLoader(private val config: Map<String, String>) : SchemaLoader {
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaFilename: String): Map<String, Any> {
-        javaClass.classLoader.getResourceAsStream("$schemaDirectoryPath/$schemaFilename")?.use { inputStream ->
+        val file = java.io.File("$schemaLocalSystemFilePath/$schemaFilename")
+        file.inputStream().use { inputStream ->
             val jsonContent = inputStream.readAllBytes().decodeToString()
             return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)
         }
-        return mapOf()
     }
 
     /**
