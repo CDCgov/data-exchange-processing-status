@@ -12,15 +12,16 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import org.koin.core.KoinApplication
+import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
+    val appEnvironmentModule = module { single { environment } }
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
     val schemaConfigurationModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    return modules(listOf(databaseModule, healthCheckDatabaseModule,schemaConfigurationModule))
-
+    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule,schemaConfigurationModule))
 }
 
 fun main(args: Array<String>) {
