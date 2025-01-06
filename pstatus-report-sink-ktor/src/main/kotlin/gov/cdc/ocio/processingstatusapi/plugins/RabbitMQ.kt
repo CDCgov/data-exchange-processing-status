@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -49,7 +50,8 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
-    //val schemaLoader: CloudSchemaLoader = pluginConfig.createSchemaLoader()
+    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
+    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
     lateinit var connection: Connection
     lateinit var channel: Channel
 
@@ -89,7 +91,7 @@ val RabbitMQPlugin = createApplicationPlugin(
 
                     val message = String(body, Charsets.UTF_8)
                     SchemaValidation.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
-                  //  rabbitMQProcessor.processMessage(message,schemaLoader)
+                    rabbitMQProcessor.processMessage(message,schemaLoader)
 
                     // Acknowledge the message
                     channel.basicAck(deliveryTag, false)
