@@ -71,7 +71,9 @@ class CloudSchemaLoader(
             "s3" -> {
                 val bucketName = config["REPORT_SCHEMA_S3_BUCKET"] ?: throw IllegalArgumentException("S3 bucket not configured")
                 val region = config["REPORT_SCHEMA_S3_REGION"] ?: "us-east-1"
-                S3SchemaStorageClient(bucketName, region)
+                val roleArn = config["AWS_ROLE_ARN"] ?: ""
+                val webIdentityTokenFile = config["AWS_WEB_IDENTITY_TOKEN_FILE"]
+                S3SchemaStorageClient(bucketName, region, roleArn, webIdentityTokenFile)
             }
             "blob_storage" -> {
                 val connectionString = config["REPORT_SCHEMA_BLOB_CONNECTION_STR"] ?: throw IllegalArgumentException("Blob connection string not configured")
