@@ -5,9 +5,6 @@ import gov.cdc.ocio.processingstatusapi.models.ReportCounts
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import gov.cdc.ocio.processingstatusapi.models.reports.*
-import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Debatch
-import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Redactor
-import gov.cdc.ocio.processingstatusapi.models.reports.stagereports.HL7Validation
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import mu.KotlinLogging
@@ -65,15 +62,28 @@ class ReportCountsLoader: KoinComponent {
 
             logger.info("Successfully located report with uploadId = $uploadId")
 
+            val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
+            // Populate `stages` property
+            // Populate `stages` property
+            val revisedStageCounts: Map<String, Any> = stageCountsByUploadId[uploadId]?.groupBy { it.stageName }?.mapKeys {
+                it.key ?: "Unknown"
+            }?.mapValues { stageEntry ->
+                stageEntry.value.map { stageItem ->
+                    mapOf(
+                        "schema_name" to (stageItem.schema_name ?: "Unknown"),
+                        "schema_version" to (stageItem.schema_version ?: "Unknown"),
+                        "count" to stageItem.counts
+                    )
+                }
+            } ?: mapOf()
+
+
             val reportResult = ReportCounts().apply {
                 this.uploadId = uploadId
                 this.dataStreamId = firstReport?.dataStreamId
                 this.dataStreamRoute = firstReport?.dataStreamRoute
                 this.timestamp = firstReport?.timestamp?.atOffset(ZoneOffset.UTC)
-                val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
-                val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
-                val revisedStageCounts = revisedStageCountsByUploadId[uploadId]
-                revisedStageCounts?.let { this.stages = it }
+                revisedStageCounts.let { this.stages = it }
             }
 
             return reportResult
@@ -84,99 +94,6 @@ class ReportCountsLoader: KoinComponent {
         return null
     }
 
-    /**
-     * Get the counts, including any special counting based on the schema from the report, from the uploadIds and
-     * stageCounts provided.
-     *
-     * @param stageCountsByUploadId Map<String, List<StageCounts>>
-     * @return Map<String, Map<String, Any>> Revised stage counts by uploadId.  In the returned Map, the outer key is
-     * the uploadId and outer value is the stage counts map.  The inner key is the stage name and the inner value is
-     * the stage counts, which can be a simple integer or an object containing additional counts.
-     */
-    private fun getCounts(stageCountsByUploadId: Map<String, List<StageCounts>>): Map<String, Map<String, Any>> {
-
-        val revisedStageCountsByUploadId = mutableMapOf<String, MutableMap<String, Any>>()
-
-        val uploadIdList = stageCountsByUploadId.keys
-        val quotedUploadIds = uploadIdList.joinToString("\",\"", "\"", "\"")
-
-        // Get counts for any HL7 debatch stages
-        val hl7DebatchSchemaName = HL7Debatch.schemaDefinition.schemaName
-        val hl7DebatchCountsQuery = (
-                "select "
-                        + "${cPrefix}uploadId, ${cPrefix}stageName, SUM(${cPrefix}content.stage.report.number_of_messages) as numberOfMessages, "
-                        + "SUM(${cPrefix}content.stage.report.number_of_messages_not_propagated) as numberOfMessagesNotPropagated "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = '$hl7DebatchSchemaName' and ${cPrefix}uploadId in ($quotedUploadIds) "
-                        + "group by ${cPrefix}uploadId, ${cPrefix}stageName"
-                )
-
-        val hl7DebatchCountsItems = reportsCollection.queryItems(
-            hl7DebatchCountsQuery,
-            HL7DebatchCounts::class.java
-        )
-
-        val hl7ValidationSchemaName = HL7Validation.schemaDefinition.schemaName
-        val hl7ValidationCountsQuery = (
-                "select "
-                        + "${cPrefix}uploadId, ${cPrefix}stageName, "
-                        + "count(contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) as valid, "
-                        + "count(not contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) as invalid "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = '$hl7ValidationSchemaName' and ${cPrefix}uploadId in ($quotedUploadIds) "
-                        + "group by ${cPrefix}uploadId, ${cPrefix}stageName"
-                )
-
-        val hl7ValidationCountsItems = reportsCollection.queryItems(
-            hl7ValidationCountsQuery,
-            HL7ValidationCounts::class.java
-        )
-
-        stageCountsByUploadId.forEach { entry ->
-            val uploadId = entry.key
-            val stageCounts = entry.value
-            val revisedStageCounts = revisedStageCountsByUploadId[uploadId] ?: mutableMapOf()
-            stageCounts.forEach { stageCount ->
-                when (stageCount.schema_name) {
-                    HL7Debatch.schemaDefinition.schemaName -> {
-                        val hl7DebatchCounts = hl7DebatchCountsItems.toList().firstOrNull {
-                            it.uploadId == uploadId && it.stageName == stageCount.stageName
-                        }
-                        val counts: Any = if (hl7DebatchCounts != null) {
-                            mapOf(
-                                "counts" to stageCount.counts,
-                                "number_of_messages" to hl7DebatchCounts.numberOfMessages.toLong(),
-                                "number_of_messages_not_propagated" to hl7DebatchCounts.numberOfMessagesNotPropagated.toLong()
-                            )
-                        } else
-                            stageCount.counts!!
-                        revisedStageCounts[stageCount.stageName!!] = counts
-                    }
-                    HL7Validation.schemaDefinition.schemaName -> {
-                        val hl7ValidationCounts = hl7ValidationCountsItems.toList().firstOrNull {
-                            it.uploadId == uploadId && it.stageName == stageCount.stageName
-                        }
-                        val counts: Any = if (hl7ValidationCounts != null) {
-                            mapOf(
-                                "counts" to stageCount.counts,
-                                "valid" to hl7ValidationCounts.valid.toLong(),
-                                "invalid" to hl7ValidationCounts.invalid.toLong()
-                            )
-                        } else
-                            stageCount.counts!!
-                        revisedStageCounts[stageCount.stageName!!] = counts
-                    }
-                    // No further counts needed
-                    else -> {
-                        revisedStageCounts[stageCount.stageName!!] = stageCount.counts!!
-                    }
-                }
-            }
-            revisedStageCountsByUploadId[uploadId] = revisedStageCounts
-        }
-
-        return revisedStageCountsByUploadId
-    }
 
     /**
      * Get upload report counts for the given query parameters.
@@ -286,16 +203,31 @@ class ReportCountsLoader: KoinComponent {
                         })
                         stageCountsByUploadId[it.uploadId!!] = list
                     }
-                    val revisedStageCountsByUploadId = getCounts(stageCountsByUploadId)
 
-                    revisedStageCountsByUploadId.forEach { upload ->
+
+
+                    stageCountsByUploadId.forEach { upload ->
                         val uploadId = upload.key
                         reportCountsList.add(ReportCounts().apply {
                             this.uploadId = uploadId
                             this.dataStreamId = dataStreamId
                             this.dataStreamRoute = dataStreamRoute
                             this.timestamp = earliestTimestampByUploadId[uploadId]
-                            this.stages = upload.value
+                            // Populate `stages` property
+
+                            val stageCountsByUploadIdList = mapOf(uploadId to reportItems.toList())
+                            val revisedStageCounts: Map<String, Any> =stageCountsByUploadIdList[uploadId]?.groupBy { it.stageName }?.mapKeys {
+                            it.key ?: "Unknown"
+                        }?.mapValues { stageEntry ->
+                            stageEntry.value.map { stageItem ->
+                                mapOf(
+                                    "schema_name" to (stageItem.schema_name ?: "Unknown"),
+                                    "schema_version" to (stageItem.schema_version ?: "Unknown"),
+                                    "count" to stageItem.counts
+                                )
+                            }
+                        } ?: mapOf()
+                            revisedStageCounts.let { this.stages = it }
                         })
                     }
                 }
@@ -318,49 +250,6 @@ class ReportCountsLoader: KoinComponent {
         return aggregateReportCounts
     }
 
-    /**
-     * Gets the total number of HL7 reports found with an invalid structure validation for the filter criteria
-     * provided.
-     *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param dateStart String?
-     * @param dateEnd String?
-     * @param daysInterval String?
-     * @return HL7InvalidStructureValidationCounts
-     */
-    fun getHL7InvalidStructureValidationCounts(dataStreamId: String,
-                                               dataStreamRoute: String,
-                                               dateStart: String?,
-                                               dateEnd: String?,
-                                               daysInterval: Int?
-    ): HL7InvalidStructureValidationCounts {
-
-        val timeRangeWhereClause =
-            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
-
-        val reportsSqlQuery = (
-                "select "
-                        + "value count(not contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
-                )
-
-        val startTime = System.currentTimeMillis()
-        val countResult = reportsCollection.queryItems(
-            reportsSqlQuery,
-            Long::class.java
-        )
-        val totalItems = countResult.firstOrNull() ?: 0
-        val endTime = System.currentTimeMillis()
-        val counts = HL7InvalidStructureValidationCounts().apply {
-            this.counts = totalItems
-            this.queryTimeMillis = endTime - startTime
-        }
-
-        return counts
-    }
 
     /**
      * Get processing counts
@@ -431,134 +320,6 @@ class ReportCountsLoader: KoinComponent {
             }
         }
 
-        return counts
-    }
-
-    /**
-     * Get direct and in-direct message counts
-     *
-     * @return HttpResponseMessage
-     */
-    fun getHL7DirectIndirectMessageCounts(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        dateStart: String?,
-        dateEnd: String?,
-        daysInterval: Int?
-    ): HL7DirectIndirectMessageCounts {
-
-        val timeRangeWhereClause =
-            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
-
-        val directMessageQuery = (
-                "select value SUM(directCounts) "
-                        + "from (select value SUM(${cPrefix}content.stage.report.number_of_messages) from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = '${HL7Debatch.schemaDefinition.schemaName}' and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
-                )
-
-        val indirectMessageQuery = (
-                "select value count(redactedCount) from ( "
-                        + "select * from $cName $cVar where ${cPrefix}content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as redactedCount"
-                )
-
-        val startTime = System.currentTimeMillis()
-
-        val directCountResult = reportsCollection.queryItems(
-            directMessageQuery,
-            Float::class.java
-        )
-
-        val indirectCountResult = reportsCollection.queryItems(
-            indirectMessageQuery,
-            Float::class.java
-        )
-
-        val directTotalItems: Long = directCountResult.firstOrNull()?.toLong() ?: 0
-        val inDirectTotalItems = indirectCountResult.firstOrNull()?.toLong() ?: 0
-
-        val endTime = System.currentTimeMillis()
-        val counts = HL7DirectIndirectMessageCounts().apply {
-            this.directCounts = directTotalItems
-            this.indirectCounts = inDirectTotalItems
-            this.queryTimeMillis = endTime - startTime
-        }
-
-        return counts
-    }
-
-    /**
-     * Get the number of invalid HL7v2 messages count using two different methods.
-     *
-     * @return HttpResponseMessage
-     */
-    fun getHL7InvalidMessageCounts(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        dateStart: String?,
-        dateEnd: String?,
-        daysInterval: Int?
-    ) : HL7InvalidMessageCounts {
-
-        val timeRangeWhereClause =
-            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
-
-        val directInvalidMessageQuery = (
-                "select value SUM(directCounts) "
-                        + "FROM (select value SUM(${cPrefix}content.stage.report.number_of_messages) from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = '${HL7Redactor.schemaDefinition.schemaName}' and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as directCounts"
-                )
-
-        val directStructureInvalidMessageQuery = (
-                "select "
-                        + "value count(not contains(upper(${cPrefix}content.summary.current_status), 'VALID_') ? 1 : undefined) "
-                        + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = '${HL7Validation.schemaDefinition.schemaName}' and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
-                )
-
-        val indirectInvalidMessageQuery = (
-                "select value count(invalidCounts) from ("
-                        + "select * from $cName $cVar where ${cPrefix}content.schema_name != 'HL7-JSON-LAKE-TRANSFORMER' and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause) as invalidCounts"
-                )
-
-        val startTime = System.currentTimeMillis()
-
-        val directRedactedCountResult = reportsCollection.queryItems(
-            directInvalidMessageQuery,
-            Float::class.java
-        )
-
-        val directStructureCountResult = reportsCollection.queryItems(
-            directStructureInvalidMessageQuery,
-            Float::class.java
-        )
-
-        val indirectCountResult = reportsCollection.queryItems(
-            indirectInvalidMessageQuery,
-            Float::class.java
-        )
-
-        val directRedactedCount = directRedactedCountResult.firstOrNull()?.toLong() ?: 0
-        val directStructureCount = directStructureCountResult.firstOrNull()?.toLong() ?: 0
-        val directTotalItems = directRedactedCount + directStructureCount
-        val indirectTotalItems = indirectCountResult.firstOrNull()?.toLong() ?: 0
-
-        val endTime = System.currentTimeMillis()
-
-        val counts = HL7InvalidMessageCounts().apply {
-            this.invalidMessageDirectCounts = directTotalItems
-            this.invalidMessageIndirectCounts = indirectTotalItems
-            this.queryTimeMillis = endTime - startTime
-        }
         return counts
     }
 
