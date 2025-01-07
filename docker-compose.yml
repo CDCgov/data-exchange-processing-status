@@ -12,9 +12,13 @@ services:
       COUCHBASE_USERNAME: "admin"
       COUCHBASE_PASSWORD: "password"
       PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
+      REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
     depends_on:
       - couchbase
     restart: "always"
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
 
   report-sink:
     image: quay.io/us-cdcgov/phdo/pstatus-report-sink:latest
@@ -34,10 +38,14 @@ services:
       RABBITMQ_USERNAME: "guest"
       RABBITMQ_PASSWORD: "guest"
       RABBITMQ_VIRTUAL_HOST: "/"
+      REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
     depends_on:
       - couchbase
       - rabbitmq
     restart: "always"
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
 
   couchbase:
     image: couchbase
