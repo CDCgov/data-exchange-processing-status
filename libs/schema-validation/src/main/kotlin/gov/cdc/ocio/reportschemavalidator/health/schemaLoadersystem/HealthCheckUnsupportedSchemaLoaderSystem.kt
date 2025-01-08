@@ -10,7 +10,7 @@ import gov.cdc.ocio.types.health.HealthStatusType
  * Concrete implementation of the unsupported messaging service health checks.
  */
 
-class HealthCheckUnsupportedSchemaLoaderSystem : HealthCheckSystem("Cloud Schema Loader") {
+class HealthCheckUnsupportedSchemaLoaderSystem : HealthCheckSystem("Schema Loader") {
 
 
 /**

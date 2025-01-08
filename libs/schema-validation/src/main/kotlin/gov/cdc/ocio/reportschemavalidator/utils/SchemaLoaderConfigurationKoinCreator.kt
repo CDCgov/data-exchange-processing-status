@@ -26,17 +26,17 @@ class SchemaLoaderConfigurationKoinCreator {
                 val schemaLoaderSystemType: SchemaLoaderSystemType
                 when (schemaLoaderSystem.lowercase()) {
                     SchemaLoaderSystemType.S3.toString().lowercase() -> {
-                        single {  AWSS3Configuration(environment.config,configurationPath = "aws") }
+                        single { AWSS3Configuration(environment.config ,configurationPath = "aws") }
                         schemaLoaderSystemType = SchemaLoaderSystemType.S3
                     }
 
                     SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> {
-                        single {  AzureBlobStorageConfiguration(environment.config,configurationPath = "azure") }
+                        single { AzureBlobStorageConfiguration(environment.config, configurationPath = "azure") }
                         schemaLoaderSystemType = SchemaLoaderSystemType.BLOB_STORAGE
                     }
 
                     SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> {
-                        single {  FileSystemConfiguration(environment.config,configurationPath = "file_system") }
+                        single { FileSystemConfiguration(environment.config, configurationPath = "file_system") }
                         schemaLoaderSystemType = SchemaLoaderSystemType.FILE_SYSTEM
                     }
 

@@ -8,6 +8,7 @@ import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckServiceBus
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckUnsupportedMessageSystem
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderSystemType
@@ -68,6 +69,7 @@ class HealthQueryService: KoinComponent {
             schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
                 SchemaLoaderSystemType.S3.toString().lowercase() -> HealthCheckS3Bucket()
                 SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> HealthCheckBlobContainer()
+                SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> HealthCheckFileSystem()
                 else -> HealthCheckUnsupportedSchemaLoaderSystem()
             }
             schemaLoaderSystemHealthCheck.doHealthCheck()
