@@ -15,6 +15,8 @@ class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
     private val schemaLoaderSystem = environment.config.tryGetString("ktor.report_schema_loader_system")?: ""
     private val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
     private val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
+    private val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
+    private val webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file") ?: ""
     private val connectionString = environment.config.tryGetString("azure.blob_storage.report_schema_connection_string") ?: ""
     private val container = environment.config.tryGetString("azure.blob_storage.report_schema_container") ?: ""
     private val localFileSystemPath = environment.config.tryGetString("file_system.report_schema_local_path") ?: ""
@@ -27,7 +29,9 @@ class SchemaLoaderConfiguration(environment: ApplicationEnvironment){
             SchemaLoaderSystemType.S3.toString().lowercase()  -> {
                 val config = mapOf(
                     "REPORT_SCHEMA_S3_BUCKET" to s3Bucket,
-                    "REPORT_SCHEMA_S3_REGION" to s3Region
+                    "REPORT_SCHEMA_S3_REGION" to s3Region,
+                    "AWS_ROLE_ARN" to roleArn,
+                    "AWS_WEB_IDENTITY_TOKEN_FILE" to webIdentityTokenFile
                 )
                 return CloudSchemaLoader(schemaLoaderSystem, config)
             }
