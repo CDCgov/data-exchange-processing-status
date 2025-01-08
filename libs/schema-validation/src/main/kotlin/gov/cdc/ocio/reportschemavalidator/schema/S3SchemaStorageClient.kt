@@ -5,17 +5,22 @@ import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import java.io.InputStream
+import java.nio.file.Path
 import java.util.function.Consumer
 
 
 class S3SchemaStorageClient(
     private val bucketName: String,
-    private val region: String
+    private val region: String,
+    private val roleArn: String?,
+    private val webIdentityTokenFile: String?
+
 ) : SchemaStorageClient {
 
     /**
@@ -24,9 +29,22 @@ class S3SchemaStorageClient(
      * @return S3Client
      */
     private fun getS3Client(): S3Client {
+
+      val credentialsProvider =    if (roleArn.isNullOrEmpty() ||
+            webIdentityTokenFile.isNullOrEmpty()) {
+            // Fallback to default credentials provider (access key and secret)
+            DefaultCredentialsProvider.create()
+        } else {
+            // Use Web Identity Token
+            WebIdentityTokenFileCredentialsProvider.builder()
+                .roleArn(roleArn)
+                .webIdentityTokenFile(webIdentityTokenFile.let { Path.of(it) })
+                .build()
+        }
+        // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return S3Client.builder()
             .region(Region.of(region))
-            .credentialsProvider(DefaultCredentialsProvider.create())
+            .credentialsProvider(credentialsProvider)
             .build()
     }
 
@@ -45,8 +63,6 @@ class S3SchemaStorageClient(
             .build()
 
         val result = s3Client.getObject(getObjectRequest)
-        s3Client.close()
-
         return result
     }
 
