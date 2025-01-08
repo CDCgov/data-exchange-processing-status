@@ -14,9 +14,9 @@ data class StageCountsForUpload(
 
     var uploadId: String? = null,
 
-    var schema_name: String? = null,
+    var content_schema_name: String? = null,
 
-    var schema_version: String? = null,
+    var content_schema_version: String? = null,
 
     var timestamp: OffsetDateTime? = null,
 

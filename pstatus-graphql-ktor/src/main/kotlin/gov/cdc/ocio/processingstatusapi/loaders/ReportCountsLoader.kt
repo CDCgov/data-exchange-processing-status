@@ -38,9 +38,9 @@ class ReportCountsLoader: KoinComponent {
         // Get the reports
         val reportsSqlQuery = (
                 "select "
-                        + "count(1) as counts, ${cPrefix}stageName, ${cPrefix}content.schema_name, ${cPrefix}content.schema_version "
+                        + "count(1) as counts, ${cPrefix}stageName, ${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version "
                         + "from $cName $cVar where ${cPrefix}uploadId = '$uploadId' "
-                        + "group by ${cPrefix}stageName, ${cPrefix}content.${cElFunc("schema_name")}, ${cPrefix}content.${cElFunc("schema_version")}"
+                        + "group by ${cPrefix}stageName, ${cPrefix}content.${cElFunc("content_schema_name")}, ${cPrefix}content.${cElFunc("content_schema_version")}"
                 )
         val reportItems = reportsCollection.queryItems(
             reportsSqlQuery,
@@ -63,20 +63,17 @@ class ReportCountsLoader: KoinComponent {
             logger.info("Successfully located report with uploadId = $uploadId")
 
             val stageCountsByUploadId = mapOf(uploadId to reportItems.toList())
-            // Populate `stages` property
-            // Populate `stages` property
             val revisedStageCounts: Map<String, Any> = stageCountsByUploadId[uploadId]?.groupBy { it.stageName }?.mapKeys {
                 it.key ?: "Unknown"
             }?.mapValues { stageEntry ->
                 stageEntry.value.map { stageItem ->
                     mapOf(
-                        "schema_name" to (stageItem.schema_name ?: "Unknown"),
-                        "schema_version" to (stageItem.schema_version ?: "Unknown"),
+                        "schema_name" to (stageItem.content_schema_name ?: "Unknown"),
+                        "schema_version" to (stageItem.content_schema_version ?: "Unknown"),
                         "count" to stageItem.counts
                     )
                 }
             } ?: mapOf()
-
 
             val reportResult = ReportCounts().apply {
                 this.uploadId = uploadId
@@ -130,8 +127,14 @@ class ReportCountsLoader: KoinComponent {
                     + "value count(1) "
                     + "from (select distinct ${cPrefix}uploadId from $cName $cVar "
                     + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
-                    + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause)"
+                    + "${cPrefix}dataStreamRoute = '$dataStreamRoute' ) "
         )
+        if(timeRangeWhereClause.isNotEmpty()) {
+            uploadIdCountSqlQuery.append("(and $timeRangeWhereClause)as distinctUploads")
+        }
+        else{
+            uploadIdCountSqlQuery.append("as distinctUploads")
+        }
 
         val uploadIdCountResult = reportsCollection.queryItems(
             uploadIdCountSqlQuery.toString(),
@@ -168,11 +171,11 @@ class ReportCountsLoader: KoinComponent {
                 val quotedUploadIds = uploadIdsList.joinToString("\",\"", "\"", "\"")
                 val reportsSqlQuery = (
                         "select "
-                                + "${cPrefix}uploadId, ${cPrefix}content.schema_name, ${cPrefix}content.schema_version, "
+                                + "${cPrefix}uploadId, ${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version, "
                                 + "MIN(r.timestamp) as timestamp, count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
                                 + "from $cName $cVar where ${cPrefix}uploadId in ($quotedUploadIds) "
-                                + "group by ${cPrefix}uploadId, ${cPrefix}stageName, ${cPrefix}content.schema_name, "
-                                + "${cPrefix}content.schema_version"
+                                + "group by ${cPrefix}uploadId, ${cPrefix}stageName, ${cPrefix}content.content_schema_name, "
+                                + "${cPrefix}content.content_schema_version"
                         )
                 val reportItems = reportsCollection.queryItems(
                     reportsSqlQuery,
@@ -185,8 +188,8 @@ class ReportCountsLoader: KoinComponent {
                     reportItems.forEach {
                         val list = stageCountsByUploadId[it.uploadId!!] ?: mutableListOf()
                         list.add(StageCounts().apply {
-                            this.schema_name = it.schema_name
-                            this.schema_version = it.schema_version
+                            this.content_schema_name = it.content_schema_name
+                            this.content_schema_version = it.content_schema_version
                             this.counts = it.counts
                             this.stageName = it.stageName
                             it.timestamp?.let { timestamp ->
@@ -204,8 +207,6 @@ class ReportCountsLoader: KoinComponent {
                         stageCountsByUploadId[it.uploadId!!] = list
                     }
 
-
-
                     stageCountsByUploadId.forEach { upload ->
                         val uploadId = upload.key
                         reportCountsList.add(ReportCounts().apply {
@@ -213,7 +214,6 @@ class ReportCountsLoader: KoinComponent {
                             this.dataStreamId = dataStreamId
                             this.dataStreamRoute = dataStreamRoute
                             this.timestamp = earliestTimestampByUploadId[uploadId]
-                            // Populate `stages` property
 
                             val stageCountsByUploadIdList = mapOf(uploadId to reportItems.toList())
                             val revisedStageCounts: Map<String, Any> =stageCountsByUploadIdList[uploadId]?.groupBy { it.stageName }?.mapKeys {
@@ -221,8 +221,8 @@ class ReportCountsLoader: KoinComponent {
                         }?.mapValues { stageEntry ->
                             stageEntry.value.map { stageItem ->
                                 mapOf(
-                                    "schema_name" to (stageItem.schema_name ?: "Unknown"),
-                                    "schema_version" to (stageItem.schema_version ?: "Unknown"),
+                                    "schema_name" to (stageItem.content_schema_name ?: "Unknown"),
+                                    "schema_version" to (stageItem.content_schema_version ?: "Unknown"),
                                     "count" to stageItem.counts
                                 )
                             }
@@ -346,11 +346,11 @@ class ReportCountsLoader: KoinComponent {
 
         val rollupCountsQuery = (
                 "select "
-                        + "${cPrefix}content.schema_name, ${cPrefix}content.schema_version, "
+                        + "${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version, "
                         + "count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
                         + "from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
-                        + "group by ${cPrefix}stageName, ${cPrefix}content.schema_name, ${cPrefix}content.schema_version"
+                        + "group by ${cPrefix}stageName, ${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version"
                 )
 
         val rollupCountsResult = reportsCollection.queryItems(
