@@ -156,9 +156,12 @@ class ReportCountsLoader: KoinComponent {
                         + "distinct value ${cPrefix}uploadId "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
-                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "$timeRangeWhereClause offset $offset limit $pageSizeAsInt"
+                        + "${cPrefix}dataStreamRoute = '$dataStreamRoute'"
             )
+
+            if(timeRangeWhereClause.isNotEmpty()) {
+                uploadIdCountSqlQuery.append(" and $timeRangeWhereClause offset $offset limit $pageSizeAsInt")
+            }
 
             // Get the matching uploadIds
             val uploadIds = reportsCollection.queryItems(
@@ -172,8 +175,8 @@ class ReportCountsLoader: KoinComponent {
                 val reportsSqlQuery = (
                         "select "
                                 + "${cPrefix}uploadId, ${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version, "
-                                + "MIN(r.timestamp) as timestamp, count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
-                                + "from $cName $cVar where ${cPrefix}uploadId in ($quotedUploadIds) "
+                                + "MIN(MILLIS_TO_STR(STR_TO_MILLIS(r.timestamp))) AS timestamp, count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
+                                + "from $cName $cVar where ${cPrefix}uploadId in [$quotedUploadIds] "
                                 + "group by ${cPrefix}uploadId, ${cPrefix}stageName, ${cPrefix}content.content_schema_name, "
                                 + "${cPrefix}content.content_schema_version"
                         )
