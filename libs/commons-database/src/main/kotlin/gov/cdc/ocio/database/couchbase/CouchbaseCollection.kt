@@ -6,7 +6,9 @@ import com.couchbase.client.java.json.JsonObject
 import com.google.gson.*
 import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
 import gov.cdc.ocio.database.utils.InstantTypeAdapter
+import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 
@@ -31,6 +33,7 @@ class CouchbaseCollection(
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
         .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+        .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
         .create()
 
     /**
