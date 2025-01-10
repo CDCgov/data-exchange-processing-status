@@ -1,13 +1,7 @@
-
-
-
 plugins {
     id ("org.jetbrains.kotlin.jvm") version "1.9.23"
     id ("java-library")
-//    kotlin("jvm") version "1.9.23"
-    // id ("org.jetbrains.kotlin.jvm") version "1.9.24"
     id ("io.ktor.plugin") version "2.3.11"
-
 }
 
 group = "gov.cdc.ocio"
@@ -43,20 +37,16 @@ dependencies {
     implementation("software.amazon.awssdk:regions:2.20.91")
 
     // Azure Blob Storage SDK
-    implementation("com.azure:azure-storage-blob:12.25.0")
-    implementation("com.azure:azure-identity:1.11.0")
-
+    implementation("com.azure:azure-storage-blob:12.29.0")
+    implementation("com.azure:azure-identity:1.14.2")
 
     testImplementation(kotlin("test"))
-   // testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.23")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation ("org.testng:testng:7.7.0")
     testImplementation ("org.mockito:mockito-inline:3.11.2")
     testImplementation ("io.mockk:mockk:1.13.9")
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-
-
 }
 
 tasks.test {
@@ -78,6 +68,3 @@ java {
 kotlin {
     jvmToolchain(17)
 }
-
-
-
