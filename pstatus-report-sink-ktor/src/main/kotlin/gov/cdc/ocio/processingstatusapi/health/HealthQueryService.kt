@@ -67,8 +67,8 @@ class HealthQueryService: KoinComponent {
             messageSystemHealthCheck.doHealthCheck()
 
             schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
-                SchemaLoaderSystemType.S3.toString().lowercase() -> HealthCheckS3Bucket()
-                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> HealthCheckBlobContainer()
+                SchemaLoaderSystemType.S3.toString().lowercase() ->  getKoin().get<HealthCheckS3Bucket>()
+                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() ->  getKoin().get<HealthCheckBlobContainer>()
                 SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> HealthCheckFileSystem()
                 else -> HealthCheckUnsupportedSchemaLoaderSystem()
             }

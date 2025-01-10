@@ -30,7 +30,8 @@ enum class MessageSystem {
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
-    val schemaConfigurationModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
+    val schemaConfigurationAppModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
+    val schemaConfigurationHealthModule = SchemaLoaderConfigurationKoinCreator.schemaLoaderHealthCheckModuleFromAppEnv(environment)
     val messageSystemModule = module {
         val msgType = environment.config.property("ktor.message_system").getString()
         single {msgType} // add msgType to Koin Modules
@@ -54,7 +55,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
         }
     }
-    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule,schemaConfigurationModule)) //, schemaLoaderSystemModule
+    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule,schemaConfigurationHealthModule,schemaConfigurationAppModule)) //, schemaLoaderSystemModule
 }
 
 /**
