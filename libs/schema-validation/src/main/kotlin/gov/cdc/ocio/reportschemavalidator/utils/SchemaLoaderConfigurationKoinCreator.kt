@@ -69,8 +69,6 @@ class SchemaLoaderConfigurationKoinCreator {
                     return SchemaLoaderModules.provideS3Module(
                         config = environment.config,
                         region = environment.config.tryGetString("aws.s3.report_schema_region") ?: "",
-                       /* roleArn = environment.config.tryGetString("aws.role_arn") ?: "",
-                        webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file") ?: ""*/
 
                     )
 
