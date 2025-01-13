@@ -20,12 +20,13 @@ import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
@@ -67,13 +68,13 @@ object ValidationComponents {
  *   into usable formats.
  *
  */
-class ReportMutationService(private val environment: ApplicationEnvironment){
+class ReportMutationService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
     private val reportManager = ReportManager()
 
-
+    private val schemaLoader by inject<SchemaLoader>()
 
     /**
      * Upsert a report based on the provided input and action.
@@ -97,13 +98,8 @@ class ReportMutationService(private val environment: ApplicationEnvironment){
             // Validate action
             val actionType = validateAction(action)
 
-            //schema loader
-
-            val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader()
-
-
             // Validate the report
-            val validationResult = validateReport(schemaLoader,mapOfContent)
+            val validationResult = validateReport(mapOfContent)
             val validatedReport = validationResult.report!!
 
             // Assign the report ids
@@ -152,8 +148,7 @@ class ReportMutationService(private val environment: ApplicationEnvironment){
      * @throws Exception
      */
     @Throws(ContentException::class, Exception::class)
-
-    private fun validateReport(schemaLoader: SchemaLoader, input: Map<String, Any?>?): ValidatedReportResult {
+    private fun validateReport(input: Map<String, Any?>?): ValidatedReportResult {
 
         if (input.isNullOrEmpty()) throw ContentException("Can't validate a null or empty report")
 
