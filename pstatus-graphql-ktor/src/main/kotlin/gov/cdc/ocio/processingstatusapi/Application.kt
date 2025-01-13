@@ -20,8 +20,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val appEnvironmentModule = module { single { environment } }
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
-    val schemaConfigurationModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule,schemaConfigurationModule))
+    val schemaConfigurationAppModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
+    val schemaConfigurationHealthModule = SchemaLoaderConfigurationKoinCreator.schemaLoaderHealthCheckModuleFromAppEnv(environment)
+    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule,schemaConfigurationHealthModule, schemaConfigurationAppModule))
 }
 
 fun main(args: Array<String>) {
