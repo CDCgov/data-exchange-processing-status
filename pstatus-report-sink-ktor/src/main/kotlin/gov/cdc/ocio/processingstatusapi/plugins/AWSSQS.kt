@@ -119,7 +119,7 @@ val AWSSQSPlugin  = createApplicationPlugin(
                 SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
                 val awsSQSProcessor = AWSSQSProcessor()
                 message.body?.let {
-                   awsSQSProcessor.processMessage(it,schemaLoader)
+                   awsSQSProcessor.processMessage(it)
                 }
             }
             deleteMessage(receivedMessages)

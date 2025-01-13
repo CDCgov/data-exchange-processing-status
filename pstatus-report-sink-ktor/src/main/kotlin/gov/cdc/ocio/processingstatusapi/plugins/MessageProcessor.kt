@@ -9,15 +9,18 @@ import gov.cdc.ocio.processingstatusapi.models.ValidationComponents
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
-abstract class MessageProcessor {
+abstract class MessageProcessor: KoinComponent {
     protected abstract val source: Source
     private val components = ValidationComponents.getComponents()
 
+    private val schemaLoader by inject<SchemaLoader>()
 
     @Throws(BadRequestException::class,BadStateException::class)
-    fun processMessage(message: String, schemaLoader: SchemaLoader) {
+    fun processMessage(message: String) {
         try {
             components.logger.info { "Received message from $source : $message" }
             val updatedMessage = SchemaValidation().checkAndReplaceDeprecatedFields(message)

@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.*
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfigurationKoinCreator
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -30,6 +31,7 @@ enum class MessageSystem {
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
+    val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
     val schemaConfigurationAppModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
     val schemaConfigurationHealthModule = SchemaLoaderConfigurationKoinCreator.schemaLoaderHealthCheckModuleFromAppEnv(environment)
     val messageSystemModule = module {
@@ -55,7 +57,15 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             }
         }
     }
-    return modules(listOf(databaseModule,healthCheckDatabaseModule, messageSystemModule,schemaConfigurationHealthModule,schemaConfigurationAppModule)) //, schemaLoaderSystemModule
+    return modules(
+        listOf(
+            databaseModule,
+            healthCheckDatabaseModule,
+            messageSystemModule,
+            schemaLoaderModule,
+            schemaConfigurationHealthModule,
+            schemaConfigurationAppModule)
+    )
 }
 
 /**
