@@ -1,6 +1,8 @@
 package gov.cdc.ocio.reportschemavalidator.utils
 
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.modules.SchemaLoaderModules
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import mu.KotlinLogging
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -50,6 +52,42 @@ class SchemaLoaderConfigurationKoinCreator {
                 single { schemaLoaderSystemType } // add databaseType to Koin Modules
             }
             return schemaLoaderSystemModule
+        }
+        /**
+         *  Set the appropriate schema loader module
+         *  Creates a koin module and injects singletons for the schema loader config specified in the [ApplicationEnvironment]
+         *  @param environment ApplicationEnvironment
+         * @return [Module] Resultant koin module.
+         */
+        fun schemaLoaderHealthCheckModuleFromAppEnv(environment: ApplicationEnvironment):Module {
+            val logger = KotlinLogging.logger {}
+            val schemaLoaderSystem = environment.config.property("ktor.report_schema_loader_system").getString()
+            var schemaLoaderSystemType:SchemaLoaderSystemType = SchemaLoaderSystemType.FILE_SYSTEM
+            when (schemaLoaderSystem.lowercase()) {
+                SchemaLoaderSystemType.S3.toString().lowercase() -> {
+                    schemaLoaderSystemType = SchemaLoaderSystemType.S3
+                    return SchemaLoaderModules.provideS3Module(
+                        config = environment.config,
+                        region = environment.config.tryGetString("aws.s3.report_schema_region") ?: "",
+
+                    )
+
+                }
+
+                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> {
+                    schemaLoaderSystemType = SchemaLoaderSystemType.BLOB_STORAGE
+                    return  SchemaLoaderModules.provideBlobContainerModule(
+                        config= environment.config,
+                        connectionString = environment.config.tryGetString("azure.blob_storage.report_schema_connection_string") ?: "",
+                        container =  environment.config.tryGetString("azure.blob_storage.report_schema_container") ?: ""
+                                            )
+                }
+
+
+                else -> logger.error("Unsupported schema loader system requested: $schemaLoaderSystemType")
+            }
+
+            return module { single { schemaLoaderSystemType } }
         }
     }
 }

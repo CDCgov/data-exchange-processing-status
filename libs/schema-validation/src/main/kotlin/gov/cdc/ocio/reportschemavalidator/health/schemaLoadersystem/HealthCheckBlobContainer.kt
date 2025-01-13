@@ -1,7 +1,7 @@
 
 package gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem
 
-import com.azure.storage.blob.BlobContainerClientBuilder
+import com.azure.storage.blob.BlobContainerClient
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import gov.cdc.ocio.reportschemavalidator.utils.AzureBlobStorageConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
@@ -16,7 +16,7 @@ import org.koin.core.component.inject
  */
 
 @JsonIgnoreProperties("koin")
-class HealthCheckBlobContainer : HealthCheckSystem("blob_storage"), KoinComponent {
+class HealthCheckBlobContainer(private val blobContainerClient:BlobContainerClient) : HealthCheckSystem("blob_storage"), KoinComponent {
 
     private val azureConfiguration by inject<AzureBlobStorageConfiguration>()
 
@@ -49,11 +49,6 @@ class HealthCheckBlobContainer : HealthCheckSystem("blob_storage"), KoinComponen
     @Throws(Exception::class)
     fun isAzureBlobContainerHealthy(config:AzureBlobStorageConfiguration): Boolean {
         return try {
-            val blobContainerClient = BlobContainerClientBuilder()
-                .connectionString(config.connectionString)
-                .containerName(config.container)
-                .buildClient()
-
             // Attempt to list blobs to ensure access
             val blobs = blobContainerClient.listBlobs().iterator()
             blobs.hasNext()

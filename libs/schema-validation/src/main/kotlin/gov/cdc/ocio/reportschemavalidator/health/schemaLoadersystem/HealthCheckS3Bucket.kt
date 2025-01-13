@@ -18,7 +18,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Response
  */
 
 @JsonIgnoreProperties("koin")
-class HealthCheckS3Bucket : HealthCheckSystem("s3"), KoinComponent {
+class HealthCheckS3Bucket(private val s3Client: S3Client) : HealthCheckSystem("s3"), KoinComponent {
 
     private val awsServiceConfiguration by inject<AWSS3Configuration>()
 
@@ -51,7 +51,7 @@ class HealthCheckS3Bucket : HealthCheckSystem("s3"), KoinComponent {
     @Throws(Exception::class)
     fun isS3FolderHealthy(config:AWSS3Configuration): Boolean {
         return try {
-            val s3Client = S3Client.builder().region(software.amazon.awssdk.regions.Region.of(config.s3Region)).build()
+
             val request = ListObjectsV2Request.builder()
                 .bucket(config.s3Bucket)
                 .maxKeys(1) // one file - lightweight check
