@@ -9,10 +9,14 @@ import io.ktor.server.config.*
 import org.apache.qpid.proton.TimeoutException
 import java.io.IOException
 
+
 /**
- * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings provided in an `ApplicationConfig`.
+ * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings
+ * provided in an `ApplicationConfig`.
+ *
  * @param config `ApplicationConfig` containing the configuration settings for RabbitMQ, including connection details.
- * @param configurationPath represents prefix used to locate environment variables specific to RabbitMQ within the configuration.
+ * @param configurationPath represents prefix used to locate environment variables specific to RabbitMQ within the
+ * configuration.
  */
 class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
 
@@ -27,20 +31,20 @@ class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath:
     private val configPath= if (configurationPath != null) "$configurationPath." else ""
     val queue = config.tryGetString("${configPath}queue_name") ?: ""
 
-
     init {
         connectionFactory.host = config.tryGetString("${configPath}host") ?: DEFAULT_HOST
         connectionFactory.port = config.tryGetString("${configPath}port") ?.toInt()!!
         connectionFactory.virtualHost = config.tryGetString("${configPath}virtual_host") ?: DEFAULT_VIRTUAL_HOST
         connectionFactory.username = config.tryGetString("${configPath}user_name") ?: DEFAULT_USERNAME
         connectionFactory.password = config.tryGetString("${configPath}password") ?: DEFAULT_PASSWORD
-        //attempt recovery every 10 seconds
+
+        // Attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000)
     }
+
     fun getConnectionFactory(): ConnectionFactory {
         return connectionFactory
     }
-
 }
 
 val RabbitMQPlugin = createApplicationPlugin(
@@ -50,8 +54,6 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
-    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
-    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
     lateinit var connection: Connection
     lateinit var channel: Channel
 
@@ -62,10 +64,9 @@ val RabbitMQPlugin = createApplicationPlugin(
         SchemaValidation.logger.info("Channel was successfully created.")
     } catch (e: IOException ) {
         SchemaValidation.logger.error("IOException occurred {}", e.message)
-    }catch (e: TimeoutException){
+    } catch (e: TimeoutException){
         SchemaValidation.logger.error("TimeoutException occurred $e.message")
     }
-
 
     /**
      * consumeMessages function listens to the queue, receives the messages
@@ -91,13 +92,13 @@ val RabbitMQPlugin = createApplicationPlugin(
 
                     val message = String(body, Charsets.UTF_8)
                     SchemaValidation.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
-                    rabbitMQProcessor.processMessage(message,schemaLoader)
+                    rabbitMQProcessor.processMessage(message)
 
                     // Acknowledge the message
                     channel.basicAck(deliveryTag, false)
                 }
             })
-        }catch (e: IOException){
+        } catch (e: IOException) {
             SchemaValidation.logger.error("IOException occurred failed to process message from the queue $e.message")
         }
 
@@ -136,6 +137,4 @@ private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connect
  */
 fun Application.rabbitMQModule() {
     install(RabbitMQPlugin)
-
 }
-

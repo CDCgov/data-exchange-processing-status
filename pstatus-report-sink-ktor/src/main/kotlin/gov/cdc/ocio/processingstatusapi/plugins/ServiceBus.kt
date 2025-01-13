@@ -119,7 +119,7 @@ private fun processMessage(context: ServiceBusReceivedMessageContext, schemaLoad
 
         val serviceBusProcessor = ServiceBusProcessor()
         val messageToString = String(message.body.toBytes())
-        serviceBusProcessor.processMessage(messageToString, schemaLoader)
+        serviceBusProcessor.processMessage(messageToString)
     }
     catch (e: BadRequestException) {
         logger.warn("Unable to parse the message: {}", e.localizedMessage)

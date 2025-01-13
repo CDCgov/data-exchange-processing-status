@@ -1,7 +1,6 @@
 package gov.cdc.ocio.reportschemavalidator.models
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import java.io.InputStream
 
 
 /**
@@ -25,10 +24,10 @@ data class ReportSchemaMetadata(
          * Convenience function to convert the provided parameters into a [ReportSchemaMetadata] object.
          *
          * @param schemaFilename String
-         * @param schemaFile InputStream
+         * @param schemaFile String
          * @return ReportSchemaMetadata
          */
-        fun from(schemaFilename: String, schemaFile: InputStream): ReportSchemaMetadata {
+        fun from(schemaFilename: String, schemaFile: String): ReportSchemaMetadata {
             val schemaNode = ObjectMapper().readTree(schemaFile)
             val titleNode = schemaNode.get("title")
             val description = if (titleNode.isTextual) titleNode.textValue() else "unknown"

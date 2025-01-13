@@ -101,8 +101,7 @@ fun Application.graphQLModule() {
                 DeadlineCheckSubscriptionMutationService(),
                 UploadErrorsNotificationSubscriptionMutationService(),
                 UploadDigestCountsSubscriptionMutationService(),
-                ReportMutation(environment)
-
+                ReportMutation()
             )
 //            subscriptions = listOf(
 //                ErrorSubscriptionService()

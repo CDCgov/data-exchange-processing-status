@@ -24,10 +24,10 @@ class CloudSchemaLoader(
      * @return [SchemaFile]
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
-        val inputStream = storageClient.getSchemaFile(fileName)
+        val content = storageClient.getSchemaFile(fileName)
         return SchemaFile(
             fileName = fileName,
-            inputStream = inputStream
+            content = content
         )
     }
 

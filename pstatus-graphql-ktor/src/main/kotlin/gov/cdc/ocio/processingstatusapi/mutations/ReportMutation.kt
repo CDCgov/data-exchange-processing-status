@@ -6,7 +6,6 @@ import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportMutationService
-import io.ktor.server.application.*
 
 
 /**
@@ -23,8 +22,7 @@ import io.ktor.server.application.*
  * - ReportInput: Represents the input model for report data.
  */
 @GraphQLDescription("A Mutation Service to either create a new report or replace an existing report")
-class ReportMutation(private val environment: ApplicationEnvironment) : Mutation {
-
+class ReportMutation : Mutation {
 
     /**
      * Creates a new report or updates existing report based on action.
@@ -50,7 +48,7 @@ class ReportMutation(private val environment: ApplicationEnvironment) : Mutation
                       )
                       report: BasicHashMap<String, Any?>
     ) = run {
-        val service = ReportMutationService(environment)
+        val service = ReportMutationService()
         service.upsertReport(action, report)
     }
 }
