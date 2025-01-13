@@ -4,6 +4,7 @@ import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfigurationKoinCreator
+import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import graphql.scalars.ExtendedScalars
 import graphql.schema.idl.RuntimeWiring
 import io.ktor.serialization.jackson.*
@@ -20,8 +21,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val appEnvironmentModule = module { single { environment } }
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
+    val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
     val schemaConfigurationModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule,schemaConfigurationModule))
+    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule, schemaLoaderModule, schemaConfigurationModule))
 }
 
 fun main(args: Array<String>) {

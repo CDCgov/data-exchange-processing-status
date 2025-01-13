@@ -10,7 +10,6 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
-import java.io.InputStream
 import java.nio.file.Path
 import java.util.function.Consumer
 
@@ -52,9 +51,9 @@ class S3SchemaStorageClient(
      * Get a schema file from the provided filename.
      *
      * @param fileName String
-     * @return InputStream
+     * @return String
      */
-    override fun getSchemaFile(fileName: String): InputStream {
+    override fun getSchemaFile(fileName: String): String {
         val s3Client = getS3Client()
 
         val getObjectRequest = GetObjectRequest.builder()
@@ -62,7 +61,11 @@ class S3SchemaStorageClient(
             .key(fileName)
             .build()
 
-        val result = s3Client.getObject(getObjectRequest)
+        val result = s3Client
+            .getObject(getObjectRequest)
+            .readAllBytes()
+            .decodeToString()
+
         return result
     }
 
@@ -87,8 +90,11 @@ class S3SchemaStorageClient(
                     .bucket(bucketName)
                     .key(s3Object.key())
                     .build()
-                val s3ObjectInputStream = s3Client.getObject(getObjectRequest)
-                schemaFiles.add(ReportSchemaMetadata.from(s3Object.key(), s3ObjectInputStream))
+                val content = s3Client
+                    .getObject(getObjectRequest)
+                    .readAllBytes()
+                    .decodeToString()
+                schemaFiles.add(ReportSchemaMetadata.from(s3Object.key(), content))
             })
         }
         s3Client.close()

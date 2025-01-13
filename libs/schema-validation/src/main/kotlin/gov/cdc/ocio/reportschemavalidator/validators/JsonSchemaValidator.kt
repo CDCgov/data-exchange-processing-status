@@ -37,7 +37,7 @@ class JsonSchemaValidator(private val logger: KLogger) : SchemaValidator {
         var status = false
         var reason = "The report could not be validated against the JSON schema: $schemaFileName."
         logger.info("Schema file base: $schemaFileName")
-        val schemaNode = objectMapper.readTree(schemaFile.inputStream)
+        val schemaNode = objectMapper.readTree(schemaFile.content)
         val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
         val schema = schemaFactory.getSchema(schemaNode)
         val schemaValidationMessages = schema.validate(jsonNode)

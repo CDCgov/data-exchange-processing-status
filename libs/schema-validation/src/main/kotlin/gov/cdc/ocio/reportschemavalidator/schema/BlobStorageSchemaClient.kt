@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
-import java.io.InputStream
 
 
 class BlobStorageSchemaClient(
@@ -21,14 +20,14 @@ class BlobStorageSchemaClient(
     private val containerClient = blobServiceClient
         .getBlobContainerClient(containerName)
 
-    override fun getSchemaFile(fileName: String): InputStream {
+    override fun getSchemaFile(fileName: String): String {
         val blobClient = BlobClientBuilder()
             .connectionString(connectionString)
             .containerName(containerName)
             .blobName(fileName)
             .buildClient()
 
-        return blobClient.openInputStream()
+        return blobClient.openInputStream().readAllBytes().decodeToString()
     }
 
     /**
@@ -37,9 +36,10 @@ class BlobStorageSchemaClient(
      * @return List<[ReportSchemaMetadata]>
      */
     override fun getSchemaFiles() = containerClient.listBlobs().map { blobItem ->
-        getSchemaFile(blobItem.name).use { inputStream ->
-            ReportSchemaMetadata.from(blobItem.name, inputStream)
-        }
+        ReportSchemaMetadata.from(
+            blobItem.name,
+            getSchemaFile(blobItem.name)
+        )
     }
 
     /**
@@ -59,10 +59,8 @@ class BlobStorageSchemaClient(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaFilename: String): Map<String, Any> {
-        getSchemaFile(schemaFilename).use { inputStream ->
-            val jsonContent = inputStream.readAllBytes().decodeToString()
-            return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)
-        }
+        val jsonContent = getSchemaFile(schemaFilename)
+        return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)
     }
 
     /**

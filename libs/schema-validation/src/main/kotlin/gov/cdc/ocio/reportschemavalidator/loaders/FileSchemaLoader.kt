@@ -34,7 +34,7 @@ class FileSchemaLoader(
         }
         return SchemaFile(
             fileName = fileName,
-            inputStream = file.inputStream()
+            content = file.inputStream().readAllBytes().decodeToString()
         )
     }
 
@@ -48,8 +48,11 @@ class FileSchemaLoader(
         val files = folderPath.listDirectoryEntries().filter { Files.isRegularFile(it) && it.toFile().extension == "json" }
 
         return files.map { filePath ->
-            filePath.inputStream().use { inputStream ->
-                ReportSchemaMetadata.from(filePath.toFile().name, inputStream)
+            filePath.inputStream().use { content ->
+                ReportSchemaMetadata.from(
+                    filePath.toFile().name,
+                    content.readAllBytes().decodeToString()
+                )
             }
         }
     }

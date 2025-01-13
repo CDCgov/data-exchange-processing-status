@@ -31,6 +31,9 @@ dependencies {
 
     implementation(project(":libs:commons-types"))
     implementation("io.insert-koin:koin-ktor:3.5.6")
+
+    implementation("com.google.guava:guava:33.4.0-jre")
+
     // AWS SDK for S3
     implementation("software.amazon.awssdk:s3:2.20.91")
     implementation("software.amazon.awssdk:auth:2.20.91")
