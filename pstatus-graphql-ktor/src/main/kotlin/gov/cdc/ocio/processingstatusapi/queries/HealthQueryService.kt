@@ -1,9 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
-import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.health.*
+import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
+import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheckSystem
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
@@ -16,48 +17,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 
-/**
- * HealthCheck object with  overall health of the graphql service and its dependencies
- */
-@GraphQLDescription("HealthCheck object with the overall health of the graphql service and its dependencies")
-class GraphQLHealthCheckSystem {
-
-    @GraphQLDescription("Name of the service")
-    var service: String? = null
-
-    @GraphQLDescription("Status of the service")
-    var status: String? = null
-
-    @GraphQLDescription("Issue related to graphql service dependency")
-    var healthIssues: String? = null
-}
-
-/**
- * Run health checks for the service.
- *
- * @property status String?
- * @property totalChecksDuration String?
- * @property dependencyHealthChecks MutableList<HealthCheckSystem>
- */
-@GraphQLDescription("Run health checks for the service")
-class GraphQLHealthCheck {
-
-    @GraphQLDescription("Overall status of the service")
-    var status : String? = "DOWN"
-
-    @GraphQLDescription("Total time it took to evaluate the health of the service and its dependencies")
-    var totalChecksDuration : String? = null
-
-    @GraphQLDescription("Status of the service dependencies")
-    var dependencyHealthChecks = mutableListOf<GraphQLHealthCheckSystem>()
-}
-
-/**
- * GraphQL query service for getting health status.
- */
-class HealthQueryService : Query {
-    fun getHealth() = HealthCheckService().getHealth()
-}
 
 /**
  * Service for querying the health of the report-sink service and its dependencies.
@@ -143,4 +102,11 @@ class HealthCheckService: KoinComponent {
 
         return "%02d:%02d:%02d.%03d".format(hours, minutes, remainingSeconds, remainingMillis / 10)
     }
+}
+
+/**
+ * GraphQL query service for getting health status.
+ */
+class HealthQueryService : Query {
+    fun getHealth() = HealthCheckService().getHealth()
 }
