@@ -1,24 +1,20 @@
 package gov.cdc.ocio.database.health
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoDatabase
-import gov.cdc.ocio.database.mongo.MongoConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import org.bson.BsonDocument
 import org.bson.BsonInt64
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+
 
 /**
  * Concrete implementation of the MongoDB health check.
  */
-@JsonIgnoreProperties("koin")
 class HealthCheckMongoDb(
     private val mongoClient: MongoClient,
-    private val config: MongoConfiguration
-) : HealthCheckSystem("Mongo DB"), KoinComponent {
+    private val databaseName: String
+) : HealthCheckSystem("Mongo DB") {
 
     /**
      * Checks and sets MongoDB status.
@@ -63,12 +59,12 @@ class HealthCheckMongoDb(
      * @return MongoDatabase?
      */
     private fun connectToDatabase(): MongoDatabase? {
-        val database = mongoClient.getDatabase(config.databaseName)
+        val database = mongoClient.getDatabase(databaseName)
         return try {
             // Send a ping to confirm a successful connection
             val command = BsonDocument("ping", BsonInt64(1))
             database.runCommand(command)
-            logger.info("Successfully pinged MongoDB database: ${config.databaseName}")
+            logger.info("Successfully pinged MongoDB database: $databaseName")
             database
         } catch (ex: Exception) {
             logger.error("Failed to ping MongoDB: ${ex.message}")

@@ -9,7 +9,6 @@ import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -20,6 +19,7 @@ import kotlinx.coroutines.launch
 import org.apache.qpid.proton.TimeoutException
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import java.nio.file.Path
+
 
 /**
  * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
@@ -69,8 +69,6 @@ val AWSSQSPlugin  = createApplicationPlugin(
 ) {
     lateinit var sqsClient: SqsClient
     lateinit var queueUrl: String
-    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
-    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
 
     try {
         sqsClient = pluginConfig.createSQSClient()

@@ -38,8 +38,7 @@ val AzureServiceBus  = createApplicationPlugin(
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
-    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
-    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
+
     // Initialize Service Bus client for queue
     val processorQueueClient by lazy {
         ServiceBusClientBuilder()
@@ -47,7 +46,7 @@ val AzureServiceBus  = createApplicationPlugin(
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .queueName(queueName)
-            .processMessage{ context -> processMessage(context,schemaLoader) }
+            .processMessage{ context -> processMessage(context) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
     }
@@ -60,7 +59,7 @@ val AzureServiceBus  = createApplicationPlugin(
             .processor()
             .topicName(topicName)
             .subscriptionName(subscriptionName)
-            .processMessage{ context -> processMessage(context,schemaLoader) }
+            .processMessage{ context -> processMessage(context) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
     }
@@ -107,7 +106,7 @@ val AzureServiceBus  = createApplicationPlugin(
  *   @throws BadRequestException
  *   @throws Exception generic
  */
-private fun processMessage(context: ServiceBusReceivedMessageContext, schemaLoader: SchemaLoader) {
+private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",

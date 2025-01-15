@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfigurationKoinCreator
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import graphql.scalars.ExtendedScalars
 import graphql.schema.idl.RuntimeWiring
@@ -13,18 +12,13 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import org.koin.core.KoinApplication
-import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
-    val appEnvironmentModule = module { single { environment } }
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
     val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
-    val schemaConfigurationAppModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    val schemaConfigurationHealthModule = SchemaLoaderConfigurationKoinCreator.schemaLoaderHealthCheckModuleFromAppEnv(environment)
-    return modules(listOf(appEnvironmentModule, databaseModule, healthCheckDatabaseModule, schemaLoaderModule, schemaConfigurationHealthModule, schemaConfigurationAppModule))
+    return modules(listOf(databaseModule, schemaLoaderModule))
 }
 
 fun main(args: Array<String>) {

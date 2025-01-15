@@ -5,7 +5,9 @@ import com.mongodb.*
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoDatabase
+import gov.cdc.ocio.database.health.HealthCheckMongoDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.health.HealthCheckSystem
 import mu.KotlinLogging
 import org.bson.BsonDocument
 import org.bson.BsonInt64
@@ -63,6 +65,8 @@ class MongoRepository(
     override var notificationSubscriptionsCollection = notificationSubscriptionsMongoCollection?.let {
         MongoCollection(it)
     } as Collection
+
+    override var healthCheckSystem = HealthCheckMongoDb(mongoClient!!, databaseName) as HealthCheckSystem
 
     /**
      * Connect to monogodb with the provided URI and database name.

@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*

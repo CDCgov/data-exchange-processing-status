@@ -3,6 +3,7 @@ package gov.cdc.ocio.reportschemavalidator.loaders
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
+import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 /**
@@ -48,5 +49,6 @@ interface SchemaLoader {
      * @return [Map]<[String], [Any]>
      */
     fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any>
-}
 
+    var healthCheckSystem: HealthCheckSystem
+}

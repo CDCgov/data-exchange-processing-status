@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.*
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfigurationKoinCreator
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -20,7 +19,6 @@ enum class MessageSystem {
 }
 
 
-
 /**
  * Load the environment configuration values
  *
@@ -30,41 +28,37 @@ enum class MessageSystem {
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
     val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
-    val schemaConfigurationAppModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    val schemaConfigurationHealthModule = SchemaLoaderConfigurationKoinCreator.schemaLoaderHealthCheckModuleFromAppEnv(environment)
     val messageSystemModule = module {
         val msgType = environment.config.property("ktor.message_system").getString()
-        single {msgType} // add msgType to Koin Modules
+        single { msgType } // add msgType to Koin Modules
 
-        when (msgType) {
-            MessageSystem.AZURE_SERVICE_BUS.toString() -> {
+        when (msgType.lowercase()) {
+            MessageSystem.AZURE_SERVICE_BUS.toString().lowercase() -> {
                 single(createdAtStart = true) {
                     AzureServiceBusConfiguration(environment.config, configurationPath = "azure") }
 
             }
-            MessageSystem.RABBITMQ.toString() -> {
+            MessageSystem.RABBITMQ.toString().lowercase() -> {
                 single(createdAtStart = true) {
                     RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
                 }
 
             }
-            MessageSystem.AWS.toString() -> {
+            MessageSystem.AWS.toString().lowercase() -> {
                 single(createdAtStart = true) {
                     AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
                 }
             }
         }
     }
+
     return modules(
         listOf(
             databaseModule,
-            healthCheckDatabaseModule,
             messageSystemModule,
-            schemaLoaderModule,
-            schemaConfigurationHealthModule,
-            schemaConfigurationAppModule)
+            schemaLoaderModule
+        )
     )
 }
 

@@ -1,16 +1,11 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
 import com.expediagroup.graphql.server.operations.Query
-import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.health.*
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheckSystem
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderSystemType
-import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.types.health.HealthStatusType
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -28,35 +23,21 @@ class HealthCheckService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val databaseType: DatabaseType by inject()
+    private val repository by inject<ProcessingStatusRepository>()
 
-    private val msgType: String by inject()
+    private val schemaLoader by inject<SchemaLoader>()
 
-    private val schemaLoaderSystemType:SchemaLoaderSystemType by inject()
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
      *
      * @return HealthCheck
      */
     fun getHealth(): GraphQLHealthCheck {
-        val databaseHealthCheck: HealthCheckSystem?
-        val schemaLoaderSystemHealthCheck: HealthCheckSystem?
-        val time = measureTimeMillis {
-            databaseHealthCheck = when (databaseType) {
-                DatabaseType.COSMOS -> getKoin().get<HealthCheckCosmosDb>()
-                DatabaseType.MONGO -> getKoin().get<HealthCheckMongoDb>()
-                DatabaseType.COUCHBASE -> getKoin().get<HealthCheckCouchbaseDb>()
-                DatabaseType.DYNAMO -> getKoin().get<HealthCheckDynamoDb>()
-                else -> HealthCheckUnsupportedDb()
-            }
-            databaseHealthCheck.doHealthCheck()
+        val databaseHealthCheck = repository.healthCheckSystem
+        val schemaLoaderSystemHealthCheck = schemaLoader.healthCheckSystem
 
-            schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
-                SchemaLoaderSystemType.S3.toString().lowercase() ->  getKoin().get<HealthCheckS3Bucket>()
-                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() ->  getKoin().get<HealthCheckBlobContainer>()
-                SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> HealthCheckFileSystem()
-                else -> HealthCheckUnsupportedSchemaLoaderSystem()
-            }
+        val time = measureTimeMillis {
+            databaseHealthCheck.doHealthCheck()
             schemaLoaderSystemHealthCheck.doHealthCheck()
         }
 

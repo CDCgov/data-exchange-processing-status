@@ -1,10 +1,13 @@
 package gov.cdc.ocio.database.dynamo
 
 import com.google.gson.Gson
+import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
+import gov.cdc.ocio.database.health.HealthCheckDynamoDb
 import gov.cdc.ocio.database.persistence.Collection
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.health.HealthCheckSystem
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
@@ -111,4 +114,6 @@ class DynamoRepository(tablePrefix: String, roleArn:String?, webIdentityTokenFil
             .dynamoDbClient(ddbClient)
             .build()
     }
+
+    override var healthCheckSystem = HealthCheckDynamoDb() as HealthCheckSystem
 }

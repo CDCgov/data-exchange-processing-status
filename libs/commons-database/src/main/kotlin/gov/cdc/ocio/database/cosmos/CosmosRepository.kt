@@ -1,7 +1,9 @@
 package gov.cdc.ocio.database.cosmos
 
+import gov.cdc.ocio.database.health.HealthCheckCosmosDb
 import gov.cdc.ocio.database.persistence.Collection
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 /**
@@ -48,4 +50,6 @@ class CosmosRepository(
 
     override var subscriptionManagementCollection =
         CosmosCollection(notificationSubscriptionsContainerName, subscriptionManagementContainer) as Collection
+
+    override var healthCheckSystem = HealthCheckCosmosDb(CosmosClientManager.getCosmosClient(uri, authKey)!!) as HealthCheckSystem
 }
