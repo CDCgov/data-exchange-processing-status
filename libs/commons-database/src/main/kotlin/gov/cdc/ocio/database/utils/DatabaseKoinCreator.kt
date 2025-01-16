@@ -1,5 +1,6 @@
 package gov.cdc.ocio.database.utils
 
+import gov.cdc.ocio.database.UnsupportedRepository
 import gov.cdc.ocio.database.DatabaseType
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.database.cosmos.CosmosRepository
@@ -79,6 +80,9 @@ object DatabaseKoinCreator {
 
                 else -> {
                     logger.error("Unsupported database requested: $database")
+                    single<ProcessingStatusRepository>(createdAtStart = true) {
+                        UnsupportedRepository(database)
+                    }
                 }
             }
         }
