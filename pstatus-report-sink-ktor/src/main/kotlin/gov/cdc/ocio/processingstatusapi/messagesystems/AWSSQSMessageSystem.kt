@@ -11,7 +11,7 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  * @property healthCheckSystem HealthCheckSystem
  * @constructor
  */
-class AWSSQSMessageSystem(sqsClient: SqsClient, queueUrl: String): MessageSystem {
+class AWSSQSMessageSystem(val sqsClient: SqsClient, queueUrl: String): MessageSystem {
 
     override var healthCheckSystem = HealthCheckAWSSQS(sqsClient, queueUrl) as HealthCheckSystem
 }

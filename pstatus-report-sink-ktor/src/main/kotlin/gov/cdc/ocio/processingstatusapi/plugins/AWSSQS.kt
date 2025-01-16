@@ -7,6 +7,8 @@ import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
+import gov.cdc.ocio.processingstatusapi.messagesystems.AWSSQSMessageSystem
+import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
@@ -17,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.qpid.proton.TimeoutException
-import org.koin.java.KoinJavaComponent.inject
+import org.koin.java.KoinJavaComponent.getKoin
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import java.nio.file.Path
 
@@ -66,7 +68,8 @@ val AWSSQSPlugin = createApplicationPlugin(
     configurationPath = "aws",
     createConfiguration = ::AWSSQSServiceConfiguration
 ) {
-    val sqsClient by inject<SqsClient>(SqsClient::class.java)
+
+    lateinit var sqsClient: SqsClient
 
     lateinit var queueUrl: String
 
@@ -164,6 +167,8 @@ val AWSSQSPlugin = createApplicationPlugin(
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started successfully.")
+        val msgSystem = getKoin().get<MessageSystem>() as AWSSQSMessageSystem
+        sqsClient = msgSystem.sqsClient
         consumeMessages()
     }
 

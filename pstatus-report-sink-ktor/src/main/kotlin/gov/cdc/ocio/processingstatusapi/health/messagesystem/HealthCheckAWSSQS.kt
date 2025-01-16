@@ -29,7 +29,7 @@ class HealthCheckAWSSQS(
             }.await()
         }
         result.onFailure { error ->
-            val reason = "AWS SQS is not healthy ${error.localizedMessage}"
+            val reason = "AWS SQS is not healthy: ${error.localizedMessage}"
             logger.error(reason)
             return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
         }
