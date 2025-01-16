@@ -32,7 +32,6 @@ object DatabaseKoinCreator {
 
         val databaseModule = module {
             val database = environment.config.property("ktor.database").getString()
-            var databaseType = DatabaseType.UNKNOWN
 
             when (database.lowercase()) {
                 DatabaseType.MONGO.value -> {
@@ -44,7 +43,6 @@ object DatabaseKoinCreator {
 
                     //  Create a MongoDB config that can be dependency injected (for health checks)
                     single { MongoConfiguration(connectionString, databaseName) }
-                    databaseType = DatabaseType.MONGO
                 }
 
                 DatabaseType.COUCHBASE.value -> {
@@ -57,7 +55,6 @@ object DatabaseKoinCreator {
 
                     //  Create a couchbase config that can be dependency injected (for health checks)
                     single { CouchbaseConfiguration(connectionString, username, password) }
-                    databaseType = DatabaseType.COUCHBASE
                 }
 
                 DatabaseType.COSMOS.value -> {
@@ -69,7 +66,6 @@ object DatabaseKoinCreator {
 
                     //  Create a CosmosDB config that can be dependency injected (for health checks)
                     single { CosmosConfiguration(uri, authKey) }
-                    databaseType = DatabaseType.COSMOS
                 }
 
                 DatabaseType.DYNAMO.value -> {
@@ -79,14 +75,12 @@ object DatabaseKoinCreator {
                     single<ProcessingStatusRepository>(createdAtStart = true) {
                         DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
                     }
-                    databaseType = DatabaseType.DYNAMO
                 }
 
                 else -> {
-                    logger.error("Unsupported database requested: $databaseType")
+                    logger.error("Unsupported database requested: $database")
                 }
             }
-            single { databaseType } // add databaseType to Koin Modules
         }
         return databaseModule
     }
