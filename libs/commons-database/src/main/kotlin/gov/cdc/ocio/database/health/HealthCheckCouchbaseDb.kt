@@ -47,7 +47,6 @@ class HealthCheckCouchbaseDb(private val couchbaseCluster: Cluster? = null) : He
         return try {
             val cluster = couchbaseCluster ?: defaultCluster // Use injected or default cluster
             // Perform a lightweight health check like a ping
-            val pingResult = cluster.ping()
             if (!cluster.ping().id().isNullOrEmpty())
                 Result.success(true)
             else

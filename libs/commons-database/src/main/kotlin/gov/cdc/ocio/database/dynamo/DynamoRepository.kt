@@ -1,7 +1,6 @@
 package gov.cdc.ocio.database.dynamo
 
 import com.google.gson.Gson
-import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.health.HealthCheckDynamoDb
 import gov.cdc.ocio.database.persistence.Collection
 import gov.cdc.ocio.database.models.Report
