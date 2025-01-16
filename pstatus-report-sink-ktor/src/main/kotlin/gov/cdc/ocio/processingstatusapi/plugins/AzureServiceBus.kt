@@ -149,19 +149,29 @@ private fun processError(context: ServiceBusErrorContext) {
     }
     val exception = context.exception as ServiceBusException
     val reason = exception.reason
-    if (reason === ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED || reason === ServiceBusFailureReason.MESSAGING_ENTITY_NOT_FOUND || reason === ServiceBusFailureReason.UNAUTHORIZED) {
-        logger.error("An unrecoverable error occurred. Stopping processing with reason $reason: ${exception.message}")
-    } else if (reason === ServiceBusFailureReason.MESSAGE_LOCK_LOST) {
-        logger.error("Message lock lost for message: ${context.exception}")
-    } else if (reason === ServiceBusFailureReason.SERVICE_BUSY) {
-        try {
-            // Choosing an arbitrary amount of time to wait until trying again.
-            TimeUnit.SECONDS.sleep(1)
-        } catch (e: InterruptedException) {
-            logger.error("Unable to sleep for period of time")
+    when (reason) {
+        ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED,
+        ServiceBusFailureReason.MESSAGING_ENTITY_NOT_FOUND,
+        ServiceBusFailureReason.UNAUTHORIZED -> {
+            logger.error("An unrecoverable error occurred. Stopping processing with reason $reason: ${exception.message}")
         }
-    } else {
-        logger.error("Error source ${context.errorSource}, reason $reason, message: ${context.exception}")
+
+        ServiceBusFailureReason.MESSAGE_LOCK_LOST -> {
+            logger.error("Message lock lost for message: ${context.exception}")
+        }
+
+        ServiceBusFailureReason.SERVICE_BUSY -> {
+            try {
+                // Choosing an arbitrary amount of time to wait until trying again.
+                TimeUnit.SECONDS.sleep(1)
+            } catch (e: InterruptedException) {
+                logger.error("Unable to sleep for period of time")
+            }
+        }
+
+        else -> {
+            logger.error("Error source ${context.errorSource}, reason $reason, message: ${context.exception}")
+        }
     }
 }
 /**
