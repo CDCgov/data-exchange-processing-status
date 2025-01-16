@@ -1,47 +1,60 @@
 package gov.cdc.ocio.processingnotifications
 
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import io.temporal.api.workflowservice.v1.GetSystemInfoRequest
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
 
+
 /**
- * health check implementation of Temporal
+ * Health check implementation of Temporal
+ *
  * @param temporalConfig TemporalConfig
  */
-
-class HealthCheckTemporalServer(temporalConfig: TemporalConfig) : HealthCheckSystem("Temporal Server") {
+class HealthCheckTemporalServer(
+    temporalConfig: TemporalConfig
+) : HealthCheckSystem("Temporal Server") {
 
     private val target = temporalConfig.temporalServiceTarget
+
     /**
      * Checks and sets TemporalHealth status
      */
+    override fun doHealthCheck(): HealthCheckResult {
+        isTemporalHealthy().onFailure { error ->
+            val reason = "Temporal is not healthy: ${error.localizedMessage}"
+            logger.error(reason)
+            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+        }
+        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+    }
 
-    override fun doHealthCheck() {
-        try {
-
-
+    /**
+     * Check whether Temporal is healthy.
+     *
+     * @return Result<Boolean>
+     */
+    private fun isTemporalHealthy(): Result<Boolean> {
+        return try {
             val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-            .setTarget(target)   
-            .build()
-        val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
+                .setTarget(target)
+                .build()
+
+            val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
 
             val isDown = serviceStubs.isShutdown || serviceStubs.isTerminated
             if (isDown) {
-                this.status = HealthStatusType.STATUS_DOWN
-                healthIssues = "Temporal Server is down or terminated"
+                Result.failure(Exception("Temporal Server is down or terminated"))
             } else {
                 serviceStubs.blockingStub()
                     .getSystemInfo(GetSystemInfoRequest.getDefaultInstance()).capabilities
-                this.status = HealthStatusType.STATUS_UP
+                Result.success(true)
             }
         } catch (ex: Exception) {
-            this.status = HealthStatusType.STATUS_DOWN
-            healthIssues = ex.message
-            logger.error("Temporal Server is not healthy: ${ex.message}")
+            Result.failure(ex)
         }
-
     }
 }
