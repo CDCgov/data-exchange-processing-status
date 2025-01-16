@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
 import com.expediagroup.graphql.server.operations.Query
-import gov.cdc.ocio.database.health.*
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheckSystem
@@ -18,7 +17,8 @@ import kotlin.system.measureTimeMillis
  * Service for querying the health of the report-sink service and its dependencies.
  *
  * @property logger KLogger
- * @property msgType String
+ * @property repository ProcessingStatusRepository
+ * @property schemaLoader SchemaLoader
  */
 class HealthCheckService: KoinComponent {
 
