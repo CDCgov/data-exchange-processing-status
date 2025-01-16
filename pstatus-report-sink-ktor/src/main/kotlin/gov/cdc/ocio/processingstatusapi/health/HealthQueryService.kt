@@ -1,9 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.health
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.types.health.HealthCheck
-import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -15,7 +16,9 @@ import kotlin.system.measureTimeMillis
  * Service for querying the health of the report-sink service and its dependencies.
  *
  * @property logger KLogger
- * @property msgType String
+ * @property repository ProcessingStatusRepository
+ * @property messageSystem MessageSystem
+ * @property schemaLoader SchemaLoader
  */
 class HealthQueryService: KoinComponent {
 
@@ -23,7 +26,7 @@ class HealthQueryService: KoinComponent {
 
     private val repository by inject<ProcessingStatusRepository>()
 
-//    private val messageSystem by inject<>()
+    private val messageSystem by inject<MessageSystem>()
 
     private val schemaLoader by inject<SchemaLoader>()
 
@@ -33,24 +36,16 @@ class HealthQueryService: KoinComponent {
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
-        val databaseHealthCheck = repository.healthCheckSystem
-        val messageSystemHealthCheck = schemaLoader.healthCheckSystem
-        val schemaLoaderSystemHealthCheck = schemaLoader.healthCheckSystem
+        var databaseHealthCheck: HealthCheckResult
+        var messageSystemHealthCheck: HealthCheckResult
+        var schemaLoaderSystemHealthCheck: HealthCheckResult
 
         val time = measureTimeMillis {
-            databaseHealthCheck.doHealthCheck()
-
-            // selectively check health of the messaging service based on msgType
-//            messageSystemHealthCheck = when (msgType) {
-//                MessageSystem.AZURE_SERVICE_BUS.toString() -> HealthCheckServiceBus()
-//                MessageSystem.RABBITMQ.toString() -> HealthCheckRabbitMQ()
-//                MessageSystem.AWS.toString() -> HealthCheckAWSSQS()
-//                else -> HealthCheckUnsupportedMessageSystem()
-//            }
-//            messageSystemHealthCheck.doHealthCheck()
-
-            schemaLoaderSystemHealthCheck.doHealthCheck()
+            databaseHealthCheck = repository.healthCheckSystem.doHealthCheck()
+            messageSystemHealthCheck = messageSystem.healthCheckSystem.doHealthCheck()
+            schemaLoaderSystemHealthCheck = schemaLoader.healthCheckSystem.doHealthCheck()
         }
+
         return compileHealthChecks(databaseHealthCheck, messageSystemHealthCheck, schemaLoaderSystemHealthCheck, time)
     }
 
@@ -63,24 +58,24 @@ class HealthQueryService: KoinComponent {
      * @return HealthCheck
      */
     private fun compileHealthChecks(
-        databaseHealth: HealthCheckSystem?,
-        messageSystemHealth: HealthCheckSystem?,
-        schemaLoaderSystemHealth:HealthCheckSystem?,
+        databaseHealth: HealthCheckResult,
+        messageSystemHealth: HealthCheckResult,
+        schemaLoaderSystemHealth: HealthCheckResult,
         totalTime: Long
     ): HealthCheck {
 
         return HealthCheck().apply {
-            status = if (databaseHealth?.status == HealthStatusType.STATUS_UP
-                && messageSystemHealth?.status == HealthStatusType.STATUS_UP
-                && schemaLoaderSystemHealth?.status == HealthStatusType.STATUS_UP
+            status = if (databaseHealth.status == HealthStatusType.STATUS_UP
+                && messageSystemHealth.status == HealthStatusType.STATUS_UP
+                && schemaLoaderSystemHealth.status == HealthStatusType.STATUS_UP
             )
                 HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
 
             totalChecksDuration = formatMillisToHMS(totalTime)
 
-            databaseHealth?.let { dependencyHealthChecks.add(it) }
-            messageSystemHealth?.let { dependencyHealthChecks.add(it) }
-            schemaLoaderSystemHealth?.let { dependencyHealthChecks.add(it) }
+            dependencyHealthChecks.add(databaseHealth)
+            dependencyHealthChecks.add(messageSystemHealth)
+            dependencyHealthChecks.add(schemaLoaderSystemHealth)
         }
     }
 

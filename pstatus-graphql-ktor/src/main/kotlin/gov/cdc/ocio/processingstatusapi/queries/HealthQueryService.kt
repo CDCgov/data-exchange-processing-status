@@ -6,6 +6,7 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheckSystem
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -33,30 +34,30 @@ class HealthCheckService: KoinComponent {
      * @return HealthCheck
      */
     fun getHealth(): GraphQLHealthCheck {
-        val databaseHealthCheck = repository.healthCheckSystem
-        val schemaLoaderSystemHealthCheck = schemaLoader.healthCheckSystem
+        val databaseHealthCheck: HealthCheckResult
+        val schemaLoaderSystemHealthCheck: HealthCheckResult
 
         val time = measureTimeMillis {
-            databaseHealthCheck.doHealthCheck()
-            schemaLoaderSystemHealthCheck.doHealthCheck()
+            databaseHealthCheck = repository.healthCheckSystem.doHealthCheck()
+            schemaLoaderSystemHealthCheck = schemaLoader.healthCheckSystem.doHealthCheck()
         }
 
         return GraphQLHealthCheck().apply {
-            status = if (databaseHealthCheck?.status == HealthStatusType.STATUS_UP
-                && schemaLoaderSystemHealthCheck?.status == HealthStatusType.STATUS_UP
+            status = if (databaseHealthCheck.status == HealthStatusType.STATUS_UP
+                && schemaLoaderSystemHealthCheck.status == HealthStatusType.STATUS_UP
             )
                 HealthStatusType.STATUS_UP.value
             else
                 HealthStatusType.STATUS_DOWN.value
             totalChecksDuration = formatMillisToHMS(time)
-            databaseHealthCheck?.let {
+            databaseHealthCheck.let {
                 val gqlHealthCheckSystem = GraphQLHealthCheckSystem().apply {
-                    this.service = it.service
-                    this.status = it.status.value
-                    this.healthIssues = it.healthIssues
+                    this.service = databaseHealthCheck.service
+                    this.status = databaseHealthCheck.status.value
+                    this.healthIssues = databaseHealthCheck.healthIssues
                 }
                 dependencyHealthChecks.add(gqlHealthCheckSystem)
-                schemaLoaderSystemHealthCheck?.let {
+                schemaLoaderSystemHealthCheck.let {
                     val schemaLoaderHealthCheckSystem = GraphQLHealthCheckSystem().apply {
                         this.service = it.service
                         this.status = it.status.value

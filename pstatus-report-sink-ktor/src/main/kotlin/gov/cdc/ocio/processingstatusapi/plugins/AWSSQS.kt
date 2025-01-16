@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.qpid.proton.TimeoutException
+import org.koin.java.KoinJavaComponent.inject
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import java.nio.file.Path
 
@@ -38,7 +39,7 @@ class AWSSQSServiceConfiguration(config: ApplicationConfig, configurationPath: S
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
     private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
 
-    fun createSQSClient(): SqsClient{
+    fun createSQSClient(): SqsClient {
         return SqsClient {
 
             if (accessKeyId.isNotEmpty() && secretAccessKey.isNotEmpty()) {
@@ -58,20 +59,18 @@ class AWSSQSServiceConfiguration(config: ApplicationConfig, configurationPath: S
             endpointUrl = this@AWSSQSServiceConfiguration.endpoint
         }
     }
-
-
 }
 
-val AWSSQSPlugin  = createApplicationPlugin(
+val AWSSQSPlugin = createApplicationPlugin(
     name = "AWS SQS",
     configurationPath = "aws",
     createConfiguration = ::AWSSQSServiceConfiguration
 ) {
-    lateinit var sqsClient: SqsClient
+    val sqsClient by inject<SqsClient>(SqsClient::class.java)
+
     lateinit var queueUrl: String
 
     try {
-        sqsClient = pluginConfig.createSQSClient()
         queueUrl = pluginConfig.queueURL
 
         SchemaValidation.logger.info("Connection to the AWS SQS was successfully established")
@@ -84,6 +83,7 @@ val AWSSQSPlugin  = createApplicationPlugin(
     } catch (e: Exception) {
         SchemaValidation.logger.error("Unexpected error occurred ${e.message}")
     }
+
     /**
      * Deletes messages from AWS SQS Service that has been validated
      * @param receivedMessages the list of message(s) received from the queue to be deleted

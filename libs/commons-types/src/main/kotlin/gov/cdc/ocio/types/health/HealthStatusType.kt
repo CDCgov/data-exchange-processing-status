@@ -12,6 +12,5 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 @JsonSerialize(using = HealthStatusTypeSerializer::class)
 enum class HealthStatusType(val value: String) {
     STATUS_UP("UP"),
-    STATUS_DOWN("DOWN"),
-    STATUS_UNSUPPORTED("UNSUPPORTED")
+    STATUS_DOWN("DOWN")
 }

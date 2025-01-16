@@ -3,6 +3,7 @@ package gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import gov.cdc.ocio.reportschemavalidator.utils.FileSystemConfiguration
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
@@ -22,32 +23,31 @@ class HealthCheckFileSystem : HealthCheckSystem("file_system"), KoinComponent {
 
     /**
      * Checks tha the folder for the file system exists.
+     *
+     * @return HealthCheckResult
      */
-    override fun doHealthCheck() {
-        try {
-            if (isFileSystemHealthy(fileSystemConfiguration)) {
-                status = HealthStatusType.STATUS_UP
-            }
-
-        } catch (ex: Exception) {
-            logger.error("File system is not accessible and hence not healthy $ex.message")
-            healthIssues = ex.message
+    override fun doHealthCheck(): HealthCheckResult {
+        val result = isFileSystemHealthy(fileSystemConfiguration)
+        result.onFailure { error ->
+            val reason = "File system is not accessible and hence not healthy ${error.localizedMessage}"
+            logger.error(reason)
+            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
         }
+
+        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
     }
 
     /**
      * Check whether the file system folder exists.
      *
      * @param config FileSystemConfiguration
-     * @return Boolean
-     * @throws FileNotFoundException
+     * @return Result<Boolean>
      */
-    @Throws(FileNotFoundException::class)
-    fun isFileSystemHealthy(config: FileSystemConfiguration): Boolean {
-        if (File(config.localFileSystemPath).exists())
-            return true
+    private fun isFileSystemHealthy(config: FileSystemConfiguration): Result<Boolean> {
+        return if (File(config.localFileSystemPath).exists())
+            Result.success(true)
         else
-            throw FileNotFoundException("Report schema folder '${config.localFileSystemPath}' does not exist")
+            Result.failure(FileNotFoundException("Report schema folder '${config.localFileSystemPath}' does not exist"))
     }
 
 }

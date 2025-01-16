@@ -2,6 +2,7 @@ package gov.cdc.ocio.database.health
 
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoDatabase
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import org.bson.BsonDocument
@@ -18,19 +19,17 @@ class HealthCheckMongoDb(
 
     /**
      * Checks and sets MongoDB status.
+     *
+     * @return HealthCheckResult
      */
-    override fun doHealthCheck() {
-        try {
-            if (isMongoDBHealthy()) {
-                status = HealthStatusType.STATUS_UP
-            } else {
-                throw Exception("MongoDB is not healthy.")
-            }
-        } catch (ex: Exception) {
-            logger.error("MongoDB is not healthy: ${ex.message}")
-            status = HealthStatusType.STATUS_DOWN
-            healthIssues = ex.message
+    override fun doHealthCheck(): HealthCheckResult {
+        val result = isMongoDBHealthy()
+        result.onFailure { error ->
+            val reason = "MongoDB is not healthy: ${error.localizedMessage}"
+            logger.error(reason)
+            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
         }
+        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
     }
 
     /**
@@ -38,18 +37,17 @@ class HealthCheckMongoDb(
      *
      * @return Boolean
      */
-    private fun isMongoDBHealthy(): Boolean {
+    private fun isMongoDBHealthy(): Result<Boolean> {
         return try {
             val database = connectToDatabase()
             if (database == null) {
-                throw Exception("Failed to establish a MongoDB connection.")
+                Result.failure(Exception("Failed to establish a MongoDB connection."))
             } else {
                 logger.info("MongoDB connection is healthy.")
-                true
+                Result.success(true)
             }
         } catch (ex: Exception) {
-            logger.error("Error during MongoDB health check: ${ex.message}")
-            false
+            Result.failure(ex)
         }
     }
 

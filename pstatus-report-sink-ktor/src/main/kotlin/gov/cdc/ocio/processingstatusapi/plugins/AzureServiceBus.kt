@@ -5,8 +5,6 @@ import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
-import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -17,8 +15,13 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Class which initializes configuration values
- * @param config ApplicationConfig
  *
+ * @property configPath String
+ * @property connectionString String
+ * @property queueName String
+ * @property topicName String
+ * @property subscriptionName String
+ * @constructor
  */
 class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
@@ -27,21 +30,8 @@ class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath:
     val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
     val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
 
-}
-
-val AzureServiceBus  = createApplicationPlugin(
-    name = "AzureServiceBus",
-    configurationPath = "azure",
-    createConfiguration = ::AzureServiceBusConfiguration) {
-
-    val connectionString = pluginConfig.connectionString
-    val queueName = pluginConfig.queueName
-    val topicName = pluginConfig.topicName
-    val subscriptionName = pluginConfig.subscriptionName
-
-    // Initialize Service Bus client for queue
-    val processorQueueClient by lazy {
-        ServiceBusClientBuilder()
+    fun createProcessorQueueClient(): ServiceBusProcessorClient {
+        return ServiceBusClientBuilder()
             .connectionString(connectionString)
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
@@ -51,9 +41,8 @@ val AzureServiceBus  = createApplicationPlugin(
             .buildProcessorClient()
     }
 
-    // Initialize Service Bus client for topics
-    val processorTopicClient by lazy {
-        ServiceBusClientBuilder()
+    fun createProcessorTopicClient(): ServiceBusProcessorClient {
+        return ServiceBusClientBuilder()
             .connectionString(connectionString)
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
@@ -62,6 +51,26 @@ val AzureServiceBus  = createApplicationPlugin(
             .processMessage{ context -> processMessage(context) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
+    }
+}
+
+val AzureServiceBus = createApplicationPlugin(
+    name = "AzureServiceBus",
+    configurationPath = "azure",
+    createConfiguration = ::AzureServiceBusConfiguration) {
+
+    val queueName = pluginConfig.queueName
+    val topicName = pluginConfig.topicName
+    val subscriptionName = pluginConfig.subscriptionName
+
+    // Initialize Service Bus client for queue
+    val processorQueueClient by lazy {
+        pluginConfig.createProcessorQueueClient()
+    }
+
+    // Initialize Service Bus client for topics
+    val processorTopicClient by lazy {
+        pluginConfig.createProcessorTopicClient()
     }
 
     /**
