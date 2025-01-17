@@ -1,9 +1,6 @@
 package gov.cdc.ocio.reportschemavalidator.utils
 
-import gov.cdc.ocio.reportschemavalidator.loaders.CachedSchemaLoader
-import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
-import gov.cdc.ocio.reportschemavalidator.loaders.FileSchemaLoader
-import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
+import gov.cdc.ocio.reportschemavalidator.loaders.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
 
@@ -52,7 +49,7 @@ object SchemaLoaderConfiguration {
                 )
                 FileSchemaLoader(config)
             }
-            else -> throw IllegalArgumentException( "Unsupported schema loader type: $schemaLoaderSystem")
+            else -> UnsupportedSchemaLoader(schemaLoaderSystem)
         }
         return CachedSchemaLoader(schemaLoader)
     }
