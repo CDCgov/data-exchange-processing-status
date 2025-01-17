@@ -1,25 +1,38 @@
 package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.processingstatusapi.messagesystems.*
+import gov.cdc.ocio.processingstatusapi.models.MessageSystemType
 import gov.cdc.ocio.processingstatusapi.plugins.*
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfigurationKoinCreator
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import mu.KotlinLogging
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
-enum class MessageSystem {
-    AWS,
-    AZURE_SERVICE_BUS,
-    RABBITMQ
+
+private fun createMessageSystem(environment: ApplicationEnvironment): MessageSystem {
+    return when (getMessageSystem(environment)) {
+        MessageSystemType.AZURE_SERVICE_BUS -> {
+            val config = AzureServiceBusConfiguration(environment.config, configurationPath = "azure")
+            AzureServiceBusMessageSystem(config)
+        }
+        MessageSystemType.RABBITMQ -> {
+            val config = RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
+            RabbitMQMessageSystem(config.getConnectionFactory().newConnection())
+        }
+        MessageSystemType.AWS -> {
+            val config = AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
+            AWSSQSMessageSystem(config.createSQSClient(), config.queueURL)
+        }
+        else -> { UnsupportedMessageSystem(environment.config.property("ktor.message_system").getString()) }
+    }
 }
-
-
 
 /**
  * Load the environment configuration values
@@ -30,41 +43,17 @@ enum class MessageSystem {
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val healthCheckDatabaseModule = DatabaseKoinCreator.dbHealthCheckModuleFromAppEnv(environment)
     val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
-    val schemaConfigurationAppModule = SchemaLoaderConfigurationKoinCreator.getSchemaLoaderConfigurationFromAppEnv(environment)
-    val schemaConfigurationHealthModule = SchemaLoaderConfigurationKoinCreator.schemaLoaderHealthCheckModuleFromAppEnv(environment)
     val messageSystemModule = module {
-        val msgType = environment.config.property("ktor.message_system").getString()
-        single {msgType} // add msgType to Koin Modules
-
-        when (msgType) {
-            MessageSystem.AZURE_SERVICE_BUS.toString() -> {
-                single(createdAtStart = true) {
-                    AzureServiceBusConfiguration(environment.config, configurationPath = "azure") }
-
-            }
-            MessageSystem.RABBITMQ.toString() -> {
-                single(createdAtStart = true) {
-                    RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
-                }
-
-            }
-            MessageSystem.AWS.toString() -> {
-                single(createdAtStart = true) {
-                    AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
-                }
-            }
-        }
+        single(createdAtStart = true) { createMessageSystem(environment) }
     }
+
     return modules(
         listOf(
             databaseModule,
-            healthCheckDatabaseModule,
             messageSystemModule,
-            schemaLoaderModule,
-            schemaConfigurationHealthModule,
-            schemaConfigurationAppModule)
+            schemaLoaderModule
+        )
     )
 }
 
@@ -76,30 +65,34 @@ fun main(args: Array<String>) {
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
 }
 
+private fun getMessageSystem(environment: ApplicationEnvironment): MessageSystemType? {
+    val logger = KotlinLogging.logger {}
+
+    // Determine which messaging system module to load
+    val currentMessagingSystem = environment.config.property("ktor.message_system").getString()
+    val messageSystemType: MessageSystemType? = try {
+        MessageSystemType.valueOf(currentMessagingSystem.uppercase())
+    } catch (e: IllegalArgumentException) {
+        logger.error("Unrecognized message system: $currentMessagingSystem")
+        null
+    }
+    return messageSystemType
+}
+
 /**
  * The main application module which always runs and loads other modules
  */
 fun Application.module() {
     configureRouting()
 
-    //determine which messaging system module to load
-    val messageSystem: MessageSystem? =  try {
-        val currentMessagingSystem = environment.config.property("ktor.message_system").getString()
-        MessageSystem.valueOf(currentMessagingSystem)
-    } catch (e: IllegalArgumentException) {
-        log.error("Invalid message system configuration: ${e.message}")
-        null
-    }
-
-    when (messageSystem) {
-        MessageSystem.AZURE_SERVICE_BUS -> {
+    when (getMessageSystem(environment)) {
+        MessageSystemType.AZURE_SERVICE_BUS -> {
             serviceBusModule()
         }
-        MessageSystem.RABBITMQ -> {
+        MessageSystemType.RABBITMQ -> {
             rabbitMQModule()
         }
-
-        MessageSystem.AWS -> {
+        MessageSystemType.AWS -> {
             awsSQSModule()
         }
         else -> log.error("Invalid message system configuration")

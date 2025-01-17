@@ -3,9 +3,11 @@ package gov.cdc.ocio.reportschemavalidator.schema
 import com.azure.storage.blob.BlobClientBuilder
 import com.azure.storage.blob.BlobServiceClientBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
+import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 class BlobStorageSchemaClient(
@@ -73,4 +75,6 @@ class BlobStorageSchemaClient(
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
+
+    override var healthCheckSystem = HealthCheckBlobContainer(containerClient) as HealthCheckSystem
 }

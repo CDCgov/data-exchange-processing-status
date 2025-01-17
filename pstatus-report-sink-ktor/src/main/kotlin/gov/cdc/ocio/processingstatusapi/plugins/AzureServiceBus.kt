@@ -5,8 +5,6 @@ import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
-import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -17,8 +15,13 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Class which initializes configuration values
- * @param config ApplicationConfig
  *
+ * @property configPath String
+ * @property connectionString String
+ * @property queueName String
+ * @property topicName String
+ * @property subscriptionName String
+ * @constructor
  */
 class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
@@ -27,42 +30,47 @@ class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath:
     val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
     val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
 
-}
-
-val AzureServiceBus  = createApplicationPlugin(
-    name = "AzureServiceBus",
-    configurationPath = "azure",
-    createConfiguration = ::AzureServiceBusConfiguration) {
-
-    val connectionString = pluginConfig.connectionString
-    val queueName = pluginConfig.queueName
-    val topicName = pluginConfig.topicName
-    val subscriptionName = pluginConfig.subscriptionName
-    val environment: ApplicationEnvironment = this@createApplicationPlugin.application.environment
-    val schemaLoader = SchemaLoaderConfiguration(environment).createSchemaLoader() // Create the schema loader here
-    // Initialize Service Bus client for queue
-    val processorQueueClient by lazy {
-        ServiceBusClientBuilder()
+    fun createProcessorQueueClient(): ServiceBusProcessorClient {
+        return ServiceBusClientBuilder()
             .connectionString(connectionString)
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .queueName(queueName)
-            .processMessage{ context -> processMessage(context,schemaLoader) }
+            .processMessage{ context -> processMessage(context) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
     }
 
-    // Initialize Service Bus client for topics
-    val processorTopicClient by lazy {
-        ServiceBusClientBuilder()
+    fun createProcessorTopicClient(): ServiceBusProcessorClient {
+        return ServiceBusClientBuilder()
             .connectionString(connectionString)
             .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
             .processor()
             .topicName(topicName)
             .subscriptionName(subscriptionName)
-            .processMessage{ context -> processMessage(context,schemaLoader) }
+            .processMessage{ context -> processMessage(context) }
             .processError { context -> processError(context) }
             .buildProcessorClient()
+    }
+}
+
+val AzureServiceBus = createApplicationPlugin(
+    name = "AzureServiceBus",
+    configurationPath = "azure",
+    createConfiguration = ::AzureServiceBusConfiguration) {
+
+    val queueName = pluginConfig.queueName
+    val topicName = pluginConfig.topicName
+    val subscriptionName = pluginConfig.subscriptionName
+
+    // Initialize Service Bus client for queue
+    val processorQueueClient by lazy {
+        pluginConfig.createProcessorQueueClient()
+    }
+
+    // Initialize Service Bus client for topics
+    val processorTopicClient by lazy {
+        pluginConfig.createProcessorTopicClient()
     }
 
     /**
@@ -107,7 +115,7 @@ val AzureServiceBus  = createApplicationPlugin(
  *   @throws BadRequestException
  *   @throws Exception generic
  */
-private fun processMessage(context: ServiceBusReceivedMessageContext, schemaLoader: SchemaLoader) {
+private fun processMessage(context: ServiceBusReceivedMessageContext) {
     val message = context.message
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
@@ -141,19 +149,29 @@ private fun processError(context: ServiceBusErrorContext) {
     }
     val exception = context.exception as ServiceBusException
     val reason = exception.reason
-    if (reason === ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED || reason === ServiceBusFailureReason.MESSAGING_ENTITY_NOT_FOUND || reason === ServiceBusFailureReason.UNAUTHORIZED) {
-        logger.error("An unrecoverable error occurred. Stopping processing with reason $reason: ${exception.message}")
-    } else if (reason === ServiceBusFailureReason.MESSAGE_LOCK_LOST) {
-        logger.error("Message lock lost for message: ${context.exception}")
-    } else if (reason === ServiceBusFailureReason.SERVICE_BUSY) {
-        try {
-            // Choosing an arbitrary amount of time to wait until trying again.
-            TimeUnit.SECONDS.sleep(1)
-        } catch (e: InterruptedException) {
-            logger.error("Unable to sleep for period of time")
+    when (reason) {
+        ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED,
+        ServiceBusFailureReason.MESSAGING_ENTITY_NOT_FOUND,
+        ServiceBusFailureReason.UNAUTHORIZED -> {
+            logger.error("An unrecoverable error occurred. Stopping processing with reason $reason: ${exception.message}")
         }
-    } else {
-        logger.error("Error source ${context.errorSource}, reason $reason, message: ${context.exception}")
+
+        ServiceBusFailureReason.MESSAGE_LOCK_LOST -> {
+            logger.error("Message lock lost for message: ${context.exception}")
+        }
+
+        ServiceBusFailureReason.SERVICE_BUSY -> {
+            try {
+                // Choosing an arbitrary amount of time to wait until trying again.
+                TimeUnit.SECONDS.sleep(1)
+            } catch (e: InterruptedException) {
+                logger.error("Unable to sleep for period of time")
+            }
+        }
+
+        else -> {
+            logger.error("Error source ${context.errorSource}, reason $reason, message: ${context.exception}")
+        }
     }
 }
 /**

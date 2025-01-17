@@ -1,19 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.health
 
-import gov.cdc.ocio.database.DatabaseType
-import gov.cdc.ocio.database.health.*
-import gov.cdc.ocio.processingstatusapi.MessageSystem
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckAWSSQS
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckServiceBus
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckUnsupportedMessageSystem
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckBlobContainer
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
-import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckUnsupportedSchemaLoaderSystem
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderSystemType
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.types.health.HealthCheck
-import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -25,17 +16,19 @@ import kotlin.system.measureTimeMillis
  * Service for querying the health of the report-sink service and its dependencies.
  *
  * @property logger KLogger
- * @property msgType String
+ * @property repository ProcessingStatusRepository
+ * @property messageSystem MessageSystem
+ * @property schemaLoader SchemaLoader
  */
 class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val databaseType: DatabaseType by inject()
+    private val repository by inject<ProcessingStatusRepository>()
 
-    private val msgType: String by inject()
+    private val messageSystem by inject<MessageSystem>()
 
-    private val schemaLoaderSystemType:SchemaLoaderSystemType by inject()
+    private val schemaLoader by inject<SchemaLoader>()
 
     /**
      * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
@@ -43,38 +36,17 @@ class HealthQueryService: KoinComponent {
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
-        val databaseHealthCheck: HealthCheckSystem?
-        val messageSystemHealthCheck: HealthCheckSystem?
-        val schemaLoaderSystemHealthCheck: HealthCheckSystem?
+        var databaseHealthCheck: HealthCheckResult
+        var messageSystemHealthCheck: HealthCheckResult
+        var schemaLoaderSystemHealthCheck: HealthCheckResult
 
         val time = measureTimeMillis {
-            databaseHealthCheck = when (databaseType) {
-                DatabaseType.COSMOS -> getKoin().get<HealthCheckCosmosDb>()
-                DatabaseType.MONGO -> getKoin().get<HealthCheckMongoDb>()
-                DatabaseType.COUCHBASE -> getKoin().get<HealthCheckCouchbaseDb>()
-                DatabaseType.DYNAMO -> getKoin().get<HealthCheckDynamoDb>()
-                else -> HealthCheckUnsupportedDb()
-            }
-            databaseHealthCheck.doHealthCheck()
-
-            // selectively check health of the messaging service based on msgType
-            messageSystemHealthCheck = when (msgType) {
-                MessageSystem.AZURE_SERVICE_BUS.toString() -> HealthCheckServiceBus()
-                MessageSystem.RABBITMQ.toString() -> HealthCheckRabbitMQ()
-                MessageSystem.AWS.toString() -> HealthCheckAWSSQS()
-                else -> HealthCheckUnsupportedMessageSystem()
-            }
-            messageSystemHealthCheck.doHealthCheck()
-
-            schemaLoaderSystemHealthCheck = when (schemaLoaderSystemType.toString().lowercase()) {
-                SchemaLoaderSystemType.S3.toString().lowercase() ->  getKoin().get<HealthCheckS3Bucket>()
-                SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() ->  getKoin().get<HealthCheckBlobContainer>()
-                SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> HealthCheckFileSystem()
-                else -> HealthCheckUnsupportedSchemaLoaderSystem()
-            }
-            schemaLoaderSystemHealthCheck.doHealthCheck()
+            databaseHealthCheck = repository.healthCheckSystem.doHealthCheck()
+            messageSystemHealthCheck = messageSystem.healthCheckSystem.doHealthCheck()
+            schemaLoaderSystemHealthCheck = schemaLoader.healthCheckSystem.doHealthCheck()
         }
-        return compileHealthChecks(databaseHealthCheck, messageSystemHealthCheck,schemaLoaderSystemHealthCheck, time)
+
+        return compileHealthChecks(databaseHealthCheck, messageSystemHealthCheck, schemaLoaderSystemHealthCheck, time)
     }
 
     /**
@@ -86,24 +58,24 @@ class HealthQueryService: KoinComponent {
      * @return HealthCheck
      */
     private fun compileHealthChecks(
-        databaseHealth: HealthCheckSystem?,
-        messageSystemHealth: HealthCheckSystem?,
-        schemaLoaderSystemHealth:HealthCheckSystem?,
+        databaseHealth: HealthCheckResult,
+        messageSystemHealth: HealthCheckResult,
+        schemaLoaderSystemHealth: HealthCheckResult,
         totalTime: Long
     ): HealthCheck {
 
         return HealthCheck().apply {
-            status = if (databaseHealth?.status == HealthStatusType.STATUS_UP
-                && messageSystemHealth?.status == HealthStatusType.STATUS_UP
-                && schemaLoaderSystemHealth?.status == HealthStatusType.STATUS_UP
+            status = if (databaseHealth.status == HealthStatusType.STATUS_UP
+                && messageSystemHealth.status == HealthStatusType.STATUS_UP
+                && schemaLoaderSystemHealth.status == HealthStatusType.STATUS_UP
             )
                 HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
 
             totalChecksDuration = formatMillisToHMS(totalTime)
 
-            databaseHealth?.let { dependencyHealthChecks.add(it) }
-            messageSystemHealth?.let { dependencyHealthChecks.add(it) }
-            schemaLoaderSystemHealth?.let { dependencyHealthChecks.add(it) }
+            dependencyHealthChecks.add(databaseHealth)
+            dependencyHealthChecks.add(messageSystemHealth)
+            dependencyHealthChecks.add(schemaLoaderSystemHealth)
         }
     }
 

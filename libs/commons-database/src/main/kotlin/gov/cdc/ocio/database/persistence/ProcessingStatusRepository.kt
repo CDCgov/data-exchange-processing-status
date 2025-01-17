@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
+import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 /**
@@ -27,6 +28,8 @@ abstract class ProcessingStatusRepository {
 
     // Common interface for the notification subscriptions collection
     open lateinit var notificationSubscriptionsCollection: Collection
+
+    abstract var healthCheckSystem: HealthCheckSystem
 
     private val gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)

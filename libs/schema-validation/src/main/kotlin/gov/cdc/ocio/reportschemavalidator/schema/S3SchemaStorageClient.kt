@@ -1,9 +1,11 @@
 package gov.cdc.ocio.reportschemavalidator.schema
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckS3Bucket
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
+import gov.cdc.ocio.types.health.HealthCheckSystem
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import software.amazon.awssdk.regions.Region
@@ -19,7 +21,6 @@ class S3SchemaStorageClient(
     private val region: String,
     private val roleArn: String?,
     private val webIdentityTokenFile: String?
-
 ) : SchemaStorageClient {
 
     /**
@@ -29,7 +30,7 @@ class S3SchemaStorageClient(
      */
     private fun getS3Client(): S3Client {
 
-      val credentialsProvider =    if (roleArn.isNullOrEmpty() ||
+      val credentialsProvider = if (roleArn.isNullOrEmpty() ||
             webIdentityTokenFile.isNullOrEmpty()) {
             // Fallback to default credentials provider (access key and secret)
             DefaultCredentialsProvider.create()
@@ -149,4 +150,5 @@ class S3SchemaStorageClient(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
+    override var healthCheckSystem = HealthCheckS3Bucket(getS3Client()) as HealthCheckSystem
 }

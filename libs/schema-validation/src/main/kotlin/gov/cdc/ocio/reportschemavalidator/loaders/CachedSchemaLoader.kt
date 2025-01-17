@@ -94,4 +94,6 @@ class CachedSchemaLoader(private val schemaLoaderImpl: SchemaLoader) : SchemaLoa
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> =
         getSchemaContent("$schemaName.$schemaVersion.schema.json")
+
+    override var healthCheckSystem = schemaLoaderImpl.healthCheckSystem
 }

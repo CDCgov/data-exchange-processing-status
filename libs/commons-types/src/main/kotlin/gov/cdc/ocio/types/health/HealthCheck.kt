@@ -14,6 +14,6 @@ class HealthCheck {
 
     var totalChecksDuration: String? = null
 
-    var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
+    var dependencyHealthChecks = mutableListOf<HealthCheckResult>()
 }
 

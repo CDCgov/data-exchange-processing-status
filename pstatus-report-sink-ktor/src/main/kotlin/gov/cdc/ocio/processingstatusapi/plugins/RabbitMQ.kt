@@ -1,12 +1,14 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
+import gov.cdc.ocio.processingstatusapi.messagesystems.RabbitMQMessageSystem
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
-import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import org.apache.qpid.proton.TimeoutException
+import org.koin.java.KoinJavaComponent.getKoin
 import java.io.IOException
 
 
@@ -40,6 +42,7 @@ class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath:
 
         // Attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000)
+        connectionFactory.connectionTimeout = 10000 // 10 seconds
     }
 
     fun getConnectionFactory(): ConnectionFactory {
@@ -52,21 +55,9 @@ val RabbitMQPlugin = createApplicationPlugin(
     configurationPath = "rabbitMQ",
     createConfiguration = ::RabbitMQServiceConfiguration) {
 
-    val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
     lateinit var connection: Connection
     lateinit var channel: Channel
-
-    try {
-        connection = factory.newConnection()
-        SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
-        channel = connection.createChannel()
-        SchemaValidation.logger.info("Channel was successfully created.")
-    } catch (e: IOException ) {
-        SchemaValidation.logger.error("IOException occurred {}", e.message)
-    } catch (e: TimeoutException){
-        SchemaValidation.logger.error("TimeoutException occurred $e.message")
-    }
 
     /**
      * consumeMessages function listens to the queue, receives the messages
@@ -106,6 +97,17 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started successfully.")
+        try {
+            val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
+            connection = msgSystem.rabbitMQConnection
+            SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
+            channel = connection.createChannel()
+            SchemaValidation.logger.info("Channel was successfully created.")
+        } catch (e: IOException ) {
+            SchemaValidation.logger.error("IOException occurred {}", e.message)
+        } catch (e: TimeoutException){
+            SchemaValidation.logger.error("TimeoutException occurred $e.message")
+        }
         consumeMessages(channel, queueName)
     }
 

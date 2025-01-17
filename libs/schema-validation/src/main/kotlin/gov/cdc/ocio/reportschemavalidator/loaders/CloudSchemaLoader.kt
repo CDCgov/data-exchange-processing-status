@@ -7,7 +7,6 @@ import gov.cdc.ocio.reportschemavalidator.schema.BlobStorageSchemaClient
 import gov.cdc.ocio.reportschemavalidator.schema.S3SchemaStorageClient
 
 
-
 /**
  * A loader that retrieves schema files from cloud storage solutions like S3 or Azure Blob Storage.
  */
@@ -61,6 +60,8 @@ class CloudSchemaLoader(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String) = storageClient.getSchemaContent(schemaName, schemaVersion)
+
+    override var healthCheckSystem = storageClient.healthCheckSystem
 
     /**
      * Factory function to create a storage client based on the provided configuration.

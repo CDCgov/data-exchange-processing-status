@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.queries
 
 import gov.cdc.ocio.database.cosmos.CosmosClientManager
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
+import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach

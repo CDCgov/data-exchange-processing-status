@@ -1,10 +1,12 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
+import gov.cdc.ocio.types.health.HealthCheckSystem
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -89,4 +91,5 @@ class FileSchemaLoader(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
+    override var healthCheckSystem = HealthCheckFileSystem() as HealthCheckSystem
 }
