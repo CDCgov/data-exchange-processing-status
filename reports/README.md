@@ -277,12 +277,6 @@ If partners using DEX have downstream processing and want to provide **report co
 | upload-started                  | [schema.1.0.0](upload-started.1.0.0.schema.json)                               | 1.0.0          | upload api / upload-started             |
 | upload-completed                | [schema.1.0.0](upload-completed.1.0.0.schema.json)                             | 1.0.0          | upload api / upload-completed           |
 | blob-file-copy                  | [schema.1.0.0](blob-file-copy.1.0.0.schema.json)                               | 1.0.0          | routing / file-copy, upload / file-copy |
-| hl7v2-debatch                   | [schema.1.0.0](hl7v2-debatch.1.0.0.schema.json)                                | 1.0.0          | hl7v2 / receiver                        |
-| hl7v2-redact                    | [schema.1.0.0](hl7v2-redact.1.0.0.schema.json)                                 | 1.0.0          | hl7v2 / redactor                        |
-| hl7v2-structure-validation      | [schema.1.0.0](hl7v2-structure-validation.1.0.0.schema.json)                   | 1.0.0          | hl7v2 / structure-validator             |
-| hl7v2-json-lake-transformer     | [schema.1.0.0](hl7v2-json-lake-transformer.1.0.0.schema.json)                  | 1.0.0          | hl7v2 / json-lake-transformer           |
-| hl7v2-lake-segments-transformer | [schema.1.0.0](hl7v2-lake-segments-transformer.1.0.0.schema.json)              | 1.0.0          | hl7v2 / lake-segments-transformer       |
-| buzz-file-capture               | [schema.1.0.0](buzz-file-capture.1.0.0.schema.json)                            | 1.0.0          | buzz app                                |
 
 # Validation
 The PS API will perform the following workflow for validation.
