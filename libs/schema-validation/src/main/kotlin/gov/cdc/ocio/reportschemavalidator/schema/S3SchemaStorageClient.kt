@@ -30,8 +30,9 @@ class S3SchemaStorageClient(
      */
     private fun getS3Client(): S3Client {
 
-      val credentialsProvider = if (roleArn.isNullOrEmpty() ||
-            webIdentityTokenFile.isNullOrEmpty()) {
+        val credentialsProvider = if (roleArn.isNullOrEmpty() ||
+            webIdentityTokenFile.isNullOrEmpty()
+        ) {
             // Fallback to default credentials provider (access key and secret)
             DefaultCredentialsProvider.create()
         } else {
@@ -41,6 +42,7 @@ class S3SchemaStorageClient(
                 .webIdentityTokenFile(webIdentityTokenFile.let { Path.of(it) })
                 .build()
         }
+
         // Load credentials from the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN environment variables.
         return S3Client.builder()
             .region(Region.of(region))
@@ -66,6 +68,8 @@ class S3SchemaStorageClient(
             .getObject(getObjectRequest)
             .readAllBytes()
             .decodeToString()
+
+        s3Client.close()
 
         return result
     }
@@ -150,5 +154,5 @@ class S3SchemaStorageClient(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
-    override var healthCheckSystem = HealthCheckS3Bucket(getS3Client(), bucketName) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckS3Bucket(::getS3Client, bucketName) as HealthCheckSystem
 }

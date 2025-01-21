@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.model.ListBucketsRequest
  * Concrete implementation of the S3 Bucket health checks.
  */
 class HealthCheckS3Bucket(
-    private val s3Client: S3Client,
+    private val getS3ClientFunc: () -> S3Client,
     private val s3Bucket: String,
 ) : HealthCheckSystem("s3") {
 
@@ -33,20 +33,21 @@ class HealthCheckS3Bucket(
     /**
      * Check whether S3 Buket is accessible
      *
-     * @param config AWSS3Configuration
      * @return Result<Boolean>
      */
     private fun isS3FolderHealthy(): Result<Boolean> {
         return try {
+            val s3Client = getS3ClientFunc()
             val request = ListBucketsRequest.builder()
                 .build()
             val response = s3Client.listBuckets(request)
+            s3Client.close()
             if (response.buckets().any { it.name() == s3Bucket })
                 Result.success(true)
             else
                 Result.failure(Exception("Established connection to S3, but failed to verify the expected bucket exists."))
         } catch (e: Exception) {
-            throw Exception("Failed to establish connection to S3 bucket.")
+            Result.failure(Exception("Failed to establish connection to S3 bucket: ${e.localizedMessage}"))
         }
     }
 }
