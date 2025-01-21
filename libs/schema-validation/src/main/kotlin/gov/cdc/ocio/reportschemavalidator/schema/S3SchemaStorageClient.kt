@@ -150,5 +150,5 @@ class S3SchemaStorageClient(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
-    override var healthCheckSystem = HealthCheckS3Bucket(getS3Client()) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckS3Bucket(getS3Client(), bucketName) as HealthCheckSystem
 }
