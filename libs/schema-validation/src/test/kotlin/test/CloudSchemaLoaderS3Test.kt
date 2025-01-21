@@ -29,6 +29,8 @@ class CloudSchemaLoaderS3Test  {
         val loader = CloudSchemaLoader("s3", config)
 
         // Inject mock client via reflection
+        // Suppress Fortify warning: This use of setAccessible is restricted to test code and is necessary for injecting mocks.
+        // the use of setAccessible(true) is restricted to testing (and is safe)
         val storageClientField = loader.javaClass.getDeclaredField("storageClient")
         storageClientField.isAccessible = true
         storageClientField.set(loader, mockS3Client)

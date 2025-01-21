@@ -34,9 +34,11 @@ For Azure Service Bus only, set the following environment variables:
 - `azure_topic_name` - Your service bus topic name.
   
 #### AWS 
-For AWS SNS/SQS only, set the following environment variables:
-- `aws_access_key_id` - The Access Key ID for an IAM user with permissions to receive and delete messages from specified SQS queue.
-- `aws_secret_access_key` - The secret access key for an IAM user with permissions to receive and delete messages from the specified SQS queue. This key is used for authentication and secure access to the queue.
+For AWS SNS/SQS only, set the following variables in the OS environment or put in the default profile in ~/.aws/credentials:
+- `AWS_ACCESS_KEY_ID` - The Access Key ID for an IAM user with permissions to receive and delete messages from specified SQS queue.
+- `AWS_SECRET_ACCESS_KEY` - The secret access key for an IAM user with permissions to receive and delete messages from the specified SQS queue. This key is used for authentication and secure access to the queue.
+- `AWS_SESSION_TOKEN` - The session token, required when using short-term access keys.
+Set the remaining variables in the environment file:
 - `aws_region` - The AWS region where your SQS queue is located.
 - `aws_queue_url` - URL of the Amazon Simple Queue Service(SQS) queue.
 - `aws_topic_arn` - Value of the Amazon Simple Notification Service(SNS) topic.

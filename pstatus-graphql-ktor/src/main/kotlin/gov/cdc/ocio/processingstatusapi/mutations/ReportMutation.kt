@@ -30,7 +30,7 @@ class ReportMutation : Mutation {
      * This function serves as a GraphQL mutation to create a new report or replace an existing one.
      * It delegates the actual upsert logic to the ReportMutation class.
      *
-     * @param input The report to be created or updated.
+     * @param report The report to be created or updated.
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The result of the upsert operation, handled by the ReportMutation class.
      */
@@ -41,12 +41,15 @@ class ReportMutation : Mutation {
         "*Action*: Can be one of the following values\n"
                 + "`create`: Creates a new report.\n"
                 + "`replace`: Replace an existing report.\n"
-        )
-        action: String,
-
-        @GraphQLDescription(
-            "*Report* to be created or updated, which is the JSON of the report provided.\n"
-        )
-        report: BasicHashMap<String, Any?>
-        ) = ReportMutationService().upsertReport(action, report)
+    )
+                      action: String,
+                      @GraphQLDescription(
+                          "*Report* to be created or updated, which is the JSON of the report provided.\n"
+                      )
+                      report: BasicHashMap<String, Any?>
+    ) = run {
+        val service = ReportMutationService()
+        service.upsertReport(action, report)
+    }
 }
+

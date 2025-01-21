@@ -18,8 +18,6 @@ def test_aws_connection():
         # Create SQS client using config values
         sqs = boto3.client(
             'sqs',
-            aws_access_key_id=config['aws_access_key_id'],
-            aws_secret_access_key=config['aws_secret_access_key'],
             region_name=config['aws_region']
         )
 

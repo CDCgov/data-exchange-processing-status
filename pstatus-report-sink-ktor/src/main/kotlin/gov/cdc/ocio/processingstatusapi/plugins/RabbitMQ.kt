@@ -1,19 +1,24 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
+import gov.cdc.ocio.processingstatusapi.messagesystems.RabbitMQMessageSystem
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import org.apache.qpid.proton.TimeoutException
+import org.koin.java.KoinJavaComponent.getKoin
 import java.io.IOException
 
 
-
 /**
- * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings provided in an `ApplicationConfig`.
+ * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings
+ * provided in an `ApplicationConfig`.
+ *
  * @param config `ApplicationConfig` containing the configuration settings for RabbitMQ, including connection details.
- * @param configurationPath represents prefix used to locate environment variables specific to RabbitMQ within the configuration.
+ * @param configurationPath represents prefix used to locate environment variables specific to RabbitMQ within the
+ * configuration.
  */
 class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
 
@@ -34,9 +39,12 @@ class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath:
         connectionFactory.virtualHost = config.tryGetString("${configPath}virtual_host") ?: DEFAULT_VIRTUAL_HOST
         connectionFactory.username = config.tryGetString("${configPath}user_name") ?: DEFAULT_USERNAME
         connectionFactory.password = config.tryGetString("${configPath}password") ?: DEFAULT_PASSWORD
-        //attempt recovery every 10 seconds
+
+        // Attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000)
+        connectionFactory.connectionTimeout = 10000 // 10 seconds
     }
+
     fun getConnectionFactory(): ConnectionFactory {
         return connectionFactory
     }
@@ -47,23 +55,9 @@ val RabbitMQPlugin = createApplicationPlugin(
     configurationPath = "rabbitMQ",
     createConfiguration = ::RabbitMQServiceConfiguration) {
 
-    val factory = pluginConfig.getConnectionFactory()
     val queueName = pluginConfig.queue
-
     lateinit var connection: Connection
     lateinit var channel: Channel
-
-    try {
-        connection = factory.newConnection()
-        SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
-        channel = connection.createChannel()
-        SchemaValidation.logger.info("Channel was successfully created.")
-    } catch (e: IOException ) {
-        SchemaValidation.logger.error("IOException occurred {}", e.message)
-    }catch (e: TimeoutException){
-        SchemaValidation.logger.error("TimeoutException occurred $e.message")
-    }
-
 
     /**
      * consumeMessages function listens to the queue, receives the messages
@@ -95,7 +89,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                     channel.basicAck(deliveryTag, false)
                 }
             })
-        }catch (e: IOException){
+        } catch (e: IOException) {
             SchemaValidation.logger.error("IOException occurred failed to process message from the queue $e.message")
         }
 
@@ -103,6 +97,17 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started successfully.")
+        try {
+            val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
+            connection = msgSystem.rabbitMQConnection
+            SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
+            channel = connection.createChannel()
+            SchemaValidation.logger.info("Channel was successfully created.")
+        } catch (e: IOException ) {
+            SchemaValidation.logger.error("IOException occurred {}", e.message)
+        } catch (e: TimeoutException){
+            SchemaValidation.logger.error("TimeoutException occurred $e.message")
+        }
         consumeMessages(channel, queueName)
     }
 
@@ -135,4 +140,3 @@ private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connect
 fun Application.rabbitMQModule() {
     install(RabbitMQPlugin)
 }
-

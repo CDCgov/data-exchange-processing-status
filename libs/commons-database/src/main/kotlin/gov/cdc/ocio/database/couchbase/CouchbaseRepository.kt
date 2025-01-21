@@ -3,7 +3,9 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.Scope
+import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.health.HealthCheckSystem
 import java.time.Duration
 
 
@@ -87,4 +89,6 @@ class CouchbaseRepository(
             scope,
             notificationSubscriptionsCouchbaseCollection
         ) as Collection
+
+    override var healthCheckSystem = HealthCheckCouchbaseDb() as HealthCheckSystem
 }

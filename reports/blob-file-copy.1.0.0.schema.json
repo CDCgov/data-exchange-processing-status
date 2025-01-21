@@ -1,5 +1,5 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$schema": "https://json-schema.org/draft-07/schema",
     "$id": "https://github.com/cdcent/data-exchange-messages/reports/blob-file-copy",
     "title": "Blob File Copy Report",
     "type": "object",

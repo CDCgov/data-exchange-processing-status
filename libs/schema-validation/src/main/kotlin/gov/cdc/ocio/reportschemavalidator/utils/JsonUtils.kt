@@ -10,4 +10,5 @@ interface JsonUtils {
     fun isJsonMimeType(contentType: String): Boolean
     fun parseJsonNode(message: String): JsonNode
     fun getReportSchemaVersion(message: String):String?
+    fun getJsonMapOfContent(jsonString: String): Map<String, Any>
 }

@@ -7,6 +7,8 @@ import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
 import aws.smithy.kotlin.runtime.net.url.Url
+import gov.cdc.ocio.processingstatusapi.messagesystems.AWSSQSMessageSystem
+import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
 
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
@@ -17,8 +19,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.qpid.proton.TimeoutException
+import org.koin.java.KoinJavaComponent.getKoin
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import java.nio.file.Path
+
 
 /**
  * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
@@ -27,7 +31,7 @@ import java.nio.file.Path
  * @param config `ApplicationConfig` containing the configuration settings for AWS SQS.
  * @param configurationPath represents prefix used to locate environment variables specific to AWS within the configuration.
  */
-class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+class AWSSQSServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
     private val roleArn: String = config.tryGetString("${configPath}role_arn") ?: ""
@@ -37,13 +41,13 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
     private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
 
-    fun createSQSClient(): SqsClient{
+    fun createSQSClient(): SqsClient {
         return SqsClient {
 
             if (accessKeyId.isNotEmpty() && secretAccessKey.isNotEmpty()) {
                 StaticCredentialsProvider {
-                    accessKeyId = this@AWSSQServiceConfiguration.accessKeyId
-                    secretAccessKey = this@AWSSQServiceConfiguration.secretAccessKey
+                    accessKeyId = this@AWSSQSServiceConfiguration.accessKeyId
+                    secretAccessKey = this@AWSSQSServiceConfiguration.secretAccessKey
                 }
             } else if (webIdentityTokenFile.isNotEmpty() && roleArn.isNotEmpty()) {
                 WebIdentityTokenFileCredentialsProvider.builder()
@@ -53,8 +57,8 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
             } else {
                 throw IllegalArgumentException("No valid credentials provided.")
             }
-            region = this@AWSSQServiceConfiguration.region
-            endpointUrl = this@AWSSQServiceConfiguration.endpoint
+            region = this@AWSSQSServiceConfiguration.region
+            endpointUrl = this@AWSSQSServiceConfiguration.endpoint
         }
     }
 }
@@ -62,14 +66,16 @@ class AWSSQServiceConfiguration(config: ApplicationConfig, configurationPath: St
 val AWSSQSPlugin = createApplicationPlugin(
     name = "AWS SQS",
     configurationPath = "aws",
-    createConfiguration = ::AWSSQServiceConfiguration
+    createConfiguration = ::AWSSQSServiceConfiguration
 ) {
+
     lateinit var sqsClient: SqsClient
+
     lateinit var queueUrl: String
 
     try {
-        sqsClient = pluginConfig.createSQSClient()
         queueUrl = pluginConfig.queueURL
+
         SchemaValidation.logger.info("Connection to the AWS SQS was successfully established")
     } catch (e: SqsException) {
         SchemaValidation.logger.error("Failed to create AWS SQS client ${e.message}")
@@ -80,6 +86,7 @@ val AWSSQSPlugin = createApplicationPlugin(
     } catch (e: Exception) {
         SchemaValidation.logger.error("Unexpected error occurred ${e.message}")
     }
+
     /**
      * Deletes messages from AWS SQS Service that has been validated
      * @param receivedMessages the list of message(s) received from the queue to be deleted
@@ -113,7 +120,7 @@ val AWSSQSPlugin = createApplicationPlugin(
                 SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
                 val awsSQSProcessor = AWSSQSProcessor()
                 message.body?.let {
-                    awsSQSProcessor.processMessage(it)
+                   awsSQSProcessor.processMessage(it)
                 }
             }
             deleteMessage(receivedMessages)
@@ -160,6 +167,8 @@ val AWSSQSPlugin = createApplicationPlugin(
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started successfully.")
+        val msgSystem = getKoin().get<MessageSystem>() as AWSSQSMessageSystem
+        sqsClient = msgSystem.sqsClient
         consumeMessages()
     }
 

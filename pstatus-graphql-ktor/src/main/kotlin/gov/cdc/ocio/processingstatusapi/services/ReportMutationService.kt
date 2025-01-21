@@ -18,12 +18,15 @@ import gov.cdc.ocio.processingstatusapi.mutations.models.ValidatedReportResult
 import gov.cdc.ocio.processingstatusapi.services.ValidationComponents.gson
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.exceptions.ValidationException
-import gov.cdc.ocio.reportschemavalidator.loaders.FileSchemaLoader
+import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
+import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
@@ -35,7 +38,6 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    val schemaLoader: FileSchemaLoader by lazy { FileSchemaLoader() }
     val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(logger) }
     val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(logger) }
     val logger: KLogger by lazy { KotlinLogging.logger {} }
@@ -66,14 +68,16 @@ object ValidationComponents {
  *   into usable formats.
  *
  */
-class ReportMutationService {
+class ReportMutationService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
     private val reportManager = ReportManager()
 
+    private val schemaLoader by inject<SchemaLoader>()
+
     /**
-     * Upserts a report based on the provided input and action.
+     * Upsert a report based on the provided input and action.
      *
      * This method either creates a new report or replaces an existing one based on the specified action.
      * It validates the input and generates a new ID if the action is "create" and no ID is provided.
@@ -145,6 +149,7 @@ class ReportMutationService {
      */
     @Throws(ContentException::class, Exception::class)
     private fun validateReport(input: Map<String, Any?>?): ValidatedReportResult {
+
         if (input.isNullOrEmpty()) throw ContentException("Can't validate a null or empty report")
 
         try {
@@ -153,7 +158,7 @@ class ReportMutationService {
 
             logger.info("The report after converting to a Json: $snakeCaseKeyReportJson, report will be validated next")
             val schemaValidationService = SchemaValidationService(
-                ValidationComponents.schemaLoader,
+                schemaLoader,
                 ValidationComponents.schemaValidator,
                 ValidationComponents.errorProcessor,
                 ValidationComponents.jsonUtils,

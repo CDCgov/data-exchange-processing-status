@@ -20,6 +20,8 @@ import org.testng.Assert
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import java.io.File
+import java.nio.file.Paths
+
 
 class ReportSchemaValidationTests {
 
@@ -32,8 +34,6 @@ class ReportSchemaValidationTests {
     private val schemaValidator: SchemaValidator = JsonSchemaValidator(logger)
     //  Mock the jsonUtils dependency
     private val jsonUtils: JsonUtils = DefaultJsonUtils(objectMapper)
-    // Mock the schemaValidator dependency
-    private val schemaLoader: SchemaLoader = FileSchemaLoader()
     //Base validation failure reason
     private var reason = "The report could not be validated against the JSON schema: base.1.0.0.schema.json."
 
@@ -42,6 +42,25 @@ class ReportSchemaValidationTests {
     @BeforeMethod
     fun setUp() {
         MockitoAnnotations.openMocks(this)
+
+        // Current directory: C:\apps\dex\data-exchange-processing-status\libs\schema-validation
+        val currentPath = Paths.get("..").toAbsolutePath().normalize()
+
+        // Navigate to the "reports" directory
+        val reportsPath = currentPath.resolveSibling("reports").normalize()
+
+        val path = Paths.get(reportsPath.toString())
+        val absolutePath = path.toFile()
+        if (absolutePath.exists()) {
+            println("Directory exists")
+        } else {
+            println("Directory does not exist")
+        }
+
+        val schemaLoader:SchemaLoader = FileSchemaLoader(mapOf(
+            "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to absolutePath.toString()
+        ))
+
 
         schemaValidationService = SchemaValidationService(
             schemaLoader,
@@ -146,7 +165,8 @@ class ReportSchemaValidationTests {
         val testMessage =File("./src/test/kotlin/data/report_schema_contentSchemaVersion_validation.json").readBytes()
         val message = createMessageFromBinary(testMessage)
         val result: ValidationSchemaResult = schemaValidationService.validateJsonSchema(message)
-        val missingContent ="Report rejected: Content schema file not found for content schema name 'hl7v2-debatch' and schema version '2.0.0'."
+        val missingContent ="Report rejected: file - hl7v2-debatch.2.0.0.schema.json not found for content schema."
+        //"Report rejected: file: ${file.absolutePath} not found for content schema"
         Assert.assertTrue(!result.status)
         Assert.assertEquals(result.reason,missingContent)
         Assert.assertNotSame(result.invalidData, mutableListOf<String>())

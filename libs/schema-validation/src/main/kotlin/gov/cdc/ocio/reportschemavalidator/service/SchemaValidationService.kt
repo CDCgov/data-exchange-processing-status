@@ -11,6 +11,7 @@ import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.validators.SchemaValidator
 import mu.KLogger
 import gov.cdc.ocio.reportschemavalidator.utils.JsonUtils
+import java.io.FileNotFoundException
 
 
 /**
@@ -84,14 +85,11 @@ class SchemaValidationService(
         }
         catch (e: MalformedException){
             val reason = "Report rejected: Malformed JSON or error processing the report"
-            e.message?.let { invalidData.add(it) }
-            //TODO :This should be done in the calling code
-            // val malformedReportMessage = safeParseMessageAsReport(message)
-            return errorProcessor.processError(
-                reason,
-                schemaFileNames,
-                invalidData
-            )
+            return processValidationErrors(reason, invalidData, schemaFileNames)
+        }
+        catch (e: FileNotFoundException){
+            val reason =  e.message ?: "Report rejected: Content schema file not found"
+            return processValidationErrors(reason, invalidData, schemaFileNames)
         }
         return ValidationSchemaResult(
             "Successfully validated the report schema",
@@ -119,12 +117,11 @@ class SchemaValidationService(
         val baseSchemaFileName = "base.$reportSchemaVersion.schema.json"
         // load schema file
         val schemaFile = schemaLoader.loadSchemaFile(baseSchemaFileName)
-        if (schemaFile == null) {
-            validationSchemaResult = errorProcessor.processError(
+        if(!schemaFile.exists || schemaFile.fileName.isEmpty()){
+            validationSchemaResult=  errorProcessor.processError(
                 "Report rejected: Schema file not found for base schema version $reportSchemaVersion",
                 schemaFileNames,
-                invalidData
-            )
+                invalidData)
         }
         return Pair(schemaFile, validationSchemaResult)
 
@@ -294,5 +291,22 @@ class SchemaValidationService(
      */
     private fun getContentSchemaVersionNode(contentNode: JsonNode): JsonNode? {
         return contentNode.get("content_schema_version")
+    }
+
+    /**
+     * The function to process the Malformed and FileNotFound exception errors
+     * @param reason String
+     * @param invalidData MutableList<String>
+     * @param schemaFileNames MutableList<String>
+     * @return ValidationSchemaResult
+     */
+
+    private fun processValidationErrors(reason:String, invalidData: MutableList<String>, schemaFileNames: MutableList<String>):ValidationSchemaResult{
+        reason.let { invalidData.add(it) }
+        return errorProcessor.processError(
+            reason,
+            schemaFileNames,
+            invalidData
+        )
     }
 }

@@ -191,14 +191,10 @@ class AWSSystem(MessageSystem):
         self.use_queue = config.get('use_queue', 'true').lower() == 'true'
         self.sqs = boto3.client(
             'sqs',
-            aws_access_key_id=config['aws_access_key_id'],
-            aws_secret_access_key=config['aws_secret_access_key'],
             region_name=config['aws_region']
         )
         self.sns = boto3.client(
             'sns',
-            aws_access_key_id=config['aws_access_key_id'],
-            aws_secret_access_key=config['aws_secret_access_key'],
             region_name=config['aws_region']
         )
         self.queue_url = config['aws_queue_url']

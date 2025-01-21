@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
+
 class CloudSchemaLoaderBlobTest {
 
     @Test
@@ -15,8 +16,7 @@ class CloudSchemaLoaderBlobTest {
         val mockBlobClient = mock(BlobStorageSchemaClient::class.java)
         val fileName = "example-schema.json"
         val mockContent = "mock data from Blob Storage"
-        val mockInputStream = mockContent.byteInputStream()
-        `when`(mockBlobClient.getSchemaFile(fileName)).thenReturn(mockInputStream)
+        `when`(mockBlobClient.getSchemaFile(fileName)).thenReturn(mockContent)
 
         val config = mapOf(
             "REPORT_SCHEMA_BLOB_CONNECTION_STR" to "fake-connection-string",
@@ -25,6 +25,8 @@ class CloudSchemaLoaderBlobTest {
         val loader = CloudSchemaLoader("blob_storage", config)
 
         // Inject mock client via reflection
+        // Suppress Fortify warning: This use of setAccessible is restricted to test code and is necessary for injecting mocks.
+        // the use of setAccessible(true) is restricted to testing (and is safe)
         val storageClientField = loader.javaClass.getDeclaredField("storageClient")
         storageClientField.isAccessible = true
         storageClientField.set(loader, mockBlobClient)
@@ -33,8 +35,8 @@ class CloudSchemaLoaderBlobTest {
         val schemaFile: SchemaFile = loader.loadSchemaFile(fileName)
 
         // Assert
-        assertNotNull(schemaFile.inputStream)
-        val actualContent = schemaFile.inputStream!!.reader().readText() // Convert InputStream to String
+        assertNotNull(schemaFile.content)
+        val actualContent = schemaFile.content
         assertEquals(mockContent, actualContent)
         assertEquals(fileName, schemaFile.fileName)
         verify(mockBlobClient, times(1)).getSchemaFile(fileName)
