@@ -2,10 +2,7 @@ package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.expediagroup.graphql.dataloader.KotlinDataLoaderRegistryFactory
 import com.expediagroup.graphql.server.ktor.*
-import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDataLoader
-import gov.cdc.ocio.processingstatusapi.dataloaders.ReportDeadLetterDataLoader
 import gov.cdc.ocio.processingstatusapi.mutations.*
 import gov.cdc.ocio.processingstatusapi.queries.*
 import io.ktor.http.*
@@ -107,12 +104,6 @@ fun Application.graphQLModule() {
 //                ErrorSubscriptionService()
 //            )
             hooks = CustomSchemaGeneratorHooks()
-        }
-        engine {
-            dataLoaderRegistryFactory = KotlinDataLoaderRegistryFactory(
-                ReportDataLoader,
-                ReportDeadLetterDataLoader
-            )
         }
         if (securityEnabled) {
             server {
