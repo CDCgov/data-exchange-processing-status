@@ -50,7 +50,7 @@ private fun createMessageSystem(environment: ApplicationEnvironment): MessageSys
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
+    val schemaLoaderModule = SchemaLoaderKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = module {
         single(createdAtStart = true) { createMessageSystem(environment) }
     }
