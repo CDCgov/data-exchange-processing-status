@@ -17,11 +17,11 @@ class HealthCheckUnsupportedMessageSystem(
      * No health check - just inform unsupported
      */
     override fun doHealthCheck(): HealthCheckResult {
+        val options = MessageSystemType.entries.map { it.name }
         val healthIssue = if (messageSystem != null) {
-            "Unsupported message system: $messageSystem"
+            "Unsupported message system: $messageSystem.  Available options are $options."
         } else {
-            val options = MessageSystemType.entries.map { it.name }
-            "MSG_SYSTEM environment variable not provided (available options are $options)."
+            "MSG_SYSTEM environment variable not provided.  Available options are $options."
         }
 
         return HealthCheckResult(
