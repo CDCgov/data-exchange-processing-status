@@ -32,9 +32,9 @@ object DatabaseKoinCreator {
         val logger = KotlinLogging.logger {}
 
         val databaseModule = module {
-            val database = environment.config.property("ktor.database").getString()
+            val database = environment.config.tryGetString("ktor.database")
 
-            when (database.lowercase()) {
+            when (database?.lowercase() ?: "") {
                 DatabaseType.MONGO.value -> {
                     val connectionString = environment.config.property("mongo.connection_string").getString()
                     val databaseName = environment.config.property("mongo.database_name").getString()
