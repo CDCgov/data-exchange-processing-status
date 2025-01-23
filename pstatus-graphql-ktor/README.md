@@ -30,7 +30,6 @@ The `GraphQL` service is designed to offer users a detailed view of their data a
 | getDeadLetterReportsByDataStream(..)      | list of dead letter reports         | All the dead-letter reports associated with the provided datastreamId, datastreamroute and timestamp date range.            |
 | getDeadLetterReportsByUploadId(..)        | list of dead letter reports         | All the dead-letter reports associated with the provided uploadId.                                                          |
 | getDeadLetterReportsCountByDataStream(..) | int, number of reports              | Count of dead-letter reports associated with the provided datastreamId, (optional) datastreamroute and timestamp date range |
-| searchDeadLetterReports(..)               | list of dead letter reports         | Dead-letter reports based on ReportSearchParameters options.                                                                |
 | getUploadStats(..)                        | UploadStats                         | Various uploads statistics.                                                                                                 |
 | getUploads(..)                            | UploadsStatus                       | Upload statuses for the given filter, sort, and pagination criteria.                                                        |
 
