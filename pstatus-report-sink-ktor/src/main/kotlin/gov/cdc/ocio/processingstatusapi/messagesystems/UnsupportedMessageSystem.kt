@@ -10,7 +10,7 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  * @property healthCheckSystem HealthCheckSystem
  * @constructor
  */
-class UnsupportedMessageSystem(messageSystem: String): MessageSystem {
+class UnsupportedMessageSystem(messageSystem: String?): MessageSystem {
 
     override var healthCheckSystem = HealthCheckUnsupportedMessageSystem(messageSystem) as HealthCheckSystem
 }

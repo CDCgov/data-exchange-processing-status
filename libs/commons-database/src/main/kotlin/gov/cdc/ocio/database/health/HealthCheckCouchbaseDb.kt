@@ -14,7 +14,9 @@ import org.koin.core.component.inject
  * Concrete implementation of the couchbase health check.
  */
 @JsonIgnoreProperties("koin")
-class HealthCheckCouchbaseDb(private val couchbaseCluster: Cluster? = null) : HealthCheckSystem("Couchbase DB"), KoinComponent {
+class HealthCheckCouchbaseDb(
+    private val couchbaseCluster: Cluster? = null
+) : HealthCheckSystem("Couchbase DB"), KoinComponent {
 
     private val config by inject<CouchbaseConfiguration>()
 
