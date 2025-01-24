@@ -11,6 +11,7 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 class BlobStorageSchemaClient(
+    system: String,
     private val connectionString: String,
     private val containerName: String
 ) : SchemaStorageClient {
@@ -76,5 +77,5 @@ class BlobStorageSchemaClient(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
-    override var healthCheckSystem = HealthCheckBlobContainer(containerClient) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckBlobContainer(system, containerClient) as HealthCheckSystem
 }

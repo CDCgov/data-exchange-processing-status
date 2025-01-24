@@ -12,9 +12,10 @@ import software.amazon.awssdk.services.s3.model.ListBucketsRequest
  * Concrete implementation of the S3 Bucket health checks.
  */
 class HealthCheckS3Bucket(
+    system: String,
     private val getS3ClientFunc: () -> S3Client,
     private val s3Bucket: String,
-) : HealthCheckSystem("s3") {
+) : HealthCheckSystem(system, "s3") {
 
     /**
      * Checks and sets S3 Bucket accessible status
@@ -25,9 +26,9 @@ class HealthCheckS3Bucket(
         result.onFailure { error ->
             val reason = "S3 bucket is not accessible and hence not healthy: ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

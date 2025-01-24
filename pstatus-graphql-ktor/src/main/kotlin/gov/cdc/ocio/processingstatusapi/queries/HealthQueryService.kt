@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.queries
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
-import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheckSystem
+import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheckResult
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
@@ -50,22 +50,8 @@ class HealthCheckService: KoinComponent {
             else
                 HealthStatusType.STATUS_DOWN.value
             totalChecksDuration = formatMillisToHMS(time)
-            databaseHealthCheck.let {
-                val gqlHealthCheckSystem = GraphQLHealthCheckSystem().apply {
-                    this.service = databaseHealthCheck.service
-                    this.status = databaseHealthCheck.status.value
-                    this.healthIssues = databaseHealthCheck.healthIssues
-                }
-                dependencyHealthChecks.add(gqlHealthCheckSystem)
-                schemaLoaderSystemHealthCheck.let {
-                    val schemaLoaderHealthCheckSystem = GraphQLHealthCheckSystem().apply {
-                        this.service = it.service
-                        this.status = it.status.value
-                        this.healthIssues = it.healthIssues
-                    }
-                    dependencyHealthChecks.add(schemaLoaderHealthCheckSystem)
-                }
-            }
+            dependencyHealthChecks.add(GraphQLHealthCheckResult.from(databaseHealthCheck))
+            dependencyHealthChecks.add(GraphQLHealthCheckResult.from(schemaLoaderSystemHealthCheck))
         }
     }
 

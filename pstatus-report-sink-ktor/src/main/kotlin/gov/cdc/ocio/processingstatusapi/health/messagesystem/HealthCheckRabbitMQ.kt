@@ -15,7 +15,10 @@ import java.time.Duration
  * Concrete implementation of the RabbitMQ messaging service health checks.
  */
 @JsonIgnoreProperties("koin")
-class HealthCheckRabbitMQ(private val rabbitMQConnection: Connection) : HealthCheckSystem("RabbitMQ"), KoinComponent {
+class HealthCheckRabbitMQ(
+    system: String,
+    private val rabbitMQConnection: Connection
+) : HealthCheckSystem(system, "RabbitMQ"), KoinComponent {
 
     /**
      * Checks and sets rabbitMQHealth status
@@ -29,9 +32,9 @@ class HealthCheckRabbitMQ(private val rabbitMQConnection: Connection) : HealthCh
         result.onFailure { error ->
             val reason ="RabbitMQ is not healthy ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

@@ -15,5 +15,5 @@ class AzureServiceBusMessageSystem(
     config: AzureServiceBusConfiguration
 ): MessageSystem {
 
-    override var healthCheckSystem = HealthCheckServiceBus(config) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckServiceBus(system, config) as HealthCheckSystem
 }

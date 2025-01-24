@@ -32,7 +32,11 @@ import java.nio.file.Path
  *
  * @see [ProcessingStatusRepository]
  */
-class DynamoRepository(tablePrefix: String, roleArn:String?, webIdentityTokenFile:String?): ProcessingStatusRepository() {
+class DynamoRepository(
+    tablePrefix: String,
+    roleArn:String?,
+    webIdentityTokenFile:String?
+): ProcessingStatusRepository() {
 
     private val ddbClient = getDynamoDbClient(roleArn, webIdentityTokenFile)
 
@@ -114,5 +118,5 @@ class DynamoRepository(tablePrefix: String, roleArn:String?, webIdentityTokenFil
             .build()
     }
 
-    override var healthCheckSystem = HealthCheckDynamoDb() as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckDynamoDb(system) as HealthCheckSystem
 }

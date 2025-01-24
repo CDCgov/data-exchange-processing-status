@@ -10,8 +10,9 @@ import gov.cdc.ocio.types.health.HealthStatusType
  * Concrete implementation of the unsupported messaging service health checks.
  */
 class HealthCheckUnsupportedDb(
+    system: String,
     private val databaseName: String?
-) : HealthCheckSystem("Database") {
+) : HealthCheckSystem(system, null) {
 
     /**
      * No health check - just inform unsupported
@@ -21,11 +22,11 @@ class HealthCheckUnsupportedDb(
         val healthIssue = if (databaseName != null) {
             "Unsupported database: $databaseName.  Available options are $options."
         } else {
-
             "DATABASE environment variable not provided.  Available options are $options."
         }
 
         return HealthCheckResult(
+            system,
             service,
             HealthStatusType.STATUS_DOWN,
             healthIssues = healthIssue

@@ -13,9 +13,10 @@ import org.bson.BsonInt64
  * Concrete implementation of the MongoDB health check.
  */
 class HealthCheckMongoDb(
+    system: String,
     private val mongoClient: MongoClient,
     private val databaseName: String
-) : HealthCheckSystem("Mongo DB") {
+) : HealthCheckSystem(system, "Mongo DB") {
 
     /**
      * Checks and sets MongoDB status.
@@ -27,9 +28,9 @@ class HealthCheckMongoDb(
         result.onFailure { error ->
             val reason = "MongoDB is not healthy: ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

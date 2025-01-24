@@ -66,7 +66,7 @@ class MongoRepository(
         MongoCollection(it)
     } as Collection
 
-    override var healthCheckSystem = HealthCheckMongoDb(mongoClient!!, databaseName) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckMongoDb(system, mongoClient!!, databaseName) as HealthCheckSystem
 
     /**
      * Connect to monogodb with the provided URI and database name.

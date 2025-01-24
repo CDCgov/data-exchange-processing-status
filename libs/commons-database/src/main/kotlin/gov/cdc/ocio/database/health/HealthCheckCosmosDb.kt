@@ -12,7 +12,10 @@ import org.koin.core.component.KoinComponent
  * Concrete implementation of the cosmosdb health check.
  */
 @JsonIgnoreProperties("koin")
-class HealthCheckCosmosDb(private val cosmosClient: CosmosClient) : HealthCheckSystem("Cosmos DB"), KoinComponent {
+class HealthCheckCosmosDb(
+    system: String,
+    private val cosmosClient: CosmosClient
+) : HealthCheckSystem(system, "Cosmos DB"), KoinComponent {
 
     /**
      * Checks and sets cosmosDBHealth status
@@ -23,10 +26,11 @@ class HealthCheckCosmosDb(private val cosmosClient: CosmosClient) : HealthCheckS
         val databaseResponse = cosmosClient.getDatabase("ProcessingStatus")
         return if (databaseResponse != null)
             HealthCheckResult(
+                system,
                 service,
                 HealthStatusType.STATUS_DOWN,
                 healthIssues = "Cosmos DB is not healthy: Failed to establish a CosmosDB client.")
         else
-            HealthCheckResult(service, HealthStatusType.STATUS_UP)
+            HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 }

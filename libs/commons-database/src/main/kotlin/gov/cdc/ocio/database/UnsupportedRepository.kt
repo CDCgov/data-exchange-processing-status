@@ -15,5 +15,5 @@ class UnsupportedRepository(
     databaseName: String?
 ) : ProcessingStatusRepository() {
 
-    override var healthCheckSystem = HealthCheckUnsupportedDb(databaseName) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckUnsupportedDb(system, databaseName) as HealthCheckSystem
 }

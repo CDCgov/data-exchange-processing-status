@@ -16,7 +16,7 @@ import io.temporal.serviceclient.WorkflowServiceStubsOptions
  */
 class HealthCheckTemporalServer(
     temporalConfig: TemporalConfig
-) : HealthCheckSystem("Temporal Server") {
+) : HealthCheckSystem("Workflow", "Temporal Server") {
 
     private val target = temporalConfig.temporalServiceTarget
 
@@ -27,9 +27,9 @@ class HealthCheckTemporalServer(
         isTemporalHealthy().onFailure { error ->
             val reason = "Temporal is not healthy: ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

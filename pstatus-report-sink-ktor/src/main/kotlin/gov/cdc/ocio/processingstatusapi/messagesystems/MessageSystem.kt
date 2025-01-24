@@ -9,5 +9,9 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  * @property healthCheckSystem HealthCheckSystem
  */
 interface MessageSystem {
+
+    val system: String
+        get() = "Message System"
+
     var healthCheckSystem: HealthCheckSystem
 }

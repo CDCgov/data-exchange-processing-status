@@ -10,8 +10,9 @@ import gov.cdc.ocio.types.health.HealthStatusType
  * Concrete implementation of the unsupported messaging service health checks.
  */
 class HealthCheckUnsupportedMessageSystem(
+    system: String,
     private val messageSystem: String?
-) : HealthCheckSystem("Messaging Service") {
+) : HealthCheckSystem(system, "Messaging Service") {
 
     /**
      * No health check - just inform unsupported
@@ -25,6 +26,7 @@ class HealthCheckUnsupportedMessageSystem(
         }
 
         return HealthCheckResult(
+            system,
             service,
             HealthStatusType.STATUS_DOWN,
             healthIssues = healthIssue

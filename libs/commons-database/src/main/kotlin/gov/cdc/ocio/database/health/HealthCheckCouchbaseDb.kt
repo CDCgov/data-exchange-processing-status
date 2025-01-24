@@ -15,8 +15,9 @@ import org.koin.core.component.inject
  */
 @JsonIgnoreProperties("koin")
 class HealthCheckCouchbaseDb(
+    system: String,
     private val couchbaseCluster: Cluster? = null
-) : HealthCheckSystem("Couchbase DB"), KoinComponent {
+) : HealthCheckSystem(system, "Couchbase DB"), KoinComponent {
 
     private val config by inject<CouchbaseConfiguration>()
 
@@ -35,9 +36,9 @@ class HealthCheckCouchbaseDb(
         result.onFailure { error ->
             val reason = "Couchbase DB is not healthy: ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

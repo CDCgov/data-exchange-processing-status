@@ -90,5 +90,5 @@ class CouchbaseRepository(
             notificationSubscriptionsCouchbaseCollection
         ) as Collection
 
-    override var healthCheckSystem = HealthCheckCouchbaseDb() as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
 }

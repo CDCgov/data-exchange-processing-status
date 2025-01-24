@@ -14,5 +14,5 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  */
 class RabbitMQMessageSystem(val rabbitMQConnection: Connection): MessageSystem {
 
-    override var healthCheckSystem = HealthCheckRabbitMQ(rabbitMQConnection) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckRabbitMQ(system, rabbitMQConnection) as HealthCheckSystem
 }

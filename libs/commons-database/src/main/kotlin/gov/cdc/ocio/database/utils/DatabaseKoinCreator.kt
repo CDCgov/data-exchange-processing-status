@@ -74,7 +74,7 @@ object DatabaseKoinCreator {
                     val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
                     val webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file")?: ""
                     single<ProcessingStatusRepository>(createdAtStart = true) {
-                        DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
+                        DynamoRepository(dynamoTablePrefix, roleArn, webIdentityTokenFile)
                     }
                 }
 

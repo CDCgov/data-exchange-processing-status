@@ -11,6 +11,9 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  */
 interface SchemaLoader {
 
+    val system: String
+        get() = "Schema Loader"
+
     /**
      * Defines the interface for loading a schema file.
      *
