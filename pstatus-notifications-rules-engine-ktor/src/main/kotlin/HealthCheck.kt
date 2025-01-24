@@ -4,6 +4,7 @@ import com.azure.core.exception.ResourceNotFoundException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.microsoft.azure.servicebus.primitives.ServiceBusException
 import gov.cdc.ocio.processingstatusnotifications.servicebus.AzureServiceBusConfiguration
+import gov.cdc.ocio.types.utils.TimeUtils
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -83,7 +84,7 @@ class HealthQueryService: KoinComponent {
 
         return HealthCheck().apply {
             status = if (serviceBusHealthy) "UP" else "DOWN"
-            totalChecksDuration = formatMillisToHMS(time)
+            totalChecksDuration = TimeUtils.formatMillisToHMS(time)
             dependencyHealthChecks.add(serviceBusHealth)
         }
     }
@@ -104,21 +105,5 @@ class HealthQueryService: KoinComponent {
         adminClient.getTopic(config.topicName)
 
         return true
-    }
-
-    /**
-     * Format the time in milliseconds to 00:00:00.000 format.
-     *
-     * @param millis Long
-     * @return String
-     */
-    private fun formatMillisToHMS(millis: Long): String {
-        val seconds = millis / 1000
-        val hours = seconds / 3600
-        val minutes = (seconds % 3600) / 60
-        val remainingSeconds = seconds % 60
-        val remainingMillis = millis % 1000
-
-        return "%02d:%02d:%02d.%03d".format(hours, minutes, remainingSeconds, remainingMillis / 10)
     }
 }
