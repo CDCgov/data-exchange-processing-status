@@ -1,9 +1,58 @@
 services:
-  rabbitmq:
-    image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+  # Loki Service
+  loki:
+    image: grafana/loki:2.9.1
+    container_name: loki
     ports:
-      - "5672:5672" #AMQP protocol port
-      - "15672:15672" # Management UI port
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+
+  # Promtail Service
+  promtail:
+    image: grafana/promtail:2.9.1
+    container_name: promtail
+    ports:
+      - "9080:9080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./var/promtail-config.yaml:/etc/promtail/config.yaml
+      - ./reports:/reports # Bind mount the report schemas folder
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+
+  # Grafana Service
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+      - promtail
+
+  # OpenTelemetry Collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.87.0
+    container_name: otel-collector
+    ports:
+      - "4317:4317" # OTLP gRPC endpoint
+      - "4318:4318" # OTLP HTTP endpoint
+    volumes:
+      - ./otel-config.yaml:/etc/otel/config.yaml
+    command: --config=/etc/otel/config.yaml
+    depends_on:
+      - loki
+
+
+volumes:
+  grafana-data:
+
