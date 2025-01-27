@@ -1,56 +1,17 @@
 package gov.cdc.ocio.processingstatusnotifications
 
-import com.azure.core.exception.ResourceNotFoundException
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
-import com.microsoft.azure.servicebus.primitives.ServiceBusException
+import com.azure.messaging.servicebus.administration.models.EntityStatus
 import gov.cdc.ocio.processingstatusnotifications.servicebus.AzureServiceBusConfiguration
+import gov.cdc.ocio.types.health.HealthCheck
+import gov.cdc.ocio.types.health.HealthCheckResult
+import gov.cdc.ocio.types.health.HealthStatusType
 import gov.cdc.ocio.types.utils.TimeUtils
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 
-
-/**
- * Abstract class used for modeling the health issues of an individual service.
- *
- * @property status String
- * @property healthIssues String?
- * @property service String
- */
-abstract class HealthCheckSystem {
-
-    var status: String = "DOWN"
-
-    var healthIssues: String? = ""
-
-    open val service: String = ""
-}
-
-/**
- * Concrete implementation of the Azure Service Bus health check.
- *
- * @property service String
- */
-class HealthCheckServiceBus: HealthCheckSystem() {
-    override val service: String = "Azure Service Bus"
-}
-
-/**
- * Run health checks for the service.
- *
- * @property status String?
- * @property totalChecksDuration String?
- * @property dependencyHealthChecks MutableList<HealthCheckSystem>
- */
-class HealthCheck {
-
-    var status: String = "DOWN"
-
-    var totalChecksDuration: String? = null
-
-    var dependencyHealthChecks = mutableListOf<HealthCheckSystem>()
-}
 
 /**
  * Service for querying the health of the report-sink service and its dependencies.
@@ -62,6 +23,10 @@ class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
+    private val system = "Message System"
+
+    private val service = "Azure Service Bus"
+
     private val azureServiceBusConfiguration by inject<AzureServiceBusConfiguration>()
 
     /**
@@ -70,40 +35,53 @@ class HealthQueryService: KoinComponent {
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
-        var serviceBusHealthy = false
-         val serviceBusHealth = HealthCheckServiceBus()
+        val messageSystemHealthCheck: HealthCheckResult
+
         val time = measureTimeMillis {
-            try {
-                serviceBusHealthy = isServiceBusHealthy(config = azureServiceBusConfiguration)
-                serviceBusHealth.status = "UP"
-            } catch (ex: Exception) {
-                serviceBusHealth.healthIssues = ex.message
-                logger.error("Azure Service Bus is not healthy: ${ex.message}")
-            }
+            messageSystemHealthCheck = checkHealthMessageSystem()
         }
 
         return HealthCheck().apply {
-            status = if (serviceBusHealthy) "UP" else "DOWN"
+            status = messageSystemHealthCheck.status
             totalChecksDuration = TimeUtils.formatMillisToHMS(time)
-            dependencyHealthChecks.add(serviceBusHealth)
+            dependencyHealthChecks.add(messageSystemHealthCheck)
         }
+    }
+
+    /**
+     * Checks the health of the message system.
+     *
+     * @return HealthCheckResult
+     */
+    private fun checkHealthMessageSystem(): HealthCheckResult {
+        val result = isServiceBusHealthy(azureServiceBusConfiguration)
+        result.onFailure { error ->
+            val reason = "Azure Service Bus is not healthy: ${error.localizedMessage}"
+            logger.error(reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
+        }
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**
      * Check whether service bus is healthy.
      *
-     * @return Boolean
+     * @param config AzureServiceBusConfiguration
+     * @return Result<Boolean>
      */
-    @Throws(ResourceNotFoundException::class, ServiceBusException::class)
-    private fun isServiceBusHealthy(config: AzureServiceBusConfiguration): Boolean {
+    private fun isServiceBusHealthy(config: AzureServiceBusConfiguration): Result<Boolean> {
+        return try {
+            val adminClient = ServiceBusAdministrationClientBuilder()
+                .connectionString(config.connectionString)
+                .buildClient()
 
-        val adminClient = ServiceBusAdministrationClientBuilder()
-            .connectionString(config.connectionString)
-            .buildClient()
-
-        // Get the properties of the topic to check the connection
-        adminClient.getTopic(config.topicName)
-
-        return true
+            // Get the properties of the topic to check the connection
+            val result = adminClient.getTopic(config.topicName)
+            if (result.status == EntityStatus.ACTIVE)
+                Result.success(true)
+            Result.failure(Exception("Failed to get the status of the topic"))
+        } catch (ex: Exception) {
+            Result.failure(ex)
+        }
     }
 }
