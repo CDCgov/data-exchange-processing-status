@@ -47,9 +47,9 @@ class HealthCheckService: KoinComponent {
             status = if (databaseHealthCheck.status == HealthStatusType.STATUS_UP
                 && schemaLoaderSystemHealthCheck.status == HealthStatusType.STATUS_UP
             )
-                HealthStatusType.STATUS_UP.value
+                HealthStatusType.STATUS_UP
             else
-                HealthStatusType.STATUS_DOWN.value
+                HealthStatusType.STATUS_DOWN
             totalChecksDuration = TimeUtils.formatMillisToHMS(time)
             dependencyHealthChecks.add(GraphQLHealthCheckResult.from(databaseHealthCheck))
             dependencyHealthChecks.add(GraphQLHealthCheckResult.from(schemaLoaderSystemHealthCheck))
