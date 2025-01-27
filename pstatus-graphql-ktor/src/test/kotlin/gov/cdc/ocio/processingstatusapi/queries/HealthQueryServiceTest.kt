@@ -1,9 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
-
 import gov.cdc.ocio.database.cosmos.CosmosClientManager
 import gov.cdc.ocio.database.cosmos.CosmosConfiguration
 import gov.cdc.ocio.processingstatusapi.models.graphql.GraphQLHealthCheck
+import gov.cdc.ocio.types.health.HealthStatusType
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
@@ -13,6 +13,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import kotlin.test.assertEquals
+
 
 class HealthQueryServiceTest {
 
@@ -48,7 +49,7 @@ class HealthQueryServiceTest {
         // Arrange
         val cosmosConfiguration = CosmosConfiguration("uri", "authKey")
         val healthCheck = GraphQLHealthCheck().apply {
-            status = "UP"
+            status = HealthStatusType.STATUS_UP
             totalChecksDuration = "00:00:00.000"
             dependencyHealthChecks.any { it.service == "Cosmos DB" && it.status == "UP" }
         }
@@ -60,7 +61,7 @@ class HealthQueryServiceTest {
         val result = healthQueryService.getHealth()
 
         // Assert
-        assertEquals("UP", result.status)
+        assertEquals(HealthStatusType.STATUS_UP, result.status)
       //  assertTrue(result.dependencyHealthChecks.any { it.service == "Cosmos DB" && it.status == "UP" })
     }
 
@@ -69,7 +70,7 @@ class HealthQueryServiceTest {
         // Arrange
         val cosmosConfiguration = CosmosConfiguration("uri", "authKey")
         val healthCheck = GraphQLHealthCheck().apply {
-            status = "DOWN"
+            status = HealthStatusType.STATUS_DOWN
             totalChecksDuration = "00:00:00.000"
             dependencyHealthChecks.any { it.service == "Cosmos DB" && it.status == "DOWN" }
         }
@@ -81,7 +82,7 @@ class HealthQueryServiceTest {
         val result = healthQueryService.getHealth()
 
         // Assert
-        assertEquals("DOWN", result.status)
+        assertEquals(HealthStatusType.STATUS_DOWN, result.status)
      //   assertTrue(result.dependencyHealthChecks.any { it.service == "Cosmos DB" && it.status == "DOWN" })
     }
 }
