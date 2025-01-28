@@ -11,7 +11,6 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
-
 /**
  * Couchbase Collection implementation.
  *
@@ -23,6 +22,7 @@ import java.util.*
  * @see [CouchbaseRepository]
  * @see [Collection]
  */
+
 class CouchbaseCollection(
     collectionName: String,
     private val couchbaseScope: Scope,
@@ -48,8 +48,12 @@ class CouchbaseCollection(
         val results = mutableListOf<T>()
         when (classType) {
             // Handle primitive types
-            String::class.java, Float::class.java, Int::class.java, Long::class.java, Boolean::class.java -> {
+            String::class.java, Boolean::class.java -> {
                 results.addAll(result.rowsAs(classType))
+            }
+            Int::class.java, Long::class.java,Float::class.java -> {
+                val expectedResult = result.rowsAs(classType)[0]
+                results.add(expectedResult as T)
             }
             // Handle all others as JSON objects
             else -> {
@@ -107,5 +111,8 @@ class CouchbaseCollection(
     override val collectionNameForQuery = "${couchbaseScope.bucketName()}.${couchbaseScope.name()}.`$collectionName`"
 
     override val collectionElementForQuery = { name: String -> name }
+
+
+
 
 }
