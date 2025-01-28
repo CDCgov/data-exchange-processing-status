@@ -132,3 +132,86 @@ The api endpoint **"getHealth"** can be used to check the health of the service.
 
 **{{ps_api_base_url}}/graphql/getHealth**
 
+### LOKI Logging-  Docker Compose and other configs 
+
+For supporting LOKI logging and visualization of the logs through Grafana(dashboard) we need to setup containers for LOKI, Promtail and Grafana. 
+####
+The LOKI does the logging part, the logs are pushed to LOKI through promtail and can be visualized through grafana dashboards using LOKI as the datasource. The docker compose in this service would install and mount the LOKI, Promtail and Grafana containers in the local docker instance.The corresponding logs files for each are stored in a directory named "var". These files are mounted as volumes under the corresponding services (loki and promtail). 
+services:
+``` Loki Service
+loki:
+image: grafana/loki:2.9.1
+container_name: loki
+ports:
+- "3100:3100"
+command: -config.file=/etc/loki/local-config.yaml
+volumes:
+- ./loki-config.yaml:/etc/loki/loki-config.yaml
+
+# Promtail Service
+promtail:
+image: grafana/promtail:2.9.1
+container_name: promtail
+ports:
+- "9080:9080"
+volumes:
+- /var/run/docker.sock:/var/run/docker.sock
+- ./var/promtail-config.yaml:/etc/promtail/config.yaml
+- ./reports:/reports # Bind mount the report schemas folder
+command: -config.file=/etc/promtail/config.yaml
+depends_on:
+- loki
+```
+For Grafana installation, which is dependent on LOKI and Promtail, we need to setup a volume for grafana data 
+```Grafana Service
+grafana:
+image: grafana/grafana:10.0.0
+container_name: grafana
+ports:
+- "3000:3000"
+environment:
+- GF_SECURITY_ADMIN_USER=admin
+- GF_SECURITY_ADMIN_PASSWORD=admin
+volumes:
+- grafana-data:/var/lib/grafana
+depends_on:
+- loki
+- promtail
+
+volumes:
+grafana-data:
+````
+
+### Logback xml
+LOKI logging needs a logback.xml file which needs to reside on the resources directory. The logback xml defines the type of appender and the encoder we need to use as well as any custom fields like the application name , environment etc..
+####
+Here we are using a STDOUT appender which logs to the console and another appender named LOKI which also logs to the console but using a JSON format
+````
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="LOKI" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+        <customFields>
+            {
+            "application": "pstatus-api-graphql",
+            "environment": "${ENVIRONMENT:-development}"
+            }
+        </customFields>
+
+        <labels>
+            <label name="job">kotlin-app</label>
+            <label name="instance">instance1</label>
+        </labels>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="LOKI"/>
+    </root>
+    <logger name="org.eclipse.jetty" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
+</configuration>
+````

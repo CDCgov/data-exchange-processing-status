@@ -4,7 +4,7 @@
          <customFields>
             {
             "application": "pstatus-api-report-sink",
-            "environment": "development"
+            "environment": "${ENVIRONMENT:-development}"
             }
         </customFields>
 

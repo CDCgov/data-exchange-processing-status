@@ -23,9 +23,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
 
 fun main(args: Array<String>) {
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
+
 }
 
 fun Application.module() {
+    // Set the environment variable dynamically for Logback
+    System.setProperty("ENVIRONMENT", environment.config.property("ktor.logback.environment").getString())
 
     install(Koin) {
         loadKoinModules(environment)

@@ -83,6 +83,9 @@ private fun getMessageSystem(environment: ApplicationEnvironment): MessageSystem
  * The main application module which always runs and loads other modules
  */
 fun Application.module() {
+    // Set the environment variable dynamically for Logback
+    System.setProperty("ENVIRONMENT", environment.config.property("ktor.logback.environment").getString())
+
     configureRouting()
 
     when (getMessageSystem(environment)) {

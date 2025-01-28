@@ -9,7 +9,7 @@
         <customFields>
             {
             "application": "pstatus-api-graphql",
-            "environment": "development"
+            "environment": "${ENVIRONMENT:-development}"
             }
         </customFields>
 
