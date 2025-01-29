@@ -81,6 +81,11 @@ dependencies {
     implementation project(':libs:commons-database')
     implementation project(':libs:commons-types')
 
+    //LOKI
+    implementation ("net.logstash.logback:logstash-logback-encoder:7.4")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("ch.qos.logback:logback-classic:1.2.11")
+
     testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 
