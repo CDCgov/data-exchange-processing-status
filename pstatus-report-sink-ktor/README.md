@@ -420,7 +420,8 @@ grafana-data:
 ### Logback xml
 LOKI logging needs a logback.xml file which needs to reside on the resources directory. The logback xml defines the type of appender and the encoder we need to use as well as any custom fields like the application name , environment etc..
 ####
-Here we are using a STDOUT appender which logs to the console and another appender named LOKI which also logs to the console but using a JSON format
+Here we are using a STDOUT appender which logs to the console and another appender named LOKI which also logs to the console but using a JSON format.
+The ENVIRONMENT variable below needs to be set in the application.conf where values would be Development, Staging & Production.If not set, the default would be Development.
 ````
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
