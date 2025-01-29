@@ -4,8 +4,23 @@
             <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+    <appender name="LOKI" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+        <customFields>
+            {
+            "application": "pstatus-api-graphql",
+            "environment": "${ENVIRONMENT:-development}"
+            }
+        </customFields>
+
+        <labels>
+            <label name="job">kotlin-app</label>
+            <label name="instance">instance1</label>
+        </labels>
+    </appender>
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="LOKI"/>
     </root>
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
