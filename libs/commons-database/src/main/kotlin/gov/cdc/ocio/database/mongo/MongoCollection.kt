@@ -18,6 +18,9 @@ import org.bson.Document
 class MongoCollection(
     private val mongoCollection: com.mongodb.client.MongoCollection<Document>
 ): Collection {
+    override fun <T> getItem(id: String, classType: Class<T>?): T? {
+        TODO("Not yet implemented")
+    }
 
     /**
      * Execute the provided query and return the results as POJOs.

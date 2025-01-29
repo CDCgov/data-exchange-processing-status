@@ -5,6 +5,7 @@ import mu.KotlinLogging
 import software.amazon.awssdk.enhanced.dynamodb.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ExecuteStatementRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -47,6 +48,28 @@ class DynamoCollection<R>(
             )
         } catch (e: Exception) {
             logger.error("Unable to establish the dynamodb enhanced client for table: ${classType.name} with exception: $e")
+            null
+        }
+    }
+
+    /**
+     * Get a specific item by its ID.
+     *
+     * @param id String
+     * @param classType Class<T>?
+     * @return T?
+     */
+    override fun <T> getItem(id: String, classType: Class<T>?): T? {
+        val request = GetItemEnhancedRequest.builder()
+            .key { key -> key.partitionValue(id) }
+            .build()
+
+        val item = dynamoTable?.getItem(request) ?: return null
+
+        @Suppress("UNCHECKED_CAST")
+        return try {
+            item as T
+        } catch (e: ClassCastException) {
             null
         }
     }

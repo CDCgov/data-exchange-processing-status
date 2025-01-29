@@ -13,6 +13,7 @@ import java.time.Instant
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 
+
 /**
  * Cosmos Collection implementation.
  *
@@ -29,6 +30,7 @@ class CosmosCollection(
 ) : Collection {
 
     private val logger = KotlinLogging.logger {}
+
     // Create a custom ObjectMapper with the InstantToOffsetDateTimeConverter registered
     private fun createObjectMapper(): ObjectMapper {
         val module = SimpleModule().apply {
@@ -43,7 +45,26 @@ class CosmosCollection(
     // This will hold your ObjectMapper
     private val objectMapper: ObjectMapper = createObjectMapper()
 
-
+    /**
+     * Get a specific item by its ID.
+     *
+     * @param id String
+     * @param classType Class<T>?
+     * @return T?
+     */
+    override fun <T> getItem(id: String, classType: Class<T>?): T? {
+        val response = cosmosContainer?.readItem(
+            id, PartitionKey(id),
+            classType
+        )
+        return try {
+            objectMapper.convertValue(response?.item, classType)
+        }
+        catch (e:Exception){
+            logger.error { e.message }
+            null
+        }
+    }
 
     /**
      * Execute the provided query and return the results as POJOs.
