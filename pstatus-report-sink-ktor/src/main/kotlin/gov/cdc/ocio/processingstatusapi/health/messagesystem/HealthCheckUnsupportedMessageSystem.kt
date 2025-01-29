@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.health.messagesystem
 
+import gov.cdc.ocio.processingstatusapi.models.MessageSystemType
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
@@ -9,17 +10,26 @@ import gov.cdc.ocio.types.health.HealthStatusType
  * Concrete implementation of the unsupported messaging service health checks.
  */
 class HealthCheckUnsupportedMessageSystem(
-    private val messageSystem: String
-) : HealthCheckSystem("Messaging Service") {
+    system: String,
+    private val messageSystem: String?
+) : HealthCheckSystem(system, "Messaging Service") {
 
     /**
      * No health check - just inform unsupported
      */
     override fun doHealthCheck(): HealthCheckResult {
+        val options = MessageSystemType.entries.map { it.name }
+        val healthIssue = if (messageSystem != null) {
+            "Unsupported message system: $messageSystem.  Available options are $options."
+        } else {
+            "MSG_SYSTEM environment variable not provided.  Available options are $options."
+        }
+
         return HealthCheckResult(
+            system,
             service,
             HealthStatusType.STATUS_DOWN,
-            healthIssues = "Unsupported message system: $messageSystem"
+            healthIssues = healthIssue
         )
     }
 }

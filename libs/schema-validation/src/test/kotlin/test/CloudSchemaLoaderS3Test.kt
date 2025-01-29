@@ -1,6 +1,4 @@
-
 package test
-
 
 import gov.cdc.ocio.reportschemavalidator.loaders.CloudSchemaLoader
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
@@ -11,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
+
 class CloudSchemaLoaderS3Test  {
 
     @Test
@@ -19,8 +18,7 @@ class CloudSchemaLoaderS3Test  {
         val mockS3Client = mock(S3SchemaStorageClient::class.java)
         val fileName = "example-schema.json"
         val mockContent = "mock data from S3"
-        val mockInputStream = mockContent.byteInputStream()
-        `when`(mockS3Client.getSchemaFile(fileName)).thenReturn(mockInputStream)
+        `when`(mockS3Client.getSchemaFile(fileName)).thenReturn(mockContent)
 
         val config = mapOf(
             "REPORT_SCHEMA_S3_BUCKET" to "test-bucket",
@@ -39,15 +37,11 @@ class CloudSchemaLoaderS3Test  {
         val schemaFile: SchemaFile = loader.loadSchemaFile(fileName)
 
         // Assert
-        assertNotNull(schemaFile.inputStream)
-        val actualContent = schemaFile.inputStream!!.reader().readText() // Convert InputStream to String
+        assertNotNull(schemaFile.content)
+        val actualContent = schemaFile.content // Convert InputStream to String
         assertEquals(mockContent, actualContent)
         assertEquals(fileName, schemaFile.fileName)
         verify(mockS3Client, times(1)).getSchemaFile(fileName)
     }
 
 }
-
-
-
-

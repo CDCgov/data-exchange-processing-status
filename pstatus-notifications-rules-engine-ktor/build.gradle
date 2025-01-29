@@ -69,6 +69,9 @@ dependencies {
     implementation "io.ktor:ktor-server-netty:2.1.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
     implementation "software.amazon.awssdk:sts:2.29.34"
+
+    implementation(project(":libs:commons-types"))
+
     testImplementation "org.mockito.kotlin:mockito-kotlin:4.0.0"
     testImplementation 'org.testng:testng:7.7.0'
     testImplementation "org.mockito:mockito-inline:3.11.2"

@@ -32,9 +32,9 @@ object DatabaseKoinCreator {
         val logger = KotlinLogging.logger {}
 
         val databaseModule = module {
-            val database = environment.config.property("ktor.database").getString()
+            val database = environment.config.tryGetString("ktor.database")
 
-            when (database.lowercase()) {
+            when (database?.lowercase() ?: "") {
                 DatabaseType.MONGO.value -> {
                     val connectionString = environment.config.property("mongo.connection_string").getString()
                     val databaseName = environment.config.property("mongo.database_name").getString()
@@ -74,7 +74,7 @@ object DatabaseKoinCreator {
                     val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
                     val webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file")?: ""
                     single<ProcessingStatusRepository>(createdAtStart = true) {
-                        DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
+                        DynamoRepository(dynamoTablePrefix, roleArn, webIdentityTokenFile)
                     }
                 }
 

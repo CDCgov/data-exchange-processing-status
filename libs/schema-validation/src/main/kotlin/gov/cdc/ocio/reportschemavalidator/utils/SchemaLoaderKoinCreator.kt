@@ -12,7 +12,7 @@ object SchemaLoaderKoinCreator {
      * @param environment [ApplicationEnvironment]
      * @return [Module]
      */
-    fun getSchemaLoaderFromAppEnv(environment: ApplicationEnvironment): Module {
+    fun moduleFromAppEnv(environment: ApplicationEnvironment): Module {
         return module {
             single { SchemaLoaderConfiguration.createSchemaLoader(environment) }
         }

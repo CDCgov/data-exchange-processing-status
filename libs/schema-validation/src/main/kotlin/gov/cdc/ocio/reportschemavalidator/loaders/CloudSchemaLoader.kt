@@ -74,12 +74,12 @@ class CloudSchemaLoader(
                 val region = config["REPORT_SCHEMA_S3_REGION"] ?: "us-east-1"
                 val roleArn = config["AWS_ROLE_ARN"] ?: ""
                 val webIdentityTokenFile = config["AWS_WEB_IDENTITY_TOKEN_FILE"]
-                S3SchemaStorageClient(bucketName, region, roleArn, webIdentityTokenFile)
+                S3SchemaStorageClient(system, bucketName, region, roleArn, webIdentityTokenFile)
             }
             "blob_storage" -> {
                 val connectionString = config["REPORT_SCHEMA_BLOB_CONNECTION_STR"] ?: throw IllegalArgumentException("Blob connection string not configured")
                 val containerName = config["REPORT_SCHEMA_BLOB_CONTAINER"] ?: "default-container"
-                BlobStorageSchemaClient(connectionString, containerName)
+                BlobStorageSchemaClient(system, connectionString, containerName)
             }
             else -> throw IllegalArgumentException("Unsupported storage type: $storageType")
         }

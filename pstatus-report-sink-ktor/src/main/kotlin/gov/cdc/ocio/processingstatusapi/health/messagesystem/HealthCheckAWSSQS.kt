@@ -13,9 +13,10 @@ import gov.cdc.ocio.types.health.HealthStatusType
  */
 @JsonIgnoreProperties("koin")
 class HealthCheckAWSSQS(
+    system: String,
     private val sqsClient: SqsClient?,
     private val queueUrl: String,
-) : HealthCheckSystem("AWS SQS") {
+) : HealthCheckSystem(system, "AWS SQS") {
 
     /**
      * Checks the AWS SQS health.
@@ -31,9 +32,9 @@ class HealthCheckAWSSQS(
         result.onFailure { error ->
             val reason = "AWS SQS is not healthy: ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

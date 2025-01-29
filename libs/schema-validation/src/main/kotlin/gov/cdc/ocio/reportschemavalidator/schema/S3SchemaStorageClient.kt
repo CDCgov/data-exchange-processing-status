@@ -17,6 +17,7 @@ import java.util.function.Consumer
 
 
 class S3SchemaStorageClient(
+    system: String,
     private val bucketName: String,
     private val region: String,
     private val roleArn: String?,
@@ -154,5 +155,5 @@ class S3SchemaStorageClient(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
-    override var healthCheckSystem = HealthCheckS3Bucket(::getS3Client, bucketName) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckS3Bucket(system, ::getS3Client, bucketName) as HealthCheckSystem
 }

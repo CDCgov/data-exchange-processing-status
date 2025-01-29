@@ -15,10 +15,10 @@ object SchemaLoaderConfiguration {
      * @return CloudSchemaLoader
      */
     fun createSchemaLoader(environment: ApplicationEnvironment): SchemaLoader {
-        val schemaLoaderSystem = environment.config.tryGetString("ktor.report_schema_loader_system")?: ""
+        val schemaLoaderSystem = environment.config.tryGetString("ktor.report_schema_loader_system")
 
-        val schemaLoader = when (schemaLoaderSystem.lowercase()) {
-            SchemaLoaderSystemType.S3.toString().lowercase() -> {
+        val schemaLoader = when (schemaLoaderSystem?.lowercase() ?: "") {
+            SchemaLoaderSystemType.S3.value -> {
                 val s3Bucket = environment.config.tryGetString("aws.s3.report_schema_bucket") ?: ""
                 val s3Region = environment.config.tryGetString("aws.s3.report_schema_region") ?: ""
                 val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
@@ -29,20 +29,20 @@ object SchemaLoaderConfiguration {
                     "AWS_ROLE_ARN" to roleArn,
                     "AWS_WEB_IDENTITY_TOKEN_FILE" to webIdentityTokenFile
                 )
-                CloudSchemaLoader(schemaLoaderSystem, config)
+                CloudSchemaLoader("s3", config)
             }
 
-            SchemaLoaderSystemType.BLOB_STORAGE.toString().lowercase() -> {
+            SchemaLoaderSystemType.BLOB_STORAGE.value -> {
                 val connectionString = environment.config.tryGetString("azure.blob_storage.report_schema_connection_string") ?: ""
                 val container = environment.config.tryGetString("azure.blob_storage.report_schema_container") ?: ""
                 val config = mapOf(
                     "REPORT_SCHEMA_BLOB_CONNECTION_STR" to connectionString,
                     "REPORT_SCHEMA_BLOB_CONTAINER" to container
                 )
-                CloudSchemaLoader(schemaLoaderSystem, config)
+                CloudSchemaLoader("blob_storage", config)
             }
 
-            SchemaLoaderSystemType.FILE_SYSTEM.toString().lowercase() -> {
+            SchemaLoaderSystemType.FILE_SYSTEM.value -> {
                 val localFileSystemPath = environment.config.tryGetString("file_system.report_schema_local_path") ?: ""
                 val config = mapOf(
                     "REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH" to localFileSystemPath

@@ -51,5 +51,8 @@ class CosmosRepository(
     override var subscriptionManagementCollection =
         CosmosCollection(notificationSubscriptionsContainerName, subscriptionManagementContainer) as Collection
 
-    override var healthCheckSystem = HealthCheckCosmosDb(CosmosClientManager.getCosmosClient(uri, authKey)!!) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckCosmosDb(
+        system,
+        CosmosClientManager.getCosmosClient(uri, authKey)!!
+    ) as HealthCheckSystem
 }

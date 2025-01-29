@@ -14,8 +14,9 @@ import java.nio.file.Path
  * Concrete implementation of the dynamodb health check.
  */
 class HealthCheckDynamoDb(
+    system: String,
     private val dynamoDbClient: DynamoDbClient? = null // Injected client - optional
-) : HealthCheckSystem("Dynamo DB") {
+) : HealthCheckSystem(system, "Dynamo DB") {
 
     // Lazily initialize the client if none is provided
     private val defaultDynamoDbClient: DynamoDbClient by lazy {
@@ -40,9 +41,9 @@ class HealthCheckDynamoDb(
         result.onFailure { error ->
             val reason = "DynamoDB is not accessible and hence not healthy ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

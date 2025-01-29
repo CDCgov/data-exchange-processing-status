@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
+import gov.cdc.ocio.types.health.HealthStatusType
 import graphql.GraphQLContext
 import graphql.execution.CoercedVariables
 import graphql.language.*
@@ -139,6 +140,29 @@ val graphqlLongClassType: GraphQLScalarType = GraphQLScalarType.newScalar()
     .build()
 
 /**
+ * Define a GraphQL scalar for the HealthStatus type.
+ */
+val healthStatusTypeScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
+    .name("HealthStatusType")
+    .coercing(object : Coercing<HealthStatusType, String> {
+        /**
+         * Serialize implementation of the [HealthStatusType] scalar.
+         *
+         * @param dataFetcherResult Any
+         * @param graphQLContext GraphQLContext
+         * @param locale Locale
+         * @return String
+         */
+        override fun serialize(dataFetcherResult: Any, graphQLContext: GraphQLContext, locale: Locale): String {
+            if (dataFetcherResult is HealthStatusType)
+                return dataFetcherResult.value
+            else
+                throw CoercingSerializeException("Expected a HealthStatusType")
+        }
+    })
+    .build()
+
+/**
  * Custom schema generator hooks for the PS API reports.
  */
 class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
@@ -154,6 +178,7 @@ class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
         Long::class -> graphqlLongClassType
         Map::class -> ExtendedScalars.Json
         BasicHashMap::class -> basicHashMapScalar
+        HealthStatusType::class -> healthStatusTypeScalar
         else -> null
     }
 

@@ -5,6 +5,8 @@ package gov.cdc.ocio.processingstatusnotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.UnSubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeWebhookNotifications
+import gov.cdc.ocio.types.health.HealthStatusType
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -90,7 +92,12 @@ fun Route.unsubscribeWebhookRoute() {
 
 fun Route.healthCheckRoute() {
     get("/health") {
-        call.respond(HealthQueryService().getHealth())
+        val result = HealthQueryService().getHealth()
+        val responseCode = when (result.status) {
+            HealthStatusType.STATUS_UP -> HttpStatusCode.OK
+            else -> HttpStatusCode.InternalServerError
+        }
+        call.respond(responseCode, result)
     }
 }
 

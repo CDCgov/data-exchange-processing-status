@@ -17,7 +17,9 @@ import java.io.FileNotFoundException
  */
 
 @JsonIgnoreProperties("koin")
-class HealthCheckFileSystem : HealthCheckSystem("file_system"), KoinComponent {
+class HealthCheckFileSystem(
+    system: String
+) : HealthCheckSystem(system, "file_system"), KoinComponent {
 
     private val fileSystemConfiguration by inject<FileSystemConfiguration>()
 
@@ -31,10 +33,10 @@ class HealthCheckFileSystem : HealthCheckSystem("file_system"), KoinComponent {
         result.onFailure { error ->
             val reason = "File system is not accessible and hence not healthy ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
 
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

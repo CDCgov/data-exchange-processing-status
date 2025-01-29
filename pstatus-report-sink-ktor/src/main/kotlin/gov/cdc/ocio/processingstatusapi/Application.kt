@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingstatusapi.plugins.*
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -16,6 +17,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 
+/**
+ * Creates the message system if possible from the provided application environment variables.
+ *
+ * @param environment ApplicationEnvironment
+ * @return MessageSystem
+ */
 private fun createMessageSystem(environment: ApplicationEnvironment): MessageSystem {
     return when (getMessageSystem(environment)) {
         MessageSystemType.AZURE_SERVICE_BUS -> {
@@ -30,7 +37,7 @@ private fun createMessageSystem(environment: ApplicationEnvironment): MessageSys
             val config = AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
             AWSSQSMessageSystem(config.createSQSClient(), config.queueURL)
         }
-        else -> { UnsupportedMessageSystem(environment.config.property("ktor.message_system").getString()) }
+        else -> { UnsupportedMessageSystem(environment.config.tryGetString("ktor.message_system")) }
     }
 }
 
@@ -43,7 +50,7 @@ private fun createMessageSystem(environment: ApplicationEnvironment): MessageSys
  */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val schemaLoaderModule = SchemaLoaderKoinCreator.getSchemaLoaderFromAppEnv(environment)
+    val schemaLoaderModule = SchemaLoaderKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = module {
         single(createdAtStart = true) { createMessageSystem(environment) }
     }
@@ -65,11 +72,17 @@ fun main(args: Array<String>) {
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
 }
 
+/**
+ * Retrieves the message system from the app environment and translates that into a message system enum if possible.
+ *
+ * @param environment ApplicationEnvironment
+ * @return MessageSystemType?
+ */
 private fun getMessageSystem(environment: ApplicationEnvironment): MessageSystemType? {
     val logger = KotlinLogging.logger {}
 
     // Determine which messaging system module to load
-    val currentMessagingSystem = environment.config.property("ktor.message_system").getString()
+    val currentMessagingSystem = environment.config.tryGetString("ktor.message_system") ?: ""
     val messageSystemType: MessageSystemType? = try {
         MessageSystemType.valueOf(currentMessagingSystem.uppercase())
     } catch (e: IllegalArgumentException) {

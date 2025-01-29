@@ -6,6 +6,7 @@ import com.couchbase.client.java.Scope
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import mu.KotlinLogging
 import java.time.Duration
 
 
@@ -44,6 +45,8 @@ class CouchbaseRepository(
     notificationSubscriptionsCollectionName: String = "NotificationSubscriptions"
 ) : ProcessingStatusRepository() {
 
+    private val logger = KotlinLogging.logger {}
+
     // Connect without customizing the cluster environment
     private var cluster = Cluster.connect(connectionString, username, password)
 
@@ -58,7 +61,12 @@ class CouchbaseRepository(
     private val notificationSubscriptionsCouchbaseCollection: com.couchbase.client.java.Collection
 
     init {
-        processingStatusBucket.waitUntilReady(Duration.ofSeconds(10))
+        val result = runCatching {
+            processingStatusBucket.waitUntilReady(Duration.ofSeconds(10))
+        }
+        result.onFailure {
+            logger.error("Failed to establish an initial connection to Couchbase!")
+        }
 
         scope = processingStatusBucket.scope(scopeName)
 
@@ -90,5 +98,5 @@ class CouchbaseRepository(
             notificationSubscriptionsCouchbaseCollection
         ) as Collection
 
-    override var healthCheckSystem = HealthCheckCouchbaseDb() as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
 }

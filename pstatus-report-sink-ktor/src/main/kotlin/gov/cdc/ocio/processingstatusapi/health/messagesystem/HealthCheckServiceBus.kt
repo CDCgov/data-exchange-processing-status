@@ -15,8 +15,9 @@ import org.koin.core.component.KoinComponent
  */
 @JsonIgnoreProperties("koin")
 class HealthCheckServiceBus(
+    system: String,
     private val azureServiceBusConfiguration: AzureServiceBusConfiguration
-) : HealthCheckSystem("Azure Service Bus"), KoinComponent {
+) : HealthCheckSystem(system, "Azure Service Bus"), KoinComponent {
 
     /**
      * Checks and sets azureServiceBusHealth status
@@ -29,9 +30,9 @@ class HealthCheckServiceBus(
         result.onFailure { error ->
             val reason = "Azure Service Bus is not healthy: ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

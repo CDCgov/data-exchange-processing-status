@@ -17,6 +17,8 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  */
 abstract class ProcessingStatusRepository {
 
+    val system = "Database"
+
     // Common interface for the reports collection
     open lateinit var reportsCollection: Collection
 
