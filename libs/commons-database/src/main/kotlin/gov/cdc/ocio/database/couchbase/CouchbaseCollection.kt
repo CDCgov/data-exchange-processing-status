@@ -68,8 +68,12 @@ class CouchbaseCollection(
         val results = mutableListOf<T>()
         when (classType) {
             // Handle primitive types
-            String::class.java, Float::class.java, Int::class.java, Long::class.java, Boolean::class.java -> {
+            String::class.java, Boolean::class.java -> {
                 results.addAll(queryResult.rowsAs(classType))
+            }
+            Int::class.java, Long::class.java,Float::class.java -> {
+                val expectedResult = queryResult.rowsAs(classType)[0]
+                results.add(expectedResult as T)
             }
             // Handle all others as JSON objects
             else -> {
@@ -139,5 +143,8 @@ class CouchbaseCollection(
     override val collectionNameForQuery = "${couchbaseScope.bucketName()}.${couchbaseScope.name()}.`$collectionName`"
 
     override val collectionElementForQuery = { name: String -> name }
+
+
+
 
 }

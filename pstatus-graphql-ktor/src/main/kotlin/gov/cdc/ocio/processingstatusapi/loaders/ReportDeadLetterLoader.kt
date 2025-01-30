@@ -106,14 +106,14 @@ class ReportDeadLetterLoader: KoinComponent {
         val timeRangeWhereClause =
             SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
 
-        val reportsSqlQuery = "select value count(1) from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
+        val reportsSqlQuery = "select value count(*) from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
                 "and $timeRangeWhereClause " + if (dataStreamRoute != null) " and ${cPrefix}dataStreamRoute= '$dataStreamRoute'" else ""
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
             Int::class.java
         )
-        val count = reportItems.count()
+        val count = if(reportItems.size == 1) reportItems[0] else 0
         logger.info("Count of records: $count")
         return count
     }
