@@ -350,7 +350,7 @@ class ReportCountsLoader: KoinComponent {
         val rollupCountsQuery = (
                 "select "
                         + "${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version, "
-                        + "count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
+                        + "count(*) as counts, ${cPrefix}stageName "
                         + "from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
                         + "group by ${cPrefix}stageName, ${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version"
