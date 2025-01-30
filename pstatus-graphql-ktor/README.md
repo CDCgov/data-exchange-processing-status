@@ -43,8 +43,7 @@ The `DATABASE` environment variable is used to specify the database used for per
  - `cosmos`
  - `dynamo`
  - `couchbase`
- - `mongo`
-
+ 
 For Cosmos DB only, set the following environment variables:
 
  - `COSMOS_DB_CLIENT_ENDPOINT` - your Cosmos DB client endpoint.
@@ -59,10 +58,6 @@ For Couchbase DB only, set the following environment variables:
  - `COUCHBASE_CONNECTION_STRING` - URI of the couchbase database.
  - `COUCHBASE_USERNAME` - Username for the couchbase database.
  - `COUCHBASE_PASSWORD` - Password for the username provided.
-
-For Mongo DB only, set the following environment variables:
- -`MONGO_CONNECTION_STRING` - URI of the couchbase database.
- - `MONGO_DATABASE_NAME` - Name of the database. For example, "ProcessingStatus".
 
 For report schema loader, set the following environment variables:
 - `REPORT_SCHEMA_LOADER_SYSTEM` - One of these values (s3, blob_storage or file_system)

@@ -2,9 +2,7 @@
 The `commons-database` library is an interface for interacting with cloud and local databases.  With a common database interface you can have high-level code that works for all the supported databases.
 
 ## Supported Databases
-Supported databases include cosmosdb, dynamodb, mongodb, and couchbase.
-
-> **_Note:_** The mongodb implementation is currently only partially supported.  The `commons-library` can be used to write and delete mongodb objects, but the query interface is not implemented due to the need for Atlas to do SQL-like queries with mongodb.
+Supported databases include cosmosdb, dynamodb, and couchbase.
 
 ## Usage
 
@@ -26,12 +24,6 @@ The following excerpt of code describes how the library can be used with ktor an
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = module {
         when (val database = environment.config.tryGetString("ktor.database")) {
-            DatabaseType.MONGO.value -> {
-                val connectionString = environment.config.property("mongo.connection_string").getString()
-                single<ProcessingStatusRepository>(createdAtStart = true) {
-                    MongoRepository(connectionString, "ProcessingStatus")
-                }
-            }
             DatabaseType.COUCHBASE.value -> {
                 val connectionString = environment.config.property("couchbase.connection_string").getString()
                 single<ProcessingStatusRepository>(createdAtStart = true) {

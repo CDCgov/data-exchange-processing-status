@@ -4,7 +4,7 @@ The processing status libraries are currently only intended for internal use wit
 Please see the readme in each of the subfolders for the details of each library.
 
 ## commons-database
-The `commons-database` library is an interface for interacting with cloud and local databases.  With a common database interface you can have high-level code that works for all the supported databases.  Supported databases include cosmosdb, dynamodb, mongodb, and couchbase.
+The `commons-database` library is an interface for interacting with cloud and local databases.  With a common database interface you can have high-level code that works for all the supported databases.  Supported databases include cosmosdb, dynamodb, and couchbase.
 
 ## commons-types
 The `commons-types` library is a collection of types including enumerations, models, and utility classes that are commonly shared by the processing status API services.

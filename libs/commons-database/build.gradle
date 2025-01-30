@@ -30,9 +30,6 @@ dependencies {
     // CosmosDB
     implementation 'com.azure:azure-cosmos:4.63.3'
 
-    // MongoDB
-    implementation 'org.mongodb:mongodb-driver-sync:5.1.3'
-
     // Couchbase
     implementation 'com.couchbase.client:java-client:3.7.2'
 
