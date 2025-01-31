@@ -11,6 +11,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
+
 /**
  * Couchbase Collection implementation.
  *
@@ -22,7 +23,6 @@ import java.util.*
  * @see [CouchbaseRepository]
  * @see [Collection]
  */
-
 class CouchbaseCollection(
     collectionName: String,
     private val couchbaseScope: Scope,
@@ -37,6 +37,26 @@ class CouchbaseCollection(
         .create()
 
     /**
+     * Get a specific item by its ID.
+     *
+     * @param id String
+     * @param classType Class<T>?
+     * @return T?
+     */
+    override fun <T> getItem(id: String, classType: Class<T>?): T? {
+        val result = couchbaseCollection.get(id)
+        return when (classType) {
+            String::class.java, Float::class.java, Int::class.java, Long::class.java, Boolean::class.java -> {
+                result.contentAs(classType)
+            }
+            // Handle all others as JSON objects
+            else -> {
+                jsonObjectToType(result.contentAsObject(), classType)
+            }
+        }
+    }
+
+    /**
      * Execute the provided query and return the results as POJOs.
      *
      * @param query[String]
@@ -44,31 +64,43 @@ class CouchbaseCollection(
      * @return List<T>
      */
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
-        val result = couchbaseScope.query(query)
+        val queryResult = couchbaseScope.query(query)
         val results = mutableListOf<T>()
         when (classType) {
             // Handle primitive types
             String::class.java, Boolean::class.java -> {
-                results.addAll(result.rowsAs(classType))
+                results.addAll(queryResult.rowsAs(classType))
             }
             Int::class.java, Long::class.java,Float::class.java -> {
-                val expectedResult = result.rowsAs(classType)[0]
+                val expectedResult = queryResult.rowsAs(classType)[0]
                 results.add(expectedResult as T)
             }
             // Handle all others as JSON objects
             else -> {
-                val jsonObjects = result.rowsAsObject()
-                jsonObjects.forEach {
-                    // Couchbase items are received as an array, but within each array element is a field with the content.
-                    // The content field name will match that of the collection name.
-                    val collectionName = it.names.first()
-                    val item = if (collectionName.equals(collectionVariable)) it.get(collectionName) else it
-                    val obj = gson.fromJson(item.toString(), classType)
-                    results.add(obj)
-                }
+                val jsonObjects = queryResult.rowsAsObject()
+                results.addAll(jsonObjects.map {
+                    jsonObjectToType(it, classType)
+                })
             }
         }
         return results
+    }
+
+    /**
+     * Converts a [JsonObject] to the class type provided.
+     *
+     * @param jsonObject JsonObject
+     * @param classType Class<T>?
+     * @return T
+     * @throws JsonSyntaxException
+     */
+    @Throws(JsonSyntaxException::class)
+    private fun <T> jsonObjectToType(jsonObject: JsonObject, classType: Class<T>?): T {
+        // Couchbase items are received as an array, but within each array element is a field with the content.
+        // The content field name will match that of the collection name.
+        val collectionName = jsonObject.names.first()
+        val item = if (collectionName.equals(collectionVariable)) jsonObject.get(collectionName) else jsonObject
+        return gson.fromJson(item.toString(), classType)
     }
 
     /**

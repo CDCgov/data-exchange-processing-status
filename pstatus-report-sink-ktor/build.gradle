@@ -74,17 +74,6 @@ dependencies {
     implementation 'org.danilopianini:khttp:1.3.1'
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.9'
 
-
-    // MongoDB
-    implementation 'org.mongodb:mongodb-driver-sync:5.1.3'
-
-    // Couchbase
-    implementation 'com.couchbase.client:java-client:3.7.2'
-
-    // DynamoDB
-    implementation 'software.amazon.awssdk:dynamodb:2.27.16'
-    implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
-
     // JSON validations
     implementation("com.networknt:json-schema-validator:1.0.73")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+")
