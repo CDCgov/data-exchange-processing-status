@@ -47,6 +47,7 @@ fun Application.module() {
         subscribeUploadDigestCountsRoute()
         unsubscribeUploadDigestCountsRoute()
         healthCheckRoute()
+        versionRoute()
     }
 
 }

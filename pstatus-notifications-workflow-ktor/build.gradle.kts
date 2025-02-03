@@ -13,6 +13,7 @@ plugins {
     id ("maven-publish")
     id ("java-library")
     id ("org.jetbrains.kotlin.plugin.serialization") version "1.8.20"
+    id ("com.gorylenko.gradle-git-properties") version "2.4.2"
 }
 repositories {
     mavenCentral()
@@ -117,3 +118,14 @@ repositories{
     mavenCentral()
 }
 
+gitProperties {
+    keys = listOf("git.commit.id", "git.commit.id.abbrev", "git.branch", "git.build.time", "git.commit.time")
+    dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+    dateFormatTimeZone = "UTC"
+    extProperty = "gitProps"
+}
+
+// make sure the generateGitProperties task always executes (even when git.properties is not changed)
+tasks.named("generateGitProperties").configure {
+    outputs.upToDateWhen { false } // Forces task to run every time
+}
