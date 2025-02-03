@@ -15,8 +15,12 @@ import java.util.*
  * @receiver Application
  */
 fun Application.configureRouting() {
-    val version = environment.config.propertyOrNull("ktor.version")?.getString() ?: "unknown"
     routing {
+        val version = environment.config.propertyOrNull("ktor.version")?.getString() ?: "unknown"
+        val gitProps = Properties()
+        javaClass.getResourceAsStream("/git.properties")?.use {
+            gitProps.load(it)
+        }
         get("/health") {
             val result = HealthQueryService().getHealth()
             val responseCode = when (result.status) {
@@ -26,10 +30,6 @@ fun Application.configureRouting() {
             call.respond(responseCode, result)
         }
         get("/version") {
-            val gitProps = Properties()
-            javaClass.getResourceAsStream("/git.properties")?.use {
-                gitProps.load(it)
-            }
             call.respond(mapOf(
                 "version" to version,
                 "branch" to gitProps["git.branch"],
