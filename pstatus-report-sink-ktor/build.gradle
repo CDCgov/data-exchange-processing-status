@@ -142,7 +142,7 @@ repositories {
 }
 
 gitProperties {
-    keys = ["git.commit.id", "git.branch", "git.build.time", "git.commit.time"]
+    keys = ["git.commit.id", "git.commit.id.abbrev", "git.branch", "git.build.time", "git.commit.time"]
     dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
     dateFormatTimeZone = "UTC"
     extProperty = "gitProps"

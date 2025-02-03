@@ -28,6 +28,7 @@ fun Application.configureRouting() {
             call.respond(mapOf(
                 "version" to version,
                 "branch" to gitProps["git.branch"],
+                "commit" to gitProps["git.commit.id.abbrev"],
                 "commitId" to gitProps["git.commit.id"],
                 "commitTime" to gitProps["git.commit.time"]
             ))
