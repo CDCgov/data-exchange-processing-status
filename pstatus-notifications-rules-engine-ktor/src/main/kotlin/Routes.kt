@@ -11,6 +11,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.util.*
 
 
 /**
@@ -103,7 +104,17 @@ fun Route.healthCheckRoute() {
 
 fun Route.versionRoute() {
     val version = environment?.config?.propertyOrNull("ktor.version")?.getString() ?: "unknown"
+    val gitProps = Properties()
+    javaClass.getResourceAsStream("/git.properties")?.use {
+        gitProps.load(it)
+    }
     get("/version") {
-        call.respondText(version)
+        call.respond(mapOf(
+            "version" to version,
+            "branch" to gitProps["git.branch"],
+            "commit" to gitProps["git.commit.id.abbrev"],
+            "commitId" to gitProps["git.commit.id"],
+            "commitTime" to gitProps["git.commit.time"]
+        ))
     }
 }
