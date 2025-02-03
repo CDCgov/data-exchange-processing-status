@@ -6,6 +6,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.util.*
 
 
 /**
@@ -25,7 +26,16 @@ fun Application.configureRouting() {
             call.respond(responseCode, result)
         }
         get("/version") {
-            call.respondText(version)
+            val gitProps = Properties()
+            javaClass.getResourceAsStream("/git.properties")?.use {
+                gitProps.load(it)
+            }
+            call.respond(mapOf(
+                "version" to version,
+                "branch" to gitProps["git.branch"],
+                "commitId" to gitProps["git.commit.id"],
+                "commitTime" to gitProps["git.commit.time"]
+            ))
         }
     }
 }
