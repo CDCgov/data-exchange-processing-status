@@ -91,5 +91,5 @@ class FileSchemaLoader(
         return getSchemaContent("$schemaName.$schemaVersion.schema.json")
     }
 
-    override var healthCheckSystem = HealthCheckFileSystem(system) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckFileSystem(system, schemaLocalSystemFilePath) as HealthCheckSystem
 }
