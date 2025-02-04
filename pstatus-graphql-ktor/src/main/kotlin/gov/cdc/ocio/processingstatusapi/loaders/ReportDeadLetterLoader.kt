@@ -59,14 +59,9 @@ class ReportDeadLetterLoader: KoinComponent {
         daysInterval: Int?
     ): List<ReportDeadLetter> {
 
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
-            daysInterval,
-            getFormattedDateAsString(startDate),
-            getFormattedDateAsString(endDate),
-            cPrefix
-        )
+
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
 
         val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
                 "and ${cPrefix}dataStreamRoute = '$dataStreamRoute' " +
@@ -100,8 +95,6 @@ class ReportDeadLetterLoader: KoinComponent {
     ): Int {
 
         val logger = KotlinLogging.logger {}
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
 
         val timeRangeWhereClause =
             SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
