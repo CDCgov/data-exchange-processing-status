@@ -6,10 +6,15 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.util.*
 
 
 fun Application.configureRouting() {
     val version = environment.config.propertyOrNull("ktor.version")?.getString() ?: "unknown"
+    val gitProps = Properties()
+    javaClass.getResourceAsStream("/git.properties")?.use {
+        gitProps.load(it)
+    }
     routing {
         get("/health") {
             val result = HealthQueryService().getHealth()
@@ -20,7 +25,13 @@ fun Application.configureRouting() {
             call.respond(responseCode, result)
         }
         get("/version") {
-            call.respondText(version)
+            call.respond(mapOf(
+                "version" to version,
+                "branch" to gitProps["git.branch"],
+                "commit" to gitProps["git.commit.id.abbrev"],
+                "commitId" to gitProps["git.commit.id"],
+                "commitTime" to gitProps["git.commit.time"]
+            ))
         }
     }
 }

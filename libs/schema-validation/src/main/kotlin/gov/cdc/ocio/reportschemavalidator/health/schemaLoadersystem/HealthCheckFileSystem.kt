@@ -2,12 +2,10 @@
 package gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import gov.cdc.ocio.reportschemavalidator.utils.FileSystemConfiguration
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -18,10 +16,9 @@ import java.io.FileNotFoundException
 
 @JsonIgnoreProperties("koin")
 class HealthCheckFileSystem(
-    system: String
+    system: String,
+    private val localFileSystemPath: String
 ) : HealthCheckSystem(system, "file_system"), KoinComponent {
-
-    private val fileSystemConfiguration by inject<FileSystemConfiguration>()
 
     /**
      * Checks tha the folder for the file system exists.
@@ -29,7 +26,7 @@ class HealthCheckFileSystem(
      * @return HealthCheckResult
      */
     override fun doHealthCheck(): HealthCheckResult {
-        val result = isFileSystemHealthy(fileSystemConfiguration)
+        val result = isFileSystemHealthy()
         result.onFailure { error ->
             val reason = "File system is not accessible and hence not healthy ${error.localizedMessage}"
             logger.error(reason)
@@ -42,14 +39,13 @@ class HealthCheckFileSystem(
     /**
      * Check whether the file system folder exists.
      *
-     * @param config FileSystemConfiguration
      * @return Result<Boolean>
      */
-    private fun isFileSystemHealthy(config: FileSystemConfiguration): Result<Boolean> {
-        return if (File(config.localFileSystemPath).exists())
+    private fun isFileSystemHealthy(): Result<Boolean> {
+        return if (File(localFileSystemPath).exists())
             Result.success(true)
         else
-            Result.failure(FileNotFoundException("Report schema folder '${config.localFileSystemPath}' does not exist"))
+            Result.failure(FileNotFoundException("Report schema folder '${localFileSystemPath}' does not exist"))
     }
 
 }

@@ -10,7 +10,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.24'
     id 'io.ktor.plugin' version '2.3.11'
     id "org.jetbrains.kotlin.plugin.serialization" version "1.8.20"
-//    id ("kotlinx-serialization")
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
 }
 apply plugin: "java"
 apply plugin: "kotlin"
@@ -61,7 +61,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:2.1.0")
     implementation("io.ktor:ktor-client-content-negotiation:2.1.0")
     implementation("io.ktor:ktor-client-serialization:2.1.0")
-    implementation 'com.expediagroup:graphql-kotlin-ktor-server:7.1.1'
+    implementation 'com.expediagroup:graphql-kotlin-ktor-server:8.2.1'
     implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'io.insert-koin:koin-core:3.5.6'
@@ -162,4 +162,12 @@ sourceSets {
     }
 }
 
+gitProperties {
+    keys = ["git.commit.id", "git.commit.id.abbrev", "git.branch", "git.build.time", "git.commit.time"]
+    dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+    dateFormatTimeZone = "UTC"
+    extProperty = "gitProps"
+}
 
+// make sure the generateGitProperties task always executes (even when git.properties is not changed)
+generateGitProperties.outputs.upToDateWhen { false }
