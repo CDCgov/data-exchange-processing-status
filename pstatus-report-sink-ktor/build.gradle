@@ -150,3 +150,9 @@ gitProperties {
 
 // make sure the generateGitProperties task always executes (even when git.properties is not changed)
 generateGitProperties.outputs.upToDateWhen { false }
+
+tasks.register('wrapper', Wrapper) {
+    gradleVersion = 8.6
+    distributionType = Wrapper.DistributionType.ALL // Includes JavaDoc and source code
+    validateDistributionUrl = false
+}

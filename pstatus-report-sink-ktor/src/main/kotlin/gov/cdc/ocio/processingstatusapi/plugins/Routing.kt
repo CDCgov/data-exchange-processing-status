@@ -16,7 +16,7 @@ import java.util.*
  */
 fun Application.configureRouting() {
     routing {
-        val version = environment.config.propertyOrNull("ktor.version")?.getString() ?: "unknown"
+        val version = environment?.config?.propertyOrNull("ktor.version")?.getString() ?: "unknown"
         val gitProps = Properties()
         javaClass.getResourceAsStream("/git.properties")?.use {
             gitProps.load(it)
