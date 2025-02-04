@@ -6,15 +6,15 @@ import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
-import mu.KLogger
+import mu.KotlinLogging
 
 
 /**
- * The class that validates the Json against the schemas using networknt library
- * @param logger KLogger
+ * The class that validates the Json against the schemas using networknt library/
  */
+class JsonSchemaValidator : SchemaValidator {
 
-class JsonSchemaValidator(private val logger: KLogger) : SchemaValidator {
+    private val logger = KotlinLogging.logger {}
 
     /**
      * The function which validates the schema file against the node passed in using the networknt library

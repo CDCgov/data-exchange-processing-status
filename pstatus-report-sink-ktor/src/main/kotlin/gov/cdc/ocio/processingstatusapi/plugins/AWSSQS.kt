@@ -10,7 +10,6 @@ import aws.smithy.kotlin.runtime.net.url.Url
 import gov.cdc.ocio.processingstatusapi.messagesystems.AWSSQSMessageSystem
 import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
 
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -18,11 +17,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import org.apache.qpid.proton.TimeoutException
 import org.koin.java.KoinJavaComponent.getKoin
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import java.nio.file.Path
 
+
+val logger = KotlinLogging.logger {}
 
 /**
  * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
@@ -75,16 +77,15 @@ val AWSSQSPlugin = createApplicationPlugin(
 
     try {
         queueUrl = pluginConfig.queueURL
-
-        SchemaValidation.logger.info("Connection to the AWS SQS was successfully established")
+        logger.info("Connection to the AWS SQS was successfully established")
     } catch (e: SqsException) {
-        SchemaValidation.logger.error("Failed to create AWS SQS client ${e.message}")
+        logger.error("Failed to create AWS SQS client ${e.message}")
     } catch (e: QueueDoesNotExist) {
-        SchemaValidation.logger.error("AWS SQS URL provided does not exist ${e.message}")
+        logger.error("AWS SQS URL provided does not exist ${e.message}")
     } catch (e: TimeoutException) {
-        SchemaValidation.logger.error("Timeout occurred ${e.message}")
+        logger.error("Timeout occurred ${e.message}")
     } catch (e: Exception) {
-        SchemaValidation.logger.error("Unexpected error occurred ${e.message}")
+        logger.error("Unexpected error occurred ${e.message}")
     }
 
     /**
@@ -102,9 +103,9 @@ val AWSSQSPlugin = createApplicationPlugin(
                     }
                     sqsClient.deleteMessage(deleteMessageRequest)
                 }
-                SchemaValidation.logger.info("Successfully deleted processed report from AWS SQS")
+                logger.info("Successfully deleted processed report from AWS SQS")
             }catch (e: Exception) {
-                SchemaValidation.logger.error("Something went wrong while deleting the report from the queue ${e.message}")
+                logger.error("Something went wrong while deleting the report from the queue ${e.message}")
             }
         }
     }
@@ -117,7 +118,7 @@ val AWSSQSPlugin = createApplicationPlugin(
     suspend fun validate(receivedMessages: ReceiveMessageResponse) {
         try {
             receivedMessages.messages?.forEach { message ->
-                SchemaValidation.logger.info("Received message from AWS SQS: ${message.body}")
+                logger.info("Received message from AWS SQS: ${message.body}")
                 val awsSQSProcessor = AWSSQSProcessor()
                 message.body?.let {
                    awsSQSProcessor.processMessage(it)
@@ -125,10 +126,11 @@ val AWSSQSPlugin = createApplicationPlugin(
             }
             deleteMessage(receivedMessages)
         }catch (e: Exception) {
-            SchemaValidation.logger.error("An Exception occurred during validation ${e.message}")
+            logger.error("An Exception occurred during validation ${e.message}")
             deleteMessage(receivedMessages)
         }
     }
+
     /**
      * The `consumeMessages` function continuously listens for and processes messages from an AWS SQS queue.
      * This function runs in a non-blocking coroutine, retrieving messages from the queue, validating them using
@@ -138,7 +140,7 @@ val AWSSQSPlugin = createApplicationPlugin(
      * @throws AwsServiceException
      */
     fun consumeMessages() {
-        SchemaValidation.logger.info("Consuming messages from AWS SQS")
+        logger.info("Consuming messages from AWS SQS")
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
                 var receivedMessages: ReceiveMessageResponse?
@@ -152,13 +154,13 @@ val AWSSQSPlugin = createApplicationPlugin(
                     }
                    validate(receivedMessages)
                 } catch (e: AwsServiceException) {
-                    SchemaValidation.logger.error("AwsServiceException occurred while processing the request ${e.message} with requestID: ${e.sdkErrorMetadata.requestId}")
+                    logger.error("AwsServiceException occurred while processing the request ${e.message} with requestID: ${e.sdkErrorMetadata.requestId}")
                     throw e
                 }  catch (e: ClientException) {
-                    SchemaValidation.logger.error("ClientException occurred either while trying to send request to AWS or while trying to parse a response from AWS ${e.message}")
+                    logger.error("ClientException occurred either while trying to send request to AWS or while trying to parse a response from AWS ${e.message}")
                     throw e
                 } catch (e: Exception) {
-                    SchemaValidation.logger.error("AWS service exception occurred: ${e.message}")
+                    logger.error("AWS service exception occurred: ${e.message}")
                     throw e
                 }
             }
@@ -214,18 +216,18 @@ suspend fun<P> retryWithBackoff(
     baseDelay:Long = 1000,
     maxDelay: Long = 6000,
     block:suspend()-> P
-): P{
+): P {
     var currentDelay = baseDelay
     repeat(numOfRetries) {
-        try{
+        try {
             return block()
-        }catch (e:Exception){
-            SchemaValidation.logger.error("Attempt failed with exception: ${e.message}. Retrying again in $currentDelay")
+        } catch (e:Exception) {
+            logger.error("Attempt failed with exception: ${e.message}. Retrying again in $currentDelay")
             delay(currentDelay)
             currentDelay = (currentDelay *2).coerceAtMost(maxDelay)
         }
     }
-    //This is the last attempt, and if it fails again will throw an exception
-    SchemaValidation.logger.error("Last Attempt, if it fails again exception will be thrown")
+    // This is the last attempt, and if it fails again will throw an exception
+    logger.error("Last Attempt, if it fails again exception will be thrown")
     return block()
 }

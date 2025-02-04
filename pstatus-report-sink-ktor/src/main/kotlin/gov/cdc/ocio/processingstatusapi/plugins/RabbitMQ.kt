@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.rabbitmq.client.*
 import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
 import gov.cdc.ocio.processingstatusapi.messagesystems.RabbitMQMessageSystem
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -20,8 +19,10 @@ import java.io.IOException
  * @param configurationPath represents prefix used to locate environment variables specific to RabbitMQ within the
  * configuration.
  */
-class RabbitMQServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
-
+class RabbitMQServiceConfiguration(
+    config: ApplicationConfig,
+    configurationPath: String? = null
+) {
     companion object {
         const val DEFAULT_HOST = "localhost"
         const val DEFAULT_VIRTUAL_HOST = "/"
@@ -82,7 +83,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                     val rabbitMQProcessor = RabbitMQProcessor()
 
                     val message = String(body, Charsets.UTF_8)
-                    SchemaValidation.logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
+                    logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
                     rabbitMQProcessor.processMessage(message)
 
                     // Acknowledge the message
@@ -90,7 +91,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                 }
             })
         } catch (e: IOException) {
-            SchemaValidation.logger.error("IOException occurred failed to process message from the queue $e.message")
+            logger.error("IOException occurred failed to process message from the queue $e.message")
         }
 
     }
@@ -100,19 +101,19 @@ val RabbitMQPlugin = createApplicationPlugin(
         try {
             val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
             connection = msgSystem.rabbitMQConnection
-            SchemaValidation.logger.info("Connection to the RabbitMQ server was successfully established")
+            logger.info("Connection to the RabbitMQ server was successfully established")
             channel = connection.createChannel()
-            SchemaValidation.logger.info("Channel was successfully created.")
+            logger.info("Channel was successfully created.")
         } catch (e: IOException ) {
-            SchemaValidation.logger.error("IOException occurred {}", e.message)
+            logger.error("IOException occurred {}", e.message)
         } catch (e: TimeoutException){
-            SchemaValidation.logger.error("TimeoutException occurred $e.message")
+            logger.error("TimeoutException occurred $e.message")
         }
         consumeMessages(channel, queueName)
     }
 
     on(MonitoringEvent(ApplicationStopped)) { application ->
-        application.log.info("Application stopped successfully.")
+        logger.info("Application stopped successfully.")
         cleanupResourcesAndUnsubscribe(channel, connection, application)
     }
 }
@@ -127,11 +128,11 @@ val RabbitMQPlugin = createApplicationPlugin(
  * for unsubscribing from events.
  */
 private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connection, application: Application) {
-    application.log.info("Closing RabbitMQ connection and channel")
+    logger.info("Closing RabbitMQ connection and channel")
     channel.close()
     connection.close()
-    application.environment.monitor.unsubscribe(ApplicationStarted){}
-    application.environment.monitor.unsubscribe(ApplicationStopped){}
+    application.environment.monitor.unsubscribe(ApplicationStarted) {}
+    application.environment.monitor.unsubscribe(ApplicationStopped) {}
 }
 
 /**

@@ -1,47 +1,19 @@
 package gov.cdc.ocio.processingstatusapi.utils
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.ToNumberPolicy
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
 import gov.cdc.ocio.processingstatusapi.ReportManager
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.models.Source
 import mu.KotlinLogging
-import java.time.Instant
+
 
 /**
  * Utility class for validating reports against predefined schemas. It's intended to be re-used across supported
  * messaging systems: Azure Service Bus, RabbitMQ and AWS SQS to ensure consistent schema validation and error handling.
  */
 class SchemaValidation {
-    companion object {
-        //Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
-        val gson: Gson = GsonBuilder()
-            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-            .create()
-        val logger = KotlinLogging.logger {}
-    }
 
-    /**
-     * Checks for depreciated fields within message that are still accepted for backward compatability.
-     * If any depreciated fields are found, they are replaced with their corresponding new fields.
-     *
-     * @param messageAsString message to be checked against depreciated fields.
-     * @return updated message if depreciated fields were found.
-     */
-    fun checkAndReplaceDeprecatedFields(messageAsString: String): String {
-        var message = messageAsString
-        if (message.contains("destination_id")) {
-            message= message.replace("destination_id", "data_stream_id")
-        }
-        if (message.contains("event_type")) {
-            message = message.replace("event_type", "data_stream_route")
-        }
-        return message
-    }
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Creates report using ReportManager() and persists to Cosmos DB.
