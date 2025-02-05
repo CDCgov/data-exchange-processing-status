@@ -22,6 +22,7 @@ export default defineConfig({
   use: {
     // Collect trace when retrying the failed test.
     trace: 'on-first-retry',
+    ignoreHTTPSErrors: true,
   },
   // Configure projects for major browsers.
   projects: [
@@ -29,8 +30,26 @@ export default defineConfig({
       name: 'GQL-Local',
           use: { 
           baseURL: 'http://127.0.0.1:8090/graphql'
-       },
+      },
     },
+    {
+      name: 'GQL-Dev',
+      use: {
+            baseURL: 'https://pstatusgraphql.ocio-eks-dev-ede.cdc.gov/graphql'
+          }
+    },
+    {
+      name: 'GQL-Test',
+      use: {
+            baseURL: 'https://pstatusgraphql.phdo-eks-test.cdc.gov/graphql'
+          }
+    },
+    {
+      name: 'GQL-Stage',
+      use: {
+            baseURL: 'https://pstatusgraphql.phdo-eks-test.cdc.gov/graphql'
+          }
+    }
   ],
 
 });
