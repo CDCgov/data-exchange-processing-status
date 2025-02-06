@@ -17,7 +17,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 /**
  * Cosmos Collection implementation.
  *
- * @param containerName[String] Name of the container used for this collection.
  * @property cosmosContainer[CosmosContainer] Cosmos container associated with this collection.
  * @constructor Creates a couchbase collection for use with the [Collection] interface.
  *
@@ -25,7 +24,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
  * @see [Collection]
  */
 class CosmosCollection(
-    containerName: String,
     private val cosmosContainer: CosmosContainer?
 ) : Collection {
 

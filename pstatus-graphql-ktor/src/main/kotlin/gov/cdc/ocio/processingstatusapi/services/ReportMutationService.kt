@@ -38,8 +38,8 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(logger) }
-    val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(logger) }
+    val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator() }
+    val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor() }
     val logger: KLogger by lazy { KotlinLogging.logger {} }
 
     val gson: Gson by lazy {

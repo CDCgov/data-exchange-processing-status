@@ -23,8 +23,6 @@ abstract class MessageProcessor: KoinComponent {
     fun processMessage(message: String) {
         try {
             components.logger.info { "Received message from $source : $message" }
-            val updatedMessage = SchemaValidation().checkAndReplaceDeprecatedFields(message)
-            components.logger.info { "Updated message if depreciated fields were found $message" }
 
             /**
              * If validation is disabled and message is not a valid json, sends it to DLQ.
@@ -32,7 +30,7 @@ abstract class MessageProcessor: KoinComponent {
              */
             val isValidationDisabled = System.getenv("DISABLE_VALIDATION")?.toBoolean() ?: false
 
-            val isReportValidJson = components.jsonUtils.isJsonValid(updatedMessage)
+            val isReportValidJson = components.jsonUtils.isJsonValid(message)
 
             if (isValidationDisabled) {
                 if (!isReportValidJson) {
@@ -50,7 +48,7 @@ abstract class MessageProcessor: KoinComponent {
                 )
 
                 components.logger.info { "The message is in the correct JSON format. Proceed with schema validation" }
-                val validationResult = schemaValidationService.validateJsonSchema(updatedMessage)
+                val validationResult = schemaValidationService.validateJsonSchema(message)
 
                 if (validationResult.status) {
                     components.logger.info { "The message has been successfully validated, creating report." }

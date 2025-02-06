@@ -4,7 +4,6 @@ import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation.Companion.logger
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -23,7 +22,11 @@ import java.util.concurrent.TimeUnit
  * @property subscriptionName String
  * @constructor
  */
-class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
+class AzureServiceBusConfiguration(
+    config: ApplicationConfig,
+    configurationPath: String? = null
+) {
+
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val connectionString = config.tryGetString("${configPath}service_bus.connection_string") ?: ""
     val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
