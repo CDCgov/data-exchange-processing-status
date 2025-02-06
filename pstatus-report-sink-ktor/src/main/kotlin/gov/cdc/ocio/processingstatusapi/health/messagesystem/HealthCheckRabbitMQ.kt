@@ -1,14 +1,17 @@
 package gov.cdc.ocio.processingstatusapi.health.messagesystem
 
+import com.rabbitmq.client.*
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Connection
+import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
 import kotlinx.coroutines.*
 import org.koin.core.component.KoinComponent
+import java.net.UnknownHostException
 import java.time.Duration
+import java.util.concurrent.TimeoutException
 
 
 /**
@@ -17,7 +20,7 @@ import java.time.Duration
 @JsonIgnoreProperties("koin")
 class HealthCheckRabbitMQ(
     system: String,
-    private val rabbitMQConnection: Connection
+    private val rabbitMQConfig: RabbitMQServiceConfiguration
 ) : HealthCheckSystem(system, "RabbitMQ"), KoinComponent {
 
     /**
@@ -26,11 +29,11 @@ class HealthCheckRabbitMQ(
     override fun doHealthCheck(): HealthCheckResult {
         val result = runBlocking {
             async {
-                isRabbitMQHealthy1()
+                isRabbitMQHealthy()
             }.await()
         }
         result.onFailure { error ->
-            val reason ="RabbitMQ is not healthy ${error.localizedMessage}"
+            val reason = "RabbitMQ is not healthy: ${error.localizedMessage}"
             logger.error(reason)
             return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
@@ -40,36 +43,20 @@ class HealthCheckRabbitMQ(
     /**
      * Check whether rabbitMQ is healthy.
      *
-     * @return Boolean
+     * @return Result<Boolean>
      */
-    @Throws(Exception::class)
-    private suspend fun isRabbitMQHealthy(): Result<Boolean> {
-        var channel: Channel? = null
-        try {
-            if (rabbitMQConnection.isOpen) {
-                channel = withTimeoutOrNull(2000L) {
-                    rabbitMQConnection.createChannel()
-                }
-                val isOpen = channel?.isOpen ?: false
-                channel?.close()
-                if (!isOpen)
-                    return Result.failure(Exception("Established RabbitMQ connection, but failed to create a channel."))
-            }
-        } catch (e: Exception) {
-            channel?.close()
-            return Result.failure(Exception("Failed to establish connection to RabbitMQ server: ${e.localizedMessage}"))
-        }
-        return Result.success(true)
-    }
-
     @OptIn(DelicateCoroutinesApi::class)
-    private fun isRabbitMQHealthy1(): Result<Boolean> {
+    private fun isRabbitMQHealthy(): Result<Boolean> {
         var channel: Channel? = null
+        var rabbitMQConnection: Connection? = null
+        val issue: String
         try {
-            var d: Deferred<Channel>? = null
+            rabbitMQConnection = rabbitMQConfig.getConnectionFactory().newConnection()
+
+            var d: Deferred<Channel?>? = null
             GlobalScope.launch {
                 d = async {
-                    rabbitMQConnection.createChannel()
+                    rabbitMQConnection?.createChannel()
                 }
             }
             runBlocking {
@@ -79,12 +66,22 @@ class HealthCheckRabbitMQ(
             }
             val isOpen = channel?.isOpen ?: false
             channel?.close()
-            if (!isOpen)
-                return Result.failure(Exception("Established RabbitMQ connection, but failed to create a channel."))
-        } catch (ex: TimeoutCancellationException) {
-            channel?.close()
-            return Result.failure(Exception("Failed to establish connection to RabbitMQ server: ${ex.localizedMessage}"))
+            rabbitMQConnection?.close()
+            return if (!isOpen)
+                Result.failure(Exception("Established RabbitMQ connection, but failed to create a channel."))
+            else
+                Result.success(true)
+        } catch (ex: UnknownHostException) {
+            issue = "Unknown host: ${ex.localizedMessage}"
+        } catch (ex: TimeoutException) {
+            issue = "Timeout"
+        } catch (ex: Exception) {
+            issue = ex.localizedMessage
         }
-        return Result.success(true)
+
+        channel?.close()
+        rabbitMQConnection?.close()
+
+        return Result.failure(Exception("Failed to establish connection to RabbitMQ server: $issue"))
     }
 }

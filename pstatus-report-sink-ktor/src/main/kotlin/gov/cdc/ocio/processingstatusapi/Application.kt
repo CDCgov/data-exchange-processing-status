@@ -31,7 +31,7 @@ private fun createMessageSystem(environment: ApplicationEnvironment): MessageSys
         }
         MessageSystemType.RABBITMQ -> {
             val config = RabbitMQServiceConfiguration(environment.config, configurationPath = "rabbitMQ")
-            RabbitMQMessageSystem(config.getConnectionFactory().newConnection())
+            RabbitMQMessageSystem(config)
         }
         MessageSystemType.AWS -> {
             val config = AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")

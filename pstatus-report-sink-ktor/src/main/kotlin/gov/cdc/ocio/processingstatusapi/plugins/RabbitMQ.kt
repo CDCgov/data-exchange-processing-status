@@ -57,8 +57,8 @@ val RabbitMQPlugin = createApplicationPlugin(
     createConfiguration = ::RabbitMQServiceConfiguration) {
 
     val queueName = pluginConfig.queue
-    lateinit var connection: Connection
-    lateinit var channel: Channel
+    var connection: Connection? = null
+    var channel: Channel? = null
 
     /**
      * consumeMessages function listens to the queue, receives the messages
@@ -102,19 +102,21 @@ val RabbitMQPlugin = createApplicationPlugin(
             val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
             connection = msgSystem.rabbitMQConnection
             logger.info("Connection to the RabbitMQ server was successfully established")
-            channel = connection.createChannel()
+            channel = connection?.createChannel()
             logger.info("Channel was successfully created.")
         } catch (e: IOException ) {
             logger.error("IOException occurred {}", e.message)
         } catch (e: TimeoutException){
             logger.error("TimeoutException occurred $e.message")
         }
-        consumeMessages(channel, queueName)
+        if (channel != null)
+            consumeMessages(channel!!, queueName)
     }
 
     on(MonitoringEvent(ApplicationStopped)) { application ->
         logger.info("Application stopped successfully.")
-        cleanupResourcesAndUnsubscribe(channel, connection, application)
+        if (channel != null && connection != null)
+            cleanupResourcesAndUnsubscribe(channel!!, connection!!, application)
     }
 }
 
