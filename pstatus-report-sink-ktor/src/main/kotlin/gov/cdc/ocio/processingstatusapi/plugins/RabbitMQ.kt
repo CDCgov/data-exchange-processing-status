@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingstatusapi.messagesystems.RabbitMQMessageSystem
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
+import mu.KotlinLogging
 import org.apache.qpid.proton.TimeoutException
 import org.koin.java.KoinJavaComponent.getKoin
 import java.io.IOException
@@ -56,9 +57,11 @@ val RabbitMQPlugin = createApplicationPlugin(
     configurationPath = "rabbitMQ",
     createConfiguration = ::RabbitMQServiceConfiguration) {
 
+    val logger = KotlinLogging.logger {}
+
     val queueName = pluginConfig.queue
-    lateinit var connection: Connection
-    lateinit var channel: Channel
+    var connection: Connection? = null
+    var channel: Channel? = null
 
     /**
      * consumeMessages function listens to the queue, receives the messages
@@ -97,24 +100,26 @@ val RabbitMQPlugin = createApplicationPlugin(
     }
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
-        application.log.info("Application started successfully.")
+        logger.info("Application started successfully.")
         try {
             val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
             connection = msgSystem.rabbitMQConnection
             logger.info("Connection to the RabbitMQ server was successfully established")
-            channel = connection.createChannel()
+            channel = connection?.createChannel()
             logger.info("Channel was successfully created.")
         } catch (e: IOException ) {
             logger.error("IOException occurred {}", e.message)
         } catch (e: TimeoutException){
             logger.error("TimeoutException occurred $e.message")
         }
-        consumeMessages(channel, queueName)
+        if (channel != null)
+            consumeMessages(channel!!, queueName)
     }
 
     on(MonitoringEvent(ApplicationStopped)) { application ->
         logger.info("Application stopped successfully.")
-        cleanupResourcesAndUnsubscribe(channel, connection, application)
+        if (channel != null && connection != null)
+            cleanupResourcesAndUnsubscribe(channel!!, connection!!, application)
     }
 }
 
@@ -128,6 +133,8 @@ val RabbitMQPlugin = createApplicationPlugin(
  * for unsubscribing from events.
  */
 private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connection, application: Application) {
+    val logger = KotlinLogging.logger {}
+
     logger.info("Closing RabbitMQ connection and channel")
     channel.close()
     connection.close()

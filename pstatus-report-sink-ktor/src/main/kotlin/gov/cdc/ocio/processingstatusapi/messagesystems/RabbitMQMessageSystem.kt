@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.messagesystems
 
 import com.rabbitmq.client.Connection
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
+import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
@@ -12,7 +13,17 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  * @property healthCheckSystem HealthCheckSystem
  * @constructor
  */
-class RabbitMQMessageSystem(val rabbitMQConnection: Connection): MessageSystem {
+class RabbitMQMessageSystem(
+    rabbitMQConfig: RabbitMQServiceConfiguration
+): MessageSystem {
 
-    override var healthCheckSystem = HealthCheckRabbitMQ(system, rabbitMQConnection) as HealthCheckSystem
+    val rabbitMQConnection: Connection? by lazy {
+        try {
+            rabbitMQConfig.getConnectionFactory().newConnection()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override var healthCheckSystem = HealthCheckRabbitMQ(system, rabbitMQConfig) as HealthCheckSystem
 }

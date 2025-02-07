@@ -8,6 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
 import io.ktor.util.logging.*
+import mu.KotlinLogging
 import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
@@ -62,6 +63,8 @@ val AzureServiceBus = createApplicationPlugin(
     configurationPath = "azure",
     createConfiguration = ::AzureServiceBusConfiguration) {
 
+    val logger = KotlinLogging.logger {}
+
     val queueName = pluginConfig.queueName
     val topicName = pluginConfig.topicName
     val subscriptionName = pluginConfig.subscriptionName
@@ -103,11 +106,11 @@ val AzureServiceBus = createApplicationPlugin(
     }
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
-        application.log.info("Application started successfully.")
+        logger.info("Application started successfully.")
         receiveMessages()
     }
     on(MonitoringEvent(ApplicationStopped)) { application ->
-        application.log.info("Application stopped successfully.")
+        logger.info("Application stopped successfully.")
         cleanupResourcesAndUnsubscribe(processorQueueClient, processorTopicClient, application)
     }
 }
@@ -119,6 +122,8 @@ val AzureServiceBus = createApplicationPlugin(
  *   @throws Exception generic
  */
 private fun processMessage(context: ServiceBusReceivedMessageContext) {
+    val logger = KotlinLogging.logger {}
+
     val message = context.message
     logger.trace(
         "Processing message. Session: {}, Sequence #: {}. Contents: {}",
@@ -145,14 +150,15 @@ private fun processMessage(context: ServiceBusReceivedMessageContext) {
  *  @param context ServiceBusErrorContext
  */
 private fun processError(context: ServiceBusErrorContext) {
+    val logger = KotlinLogging.logger {}
+
     logger.error("Error when receiving messages from namespace: '${context.fullyQualifiedNamespace}', entity: '${context.entityPath}'")
     if (context.exception !is ServiceBusException) {
         logger.error("Non-ServiceBusException occurred: ${context.exception}")
         return
     }
     val exception = context.exception as ServiceBusException
-    val reason = exception.reason
-    when (reason) {
+    when (val reason = exception.reason) {
         ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED,
         ServiceBusFailureReason.MESSAGING_ENTITY_NOT_FOUND,
         ServiceBusFailureReason.UNAUTHORIZED -> {
@@ -177,6 +183,7 @@ private fun processError(context: ServiceBusErrorContext) {
         }
     }
 }
+
 /**
  * We need to clean up the resources and unsubscribe from application life events.
  * @param processorQueueClient The service bus `Queue` used for communicating with the queue.
@@ -184,15 +191,20 @@ private fun processError(context: ServiceBusErrorContext) {
  * @param application The Ktor instance , provides access to the environment monitor used
  * for unsubscribing from events.
  */
-private fun cleanupResourcesAndUnsubscribe(processorQueueClient:  ServiceBusProcessorClient,
-                                           processorTopicClient: ServiceBusProcessorClient,
-                                           application: Application) {
-    application.log.info("Closing Service Bus Queue and Topic clients")
+private fun cleanupResourcesAndUnsubscribe(
+    processorQueueClient: ServiceBusProcessorClient,
+    processorTopicClient: ServiceBusProcessorClient,
+    application: Application
+) {
+    val logger = KotlinLogging.logger {}
+
+    logger.info("Closing Service Bus Queue and Topic clients")
     processorQueueClient.close()
     processorTopicClient.close()
-    application.environment.monitor.unsubscribe(ApplicationStarted){}
-    application.environment.monitor.unsubscribe(ApplicationStopped){}
+    application.environment.monitor.unsubscribe(ApplicationStarted) {}
+    application.environment.monitor.unsubscribe(ApplicationStopped) {}
 }
+
 /**
  * The main application module which runs always
  */
