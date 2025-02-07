@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingstatusapi.messagesystems.RabbitMQMessageSystem
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
+import mu.KotlinLogging
 import org.apache.qpid.proton.TimeoutException
 import org.koin.java.KoinJavaComponent.getKoin
 import java.io.IOException
@@ -56,6 +57,8 @@ val RabbitMQPlugin = createApplicationPlugin(
     configurationPath = "rabbitMQ",
     createConfiguration = ::RabbitMQServiceConfiguration) {
 
+    val logger = KotlinLogging.logger {}
+
     val queueName = pluginConfig.queue
     var connection: Connection? = null
     var channel: Channel? = null
@@ -97,7 +100,7 @@ val RabbitMQPlugin = createApplicationPlugin(
     }
 
     on(MonitoringEvent(ApplicationStarted)) { application ->
-        application.log.info("Application started successfully.")
+        logger.info("Application started successfully.")
         try {
             val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
             connection = msgSystem.rabbitMQConnection
@@ -130,6 +133,8 @@ val RabbitMQPlugin = createApplicationPlugin(
  * for unsubscribing from events.
  */
 private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connection, application: Application) {
+    val logger = KotlinLogging.logger {}
+
     logger.info("Closing RabbitMQ connection and channel")
     channel.close()
     connection.close()

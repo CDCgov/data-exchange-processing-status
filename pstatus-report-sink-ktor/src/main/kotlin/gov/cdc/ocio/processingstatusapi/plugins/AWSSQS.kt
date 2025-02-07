@@ -24,8 +24,6 @@ import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsPr
 import java.nio.file.Path
 
 
-val logger = KotlinLogging.logger {}
-
 /**
  * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
  * This class extracts necessary AWS credentials and configuration details, such as the SQS queue URL, access key, secret key, and region,
@@ -71,6 +69,8 @@ val AWSSQSPlugin = createApplicationPlugin(
     createConfiguration = ::AWSSQSServiceConfiguration
 ) {
 
+    val logger = KotlinLogging.logger {}
+
     lateinit var sqsClient: SqsClient
 
     lateinit var queueUrl: String
@@ -104,7 +104,7 @@ val AWSSQSPlugin = createApplicationPlugin(
                     sqsClient.deleteMessage(deleteMessageRequest)
                 }
                 logger.info("Successfully deleted processed report from AWS SQS")
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 logger.error("Something went wrong while deleting the report from the queue ${e.message}")
             }
         }
@@ -156,7 +156,7 @@ val AWSSQSPlugin = createApplicationPlugin(
                 } catch (e: AwsServiceException) {
                     logger.error("AwsServiceException occurred while processing the request ${e.message} with requestID: ${e.sdkErrorMetadata.requestId}")
                     throw e
-                }  catch (e: ClientException) {
+                } catch (e: ClientException) {
                     logger.error("ClientException occurred either while trying to send request to AWS or while trying to parse a response from AWS ${e.message}")
                     throw e
                 } catch (e: Exception) {
@@ -167,15 +167,15 @@ val AWSSQSPlugin = createApplicationPlugin(
         }
     }
 
-    on(MonitoringEvent(ApplicationStarted)) { application ->
-        application.log.info("Application started successfully.")
+    on(MonitoringEvent(ApplicationStarted)) {
+        logger.info("Application started successfully.")
         val msgSystem = getKoin().get<MessageSystem>() as AWSSQSMessageSystem
         sqsClient = msgSystem.sqsClient
         consumeMessages()
     }
 
-    on(MonitoringEvent(ApplicationStopped)) { application ->
-        application.log.info("Application stopped successfully.")
+    on(MonitoringEvent(ApplicationStopped)) {
+        logger.info("Application stopped successfully.")
         cleanupResourcesAndUnsubscribe(application, sqsClient)
     }
 }
@@ -187,8 +187,13 @@ val AWSSQSPlugin = createApplicationPlugin(
  * for unsubscribing from events.
  * @param sqsClient  `sqsClient` used to receive and then delete messages from AWS SQS
  */
-private fun cleanupResourcesAndUnsubscribe(application: Application, sqsClient: SqsClient) {
-    application.log.info("Closing SQS client")
+private fun cleanupResourcesAndUnsubscribe(
+    application: Application,
+    sqsClient: SqsClient
+) {
+    val logger = KotlinLogging.logger {}
+
+    logger.info("Closing SQS client")
     sqsClient.close()
     application.environment.monitor.unsubscribe(ApplicationStarted) {}
     application.environment.monitor.unsubscribe(ApplicationStopped) {}
@@ -217,6 +222,8 @@ suspend fun<P> retryWithBackoff(
     maxDelay: Long = 6000,
     block:suspend()-> P
 ): P {
+    val logger = KotlinLogging.logger {}
+
     var currentDelay = baseDelay
     repeat(numOfRetries) {
         try {
