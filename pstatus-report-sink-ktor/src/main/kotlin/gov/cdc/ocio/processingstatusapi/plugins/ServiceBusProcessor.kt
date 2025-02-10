@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.processingstatusapi.models.Source
+import gov.cdc.ocio.messagesystem.plugins.MessageProcessor
+import gov.cdc.ocio.messagesystem.models.Source
 
 /**
  * Processor for handling messages received from Azure Service Bus Queue or Topic.

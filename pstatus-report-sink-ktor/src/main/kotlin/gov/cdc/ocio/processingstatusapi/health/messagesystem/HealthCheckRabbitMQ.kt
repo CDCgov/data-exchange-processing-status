@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusapi.health.messagesystem
 import com.rabbitmq.client.*
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.rabbitmq.client.Channel
-import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
+import gov.cdc.ocio.messagesystem.plugins.RabbitMQServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType

@@ -1,9 +1,9 @@
 package gov.cdc.ocio.processingstatusapi.utils
 
 import gov.cdc.ocio.processingstatusapi.ReportManager
-import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
-import gov.cdc.ocio.processingstatusapi.models.Source
+import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
+import gov.cdc.ocio.messagesystem.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.Source
 import mu.KotlinLogging
 
 

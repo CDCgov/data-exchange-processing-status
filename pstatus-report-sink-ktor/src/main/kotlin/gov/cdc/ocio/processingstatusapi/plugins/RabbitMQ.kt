@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.messagesystem.plugins.RabbitMQProcessor
 import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
 import gov.cdc.ocio.processingstatusapi.messagesystems.RabbitMQMessageSystem
 import io.ktor.server.application.*

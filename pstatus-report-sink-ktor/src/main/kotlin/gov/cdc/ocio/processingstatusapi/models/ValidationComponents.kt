@@ -8,7 +8,6 @@ import com.google.gson.ToNumberPolicy
 
 import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
 import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator

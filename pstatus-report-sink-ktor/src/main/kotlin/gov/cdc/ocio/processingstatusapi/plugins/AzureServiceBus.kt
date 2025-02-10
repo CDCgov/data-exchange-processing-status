@@ -3,7 +3,8 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
-import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
+import gov.cdc.ocio.messagesystem.plugins.ServiceBusProcessor
+import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*

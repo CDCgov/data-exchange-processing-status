@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusapi.messagesystems
 
 import com.rabbitmq.client.Connection
 import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
-import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
+import gov.cdc.ocio.messagesystem.plugins.RabbitMQServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
 

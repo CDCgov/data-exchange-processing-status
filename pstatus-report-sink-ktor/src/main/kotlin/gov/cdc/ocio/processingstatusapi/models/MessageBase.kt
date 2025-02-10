@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models
 
 import com.google.gson.annotations.SerializedName
+import gov.cdc.ocio.messagesystem.models.DispositionType
 
 /**
  * Disposition type specifies whether an amended report replaces an existing one

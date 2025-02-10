@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.health.messagesystem
 
-import gov.cdc.ocio.processingstatusapi.models.MessageSystemType
+import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType

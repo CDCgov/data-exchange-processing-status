@@ -1,14 +1,14 @@
 package gov.cdc.ocio.processingstatusapi
 
-import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
-import gov.cdc.ocio.processingstatusapi.exceptions.BadStateException
-import gov.cdc.ocio.processingstatusapi.models.DispositionType
+import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
+import gov.cdc.ocio.messagesystem.exceptions.BadStateException
+import gov.cdc.ocio.messagesystem.models.DispositionType
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingstatusapi.models.MessageMetadataSB
-import gov.cdc.ocio.processingstatusapi.models.Source
-import gov.cdc.ocio.processingstatusapi.models.StageInfoSB
+import gov.cdc.ocio.messagesystem.models.MessageMetadataSB
+import gov.cdc.ocio.messagesystem.models.Source
+import gov.cdc.ocio.messagesystem.models.StageInfoSB
 import mu.KotlinLogging
 import org.apache.commons.lang3.SerializationUtils
 import org.koin.core.component.KoinComponent
