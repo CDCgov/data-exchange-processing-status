@@ -118,10 +118,12 @@ class FileSchemaLoader(
     override fun removeSchema(schemaName: String, schemaVersion: String): String {
         val schemaFilename = getFilename(schemaName, schemaVersion)
         val file = File(getSchemaFilePathName(schemaFilename))
+        var fileDeleted = false
         if (file.exists())
-            file.delete()
-        else
-            throw FileNotFoundException("Schema file not found: $schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+            fileDeleted = file.delete()
+        if (!fileDeleted)
+            throw FileNotFoundException("Schema file not found or could not be deleted: "
+                + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
         return schemaFilename
     }
 
