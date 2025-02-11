@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.messagesystem.plugins.MessageProcessor
 import gov.cdc.ocio.messagesystem.models.Source
 
 /**

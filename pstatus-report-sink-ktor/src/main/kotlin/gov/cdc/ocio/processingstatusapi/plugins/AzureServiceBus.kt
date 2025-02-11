@@ -3,8 +3,8 @@ package gov.cdc.ocio.processingstatusapi.plugins
 import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
-import gov.cdc.ocio.messagesystem.plugins.ServiceBusProcessor
 import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
+import gov.cdc.ocio.messagesystem.plugins.AzureServiceBusConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.config.*
@@ -14,50 +14,50 @@ import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
 
-/**
- * Class which initializes configuration values
- *
- * @property configPath String
- * @property connectionString String
- * @property queueName String
- * @property topicName String
- * @property subscriptionName String
- * @constructor
- */
-class AzureServiceBusConfiguration(
-    config: ApplicationConfig,
-    configurationPath: String? = null
-) {
-
-    private val configPath = if (configurationPath != null) "$configurationPath." else ""
-    val connectionString = config.tryGetString("${configPath}service_bus.connection_string") ?: ""
-    val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
-    val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
-    val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
-
-    fun createProcessorQueueClient(): ServiceBusProcessorClient {
-        return ServiceBusClientBuilder()
-            .connectionString(connectionString)
-            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
-            .processor()
-            .queueName(queueName)
-            .processMessage{ context -> processMessage(context) }
-            .processError { context -> processError(context) }
-            .buildProcessorClient()
-    }
-
-    fun createProcessorTopicClient(): ServiceBusProcessorClient {
-        return ServiceBusClientBuilder()
-            .connectionString(connectionString)
-            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
-            .processor()
-            .topicName(topicName)
-            .subscriptionName(subscriptionName)
-            .processMessage{ context -> processMessage(context) }
-            .processError { context -> processError(context) }
-            .buildProcessorClient()
-    }
-}
+///**
+// * Class which initializes configuration values
+// *
+// * @property configPath String
+// * @property connectionString String
+// * @property queueName String
+// * @property topicName String
+// * @property subscriptionName String
+// * @constructor
+// */
+//class AzureServiceBusConfiguration(
+//    config: ApplicationConfig,
+//    configurationPath: String? = null
+//) {
+//
+//    private val configPath = if (configurationPath != null) "$configurationPath." else ""
+//    val connectionString = config.tryGetString("${configPath}service_bus.connection_string") ?: ""
+//    val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
+//    val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
+//    val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
+//
+//    fun createProcessorQueueClient(): ServiceBusProcessorClient {
+//        return ServiceBusClientBuilder()
+//            .connectionString(connectionString)
+//            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
+//            .processor()
+//            .queueName(queueName)
+//            .processMessage{ context -> processMessage(context) }
+//            .processError { context -> processError(context) }
+//            .buildProcessorClient()
+//    }
+//
+//    fun createProcessorTopicClient(): ServiceBusProcessorClient {
+//        return ServiceBusClientBuilder()
+//            .connectionString(connectionString)
+//            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
+//            .processor()
+//            .topicName(topicName)
+//            .subscriptionName(subscriptionName)
+//            .processMessage{ context -> processMessage(context) }
+//            .processError { context -> processError(context) }
+//            .buildProcessorClient()
+//    }
+//}
 
 val AzureServiceBus = createApplicationPlugin(
     name = "AzureServiceBus",
@@ -72,14 +72,35 @@ val AzureServiceBus = createApplicationPlugin(
 
     // Initialize Service Bus client for queue
     val processorQueueClient by lazy {
-        pluginConfig.createProcessorQueueClient()
+        ServiceBusClientBuilder()
+            .connectionString(pluginConfig.connectionString)
+            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
+            .processor()
+            .queueName(queueName)
+            .processMessage{ context -> processMessage(context) }
+            .processError { context -> processError(context) }
+            .buildProcessorClient()
     }
 
     // Initialize Service Bus client for topics
     val processorTopicClient by lazy {
-        pluginConfig.createProcessorTopicClient()
+        ServiceBusClientBuilder()
+            .connectionString(pluginConfig.connectionString)
+            .transportType(AmqpTransportType.AMQP_WEB_SOCKETS)
+            .processor()
+            .topicName(topicName)
+            .subscriptionName(subscriptionName)
+            .processMessage{ context -> processMessage(context) }
+            .processError { context -> processError(context) }
+            .buildProcessorClient()
     }
 
+    /**
+     * Function which starts receiving messages from queues and topics
+     *  @throws AmqpException
+     *  @throws TransportException
+     *  @throws Exception generic
+     */
     /**
      * Function which starts receiving messages from queues and topics
      *  @throws AmqpException
