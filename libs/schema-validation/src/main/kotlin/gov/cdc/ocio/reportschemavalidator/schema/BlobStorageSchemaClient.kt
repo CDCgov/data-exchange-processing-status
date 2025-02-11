@@ -1,5 +1,6 @@
 package gov.cdc.ocio.reportschemavalidator.schema
 
+import com.azure.storage.blob.BlobClient
 import com.azure.storage.blob.BlobClientBuilder
 import com.azure.storage.blob.BlobServiceClientBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -8,6 +9,7 @@ import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import java.nio.charset.StandardCharsets
 
 
 class BlobStorageSchemaClient(
@@ -24,11 +26,7 @@ class BlobStorageSchemaClient(
         .getBlobContainerClient(containerName)
 
     override fun getSchemaFile(fileName: String): String {
-        val blobClient = BlobClientBuilder()
-            .connectionString(connectionString)
-            .containerName(containerName)
-            .blobName(fileName)
-            .buildClient()
+        val blobClient = buildBlobClient(fileName)
 
         return blobClient.openInputStream().readAllBytes().decodeToString()
     }
@@ -87,7 +85,14 @@ class BlobStorageSchemaClient(
      * @return [String] - filename of the upserted report schema
      */
     override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
-        return "todo"
+        val fileName = getFilename(schemaName, schemaVersion)
+        val blobClient = buildBlobClient(fileName)
+
+        // Convert the schema content to a byte array and upload
+        val data = content.toByteArray(StandardCharsets.UTF_8)
+        blobClient.blockBlobClient.upload(data.inputStream(), data.size.toLong(), true)
+
+        return fileName
     }
 
     /**
@@ -98,7 +103,27 @@ class BlobStorageSchemaClient(
      * @return [String] - filename of the removed report schema
      */
     override fun removeSchema(schemaName: String, schemaVersion: String): String {
-        return "todo"
+        val fileName = getFilename(schemaName, schemaVersion)
+        val blobClient = buildBlobClient(fileName)
+
+        // Delete the blob
+        blobClient.delete()
+
+        return fileName
+    }
+
+    /**
+     * Convenience function to build the blob client.
+     *
+     * @param blobName String
+     * @return BlobClient
+     */
+    private fun buildBlobClient(blobName: String): BlobClient {
+        return BlobClientBuilder()
+            .connectionString(connectionString)
+            .containerName(containerName)
+            .blobName(blobName)
+            .buildClient()
     }
 
     override var healthCheckSystem = HealthCheckBlobContainer(system, containerClient) as HealthCheckSystem
