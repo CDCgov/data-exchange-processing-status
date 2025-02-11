@@ -61,6 +61,26 @@ class CloudSchemaLoader(
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String) = storageClient.getSchemaContent(schemaName, schemaVersion)
 
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String) = storageClient.upsertSchema(schemaName, schemaVersion, content)
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String) = storageClient.removeSchema(schemaName, schemaVersion)
+
     override var healthCheckSystem = storageClient.healthCheckSystem
 
     /**

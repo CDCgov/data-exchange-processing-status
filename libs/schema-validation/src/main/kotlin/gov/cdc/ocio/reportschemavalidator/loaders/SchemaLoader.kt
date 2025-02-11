@@ -53,5 +53,34 @@ interface SchemaLoader {
      */
     fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any>
 
+    /**
+     * Converts the provided schema name and version onto a schema filename.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return String
+     */
+    fun getFilename(schemaName: String, schemaVersion: String) = "$schemaName.$schemaVersion.schema.json"
+
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    fun removeSchema(schemaName: String, schemaVersion: String): String
+
     var healthCheckSystem: HealthCheckSystem
 }

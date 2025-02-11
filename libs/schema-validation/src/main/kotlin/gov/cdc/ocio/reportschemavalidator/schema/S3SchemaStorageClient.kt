@@ -152,7 +152,31 @@ class S3SchemaStorageClient(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
-        return getSchemaContent("$schemaName.$schemaVersion.schema.json")
+        return getSchemaContent(getFilename(schemaName, schemaVersion))
+    }
+
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        return "todo"
+    }
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        return "todo"
     }
 
     override var healthCheckSystem = HealthCheckS3Bucket(system, ::getS3Client, bucketName) as HealthCheckSystem

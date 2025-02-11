@@ -34,6 +34,14 @@ class UnsupportedSchemaLoader(
         throw UnsupportedOperationException()
     }
 
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        throw UnsupportedOperationException()
+    }
+
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        throw UnsupportedOperationException()
+    }
+
     override var healthCheckSystem = HealthCheckUnsupportedSchemaLoaderSystem(
         system,
         schemaLoaderName
