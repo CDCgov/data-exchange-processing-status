@@ -9,6 +9,7 @@ import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import java.io.FileNotFoundException
 import java.nio.charset.StandardCharsets
 
 
@@ -85,14 +86,14 @@ class BlobStorageSchemaClient(
      * @return [String] - filename of the upserted report schema
      */
     override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
-        val fileName = getFilename(schemaName, schemaVersion)
-        val blobClient = buildBlobClient(fileName)
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val blobClient = buildBlobClient(schemaFilename)
 
         // Convert the schema content to a byte array and upload
         val data = content.toByteArray(StandardCharsets.UTF_8)
         blobClient.blockBlobClient.upload(data.inputStream(), data.size.toLong(), true)
 
-        return fileName
+        return schemaFilename
     }
 
     /**
@@ -103,13 +104,19 @@ class BlobStorageSchemaClient(
      * @return [String] - filename of the removed report schema
      */
     override fun removeSchema(schemaName: String, schemaVersion: String): String {
-        val fileName = getFilename(schemaName, schemaVersion)
-        val blobClient = buildBlobClient(fileName)
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val blobClient = buildBlobClient(schemaFilename)
 
-        // Delete the blob
-        blobClient.delete()
+        val result = runCatching {
+            // Delete the blob
+            blobClient.delete()
+        }
+        result.onFailure {
+            throw FileNotFoundException("Schema file not found or could not be deleted: "
+                    + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+        }
 
-        return fileName
+        return schemaFilename
     }
 
     /**
