@@ -2,7 +2,14 @@ package gov.cdc.ocio.database.couchbase
 
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
+import com.couchbase.client.java.codec.JacksonJsonSerializer
 import com.couchbase.client.java.json.JsonObject
+import com.couchbase.client.java.kv.UpsertOptions.*
+import com.couchbase.client.java.transactions.TransactionAttemptContext
+import com.couchbase.client.java.transactions.config.TransactionReplaceOptions
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.gson.*
 import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
 import gov.cdc.ocio.database.utils.InstantTypeAdapter
@@ -36,6 +43,13 @@ class CouchbaseCollection(
         .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
         .create()
 
+    val objectMapper: ObjectMapper = ObjectMapper()
+        .registerModule(KotlinModule.Builder().build()) // Kotlin Support
+        .registerModule(JavaTimeModule()) // Enables Java 8 time serialization
+
+    val jsonSerializer = JacksonJsonSerializer.create(ObjectMapper().apply {
+        registerModule(JavaTimeModule()) // Fixes Instant serialization
+    })
     /**
      * Get a specific item by its ID.
      *
@@ -131,6 +145,26 @@ class CouchbaseCollection(
         val removeResult = couchbaseCollection.remove(itemId)
         return removeResult != null
     }
+
+    /**
+     * This function would perform an upsert based on the transaction context
+     * @param ctx TransactionAttemptContext
+     * @param item T
+     */
+     fun<T> upsertItem(ctx: TransactionAttemptContext,id: String, item: T) {
+
+        // Retrieve the document from the transaction context and replace it.
+        val doc = ctx.get(couchbaseCollection, id)
+        if(doc !=null){
+            val json = objectMapper.writeValueAsString(item)
+            ctx.replace(doc, json, TransactionReplaceOptions.transactionReplaceOptions())
+
+        } else {
+            // Insert as a new document.
+            ctx.insert(couchbaseCollection, id, item)
+        }
+    }
+
 
     override val collectionVariable = "r"
 

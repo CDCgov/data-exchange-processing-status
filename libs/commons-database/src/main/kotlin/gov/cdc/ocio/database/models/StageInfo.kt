@@ -19,15 +19,24 @@ import java.time.Instant
  */
 @DynamoDbBean
 class StageInfo {
-
+    @SerializedName("service")
+    @JsonProperty("service")
     var service : String? = null
 
+    @SerializedName("action")
+    @JsonProperty("action")
     var action: String? = null
 
+    @SerializedName("version")
+    @JsonProperty("version")
     var version: String? = null
 
+    @SerializedName("status")
+    @JsonProperty("status")
     var status: Status? = null
 
+    @SerializedName("issues")
+    @JsonProperty("issues")
     var issues: List<Issue>? = null
 
     @SerializedName("start_processing_time")

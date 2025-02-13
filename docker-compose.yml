@@ -43,6 +43,7 @@ services:
     depends_on:
       - couchbase
       - rabbitmq
+      -
     restart: "always"
     volumes:
       - ./reports:/reports # Bind mount the report schemas folder
