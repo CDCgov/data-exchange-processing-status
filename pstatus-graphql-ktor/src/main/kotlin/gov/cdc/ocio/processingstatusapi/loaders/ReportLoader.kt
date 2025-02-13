@@ -122,7 +122,7 @@ class ReportLoader: KoinComponent {
                     SortOrder.Descending -> "desc"
                     else -> "asc" // default
                 }
-//                reportsSqlQuery.append(" order by ${cPrefix}dexIngestTimestamp $sortOrderVal")
+                reportsSqlQuery.append(" order by ${cPrefix}dexIngestTimestamp $sortOrderVal")
             }
             null -> {
                 // nothing to sort by
