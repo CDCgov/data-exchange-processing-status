@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusnotifications
 
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.azure.messaging.servicebus.administration.models.EntityStatus
-import gov.cdc.ocio.processingstatusnotifications.servicebus.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.configs.AzureServiceBusConfiguration
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType

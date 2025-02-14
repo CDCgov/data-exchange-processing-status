@@ -72,6 +72,7 @@ dependencies {
     implementation "software.amazon.awssdk:sts:2.29.34"
 
     implementation(project(":libs:commons-types"))
+    implementation project(':libs:message-system')
 
     testImplementation "org.mockito.kotlin:mockito-kotlin:4.0.0"
     testImplementation 'org.testng:testng:7.7.0'

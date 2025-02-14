@@ -4,6 +4,7 @@ import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
 import com.azure.messaging.servicebus.models.DeadLetterOptions
+import gov.cdc.ocio.messagesystem.configs.AzureServiceBusConfiguration
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
@@ -13,19 +14,6 @@ import org.apache.qpid.proton.engine.TransportException
 import java.util.concurrent.TimeUnit
 
 internal val LOGGER = KtorSimpleLogger("pstatus-notifications")
-
-/**
- * Class which initializes configuration values
- * @param config ApplicationConfig
- *
- */
-class AzureServiceBusConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
-    private val configPath = if (configurationPath != null) "$configurationPath." else ""
-    val connectionString = config.tryGetString("${configPath}connection_string") ?: ""
-    val queueName = config.tryGetString("${configPath}queue_name") ?: ""
-    val topicName = config.tryGetString("${configPath}topic_name") ?: ""
-    val subscriptionName = config.tryGetString("${configPath}subscription_name") ?: ""
-}
 
 val AzureServiceBus = createApplicationPlugin(
     name = "AzureServiceBus",

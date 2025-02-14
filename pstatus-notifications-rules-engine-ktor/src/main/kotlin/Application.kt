@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications
 
-import gov.cdc.ocio.processingstatusnotifications.servicebus.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.configs.AzureServiceBusConfiguration
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
