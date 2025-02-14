@@ -3,7 +3,7 @@ package gov.cdc.ocio.messagesystem.rabbitmq
 import com.rabbitmq.client.Connection
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.health.HealthCheckRabbitMQ
-import gov.cdc.ocio.messagesystem.plugins.RabbitMQServiceConfiguration
+import gov.cdc.ocio.messagesystem.configs.RabbitMQServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
 

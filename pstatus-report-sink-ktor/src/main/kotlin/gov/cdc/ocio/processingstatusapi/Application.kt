@@ -2,10 +2,10 @@ package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.messagesystem.MessageSystem
-import gov.cdc.ocio.messagesystem.plugins.AWSSQSServiceConfiguration
-import gov.cdc.ocio.messagesystem.plugins.RabbitMQServiceConfiguration
+import gov.cdc.ocio.messagesystem.configs.AWSSQSServiceConfiguration
+import gov.cdc.ocio.messagesystem.configs.RabbitMQServiceConfiguration
 import gov.cdc.ocio.messagesystem.models.MessageSystemType
-import gov.cdc.ocio.messagesystem.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.configs.AzureServiceBusConfiguration
 import gov.cdc.ocio.messagesystem.rabbitmq.RabbitMQMessageSystem
 import gov.cdc.ocio.messagesystem.servicebus.AzureServiceBusMessageSystem
 import gov.cdc.ocio.messagesystem.sqs.AWSSQSMessageSystem

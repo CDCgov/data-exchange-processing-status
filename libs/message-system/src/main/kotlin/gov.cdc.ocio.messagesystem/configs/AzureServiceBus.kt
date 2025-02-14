@@ -1,4 +1,4 @@
-package gov.cdc.ocio.messagesystem.plugins
+package gov.cdc.ocio.messagesystem.configs
 
 import io.ktor.server.config.*
 

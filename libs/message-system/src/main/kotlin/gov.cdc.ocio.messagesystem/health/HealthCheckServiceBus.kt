@@ -3,7 +3,7 @@ package gov.cdc.ocio.messagesystem.health
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.azure.messaging.servicebus.administration.models.EntityStatus
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import gov.cdc.ocio.messagesystem.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.configs.AzureServiceBusConfiguration
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType
