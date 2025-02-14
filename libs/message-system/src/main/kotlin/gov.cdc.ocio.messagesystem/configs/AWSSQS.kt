@@ -7,7 +7,6 @@ import io.ktor.server.config.*
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import java.nio.file.Path
 
-
 /**
  * The `AWSSQServiceConfiguration` class configures and initializes connection AWS SQS based on settings provided in an `ApplicationConfig`.
  * This class extracts necessary AWS credentials and configuration details, such as the SQS queue URL, access key, secret key, and region,
