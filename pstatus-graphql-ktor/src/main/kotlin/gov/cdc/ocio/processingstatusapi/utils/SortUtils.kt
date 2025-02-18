@@ -41,22 +41,22 @@ object SortUtils {
             "dataStreamId" -> {
                 if (sortOrder == SortOrder.ASC) {
                     uploadsStatus.items.sortBy {
-                        (it.metadata?.get("data_stream_id") as? String)?.toLowerCase() ?: ""
+                        (it.metadata?.get("data_stream_id") as? String)?.lowercase() ?: ""
                     }
                 } else {
                     uploadsStatus.items.sortByDescending {
-                        (it.metadata?.get("data_stream_id") as? String)?.toLowerCase() ?: ""
+                        (it.metadata?.get("data_stream_id") as? String)?.lowercase() ?: ""
                     }
                 }
             }
             "dataStreamRoute" -> {
                 if (sortOrder == SortOrder.ASC) {
                     uploadsStatus.items.sortBy {
-                        (it.metadata?.get("data_stream_route") as? String)?.toLowerCase() ?: ""
+                        (it.metadata?.get("data_stream_route") as? String)?.lowercase() ?: ""
                     }
                 } else {
                     uploadsStatus.items.sortByDescending {
-                        (it.metadata?.get("data_stream_route") as? String)?.toLowerCase() ?: ""
+                        (it.metadata?.get("data_stream_route") as? String)?.lowercase() ?: ""
                     }
                 }
             }
