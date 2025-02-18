@@ -61,7 +61,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-client-serialization:$ktor_version")
-    implementation 'com.expediagroup:graphql-kotlin-ktor-server:8.3.0'
+    implementation "com.expediagroup:graphql-kotlin-ktor-server:$graphql_version"
     implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'io.insert-koin:koin-core:3.5.6'
@@ -69,8 +69,8 @@ dependencies {
     implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
     implementation 'joda-time:joda-time:2.12.7'
     implementation 'org.apache.commons:commons-lang3:3.3.1'
-    implementation "com.expediagroup:graphql-kotlin-server:8.2.1"
-    implementation "com.expediagroup:graphql-kotlin-schema-generator:8.2.1"
+    implementation "com.expediagroup:graphql-kotlin-server:$graphql_version"
+    implementation "com.expediagroup:graphql-kotlin-schema-generator:$graphql_version"
     implementation "io.ktor:ktor-server-netty:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
     implementation "io.ktor:ktor-client-logging:$ktor_version"
