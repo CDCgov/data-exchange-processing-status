@@ -18,6 +18,7 @@ import io.ktor.server.websocket.*
 import mu.KotlinLogging
 import java.time.Duration
 import java.util.*
+import kotlin.time.toKotlinDuration
 
 
 /**
@@ -30,7 +31,7 @@ fun Application.graphQLModule() {
 
     install(WebSockets) {
         // needed for subscriptions
-        pingPeriod = Duration.ofSeconds(1)
+        pingPeriod = Duration.ofSeconds(1).toKotlinDuration()
         contentConverter = JacksonWebsocketContentConverter()
     }
     // see https://ktor.io/docs/server-jwt.html#configure-verifier
@@ -112,7 +113,7 @@ fun Application.graphQLModule() {
             }
         }
     }
-    install(Routing) {
+    install(RoutingRoot) {
         if (securityEnabled) {
             authenticate("auth-jwt") {
                 graphQLPostRoute()
