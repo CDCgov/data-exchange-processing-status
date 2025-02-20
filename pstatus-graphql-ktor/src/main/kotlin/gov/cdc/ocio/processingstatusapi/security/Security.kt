@@ -111,7 +111,7 @@ class Security(private val authConfig: AuthConfig) {
      * @param token String
      */
     private fun validateOpaqueToken(token: String) {
-
+        throw NotImplementedError()
     }
 
     /**
