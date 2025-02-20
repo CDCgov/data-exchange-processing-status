@@ -42,13 +42,8 @@ class ReportSchemaMutationService: KoinComponent {
         schemaVersion: String,
         content: BasicHashMap<String, Any?>
     ): SchemaActionResult {
-        val authorization = dataFetchingEnvironment.graphQlContext.get<AuthContext>("Authorization")
-        val receivedSchemaAuthToken = authorization?.token
-
-        // Enforce token validation only for this mutation
-        if (receivedSchemaAuthToken.isNullOrBlank() || receivedSchemaAuthToken != "Bearer ${schemaSecurityConfig.token}") {
-            throw InvalidTokenException("Unauthorized: Missing or invalid bearer token")
-        }
+        // Make sure the caller has provided a valid token
+        verifyAuth(dataFetchingEnvironment)
 
         // Validate the content before upserting it
         val requiredFields = listOf("schema", "id", "title", "type", "defs")
@@ -91,8 +86,27 @@ class ReportSchemaMutationService: KoinComponent {
         schemaName: String,
         schemaVersion: String
     ): SchemaActionResult {
+        // Make sure the caller has provided a valid token
+        verifyAuth(dataFetchingEnvironment)
+
         val filename = schemaLoader.removeSchema(schemaName, schemaVersion)
         return SchemaActionResult("Remove schema file", "Success", filename)
     }
 
+    /**
+     * Verify the caller has the permissions to use this mutation.
+     *
+     * @param dataFetchingEnvironment DataFetchingEnvironment
+     * @throws InvalidTokenException - if the token is invalid, missing, or doesn't match the expected one
+     */
+    @Throws(InvalidTokenException::class)
+    private fun verifyAuth(dataFetchingEnvironment: DataFetchingEnvironment) {
+        val authorization = dataFetchingEnvironment.graphQlContext.get<AuthContext>("Authorization")
+        val receivedSchemaAuthToken = authorization?.token
+
+        // Enforce token validation only for this mutation
+        if (receivedSchemaAuthToken.isNullOrBlank() || receivedSchemaAuthToken != "Bearer ${schemaSecurityConfig.token}") {
+            throw InvalidTokenException("Unauthorized: Missing or invalid bearer token")
+        }
+    }
 }
