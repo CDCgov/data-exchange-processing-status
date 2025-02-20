@@ -28,8 +28,7 @@ class CustomGraphQLContextFactory : DefaultKtorGraphQLContextFactory() {
         // Add the AuthContext to the graphql context
         val authContext = request.call.attributes.getOrNull(AttributeKey("AuthContext"))
         authContext?.let { map.put("AuthContext", authContext) }
-        val headers = request.headers["Authorization"]
-        map["Authorization"] = AuthContext(headers)
+        map["Authorization"] = AuthContext(request.headers["Authorization"])
         context.plus(map)
 
         return context
