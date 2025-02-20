@@ -4,6 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.processingstatusapi.services.ReportSchemaMutationService
+import graphql.schema.DataFetchingEnvironment
 
 
 /**
@@ -23,6 +24,7 @@ class ReportSchemaMutation : Mutation {
             + "Report schemas are used to validate incoming reports before they are recorded.")
     @Suppress("unused")
     fun upsertSchema(
+        dataFetchingEnvironment: DataFetchingEnvironment,
         @GraphQLDescription("Name of the report schema to upsert.")
         schemaName: String,
         @GraphQLDescription("Version of the report schema to upsert.")
@@ -33,19 +35,20 @@ class ReportSchemaMutation : Mutation {
         content: BasicHashMap<String, Any?>
     ) = run {
         val service = ReportSchemaMutationService()
-        service.upsertSchema(schemaName, schemaVersion, content)
+        service.upsertSchema(dataFetchingEnvironment, schemaName, schemaVersion, content)
     }
 
     @GraphQLDescription("Removes a report schema.  If the report schema file associated with the provided schema "
             + "name and version is not found an error is returned.")
     @Suppress("unused")
     fun removeSchema(
+        dataFetchingEnvironment: DataFetchingEnvironment,
         @GraphQLDescription("Name of the report schema to remove.")
         schemaName: String,
         @GraphQLDescription("Version of the report schema to upsert.")
         schemaVersion: String
     ) = run {
         val service = ReportSchemaMutationService()
-        service.removeSchema(schemaName, schemaVersion)
+        service.removeSchema(dataFetchingEnvironment, schemaName, schemaVersion)
     }
 }

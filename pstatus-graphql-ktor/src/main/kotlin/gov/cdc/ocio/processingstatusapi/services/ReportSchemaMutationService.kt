@@ -4,7 +4,11 @@ import com.google.gson.GsonBuilder
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.processingstatusapi.models.SchemaActionResult
+import gov.cdc.ocio.processingstatusapi.plugins.AuthContext
+import gov.cdc.ocio.processingstatusapi.exceptions.InvalidTokenException
+import gov.cdc.ocio.processingstatusapi.security.SchemaSecurityConfig
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
+import graphql.schema.DataFetchingEnvironment
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -19,6 +23,8 @@ class ReportSchemaMutationService: KoinComponent {
 
     private val schemaLoader by inject<SchemaLoader>()
 
+    private val schemaSecurityConfig by inject<SchemaSecurityConfig>()
+
     private val gson = GsonBuilder().setPrettyPrinting().create()
 
     /**
@@ -31,10 +37,19 @@ class ReportSchemaMutationService: KoinComponent {
      * @return [SchemaActionResult]
      */
     fun upsertSchema(
+        dataFetchingEnvironment: DataFetchingEnvironment,
         schemaName: String,
         schemaVersion: String,
         content: BasicHashMap<String, Any?>
     ): SchemaActionResult {
+        val authorization = dataFetchingEnvironment.graphQlContext.get<AuthContext>("Authorization")
+        val receivedSchemaAuthToken = authorization?.token
+
+        // Enforce token validation only for this mutation
+        if (receivedSchemaAuthToken.isNullOrBlank() || receivedSchemaAuthToken != "Bearer ${schemaSecurityConfig.token}") {
+            throw InvalidTokenException("Unauthorized: Missing or invalid bearer token")
+        }
+
         // Validate the content before upserting it
         val requiredFields = listOf("schema", "id", "title", "type", "defs")
         requiredFields.forEach { fieldName ->
@@ -72,6 +87,7 @@ class ReportSchemaMutationService: KoinComponent {
      * @return [SchemaActionResult]
      */
     fun removeSchema(
+        dataFetchingEnvironment: DataFetchingEnvironment,
         schemaName: String,
         schemaVersion: String
     ): SchemaActionResult {

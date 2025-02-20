@@ -6,6 +6,10 @@ import graphql.GraphQLContext
 import io.ktor.server.request.*
 import io.ktor.util.*
 
+
+data class AuthContext(val token: String?)
+
+
 /**
  * Custom graphql context so that we have include additional context to the default graphql context.
  */
@@ -17,9 +21,17 @@ class CustomGraphQLContextFactory : DefaultKtorGraphQLContextFactory() {
      * @param request ApplicationRequest
      * @return GraphQLContext
      */
-    override suspend fun generateContext(request: ApplicationRequest): GraphQLContext =
-        super.generateContext(request)/*.plus(
-            // Add the AuthContext to the graphql context
-            mapOf("AuthContext" to (request.call.attributes.getOrNull(AttributeKey("AuthContext"))))
-        )*/
+    override suspend fun generateContext(request: ApplicationRequest): GraphQLContext {
+        val context = super.generateContext(request)
+
+        val map = mutableMapOf<String, Any>()
+        // Add the AuthContext to the graphql context
+        val authContext = request.call.attributes.getOrNull(AttributeKey("AuthContext"))
+        authContext?.let { map.put("AuthContext", authContext) }
+        val headers = request.headers["Authorization"]
+        map["Authorization"] = AuthContext(headers)
+        context.plus(map)
+
+        return context
+    }
 }
