@@ -93,7 +93,41 @@ class CachedSchemaLoader(private val schemaLoaderImpl: SchemaLoader) : SchemaLoa
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> =
-        getSchemaContent("$schemaName.$schemaVersion.schema.json")
+        getSchemaContent(getFilename(schemaName, schemaVersion))
+
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        // Invalid this file in the schema content cache.
+        schemaContentCache.invalidate(getFilename(schemaName, schemaVersion))
+        // Invalidate the file list cache to force a new list retrieval in case the file was added, not updated.
+        schemaFileListCache.invalidateAll()
+
+        return schemaLoaderImpl.upsertSchema(schemaName, schemaVersion, content)
+    }
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        // Invalidate this file from the schema content cache.
+        schemaContentCache.invalidate(getFilename(schemaName, schemaVersion))
+        // Invalidate the file list cache to force a new list retrieval.
+        schemaFileListCache.invalidateAll()
+
+        return schemaLoaderImpl.removeSchema(schemaName, schemaVersion)
+    }
 
     override var healthCheckSystem = schemaLoaderImpl.healthCheckSystem
 }

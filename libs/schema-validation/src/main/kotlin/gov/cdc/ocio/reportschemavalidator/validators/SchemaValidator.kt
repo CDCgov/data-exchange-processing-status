@@ -13,4 +13,6 @@ import gov.cdc.ocio.reportschemavalidator.models.ValidationSchemaResult
 interface SchemaValidator {
     fun validateSchema(schemaFileName: String, jsonNode: JsonNode, schemaFile: SchemaFile, objectMapper: ObjectMapper,
                        schemaFileNames: MutableList<String>, invalidData: MutableList<String>): ValidationSchemaResult
+
+    fun checkSchemaFile(schemaFileContent: String)
 }

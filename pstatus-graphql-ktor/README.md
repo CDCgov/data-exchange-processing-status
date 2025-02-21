@@ -74,7 +74,8 @@ For report schema loader, set the following environment variables:
 - `GRAPHQL_PATH` - The path of the `GraphQL endpoint`.
 
 ### Security 
-- `SECURITY_ENABLED` - Set to false for local development. 
+- `SECURITY_ENABLED` - Set to false for local development.
+- `SCHEMA_ADMIN_SECRET_TOKEN` - Secret token used to protect mutations.
 
 ### Notifications
 - `PSTATUS_NOTIFICATIONS_BASE_URL` - The notifications service base url.

@@ -20,5 +20,11 @@ interface SchemaStorageClient {
 
     fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any>
 
+    fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String
+
+    fun removeSchema(schemaName: String, schemaVersion: String): String
+
+    fun getFilename(schemaName: String, schemaVersion: String) = "$schemaName.$schemaVersion.schema.json"
+
     var healthCheckSystem: HealthCheckSystem
 }

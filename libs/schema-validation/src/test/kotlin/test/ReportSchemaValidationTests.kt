@@ -29,9 +29,9 @@ class ReportSchemaValidationTests {
     // Mock the KLogger dependency
     private val logger: KLogger = mock(KLogger::class.java)
     // Create the real instance of ErrorLoggerProcessor, injecting the mocked logger
-    private val errorProcessor: ErrorProcessor = ErrorLoggerProcessor(logger)
+    private val errorProcessor: ErrorProcessor = ErrorLoggerProcessor()
     // Mock the schemaValidator dependency
-    private val schemaValidator: SchemaValidator = JsonSchemaValidator(logger)
+    private val schemaValidator: SchemaValidator = JsonSchemaValidator()
     //  Mock the jsonUtils dependency
     private val jsonUtils: JsonUtils = DefaultJsonUtils(objectMapper)
     //Base validation failure reason

@@ -1,5 +1,6 @@
 package gov.cdc.ocio.reportschemavalidator.schema
 
+import com.azure.storage.blob.BlobClient
 import com.azure.storage.blob.BlobClientBuilder
 import com.azure.storage.blob.BlobServiceClientBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -8,6 +9,8 @@ import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import java.io.FileNotFoundException
+import java.nio.charset.StandardCharsets
 
 
 class BlobStorageSchemaClient(
@@ -24,11 +27,7 @@ class BlobStorageSchemaClient(
         .getBlobContainerClient(containerName)
 
     override fun getSchemaFile(fileName: String): String {
-        val blobClient = BlobClientBuilder()
-            .connectionString(connectionString)
-            .containerName(containerName)
-            .blobName(fileName)
-            .buildClient()
+        val blobClient = buildBlobClient(fileName)
 
         return blobClient.openInputStream().readAllBytes().decodeToString()
     }
@@ -74,7 +73,64 @@ class BlobStorageSchemaClient(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
-        return getSchemaContent("$schemaName.$schemaVersion.schema.json")
+        return getSchemaContent(getFilename(schemaName, schemaVersion))
+    }
+
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val blobClient = buildBlobClient(schemaFilename)
+
+        // Convert the schema content to a byte array and upload
+        val data = content.toByteArray(StandardCharsets.UTF_8)
+        blobClient.blockBlobClient.upload(data.inputStream(), data.size.toLong(), true)
+
+        return schemaFilename
+    }
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val blobClient = buildBlobClient(schemaFilename)
+
+        val result = runCatching {
+            // Delete the blob
+            blobClient.delete()
+        }
+        result.onFailure {
+            throw FileNotFoundException("Schema file not found or could not be deleted: "
+                    + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+        }
+
+        return schemaFilename
+    }
+
+    /**
+     * Convenience function to build the blob client.
+     *
+     * @param blobName String
+     * @return BlobClient
+     */
+    private fun buildBlobClient(blobName: String): BlobClient {
+        return BlobClientBuilder()
+            .connectionString(connectionString)
+            .containerName(containerName)
+            .blobName(blobName)
+            .buildClient()
     }
 
     override var healthCheckSystem = HealthCheckBlobContainer(system, containerClient) as HealthCheckSystem
