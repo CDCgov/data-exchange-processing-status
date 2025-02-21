@@ -27,7 +27,7 @@ class SqlClauseBuilder {
                 .withTimeAtStartOfDay()
                 .toDate()
                 .time / 1000
-            timeRangeSqlPortion.append("r.timestamp >= $dateStartEpochSecs")
+            timeRangeSqlPortion.append("r.dexIngestDateTime >= $dateStartEpochSecs")
         } else {
             dateStart?.run {
                 val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart, "date_start")
