@@ -119,15 +119,17 @@ jib {
             password = System.getenv("DOCKERHUB_TOKEN") ?: ""
         }
     }
+
     to {
-        image = 'imagehub.cdc.gov:6989/dex/pstatus/report-sink-service'
+        image = System.getenv("IMAGE")
         tags = [ System.getenv("IMAGE_TAG") ?: "latest" ]
         auth {
-            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
-            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+            username = System.getenv("USERNAME") ?: ""
+            password = System.getenv("PASSWORD") ?: ""
         }
     }
 }
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
