@@ -112,7 +112,7 @@ jib {
         }
     }
     to {
-        image = System.getenv("IMAGE")
+        image = System.getenv("IMAGE") ?: ""
         tags = [ System.getenv("IMAGE_TAG") ?: "latest" ]
         auth {
             username = System.getenv("USERNAME") ?: ""
