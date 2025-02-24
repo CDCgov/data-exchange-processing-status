@@ -97,11 +97,11 @@ jib {
         }
     }
     to {
-        image = System.getenv("IMAGE")
-        tags = [ System.getenv("IMAGE_TAG") ?: "latest" ]
+        image = System.getenv("IMAGE") ?: ""
+        tags = mutableSetOf(System.getenv("IMAGE_TAG") ?: "latest")
         auth {
-            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
-            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+            username = System.getenv("USERNAME") ?: ""
+            password = System.getenv("PASSWORD") ?: ""
         }
     }
 }
