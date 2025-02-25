@@ -197,7 +197,7 @@ class ReportManager: KoinComponent {
      * Creates a report for the given stage.
      *
      * @param reportSchemaVersion String
-     * @param reporId String
+     * @param reportId String
      * @param uploadId String
      * @param dataStreamId String
      * @param dataStreamRoute String
@@ -258,6 +258,13 @@ class ReportManager: KoinComponent {
         }
         return createReportItem(uploadId, reportId, stageReport)
     }
+
+    /**
+     * The function which initiates the replacing of the reports based on the uploadId, stageInfo
+     * service and action of the incoming report
+     * @param report Report
+     * @return reportId String
+     */
 
     private fun replaceReport(report: Report):String{
 
@@ -342,11 +349,11 @@ class ReportManager: KoinComponent {
         }
     }*/
     /**
-     * This is the function which would do the following (non transactional)
+     * This is the function which would do the following (non-transactional)
      * Search for all report IDs that match the replacement criteria, which looks for all reports matching the provided upload id,
      * stage service name and action.
      * If we have precisely ONE report ID from step 1, we do the upsert.
-     * Otherwise, all reports except for one are deleted and the remaining one is upserted.
+     * Otherwise, all reports except for one are deleted and the remaining one does upsert.
      * @param newReport Report
      * @param existingReports List<Report>
      */

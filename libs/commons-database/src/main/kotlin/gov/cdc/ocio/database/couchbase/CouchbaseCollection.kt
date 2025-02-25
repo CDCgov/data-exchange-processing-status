@@ -2,7 +2,6 @@ package gov.cdc.ocio.database.couchbase
 
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
-import com.couchbase.client.java.codec.JacksonJsonSerializer
 import com.couchbase.client.java.json.JsonObject
 import com.couchbase.client.java.kv.UpsertOptions.*
 import com.couchbase.client.java.transactions.TransactionAttemptContext
@@ -43,13 +42,10 @@ class CouchbaseCollection(
         .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
         .create()
 
-    val objectMapper: ObjectMapper = ObjectMapper()
+    private val objectMapper: ObjectMapper = ObjectMapper()
         .registerModule(KotlinModule.Builder().build()) // Kotlin Support
         .registerModule(JavaTimeModule()) // Enables Java 8 time serialization
 
-    val jsonSerializer = JacksonJsonSerializer.create(ObjectMapper().apply {
-        registerModule(JavaTimeModule()) // Fixes Instant serialization
-    })
     /**
      * Get a specific item by its ID.
      *
