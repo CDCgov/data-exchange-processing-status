@@ -8,15 +8,20 @@ import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotifica
 import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotificationWorkflow
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
  * The main class which sets up and subscribes the workflow execution
  * for digest counts and the frequency with which each of the top 5 errors occur
  */
-class DataStreamTopErrorsNotificationSubscriptionService {
+class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
+
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
     /**
@@ -44,20 +49,22 @@ class DataStreamTopErrorsNotificationSubscriptionService {
                 DataStreamTopErrorsNotificationWorkflow::class.java
             )
 
-            val execution = WorkflowClient.start(
-                workflow::checkDataStreamTopErrorsAndNotify,
-                dataStreamId,
-                dataStreamRoute,
-                jurisdiction,
-                daysToRun,
-                timeToRun,
-                deliveryReference
-            )
-            return WorkflowSubscriptionResult(
-                subscriptionId = execution.workflowId,
-                message = "",
-                deliveryReference = ""
-            )
+            workflow?.let {
+                val execution = WorkflowClient.start(
+                    workflow::checkDataStreamTopErrorsAndNotify,
+                    dataStreamId,
+                    dataStreamRoute,
+                    jurisdiction,
+                    daysToRun,
+                    timeToRun,
+                    deliveryReference
+                )
+                return WorkflowSubscriptionResult(
+                    subscriptionId = execution.workflowId,
+                    message = "",
+                    deliveryReference = ""
+                )
+            }
         }
         catch (e:Exception) {
             logger.error("Error occurred while subscribing for digest counts and top errors: ${e.message}")

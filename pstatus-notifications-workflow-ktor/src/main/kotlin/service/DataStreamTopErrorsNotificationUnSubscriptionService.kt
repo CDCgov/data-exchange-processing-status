@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingnotifications.service
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
@@ -12,12 +14,15 @@ import mu.KotlinLogging
  * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
-class DataStreamTopErrorsNotificationUnSubscriptionService {
+class DataStreamTopErrorsNotificationUnSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
 
     /**
-     * The main function which is used to cancel the workflow based on the workflowID
+     * The main function which is used to cancel the workflow based on the workflowID.
+     *
      * @param subscriptionId String
      * @return WorkflowSubscriptionResult
      */

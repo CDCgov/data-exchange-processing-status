@@ -8,6 +8,8 @@ import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflowImpl
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
@@ -17,9 +19,12 @@ import mu.KotlinLogging
  * @property workflowEngine WorkflowEngine
  * @property notificationActivitiesImpl NotificationActivitiesImpl
  */
-class DeadLineCheckSubscriptionService {
+class DeadLineCheckSubscriptionService: KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
+
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
     /**
@@ -38,24 +43,26 @@ class DeadLineCheckSubscriptionService {
             val timeToRun = subscription.timeToRun
             val deliveryReference = subscription.deliveryReference
             val taskQueue = "notificationTaskQueue"
-            val workflow: NotificationWorkflow = workflowEngine.setupWorkflow(
+            val workflow = workflowEngine.setupWorkflow(
                 taskQueue, daysToRun, timeToRun,
                 NotificationWorkflowImpl::class.java, notificationActivitiesImpl, NotificationWorkflow::class.java
             )
-            val execution = WorkflowClient.start(
-                workflow::checkUploadAndNotify,
-                dataStreamId,
-                dataStreamRoute,
-                jurisdiction,
-                daysToRun,
-                timeToRun,
-                deliveryReference
-            )
-            return WorkflowSubscriptionResult(
-                subscriptionId = execution.workflowId,
-                message = "",
-                deliveryReference = ""
-            )
+            workflow?.let {
+                val execution = WorkflowClient.start(
+                    workflow::checkUploadAndNotify,
+                    dataStreamId,
+                    dataStreamRoute,
+                    jurisdiction,
+                    daysToRun,
+                    timeToRun,
+                    deliveryReference
+                )
+                return WorkflowSubscriptionResult(
+                    subscriptionId = execution.workflowId,
+                    message = "",
+                    deliveryReference = ""
+                )
+            }
         }
         catch (e:Exception) {
             logger.error("Error occurred while subscribing workflow for upload deadline: ${e.message}")

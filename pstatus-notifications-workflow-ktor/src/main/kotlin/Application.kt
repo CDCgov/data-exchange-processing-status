@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
+import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
@@ -16,14 +17,14 @@ import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val temporalConfigModule = module {
+    val temporalModule = module {
+        val temporalServiceTarget = environment.config.tryGetString("temporal.temporal_service_target") ?: ""
+        val temporalConfig = TemporalConfig(temporalServiceTarget)
         single {
-            val appConfig: ApplicationConfig = get()
-            TemporalConfig(temporalServiceTarget =
-                appConfig.property("temporal.temporal_service_target").getString())
+            WorkflowEngine(temporalConfig)
         }
     }
-    return modules(listOf(databaseModule, temporalConfigModule, module { single { environment.config } }))
+    return modules(listOf(databaseModule, temporalModule))
 }
 
 fun main(args: Array<String>) {

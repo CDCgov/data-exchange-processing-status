@@ -9,6 +9,8 @@ import gov.cdc.ocio.processingnotifications.workflow.UploadErrorsNotificationWor
 
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
@@ -18,9 +20,12 @@ import mu.KotlinLogging
  * @property notificationActivitiesImpl NotificationActivitiesImpl
  * @property logger KLogger
  */
-class UploadErrorsNotificationSubscriptionService {
+class UploadErrorsNotificationSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
+
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
     /**
@@ -49,21 +54,23 @@ class UploadErrorsNotificationSubscriptionService {
                 UploadErrorsNotificationWorkflow::class.java
             )
 
-            val execution = WorkflowClient.start(
-                workflow::checkUploadErrorsAndNotify,
-                dataStreamId,
-                dataStreamRoute,
-                jurisdiction,
-                daysToRun,
-                timeToRun,
-                deliveryReference
-            )
-            logger.info("Started workflow with id: ${execution.workflowId}")
-            return WorkflowSubscriptionResult(
-                subscriptionId = execution.workflowId,
-                message = "",
-                deliveryReference = ""
-            )
+            workflow?.let {
+                val execution = WorkflowClient.start(
+                    workflow::checkUploadErrorsAndNotify,
+                    dataStreamId,
+                    dataStreamRoute,
+                    jurisdiction,
+                    daysToRun,
+                    timeToRun,
+                    deliveryReference
+                )
+                logger.info("Started workflow with id: ${execution.workflowId}")
+                return WorkflowSubscriptionResult(
+                    subscriptionId = execution.workflowId,
+                    message = "",
+                    deliveryReference = ""
+                )
+            }
         }
         catch (e:Exception) {
             logger.error("Error occurred while checking for errors in upload: ${e.message}")

@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingnotifications.service
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 /**
@@ -11,9 +13,11 @@ import mu.KotlinLogging
  * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
-class UploadDigestCountNotificationUnSubscriptionService {
+class UploadDigestCountNotificationUnSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
 
     /**
      * The main method which cancels a workflow based on the workflow Id
