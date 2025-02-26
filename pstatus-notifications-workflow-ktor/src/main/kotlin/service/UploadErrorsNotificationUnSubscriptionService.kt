@@ -8,7 +8,7 @@ import mu.KotlinLogging
 /**
  * The main class which unsubscribes the workflow execution for upload errors.
  *
- * @property cacheService IMemoryCacheService
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
 class UploadErrorsNotificationUnSubscriptionService {

@@ -4,12 +4,13 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
 
-/**
- * The main class which subscribes the workflow execution
- * for digest counts and top errors and its frequency for each upload
- * @property cacheService IMemoryCacheService
- * @property workflowEngine WorkflowEngine
 
+/**
+ * The main class which subscribes the workflow execution for digest counts and top errors and its frequency for
+ * each upload.
+ *
+ * @property logger KLogger
+ * @property workflowEngine WorkflowEngine
  */
 class DataStreamTopErrorsNotificationUnSubscriptionService {
     private val logger = KotlinLogging.logger {}

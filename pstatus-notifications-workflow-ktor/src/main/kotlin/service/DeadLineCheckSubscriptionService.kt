@@ -9,17 +9,18 @@ import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflowImpl
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 
+
 /**
- * The main class which subscribes the workflow execution
- * for upload deadline check
- * @property cacheService IMemoryCacheService
+ * The main class which subscribes the workflow execution for upload deadline check.
+ *
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
- * @property notificationActivitiesImpl  NotificationActivitiesImpl
+ * @property notificationActivitiesImpl NotificationActivitiesImpl
  */
 class DeadLineCheckSubscriptionService {
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
-    private val notificationActivitiesImpl:NotificationActivitiesImpl = NotificationActivitiesImpl()
+    private val workflowEngine = WorkflowEngine()
+    private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
     /**
      *  The main method which executes workflow for uploadDeadline check.

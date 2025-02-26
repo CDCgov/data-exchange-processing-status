@@ -4,10 +4,11 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
 
+
 /**
- * The main class which unsubscribes the workflow execution
- * for daily upload digest counts
- * @property cacheService IMemoryCacheService
+ * The main class which unsubscribes the workflow execution for daily upload digest counts.
+ *
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
 class UploadDigestCountNotificationUnSubscriptionService {

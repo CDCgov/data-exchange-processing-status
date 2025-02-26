@@ -20,13 +20,15 @@ import java.time.format.DateTimeFormatter
 /**
  * The implementation class for notifying if an upload has not occurred by a specified time.
  *
- * @property activities T
+ * @property repository ProcessingStatusRepository
+ * @property logger KLogger
+ * @property activities (NotificationActivities..NotificationActivities?)
  */
 class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
 
-    private val repository by inject<ProcessingStatusRepository>()
-
     private val logger = KotlinLogging.logger {}
+
+    private val repository by inject<ProcessingStatusRepository>()
 
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,

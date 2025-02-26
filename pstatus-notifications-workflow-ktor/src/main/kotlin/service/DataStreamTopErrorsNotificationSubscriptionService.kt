@@ -9,14 +9,15 @@ import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotifica
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 
+
 /**
  * The main class which sets up and subscribes the workflow execution
  * for digest counts and the frequency with which each of the top 5 errors occur
  */
 class DataStreamTopErrorsNotificationSubscriptionService {
     private val logger = KotlinLogging.logger {}
-    private val workflowEngine:WorkflowEngine = WorkflowEngine()
-    private val notificationActivitiesImpl:NotificationActivitiesImpl = NotificationActivitiesImpl()
+    private val workflowEngine = WorkflowEngine()
+    private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
     /**
      * The main method which gets called from the route which executes and kicks off the
@@ -59,7 +60,7 @@ class DataStreamTopErrorsNotificationSubscriptionService {
             )
         }
         catch (e:Exception) {
-            logger.error("Error occurred while subscribing for digest counts and top errors : ${e.message}")
+            logger.error("Error occurred while subscribing for digest counts and top errors: ${e.message}")
         }
         throw Exception("Error occurred while subscribing for the workflow engine for digest counts and top errors")
     }

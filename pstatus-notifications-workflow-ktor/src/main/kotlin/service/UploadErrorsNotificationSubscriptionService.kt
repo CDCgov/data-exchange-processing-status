@@ -10,23 +10,25 @@ import gov.cdc.ocio.processingnotifications.workflow.UploadErrorsNotificationWor
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 
+
 /**
- * The main class which subscribes the workflow execution
- * for upload errors
- * @property cacheService IMemoryCacheService
+ * The main class which subscribes the workflow execution for upload errors.
+ *
  * @property workflowEngine WorkflowEngine
- * @property notificationActivitiesImpl  NotificationActivitiesImpl
+ * @property notificationActivitiesImpl NotificationActivitiesImpl
+ * @property logger KLogger
  */
 class UploadErrorsNotificationSubscriptionService {
-    private val workflowEngine:WorkflowEngine = WorkflowEngine()
-    private val notificationActivitiesImpl:NotificationActivitiesImpl = NotificationActivitiesImpl()
     private val logger = KotlinLogging.logger {}
+    private val workflowEngine = WorkflowEngine()
+    private val notificationActivitiesImpl = NotificationActivitiesImpl()
+
     /**
-     * The main method which executes workflow engine to check for upload errors and notify
+     * The main method which executes workflow engine to check for upload errors and notify.
+     *
      * @param subscription UploadErrorsNotificationSubscription
      * @return WorkflowSubscriptionResult
      */
-
     fun run(subscription: UploadErrorsNotificationSubscription):
             WorkflowSubscriptionResult {
         try {

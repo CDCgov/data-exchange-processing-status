@@ -4,10 +4,12 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
 
+
 /**
  * The main class which unsubscribes the workflow execution
- * for upload errors
- * @property cacheService IMemoryCacheService
+ * for upload errors.
+ *
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
 class DeadLineCheckUnSubscriptionService {
