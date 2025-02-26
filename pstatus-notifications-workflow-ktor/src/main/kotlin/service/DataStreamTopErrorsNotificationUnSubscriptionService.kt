@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
@@ -14,7 +13,6 @@ import mu.KotlinLogging
  */
 class DataStreamTopErrorsNotificationUnSubscriptionService {
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
     private val workflowEngine: WorkflowEngine = WorkflowEngine()
 
     /**
@@ -26,7 +24,11 @@ class DataStreamTopErrorsNotificationUnSubscriptionService {
             WorkflowSubscriptionResult {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return cacheService.updateDeadlineCheckUnSubscriptionPreferences(subscriptionId)
+            return WorkflowSubscriptionResult(
+                subscriptionId = subscriptionId,
+                message = "",
+                deliveryReference = ""
+            )
         }
         catch (e:Exception){
             logger.error("Error occurred while unsubscribing and canceling the workflow for digest counts and top errors with workflowId $subscriptionId: ${e.message}")

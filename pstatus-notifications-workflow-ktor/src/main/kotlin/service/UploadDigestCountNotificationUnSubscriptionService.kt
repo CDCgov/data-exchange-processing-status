@@ -1,7 +1,5 @@
 package gov.cdc.ocio.processingnotifications.service
 
-
-import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
@@ -14,7 +12,6 @@ import mu.KotlinLogging
  */
 class UploadDigestCountNotificationUnSubscriptionService {
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
     private val workflowEngine: WorkflowEngine = WorkflowEngine()
 
     /**
@@ -25,9 +22,13 @@ class UploadDigestCountNotificationUnSubscriptionService {
             WorkflowSubscriptionResult {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return WorkflowSubscriptionResult(subscriptionId = subscriptionId, message = "Successfully UnSubscribed for $subscriptionId","")
+            return WorkflowSubscriptionResult(
+                subscriptionId = subscriptionId,
+                message = "Successfully UnSubscribed for $subscriptionId",
+                ""
+            )
         }
-        catch (e:Exception){
+        catch (e:Exception ){
             logger.error("Error occurred while checking for upload deadline: ${e.message}")
         }
         throw Exception("Error occurred while canceling the execution of workflow engine to cancel workflow for workflow Id $subscriptionId")

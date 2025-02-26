@@ -1,11 +1,12 @@
 package gov.cdc.ocio.processingnotifications.utils
 
-import com.azure.cosmos.implementation.BadRequestException
+import io.ktor.server.plugins.*
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 
+
 /**
- *Builds a SQL clause for filtering timestamps based on a specified date range.
+ * Builds a SQL clause for filtering timestamps based on a specified date range.
  */
 class SqlClauseBuilder {
     /**

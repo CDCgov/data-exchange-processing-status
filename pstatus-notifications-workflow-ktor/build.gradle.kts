@@ -1,11 +1,9 @@
-
-
 buildscript {
     repositories {
         mavenCentral()
     }
-
 }
+
 plugins {
     kotlin("jvm") version "1.9.23"
     id("com.google.cloud.tools.jib") version "3.3.0"
@@ -15,19 +13,17 @@ plugins {
     id ("org.jetbrains.kotlin.plugin.serialization") version "1.8.20"
     id ("com.gorylenko.gradle-git-properties") version "2.4.2"
 }
+
 repositories {
     mavenCentral()
 }
-
-
-  group "gov.cdc.ocio"
-  version "0.0.1"
 
 tasks.register("prepareKotlinBuildScriptModel"){}
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
+
 application {
     mainClass.set("gov.cdc.ocio.processingnotifications.ApplicationKt")
 }
@@ -48,7 +44,6 @@ dependencies {
     implementation ("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation ("org.slf4j:slf4j-api:1.7.36")
     implementation ("ch.qos.logback:logback-classic:1.4.12")
-    implementation("com.azure:azure-cosmos:4.55.0")
     implementation ("io.insert-koin:koin-core:3.5.6")
     implementation ("io.insert-koin:koin-ktor:3.5.6")
     implementation ("com.sun.mail:javax.mail:1.6.2")
@@ -64,11 +59,8 @@ dependencies {
     implementation ("io.ktor:ktor-client-content-negotiation:2.1.0")
     implementation ("io.netty:netty-all:4.1.68.Final")
     implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
-    implementation("software.amazon.awssdk:dynamodb-enhanced:2.20.70") // Latest Enhanced Client for DynamoDB
-    implementation("software.amazon.awssdk:sts:2.29.34") 
-   // implementation("software.amazon.awssdk:dynamodb:2.20.70") // Core DynamoDB SDK dependency
+    implementation("software.amazon.awssdk:sts:2.29.34")
     testImplementation(kotlin("test"))
-
 }
 
 tasks.test {
@@ -78,6 +70,7 @@ tasks.test {
 kotlin {
     jvmToolchain(17)
 }
+
 repositories{
     mavenLocal()
     mavenCentral()
@@ -104,6 +97,7 @@ jib {
         }
     }
 }
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)

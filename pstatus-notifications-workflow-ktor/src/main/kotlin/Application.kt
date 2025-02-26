@@ -46,6 +46,7 @@ fun Application.module() {
         unsubscribesDataStreamTopErrorsNotification()
         subscribeUploadDigestCountsRoute()
         unsubscribeUploadDigestCountsRoute()
+        getWorkflowsRoute()
         healthCheckRoute()
         versionRoute()
     }

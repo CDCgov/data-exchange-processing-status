@@ -6,6 +6,7 @@ import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
+import gov.cdc.ocio.processingnotifications.temporal.HealthCheckTemporalServer
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType

@@ -16,13 +16,18 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
+
 /**
- * The implementation class for notifying if an upload has not occurred within a specified time
+ * The implementation class for notifying if an upload has not occurred by a specified time.
+ *
  * @property activities T
  */
 class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
+
     private val repository by inject<ProcessingStatusRepository>()
+
     private val logger = KotlinLogging.logger {}
+
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
         ActivityOptions.newBuilder()
@@ -34,26 +39,27 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
                     .build()
             )
             .build()
-
     )
 
     /**
-    * The function which gets invoked by the temporal WF engine which checks whether upload has occurred within a specified time or not
-    * invokes the activity, if there are errors
-    * @param dataStreamId String
-    * @param jurisdiction String
-    * @param daysToRun List<String>
-    * @param timeToRun String
-    * @param deliveryReference String
-    */
+     * The function which gets invoked by the temporal WF engine which checks whether upload has occurred within a
+     * specified time or not invokes the activity, if there are errors.
+     *
+     * @param dataStreamId String
+     * @param dataStreamId String
+     * @param jurisdiction String
+     * @param daysToRun List<String>
+     * @param timeToRun String
+     * @param deliveryReference String
+     */
     override fun checkUploadAndNotify(
         dataStreamId: String,
+        dataStreamRoute: String,
         jurisdiction: String,
         daysToRun: List<String>,
         timeToRun: String,
         deliveryReference: String
     ) {
-
         try {
             // Logic to check if the upload occurred*/
             val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
@@ -64,8 +70,6 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")
             throw Exception("Error occurred while checking for upload deadline")
         }
-
-
     }
 
     /**
@@ -79,15 +83,14 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
         /** Get today's date in UTC **/
         val today = LocalDate.now(ZoneId.of("UTC"))
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
-        val reportsCollection =repository.reportsCollection
-        val collectionName =reportsCollection.collectionNameForQuery
+        val reportsCollection = repository.reportsCollection
+        val collectionName = reportsCollection.collectionNameForQuery
         val cVar = reportsCollection.collectionVariable
-        val cPrefix =reportsCollection.collectionVariablePrefix
+        val cPrefix = reportsCollection.collectionVariablePrefix
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
         val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd,cPrefix)
-
+        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
 
         val notificationQuery = """
            SELECT ${cPrefix}id 
@@ -111,6 +114,5 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             throw Exception("Error occurred in checking upload")
         }
     }
-
 
 }

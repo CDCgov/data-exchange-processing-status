@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications
+package gov.cdc.ocio.processingnotifications.temporal
 
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.types.health.HealthCheckResult
