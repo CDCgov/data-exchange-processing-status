@@ -6,7 +6,7 @@ package gov.cdc.ocio.processingnotifications.model
  *
  * @property workflowId String
  * @property status String
- * @property cronSchedule CronSchedule
+ * @property schedule CronSchedule
  * @constructor
  */
 data class WorkflowStatus(
@@ -18,7 +18,7 @@ data class WorkflowStatus(
 /**
  * Raw cron schedule and its human-readable form.
  *
- * @property raw String
+ * @property cron String
  * @property description String
  * @constructor
  */
