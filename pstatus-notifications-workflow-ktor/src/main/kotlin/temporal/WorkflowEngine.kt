@@ -5,7 +5,8 @@ import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
 import gov.cdc.ocio.processingnotifications.model.getCronExpression
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
-import io.temporal.api.common.v1.WorkflowExecution
+import io.temporal.api.enums.v1.WorkflowExecutionStatus
+import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.client.WorkflowClient
@@ -154,7 +155,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             // Log workflow executions
             logger.info("WorkflowId: ${executionInfo.execution.workflowId}, Type: ${executionInfo.type.name}, Status: ${executionInfo.status}")
 
-            val cronScheduleRaw = getWorkflowCronSchedule(executionInfo.execution) ?: ""
+            val cronScheduleRaw = getWorkflowCronSchedule(executionInfo) ?: ""
             val cronScheduleDescription = runCatching {
                 CronUtils.description(cronScheduleRaw)
             }
@@ -167,7 +168,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
                 description = cronScheduleDescription.getOrDefault(
                     "Parse Error: ${cronScheduleDescription.exceptionOrNull()?.localizedMessage ?: "unknown error"}"
                 ),
-                nextExecution = nextExecution.toString()
+                nextExecution = nextExecution?.toString()
             )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
@@ -180,10 +181,13 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         return results ?: listOf()
     }
 
-    private fun getWorkflowCronSchedule(wfExec: WorkflowExecution): String? {
+    private fun getWorkflowCronSchedule(wfExecInfo: WorkflowExecutionInfo): String? {
+        if (wfExecInfo.status != WorkflowExecutionStatus.WORKFLOW_EXECUTION_STATUS_RUNNING)
+            return null
+
         val req = GetWorkflowExecutionHistoryRequest.newBuilder()
             .setNamespace(client?.options?.namespace)
-            .setExecution(wfExec)
+            .setExecution(wfExecInfo.execution)
             .build()
 
         val res = service?.blockingStub()?.getWorkflowExecutionHistory(req)

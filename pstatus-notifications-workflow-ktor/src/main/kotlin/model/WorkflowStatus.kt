@@ -28,5 +28,5 @@ data class WorkflowStatus(
 data class CronSchedule(
     val cron: String,
     val description: String,
-    val nextExecution: String
+    val nextExecution: String?
 )
