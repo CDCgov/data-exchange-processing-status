@@ -24,11 +24,13 @@ import kotlinx.serialization.Serializable
  * @param deliveryReference String
  */
 @Serializable
-data class UploadDigestCountsSubscription(val jurisdictionIds: List<String>,
-                                                         val dataStreamIds: List<String>,
-                                                         val daysToRun: List<String>,
-                                                         val timeToRun: String,
-                                                         val deliveryReference: String)
+data class UploadDigestCountsSubscription(
+    val jurisdictionIds: List<String>,
+    val dataStreamIds: List<String>,
+    val daysToRun: List<String>,
+    val timeToRun: String,
+    val deliveryReference: String
+)
 
 /**
  * Daily Upload Digest Counts UnSubscription data class which is serialized back and forth which is in turn used for unsubscribing from the cache for emails and webhooks using the given subscriberId
