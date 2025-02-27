@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
+import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
 import gov.cdc.ocio.processingnotifications.model.getCronExpression
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
@@ -152,16 +153,21 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             // Log workflow executions
             logger.info("WorkflowId: ${executionInfo.execution.workflowId}, Type: ${executionInfo.type.name}, Status: ${executionInfo.status}")
 
-            val cronSchedule = getWorkflowCronSchedule(executionInfo.execution) ?: ""
+            val cronScheduleRaw = getWorkflowCronSchedule(executionInfo.execution) ?: ""
             val cronScheduleDescription = runCatching {
-                CronUtils.getCronScheduleDescription(cronSchedule)
+                CronUtils.getCronScheduleDescription(cronScheduleRaw)
             }
-
+            val cronSchedule = CronSchedule(
+                cron = cronScheduleRaw,
+                description = cronScheduleDescription.getOrDefault(
+                    "Parse Error: ${cronScheduleDescription.exceptionOrNull()?.localizedMessage ?: "unknown error"}"
+                )
+            )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
                 executionInfo.status.name,
-                cronSchedule,
-                cronScheduleDescription.getOrDefault("Parse Error: ${cronScheduleDescription.exceptionOrNull()?.localizedMessage ?: "unknown error"}"))
+                cronSchedule
+            )
         }
 
         return results ?: listOf()
