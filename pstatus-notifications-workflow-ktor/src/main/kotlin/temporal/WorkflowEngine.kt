@@ -73,6 +73,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
 
             val workflowOptions = WorkflowOptions.newBuilder()
                 .setTaskQueue(taskName)
+                .setMemo(mapOf("description" to taskName))
                 .setCronSchedule(
                     getCronExpression(
                         daysToRun,
@@ -158,6 +159,9 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
                 CronUtils.description(cronScheduleRaw)
             }
             val nextExecution = CronUtils.nextExecution(cronScheduleRaw)
+            val descPayload = runCatching { executionInfo.memo.getFieldsOrThrow("description") }
+            val description = descPayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "") ?: "unknown"
+
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,
                 description = cronScheduleDescription.getOrDefault(
@@ -167,6 +171,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
+                description,
                 executionInfo.status.name,
                 cronSchedule
             )

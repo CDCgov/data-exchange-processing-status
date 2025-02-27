@@ -1,18 +1,18 @@
 package gov.cdc.ocio.processingnotifications.model
 
-import java.time.Instant
-
 
 /**
  * Model for the workflow status.
  *
  * @property workflowId String
+ * @property description String
  * @property status String
  * @property schedule CronSchedule
  * @constructor
  */
 data class WorkflowStatus(
     val workflowId: String,
+    val description: String,
     val status: String,
     val schedule: CronSchedule
 )
