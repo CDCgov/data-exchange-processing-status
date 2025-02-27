@@ -3,24 +3,43 @@ package gov.cdc.ocio.processingnotifications.utils
 import com.cronutils.descriptor.CronDescriptor
 import com.cronutils.model.CronType
 import com.cronutils.model.definition.CronDefinitionBuilder
+import com.cronutils.model.time.ExecutionTime
 import com.cronutils.parser.CronParser
+import java.time.Instant
+import java.time.ZonedDateTime
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
+
 
 object CronUtils {
 
     /**
      * Returns a human-readable version of the provided cron schedule (UNIX format).
      *
-     * @param cronSchedule String
+     * @param cronExpression String
      * @return String
      */
-    fun getCronScheduleDescription(cronSchedule: String): String {
-        // Get a predefined instance
-        val cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX)
-
-        // Parse cronSchedule expression and get description
-        val parser = CronParser(cronDefinition)
+    fun description(cronExpression: String): String {
+        // Parse cronExpression expression and get description
+        val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
         val descriptor = CronDescriptor.instance(Locale.US)
-        return descriptor.describe(parser.parse(cronSchedule))
+        return descriptor.describe(parser.parse(cronExpression))
+    }
+
+    /**
+     * Gets the next execution time from the provided cron expression.
+     *
+     * @param cronExpression String
+     * @return Instant?
+     */
+    fun nextExecution(cronExpression: String): Instant? {
+        val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
+        val cron = parser.parse(cronExpression)
+        cron.validate() // Ensures the cron expression is valid
+
+        // Compute the next execution time
+        val executionTime = ExecutionTime.forCron(cron)
+        val now = ZonedDateTime.now()
+        return executionTime.nextExecution(now).getOrNull()?.toInstant()
     }
 }

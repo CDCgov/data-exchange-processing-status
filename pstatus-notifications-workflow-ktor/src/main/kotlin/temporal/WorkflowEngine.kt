@@ -155,13 +155,15 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
 
             val cronScheduleRaw = getWorkflowCronSchedule(executionInfo.execution) ?: ""
             val cronScheduleDescription = runCatching {
-                CronUtils.getCronScheduleDescription(cronScheduleRaw)
+                CronUtils.description(cronScheduleRaw)
             }
+            val nextExecution = CronUtils.nextExecution(cronScheduleRaw)
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,
                 description = cronScheduleDescription.getOrDefault(
                     "Parse Error: ${cronScheduleDescription.exceptionOrNull()?.localizedMessage ?: "unknown error"}"
-                )
+                ),
+                nextExecution = nextExecution.toString()
             )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
