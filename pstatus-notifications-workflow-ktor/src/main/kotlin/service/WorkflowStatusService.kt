@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingnotifications.service
 
+import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -16,7 +16,7 @@ class WorkflowStatusService : KoinComponent {
     /**
      * Get and return all the Temporal workflows.
      */
-    fun getAllWorkflows(): List<WorkflowExecutionInfo>  {
+    fun getAllWorkflows(): List<WorkflowStatus>  {
         try {
             return workflowEngine.getAllWorkflows()
         } catch (e: Exception) {

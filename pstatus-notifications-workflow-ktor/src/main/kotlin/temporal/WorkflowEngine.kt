@@ -1,8 +1,10 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
+import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
 import gov.cdc.ocio.processingnotifications.model.getCronExpression
-import io.temporal.api.workflow.v1.WorkflowExecutionInfo
+import io.temporal.api.common.v1.WorkflowExecution
+import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
@@ -113,18 +115,18 @@ class WorkflowEngine(temporalConfig: TemporalConfig) {
     /**
      * Retrieve only the running workflows.
      *
-     * @return List<WorkflowExecutionInfo>
+     * @return List<WorkflowStatus>
      */
-    fun getRunningWorkflows(): List<WorkflowExecutionInfo> {
+    fun getRunningWorkflows(): List<WorkflowStatus> {
         return getWorkflows(filterOnlyRunning = true)
     }
 
     /**
      * Retrieve all the workflows.
      *
-     * @return List<WorkflowExecutionInfo>
+     * @return List<WorkflowStatus>
      */
-    fun getAllWorkflows(): List<WorkflowExecutionInfo> {
+    fun getAllWorkflows(): List<WorkflowStatus> {
         return getWorkflows(filterOnlyRunning = false)
     }
 
@@ -132,9 +134,9 @@ class WorkflowEngine(temporalConfig: TemporalConfig) {
      * Retrieve the workflows, either all or just the ones running.
      *
      * @param filterOnlyRunning Boolean
-     * @return List<WorkflowExecutionInfo>
+     * @return List<WorkflowStatus>
      */
-    private fun getWorkflows(filterOnlyRunning: Boolean): List<WorkflowExecutionInfo> {
+    private fun getWorkflows(filterOnlyRunning: Boolean): List<WorkflowStatus> {
         val query = when (filterOnlyRunning) {
             true -> "ExecutionStatus='RUNNING'" // Filter for running workflows
             false -> ""
@@ -147,12 +149,31 @@ class WorkflowEngine(temporalConfig: TemporalConfig) {
         // Fetch workflows
         val response = service?.blockingStub()?.listWorkflowExecutions(request)
 
-        // Log workflow executions
-        response?.executionsList?.forEach { execution ->
-            logger.info("WorkflowId: ${execution.execution.workflowId}, Type: ${execution.type.name}, Status: ${execution.status}")
+        val results = response?.executionsList?.map { executionInfo ->
+            // Log workflow executions
+            logger.info("WorkflowId: ${executionInfo.execution.workflowId}, Type: ${executionInfo.type.name}, Status: ${executionInfo.status}")
+
+            val cronSchedule = getWorkflowCronSchedule(executionInfo.execution) ?: ""
+            WorkflowStatus(
+                executionInfo.execution.workflowId,
+                executionInfo.status.name,
+                cronSchedule)
         }
 
-        return response?.executionsList?.toList() ?: listOf()
+        return results ?: listOf()
+    }
+
+    private fun getWorkflowCronSchedule(wfExec: WorkflowExecution): String? {
+        val req = GetWorkflowExecutionHistoryRequest.newBuilder()
+            .setNamespace(client?.options?.namespace)
+            .setExecution(wfExec)
+            .build()
+
+        val res = service?.blockingStub()?.getWorkflowExecutionHistory(req)
+
+        val firstHistoryEvent = res?.history?.eventsList?.get(0)
+
+        return firstHistoryEvent?.workflowExecutionStartedEventAttributes?.cronSchedule
     }
 
     fun doHealthCheck() = healthCheckSystem.doHealthCheck()
