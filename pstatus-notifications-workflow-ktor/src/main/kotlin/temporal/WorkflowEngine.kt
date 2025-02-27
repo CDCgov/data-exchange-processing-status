@@ -181,6 +181,12 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         return results ?: listOf()
     }
 
+    /**
+     * Get the raw cron schedule string for a given workflow execution info.
+     *
+     * @param wfExecInfo WorkflowExecutionInfo
+     * @return String?
+     */
     private fun getWorkflowCronSchedule(wfExecInfo: WorkflowExecutionInfo): String? {
         if (wfExecInfo.status != WorkflowExecutionStatus.WORKFLOW_EXECUTION_STATUS_RUNNING)
             return null
