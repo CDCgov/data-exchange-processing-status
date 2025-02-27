@@ -18,8 +18,9 @@ import org.koin.ktor.plugin.Koin
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val temporalModule = module {
-        val temporalServiceTarget = environment.config.tryGetString("temporal.temporal_service_target") ?: ""
-        val temporalConfig = TemporalConfig(temporalServiceTarget)
+        val serviceTarget = environment.config.tryGetString("temporal.service_target") ?: "localhost:7233"
+        val namespace = environment.config.tryGetString("temporal.namespace") ?: "default"
+        val temporalConfig = TemporalConfig(serviceTarget, namespace)
         single {
             WorkflowEngine(temporalConfig)
         }

@@ -20,14 +20,12 @@ import mu.KotlinLogging
  *  Also,using the workflow options the client creates a new workflow stub
  *  Note : CRON expression is used to set the schedule
  */
-class WorkflowEngine(temporalConfig: TemporalConfig) {
+class WorkflowEngine(private val temporalConfig: TemporalConfig) {
 
     private val logger = KotlinLogging.logger {}
 
-    private val target = temporalConfig.temporalServiceTarget
-
     private val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-        .setTarget(target)
+        .setTarget(temporalConfig.serviceTarget)
         .build()
 
     private var service: WorkflowServiceStubs? = null
@@ -142,7 +140,7 @@ class WorkflowEngine(temporalConfig: TemporalConfig) {
             false -> ""
         }
         val request = ListWorkflowExecutionsRequest.newBuilder()
-            .setNamespace("default")
+            .setNamespace(temporalConfig.namespace)
             .setQuery(query)
             .build()
 

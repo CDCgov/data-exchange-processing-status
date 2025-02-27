@@ -38,7 +38,7 @@ class HealthCheckTemporalServer(
     private fun isTemporalHealthy(): Result<Boolean> {
         return try {
             val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-                .setTarget(temporalConfig.temporalServiceTarget)
+                .setTarget(temporalConfig.serviceTarget)
                 .build()
 
             val service = WorkflowServiceStubs.newServiceStubs(serviceOptions)
