@@ -109,9 +109,10 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             workflow?.cancel()
             logger.info("WorkflowID: $workflowId successfully cancelled")
         } catch (ex: Exception) {
-            logger.error("Error while canceling the workflow: ${ex.message}")
+            val message = "Error while canceling the workflow: ${ex.message}"
+            logger.error(message)
+            throw Exception(message)
         }
-        throw Exception("Workflow cancellation failed. Please try again.")
     }
 
     /**

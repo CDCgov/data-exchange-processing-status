@@ -7,12 +7,15 @@ import io.temporal.workflow.Workflow
 import mu.KotlinLogging
 import java.time.Duration
 
+
 /**
- * The implementation class for errors on missing fields from a upload
+ * The implementation class for errors on missing fields from an upload.
+ *
  * @property activities T
  */
 class UploadErrorsNotificationWorkflowImpl : UploadErrorsNotificationWorkflow {
     private val logger = KotlinLogging.logger {}
+
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
         ActivityOptions.newBuilder()
@@ -25,16 +28,18 @@ class UploadErrorsNotificationWorkflowImpl : UploadErrorsNotificationWorkflow {
             )
             .build()
     )
-/**
- * The function which gets invoked by the temporal WF engine and which checks for the errors in the upload and
- * invokes the activity, if there are errors
- * @param dataStreamId String
- * @param dataStreamRoute String
- * @param jurisdiction String
- * @param daysToRun List<String>
- * @param timeToRun String
- * @param deliveryReference String
- */
+
+    /**
+     * The function which gets invoked by the temporal WF engine and which checks for the errors in the upload and
+     * invokes the activity, if there are errors.
+     *
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param jurisdiction String
+     * @param daysToRun List<String>
+     * @param timeToRun String
+     * @param deliveryReference String
+     */
     override fun checkUploadErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
@@ -44,23 +49,27 @@ class UploadErrorsNotificationWorkflowImpl : UploadErrorsNotificationWorkflow {
         deliveryReference: String
     ) {
         try {
-            // Logic to check if the upload occurred*/
+            // Logic to check if the upload occurred
             val error = checkUploadErrors(dataStreamId, dataStreamRoute, jurisdiction)
             if (error.isNotEmpty()) {
-                activities.sendUploadErrorsNotification(error,deliveryReference)
+                activities.sendUploadErrorsNotification(error, deliveryReference)
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for errors in upload. Errors are : ${e.message}")
         }
     }
 
-    /**
-     *  Thw actual function which checks for errors in the fields used for upload
-     *   @param dataStreamId String
-     *   @param dataStreamRoute String
-     * * @param jurisdiction String
-     */
+    override fun cancelWorkflow() {
+        logger.info("workflow canceled")
+    }
 
+    /**
+     * The actual function which checks for errors in the fields used for upload.
+     *
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param jurisdiction String
+     */
     private fun checkUploadErrors(dataStreamId: String, dataStreamRoute: String, jurisdiction: String): String {
         var error = ""
         if (dataStreamId.isEmpty()) {
