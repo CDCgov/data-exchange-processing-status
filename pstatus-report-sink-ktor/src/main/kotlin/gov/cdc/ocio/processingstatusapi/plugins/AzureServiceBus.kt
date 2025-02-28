@@ -9,7 +9,7 @@ import mu.KotlinLogging
 
 /**
  * The class which processes the message from service bus topic/subscription
- * It inherits the interface MessageSystemProcessor and overrides the processMesssage
+ * It inherits the interface MessageSystemProcessor and overrides the processMessage
  * function for processing the messages
  */
 class ReportSinkProcessor : MessageSystemProcessor {
