@@ -1,7 +1,7 @@
 package gov.cdc.ocio.messagesystem.servicebus
 
 import gov.cdc.ocio.messagesystem.MessageSystem
-import gov.cdc.ocio.messagesystem.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.config.AzureServiceBusConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.messagesystem.health.HealthCheckServiceBus
 

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.messagesystem.plugins
+package gov.cdc.ocio.messagesystem.config
 
 import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.sqs.SqsClient

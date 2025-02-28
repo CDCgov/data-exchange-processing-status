@@ -7,7 +7,7 @@ import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
 import gov.cdc.ocio.messagesystem.sqs.AWSSQSMessageSystem
 import gov.cdc.ocio.messagesystem.MessageSystem
-import gov.cdc.ocio.messagesystem.plugins.AWSSQSServiceConfiguration
+import gov.cdc.ocio.messagesystem.config.AWSSQSServiceConfiguration
 
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
