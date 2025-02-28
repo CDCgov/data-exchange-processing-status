@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.models.query
 
+import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import kotlinx.serialization.Serializable
 
 
@@ -13,10 +14,18 @@ import kotlinx.serialization.Serializable
  * @constructor
  */
 @Serializable
+@GraphQLDescription("Workflow status describes the scheduled workflows for evaluating conditions to determine if a notification is sent")
 data class WorkflowStatus(
+    @GraphQLDescription("Workflow ID of the scheduled evaluation workflow")
     val workflowId: String,
+
+    @GraphQLDescription("Description of the scheduled evaluation workflow")
     val description: String,
+
+    @GraphQLDescription("Status of the scheduled evaluation workflow")
     val status: String,
+
+    @GraphQLDescription("Schedule for the workflow to run its evaluation")
     val schedule: CronSchedule
 )
 
@@ -29,8 +38,14 @@ data class WorkflowStatus(
  * @constructor
  */
 @Serializable
+@GraphQLDescription("Schedule for a workflow to run its evaluation")
 data class CronSchedule(
+    @GraphQLDescription("Cron unix syntax for the evaluation workflow schedule")
     val cron: String,
+
+    @GraphQLDescription("Human-readable description of the evaluation workflow schedule")
     val description: String,
+
+    @GraphQLDescription("Next evaluation workflow execution date/time based on the schedule")
     val nextExecution: String?
 )

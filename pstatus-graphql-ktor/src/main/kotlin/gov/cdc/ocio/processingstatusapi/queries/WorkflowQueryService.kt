@@ -23,7 +23,7 @@ class WorkflowQueryService(
     private val workflowServiceConnection =
         ServiceConnection("notifications workflow", workflowServiceUrl)
 
-    @GraphQLDescription("todo")
+    @GraphQLDescription("A workflow describes the type of notification and schedule for evaluating if a notification is sent.")
     @Suppress("unused")
     fun getAllWorkflows(): List<WorkflowStatus> {
         val url = workflowServiceConnection.getUrl("/workflows")
