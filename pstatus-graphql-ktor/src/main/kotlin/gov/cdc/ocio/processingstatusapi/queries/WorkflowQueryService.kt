@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.queries
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
+import gov.cdc.ocio.processingstatusapi.models.query.WorkflowStatus
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -24,7 +25,7 @@ class WorkflowQueryService(
 
     @GraphQLDescription("todo")
     @Suppress("unused")
-    fun getAllWorkflows(): String {
+    fun getAllWorkflows(): List<WorkflowStatus> {
         val url = workflowServiceConnection.getUrl("/workflows")
 
         return runBlocking {
@@ -32,7 +33,11 @@ class WorkflowQueryService(
                 val response = workflowServiceConnection.client.get(url) {
                     contentType(ContentType.Application.Json)
                 }
-                response.body()//@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
+                if (response.status == HttpStatusCode.OK) {
+                    return@runBlocking response.body()
+                } else {
+                    throw Exception("Service unavailable. Status: ${response.status}")
+                }
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
                     //SubscriptionResponse.ProcessErrorCodes(url, e, null)
