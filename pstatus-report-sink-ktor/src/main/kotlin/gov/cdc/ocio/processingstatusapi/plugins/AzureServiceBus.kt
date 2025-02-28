@@ -12,7 +12,7 @@ import mu.KotlinLogging
  * It inherits the interface MessageSystemProcessor and overrides the processMessage
  * function for processing the messages
  */
-class ReportSinkProcessor : MessageSystemProcessor {
+class AzureServiceBus : MessageSystemProcessor {
 
     override fun processMessage(context: ServiceBusReceivedMessageContext) {
         // Handle message specific to report-sink
@@ -45,5 +45,5 @@ class ReportSinkProcessor : MessageSystemProcessor {
  * The main application module which runs always
  */
 fun Application.serviceBusModule() {
-    install(createAzureServiceBusPlugin(ReportSinkProcessor()))
+    install(createAzureServiceBusPlugin(AzureServiceBus()))
 }
