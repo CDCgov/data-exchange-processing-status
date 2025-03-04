@@ -1,8 +1,6 @@
 package gov.cdc.ocio.processingnotifications.model
 
-import gov.cdc.ocio.types.serializers.OffsetDateTimeSerializer
 import java.time.OffsetDateTime
-import kotlinx.serialization.*
 
 
 /**
@@ -32,11 +30,9 @@ data class WorkflowStatus(
  * @property nextExecution String?
  * @constructor
  */
-@Serializable
 data class CronSchedule(
     val cron: String?,
     val description: String?,
-    @Serializable(with = OffsetDateTimeSerializer::class)
     val lastRun: OffsetDateTime?,
     val nextExecution: String?
 )
