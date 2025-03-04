@@ -72,6 +72,7 @@ dependencies {
     implementation "software.amazon.awssdk:sts:2.29.34"
 
     implementation(project(":libs:commons-types"))
+    implementation project(':libs:message-system')
 
     testImplementation "org.mockito.kotlin:mockito-kotlin:4.0.0"
     testImplementation 'org.testng:testng:7.7.0'
@@ -95,12 +96,13 @@ jib {
             password = System.getenv("DOCKERHUB_TOKEN") ?: ""
         }
     }
+
     to {
-        image = 'imagehub.cdc.gov:6989/dex/pstatus/notifications-service'
+        image = System.getenv("IMAGE") ?: ""
         tags = [ System.getenv("IMAGE_TAG") ?: "latest" ]
         auth {
-            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
-            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+            username = System.getenv("USERNAME") ?: ""
+            password = System.getenv("PASSWORD") ?: ""
         }
     }
 }

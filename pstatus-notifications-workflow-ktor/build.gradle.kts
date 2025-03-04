@@ -93,10 +93,11 @@ jib {
         }
     }
     to {
-        image = "imagehub.cdc.gov:6989/dex/pstatus/notifications-workflow-service"
+        image = System.getenv("IMAGE") ?: ""
+        tags = mutableSetOf(System.getenv("IMAGE_TAG") ?: "latest")
         auth {
-            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
-            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+            username = System.getenv("USERNAME") ?: ""
+            password = System.getenv("PASSWORD") ?: ""
         }
     }
 }

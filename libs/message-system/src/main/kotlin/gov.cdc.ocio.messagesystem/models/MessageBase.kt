@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.models
+package gov.cdc.ocio.messagesystem.models
 
 import com.google.gson.annotations.SerializedName
 

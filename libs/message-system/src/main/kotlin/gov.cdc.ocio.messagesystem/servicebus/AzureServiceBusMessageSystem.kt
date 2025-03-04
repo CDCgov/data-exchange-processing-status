@@ -1,8 +1,9 @@
-package gov.cdc.ocio.processingstatusapi.messagesystems
+package gov.cdc.ocio.messagesystem.servicebus
 
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckServiceBus
-import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.MessageSystem
+import gov.cdc.ocio.messagesystem.config.AzureServiceBusConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.messagesystem.health.HealthCheckServiceBus
 
 
 /**

@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.health
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
+import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckResult

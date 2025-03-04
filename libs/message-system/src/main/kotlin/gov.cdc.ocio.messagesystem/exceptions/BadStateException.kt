@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.exceptions
+package gov.cdc.ocio.messagesystem.exceptions
 
 /**
  * Intended use of this exception is for internal server issues where we expect to be in a certain state or have
