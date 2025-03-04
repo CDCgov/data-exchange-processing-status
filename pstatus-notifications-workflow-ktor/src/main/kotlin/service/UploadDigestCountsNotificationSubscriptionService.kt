@@ -27,6 +27,11 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
 
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
+    private val description =
+        """
+        Provides a digest of the upload counts for the data streams and day provided.
+        """.trimIndent()
+
     /**
      * The main method which executes workflow for orchestrating the daily digest counts.
      *
@@ -36,14 +41,17 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
     fun run(subscription: UploadDigestSubscription):
             WorkflowSubscriptionResult {
         try {
-            val dataStreams= subscription.dataStreamIds
+            val dataStreams = subscription.dataStreamIds
             val jurisdictionIds = subscription.jurisdictionIds
             val daysToRun = subscription.daysToRun
             val timeToRun = subscription.timeToRun
             val deliveryReference= subscription.deliveryReference
             val taskQueue = "uploadDigestCountsTaskQueue"
             val workflow = workflowEngine.setupWorkflow(
-                taskQueue,daysToRun,timeToRun,
+                description,
+                taskQueue,
+                daysToRun,
+                timeToRun,
                 UploadDigestCountsNotificationWorkflowImpl::class.java,
                 notificationActivitiesImpl,
                 UploadDigestCountsNotificationWorkflow::class.java

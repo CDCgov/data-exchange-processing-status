@@ -24,6 +24,12 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
 
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
+    private val description =
+        """
+        Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.
+        """.trimIndent()
+
+
     /**
      * The main method which gets called from the route which executes and kicks off the
      * workflow execution for digest counts and the frequency with which each of the top 5 errors occur
@@ -41,6 +47,7 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
             val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
             val workflow = workflowEngine.setupWorkflow(
+                description,
                 taskQueue,
                 daysToRun,
                 timeToRun,

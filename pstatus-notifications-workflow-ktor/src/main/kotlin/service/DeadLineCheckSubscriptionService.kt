@@ -27,6 +27,11 @@ class DeadLineCheckSubscriptionService: KoinComponent {
 
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
+    private val description =
+        """
+        Checks to see if all the expected uploads have occurred by the deadline provided.
+        """.trimIndent()
+
     /**
      *  The main method which executes workflow for uploadDeadline check.
      *
@@ -44,8 +49,13 @@ class DeadLineCheckSubscriptionService: KoinComponent {
             val deliveryReference = subscription.deliveryReference
             val taskQueue = "notificationTaskQueue"
             val workflow = workflowEngine.setupWorkflow(
-                taskQueue, daysToRun, timeToRun,
-                NotificationWorkflowImpl::class.java, notificationActivitiesImpl, NotificationWorkflow::class.java
+                description,
+                taskQueue,
+                daysToRun,
+                timeToRun,
+                NotificationWorkflowImpl::class.java,
+                notificationActivitiesImpl,
+                NotificationWorkflow::class.java
             )
             workflow?.let {
                 val execution = WorkflowClient.start(

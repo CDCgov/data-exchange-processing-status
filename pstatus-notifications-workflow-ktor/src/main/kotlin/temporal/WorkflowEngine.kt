@@ -15,6 +15,9 @@ import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
 import io.temporal.worker.WorkerFactory
 import mu.KotlinLogging
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 
 /**
@@ -56,6 +59,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
      * @return T3
      */
     fun <T1 : Any, T2 : Any, T3 : Any> setupWorkflow(
+        description: String,
         taskName: String,
         daysToRun: List<String>,
         timeToRun: String,
@@ -74,7 +78,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
 
             val workflowOptions = WorkflowOptions.newBuilder()
                 .setTaskQueue(taskName)
-                .setMemo(mapOf("description" to taskName))
+                .setMemo(mapOf("description" to description))
                 .setCronSchedule(
                     getCronExpression(
                         daysToRun,
@@ -156,11 +160,14 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             // Log workflow executions
             logger.info("WorkflowId: ${executionInfo.execution.workflowId}, Type: ${executionInfo.type.name}, Status: ${executionInfo.status}")
 
-            val cronScheduleRaw = getWorkflowCronSchedule(executionInfo) ?: ""
+            val cronScheduleRaw = getWorkflowCronSchedule(executionInfo)
             val cronScheduleDescription = runCatching {
                 CronUtils.description(cronScheduleRaw)
             }
             val nextExecution = CronUtils.nextExecution(cronScheduleRaw)
+            val taskName = executionInfo.type.name
+            val ts = executionInfo.executionTime
+            val lastRun = OffsetDateTime.ofInstant(Instant.ofEpochSecond(ts.seconds, ts.nanos.toLong()), ZoneOffset.UTC)
             val descPayload = runCatching { executionInfo.memo.getFieldsOrThrow("description") }
             val description = descPayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "") ?: "unknown"
 
@@ -169,10 +176,12 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
                 description = cronScheduleDescription.getOrDefault(
                     "Parse Error: ${cronScheduleDescription.exceptionOrNull()?.localizedMessage ?: "unknown error"}"
                 ),
+                lastRun,
                 nextExecution = nextExecution?.toString()
             )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
+                taskName,
                 description,
                 executionInfo.status.name,
                 cronSchedule

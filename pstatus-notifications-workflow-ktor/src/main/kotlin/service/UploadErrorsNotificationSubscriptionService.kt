@@ -6,7 +6,6 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.UploadErrorsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.UploadErrorsNotificationWorkflowImpl
-
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -28,6 +27,11 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
 
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
+    private val description =
+        """
+        Provides the upload errors for the data stream and date/time range provided.
+        """.trimIndent()
+
     /**
      * The main method which executes workflow engine to check for upload errors and notify.
      *
@@ -46,6 +50,7 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
             val taskQueue = "uploadErrorsNotificationTaskQueue"
 
             val workflow = workflowEngine.setupWorkflow(
+                description,
                 taskQueue,
                 daysToRun,
                 timeToRun,

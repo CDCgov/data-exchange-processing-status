@@ -19,7 +19,9 @@ object CronUtils {
      * @param cronExpression String
      * @return String
      */
-    fun description(cronExpression: String): String {
+    fun description(cronExpression: String?): String? {
+        if (cronExpression.isNullOrEmpty()) return null
+
         // Parse cronExpression expression and get description
         val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
         val descriptor = CronDescriptor.instance(Locale.US)
@@ -32,7 +34,9 @@ object CronUtils {
      * @param cronExpression String
      * @return Instant?
      */
-    fun nextExecution(cronExpression: String): Instant? {
+    fun nextExecution(cronExpression: String?): Instant? {
+        if (cronExpression.isNullOrEmpty()) return null
+
         return try {
             val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
             val cron = parser.parse(cronExpression)
