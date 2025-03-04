@@ -107,6 +107,25 @@ val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
     .name("BasicHashMap")
     .description("A basic hash map scalar")
     .coercing(object : Coercing<BasicHashMap<String, Any?>, JsonNode> {
+
+        /**
+         * Coerces an [Any] input to a [BasicHashMap].
+         *
+         * @param input Any
+         * @return BasicHashMap<String, Any?>
+         */
+        @Deprecated("Deprecated in Java")
+        override fun parseValue(input: Any): BasicHashMap<String, Any?> {
+            return when (input) {
+                is LinkedHashMap<*, *> -> {
+                    val hashMap = BasicHashMap<String, Any?>()
+                    input.forEach { hashMap.put(it.key as String, it.value) }
+                    hashMap
+                }
+                else -> throw IllegalArgumentException("Expected a LinkedHashMap<*, *>")
+            }
+        }
+
         /**
          * Coerces a [Value] generic to a [BasicHashMap].
          *
@@ -122,10 +141,9 @@ val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
             graphQLContext: GraphQLContext,
             locale: Locale
         ): BasicHashMap<String, Any?> {
-            if (input is ObjectValue) {
-                return objectValueToHashMap(input)
-            } else {
-                throw CoercingParseLiteralException("Expected an ObjectValue")
+            return when (input) {
+                is ObjectValue -> objectValueToHashMap(input)
+                else -> throw CoercingParseLiteralException("Expected an ObjectValue")
             }
         }
     })
