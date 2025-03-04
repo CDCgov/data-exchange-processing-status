@@ -85,6 +85,7 @@ dependencies {
     implementation project(':libs:commons-database')
     implementation project(':libs:schema-validation')
     implementation project(':libs:commons-types')
+    implementation project(':libs:message-system')
 
 
     implementation ("net.logstash.logback:logstash-logback-encoder:7.4")

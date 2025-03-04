@@ -1,9 +1,9 @@
-package gov.cdc.ocio.processingstatusapi.health.messagesystem
+package gov.cdc.ocio.messagesystem.health
 
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder
 import com.azure.messaging.servicebus.administration.models.EntityStatus
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import gov.cdc.ocio.processingstatusapi.plugins.AzureServiceBusConfiguration
+import gov.cdc.ocio.messagesystem.config.AzureServiceBusConfiguration
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.health.HealthStatusType

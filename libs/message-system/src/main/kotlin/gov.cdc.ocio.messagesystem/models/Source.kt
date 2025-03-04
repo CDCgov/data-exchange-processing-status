@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.models
+package gov.cdc.ocio.messagesystem.models
 
 /**
  * Indicates the source the data originates from.

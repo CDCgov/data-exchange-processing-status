@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.processingstatusapi.models.Source
+import gov.cdc.ocio.messagesystem.models.Source
 
 
 /**
@@ -11,5 +11,5 @@ import gov.cdc.ocio.processingstatusapi.models.Source
  *                  for origin tracking.
  */
 class RabbitMQProcessor: MessageProcessor() {
-    override val source:Source = Source.RABBITMQ
+    override val source: Source = Source.RABBITMQ
 }

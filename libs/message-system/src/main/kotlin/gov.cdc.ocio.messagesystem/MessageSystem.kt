@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.messagesystems
+package gov.cdc.ocio.messagesystem
 
 import gov.cdc.ocio.types.health.HealthCheckSystem
 

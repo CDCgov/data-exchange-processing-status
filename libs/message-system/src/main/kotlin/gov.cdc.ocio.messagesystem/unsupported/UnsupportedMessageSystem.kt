@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.messagesystems
+package gov.cdc.ocio.messagesystem.unsupported
 
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckUnsupportedMessageSystem
+import gov.cdc.ocio.messagesystem.MessageSystem
+import gov.cdc.ocio.messagesystem.health.HealthCheckUnsupportedMessageSystem
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
 

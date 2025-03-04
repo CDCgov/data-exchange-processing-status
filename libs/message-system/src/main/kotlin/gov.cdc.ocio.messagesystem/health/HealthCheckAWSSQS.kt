@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.health.messagesystem
+package gov.cdc.ocio.messagesystem.health
 
 import kotlinx.coroutines.*
 import aws.sdk.kotlin.services.sqs.SqsClient

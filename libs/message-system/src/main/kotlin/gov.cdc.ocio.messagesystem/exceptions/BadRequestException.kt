@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.exceptions
+package gov.cdc.ocio.messagesystem.exceptions
 
 /**
  * Intended use of this exception is for bad requests, such as a record could not be located because an invalid

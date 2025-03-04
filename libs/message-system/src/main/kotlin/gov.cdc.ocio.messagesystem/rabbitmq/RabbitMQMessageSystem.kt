@@ -1,8 +1,9 @@
-package gov.cdc.ocio.processingstatusapi.messagesystems
+package gov.cdc.ocio.messagesystem.rabbitmq
 
 import com.rabbitmq.client.Connection
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckRabbitMQ
-import gov.cdc.ocio.processingstatusapi.plugins.RabbitMQServiceConfiguration
+import gov.cdc.ocio.messagesystem.MessageSystem
+import gov.cdc.ocio.messagesystem.health.HealthCheckRabbitMQ
+import gov.cdc.ocio.messagesystem.config.RabbitMQServiceConfiguration
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
 

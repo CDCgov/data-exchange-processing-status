@@ -1,7 +1,8 @@
-package gov.cdc.ocio.processingstatusapi.messagesystems
+package gov.cdc.ocio.messagesystem.sqs
 
 import aws.sdk.kotlin.services.sqs.SqsClient
-import gov.cdc.ocio.processingstatusapi.health.messagesystem.HealthCheckAWSSQS
+import gov.cdc.ocio.messagesystem.MessageSystem
+import gov.cdc.ocio.messagesystem.health.HealthCheckAWSSQS
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
