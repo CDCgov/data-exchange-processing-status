@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingnotifications
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
@@ -37,7 +39,12 @@ fun Application.module() {
         loadKoinModules(environment)
     }
     install(ContentNegotiation) {
-        jackson()
+        jackson {
+            registerModule(JavaTimeModule())
+
+            // Serialize OffsetDateTime as ISO-8601
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        }
     }
     routing {
         subscribeDeadlineCheckRoute()
