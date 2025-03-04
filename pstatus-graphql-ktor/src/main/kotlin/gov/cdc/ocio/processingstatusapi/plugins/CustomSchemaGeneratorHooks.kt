@@ -122,7 +122,7 @@ val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
                     input.forEach { hashMap.put(it.key as String, it.value) }
                     hashMap
                 }
-                else -> throw IllegalArgumentException("Expected a LinkedHashMap<*, *>")
+                else -> throw CoercingParseValueException("Expected a LinkedHashMap<*, *>")
             }
         }
 
