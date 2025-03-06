@@ -201,8 +201,11 @@ class S3SchemaStorageClient(
             s3Client.headObject(headObjectRequest) // If no exception, object exists
         }
         result.onFailure {
-            throw FileNotFoundException("Schema file not found or could not be deleted: "
-                    + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+            when (it) {
+                is NoSuchKeyException -> throw FileNotFoundException("Schema file not found or could not be deleted: "
+                        + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+                else -> throw it
+            }
         }
 
         val deleteObjectRequest = DeleteObjectRequest.builder()
