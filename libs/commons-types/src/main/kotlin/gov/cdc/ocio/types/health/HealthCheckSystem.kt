@@ -2,7 +2,6 @@ package gov.cdc.ocio.types.health
 
 import mu.KotlinLogging
 
-
 /**
  * Abstract class used for modeling the health issues of an individual service.
  *

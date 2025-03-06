@@ -1,7 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
+
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.models.query.*
+import gov.cdc.ocio.types.health.HealthCheck
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
 import gov.cdc.ocio.types.utils.TimeUtils
 import io.ktor.client.*
@@ -40,7 +43,7 @@ class HealthCheckService: KoinComponent {
      *
      * @return HealthCheck
      */
-    suspend fun getHealth(): HealthResponse = coroutineScope {
+    suspend fun getHealth(): HealthStatusResult = coroutineScope {
         val serviceResults: MutableList<HealthCheck> = mutableListOf()
         var overallStatus = "UP"
 
@@ -61,7 +64,7 @@ class HealthCheckService: KoinComponent {
             overallStatus = HealthStatusType.STATUS_DOWN.toString()
         }
 
-        return@coroutineScope HealthResponse(
+        return@coroutineScope HealthStatusResult(
             status = overallStatus,
             totalChecksDuration = TimeUtils.formatMillisToHMS(time),
             services = serviceResults
@@ -75,14 +78,18 @@ class HealthCheckService: KoinComponent {
      */
     private fun fetchGraphQLHealth(name: String): HealthCheck {
         val result = graphqlHealthService.getHealth()
-        return HealthCheck(
-            name = name,
-            status = result.status!!,
-            totalChecksDuration = result.totalChecksDuration!!,
-            dependencyHealthChecks = result.dependencyHealthChecks.map {
-                DependencyHealthCheck(it.system!!, it.service!!, it.status, it.healthIssues)
-            }
-        )
+        return HealthCheck().apply {
+            this.name = name
+            this.status = result.status!!
+            this.totalChecksDuration = result.totalChecksDuration!!
+            this.dependencyHealthChecks = result.dependencyHealthChecks.map {
+                HealthCheckResult(
+                    it.system!!, it.service!!,
+                    if (it.status == "UP") HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN, it.healthIssues
+                )
+            }.toMutableList()
+
+        }
     }
 
     /**
@@ -94,17 +101,19 @@ class HealthCheckService: KoinComponent {
     private suspend fun fetchExternalHealth(name: String, url: String): HealthCheck {
         return try {
             val response: HealthCheck = client.get(url).body()
-            response.copy(name = name)
+           response.apply { this.name=name }
         } catch (e: Exception) {
             logger.error(e) { "Failed to fetch health from $url" }
-            HealthCheck(
-                name = name,
-                status = HealthStatusType.STATUS_DOWN,
-                totalChecksDuration = "00:00:01.000",
-                dependencyHealthChecks = listOf(
-                    DependencyHealthCheck("Unknown", name, "DOWN", e.message)
-                )
-            )
+            HealthCheck().apply{
+                this.name = name
+                this.status = HealthStatusType.STATUS_DOWN
+                this.totalChecksDuration = "00:00:01.000"
+                this.dependencyHealthChecks = listOf(
+                    HealthCheckResult("Unknown", name, HealthStatusType.STATUS_DOWN, e.message)
+                ).toMutableList()
+            }
+
+
         }
     }
 
@@ -114,7 +123,7 @@ class HealthCheckService: KoinComponent {
  * GraphQL query service for getting health status.
  */
 class HealthQueryService : Query {
-    suspend fun getHealth(): HealthResponse {
+    suspend fun getHealth(): HealthStatusResult {
         return HealthCheckService().getHealth()
     }
 }

@@ -9,6 +9,9 @@ package gov.cdc.ocio.types.health
  * @property healthIssues String?
  * @constructor
  */
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class HealthCheckResult(
     val system: String,
     val service: String?,

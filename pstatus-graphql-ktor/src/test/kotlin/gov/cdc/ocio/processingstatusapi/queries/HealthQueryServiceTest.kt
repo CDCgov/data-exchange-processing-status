@@ -1,11 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
+
 import gov.cdc.ocio.database.cosmos.CosmosClientManager
 import gov.cdc.ocio.database.couchbase.CouchbaseCollection
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
-import gov.cdc.ocio.processingstatusapi.models.query.DependencyHealthCheck
-import gov.cdc.ocio.processingstatusapi.models.query.HealthResponse
-import gov.cdc.ocio.processingstatusapi.models.query.HealthCheck
+import gov.cdc.ocio.processingstatusapi.models.query.HealthStatusResult
+import gov.cdc.ocio.types.health.HealthCheck
+import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
@@ -50,16 +51,14 @@ class HealthQueryServiceTest {
     @Test
     fun `getHealth should return UP status`() = runBlocking {
         // Arrange
-        val serviceHealth = HealthCheck(
-            name = "Cosmos DB",
-            status = HealthStatusType.STATUS_UP,
-            totalChecksDuration = "00:00:00.123",
-            dependencyHealthChecks = listOf(
-                DependencyHealthCheck("Database", "Couchbase", "UP", null)
-            )
-        )
-
-        val healthResponse = HealthResponse(
+        val serviceHealth = HealthCheck().apply {
+            this.name = "Couchbase DB"
+            this.status = HealthStatusType.STATUS_UP
+            this.totalChecksDuration = "00:00:00.123"
+            this.dependencyHealthChecks = listOf(
+                HealthCheckResult("Database", "Couchbase", HealthStatusType.STATUS_UP, null)).toMutableList()
+        }
+        val healthResponse = HealthStatusResult(
             status = "UP",
             totalChecksDuration = "00:00:00.123",
             services = listOf(serviceHealth)
@@ -81,16 +80,16 @@ class HealthQueryServiceTest {
     @Test
     fun `getHealth should return DOWN status when a service is unavailable`() = runBlocking {
         // Arrange
-        val serviceHealth = HealthCheck(
-            name = "Cosmos DB",
-            status = HealthStatusType.STATUS_DOWN,
-            totalChecksDuration = "00:00:00.456",
-            dependencyHealthChecks = listOf(
-                DependencyHealthCheck("Database", "Couchbase", "DOWN", "Timeout")
-            )
-        )
+        val serviceHealth = HealthCheck().apply {
+            this.name = "Couchbase DB"
+            this.status = HealthStatusType.STATUS_UP
+            this.totalChecksDuration = "00:00:00.456"
+            this.dependencyHealthChecks = listOf(
+                HealthCheckResult("Database", "Couchbase", HealthStatusType.STATUS_DOWN, null)).toMutableList()
+        }
 
-        val healthResponse = HealthResponse(
+
+        val healthResponse = HealthStatusResult(
             status = "DOWN",
             totalChecksDuration = "00:00:00.456",
             services = listOf(serviceHealth)

@@ -9,7 +9,6 @@ buildscript {
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.24'
     id 'io.ktor.plugin' version '2.3.11'
-    id "org.jetbrains.kotlin.plugin.serialization" version "1.8.20"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
 }
 apply plugin: "java"
