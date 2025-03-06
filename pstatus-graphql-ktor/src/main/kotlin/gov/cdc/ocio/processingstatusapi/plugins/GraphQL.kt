@@ -40,7 +40,7 @@ fun Application.graphQLModule() {
         schema {
             packages = listOf("gov.cdc.ocio.processingstatusapi")
             queries = listOf(
-                HealthQueryService(),
+                HealthQueryService(), // ✅ Manually passing dependencies
                 ReportQueryService(),
                 ReportSchemaQueryService(),
                 ReportCountsQueryService(),

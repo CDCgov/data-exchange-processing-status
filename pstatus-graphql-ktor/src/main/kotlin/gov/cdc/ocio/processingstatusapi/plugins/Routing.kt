@@ -19,7 +19,7 @@ fun Application.configureRouting() {
         get("/health") {
             val result = HealthQueryService().getHealth()
             val responseCode = when (result.status) {
-                HealthStatusType.STATUS_UP -> HttpStatusCode.OK
+                HealthStatusType.STATUS_UP.toString() -> HttpStatusCode.OK
                 else -> HttpStatusCode.InternalServerError
             }
             call.respond(responseCode, result)

@@ -87,6 +87,13 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("ch.qos.logback:logback-classic:1.2.11")
 
+    implementation "io.ktor:ktor-client-core:$ktor_version"
+    implementation "io.ktor:ktor-client-cio:$ktor_version"
+
+    // Ktor JSON serialization (Kotlinx)
+    implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
+    implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
+
     testImplementation "io.ktor:ktor-server-tests-jvm:2.3.13"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:2.1.0"
 
