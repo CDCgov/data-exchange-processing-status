@@ -57,9 +57,9 @@ class S3SchemaStorageClient(
      * Get a schema file from the provided filename.
      *
      * @param fileName String
-     * @return String
+     * @return String?
      */
-    override fun getSchemaFile(fileName: String): String {
+    override fun getSchemaFile(fileName: String): String? {
         val s3Client = getS3Client()
 
         val getObjectRequest = GetObjectRequest.builder()
@@ -67,14 +67,20 @@ class S3SchemaStorageClient(
             .key(fileName)
             .build()
 
-        val result = s3Client
-            .getObject(getObjectRequest)
-            .readAllBytes()
-            .decodeToString()
-
+        val result = runCatching {
+            s3Client
+                .getObject(getObjectRequest)
+                .readAllBytes()
+                .decodeToString()
+        }
         s3Client.close()
-
-        return result
+        result.onFailure {
+            when (it) {
+                is NoSuchKeyException -> return null
+                else -> throw it // such as token expired
+            }
+        }
+        return result.getOrNull()
     }
 
     /**

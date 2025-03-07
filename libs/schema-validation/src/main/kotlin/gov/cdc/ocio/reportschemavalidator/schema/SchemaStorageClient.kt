@@ -10,7 +10,7 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  */
 interface SchemaStorageClient {
     @Throws(Exception::class)
-    fun getSchemaFile(fileName: String): String
+    fun getSchemaFile(fileName: String): String?
 
     fun getSchemaFiles(): List<ReportSchemaMetadata>
 
