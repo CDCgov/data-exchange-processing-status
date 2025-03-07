@@ -2,7 +2,8 @@ package gov.cdc.ocio.processingnotifications.model
 
 /**
  * Base class for subscription
- *  @param dataStreamId String
+ *
+ * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
  * @param daysToRun List<String>
@@ -14,5 +15,4 @@ open class BaseSubscription(open val dataStreamId: String,
                             open val jurisdiction: String,
                             open val daysToRun: List<String>,
                             open val timeToRun: String,
-                            open val deliveryReference: String) {
-}
+                            open val deliveryReference: String)

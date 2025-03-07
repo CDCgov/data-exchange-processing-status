@@ -32,12 +32,14 @@ class FileSchemaLoader(
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
         val file = File("$schemaLocalSystemFilePath/$fileName")
-        if (!file.exists()) {
-            throw FileNotFoundException("Report rejected: file - $fileName not found for content schema.")
-        }
+
+        val content = if (file.exists())
+            file.inputStream().readAllBytes().decodeToString()
+        else null
+
         return SchemaFile(
-            fileName = fileName,
-            content = file.inputStream().readAllBytes().decodeToString()
+            fileName,
+            content
         )
     }
 

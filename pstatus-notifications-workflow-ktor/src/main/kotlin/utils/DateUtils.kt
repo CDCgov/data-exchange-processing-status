@@ -1,9 +1,10 @@
 package gov.cdc.ocio.processingnotifications.utils
 
-import com.azure.cosmos.implementation.BadRequestException
+import io.ktor.server.plugins.*
 import org.apache.commons.lang3.time.FastDateFormat
 import java.text.ParseException
 import java.util.*
+
 
 /**
  * A utility class for handling date operations.

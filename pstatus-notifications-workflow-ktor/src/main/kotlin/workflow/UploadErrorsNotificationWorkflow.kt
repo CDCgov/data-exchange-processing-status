@@ -1,7 +1,9 @@
 package gov.cdc.ocio.processingnotifications.workflow
 
+import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
+
 
 /**
  * Interface that defines the upload errors and notify
@@ -19,4 +21,6 @@ interface UploadErrorsNotificationWorkflow {
         deliveryReference: String
     )
 
+    @SignalMethod
+    fun cancelWorkflow()
 }

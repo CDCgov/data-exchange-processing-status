@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications
+package gov.cdc.ocio.processingnotifications.temporal
 
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.types.health.HealthCheckResult
@@ -15,10 +15,8 @@ import io.temporal.serviceclient.WorkflowServiceStubsOptions
  * @param temporalConfig TemporalConfig
  */
 class HealthCheckTemporalServer(
-    temporalConfig: TemporalConfig
+    private val temporalConfig: TemporalConfig
 ) : HealthCheckSystem("Workflow", "Temporal Server") {
-
-    private val target = temporalConfig.temporalServiceTarget
 
     /**
      * Checks and sets TemporalHealth status
@@ -40,16 +38,16 @@ class HealthCheckTemporalServer(
     private fun isTemporalHealthy(): Result<Boolean> {
         return try {
             val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
-                .setTarget(target)
+                .setTarget(temporalConfig.serviceTarget)
                 .build()
 
-            val serviceStubs = WorkflowServiceStubs.newServiceStubs(serviceOptions)
+            val service = WorkflowServiceStubs.newServiceStubs(serviceOptions)
 
-            val isDown = serviceStubs.isShutdown || serviceStubs.isTerminated
+            val isDown = service.isShutdown || service.isTerminated
             if (isDown) {
                 Result.failure(Exception("Temporal Server is down or terminated"))
             } else {
-                serviceStubs.blockingStub()
+                service.blockingStub()
                     .getSystemInfo(GetSystemInfoRequest.getDefaultInstance()).capabilities
                 Result.success(true)
             }

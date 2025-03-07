@@ -23,6 +23,8 @@ fun Application.graphQLModule() {
 
     val securityEnabled = environment.config.tryGetString("security.enabled")?.lowercase() != "false"
     val graphQLPath = environment.config.tryGetString("graphql.path")
+    val rulesEngineServiceUrl = environment.config.tryGetString("notifications.rules_engine_url")
+    val workflowServiceUrl = environment.config.tryGetString("notifications.workflow_url")
 
     install(WebSockets) {
         // needed for subscriptions
@@ -31,10 +33,6 @@ fun Application.graphQLModule() {
     }
 
     configureSecurity(securityEnabled)
-
-//    install(CORS) {
-//        anyHost()
-//    }
 
     install(GraphQL) {
         schema {
@@ -45,20 +43,18 @@ fun Application.graphQLModule() {
                 ReportSchemaQueryService(),
                 ReportCountsQueryService(),
                 ReportDeadLetterQueryService(),
-                UploadQueryService()
+                UploadQueryService(),
+                WorkflowQueryService(workflowServiceUrl)
             )
             mutations = listOf(
-                NotificationsMutationService(),
-                DataStreamTopErrorsNotificationSubscriptionMutationService(),
-                DeadlineCheckSubscriptionMutationService(),
-                UploadErrorsNotificationSubscriptionMutationService(),
-                UploadDigestCountsSubscriptionMutationService(),
+                NotificationsMutationService(workflowServiceUrl),
+                DataStreamTopErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
+                DeadlineCheckSubscriptionMutationService(workflowServiceUrl),
+                UploadErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
+                UploadDigestCountsSubscriptionMutationService(workflowServiceUrl),
                 ReportMutation(),
                 ReportSchemaMutation()
             )
-//            subscriptions = listOf(
-//                ErrorSubscriptionService()
-//            )
             hooks = CustomSchemaGeneratorHooks()
         }
         server {
@@ -68,6 +64,7 @@ fun Application.graphQLModule() {
             exceptionHandler = CustomGraphQLExceptionHandler()
         }
     }
+
     install(RoutingRoot) {
         if (securityEnabled) {
             authenticate("oauth") {
