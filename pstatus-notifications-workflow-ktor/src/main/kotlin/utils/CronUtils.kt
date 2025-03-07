@@ -37,17 +37,14 @@ object CronUtils {
     fun nextExecution(cronExpression: String?): Instant? {
         if (cronExpression.isNullOrEmpty()) return null
 
-        return try {
-            val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
-            val cron = parser.parse(cronExpression)
-            cron.validate() // Ensures the cron expression is valid
+        val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
+        val cron = parser.parse(cronExpression)
+        cron.validate() // Ensures the cron expression is valid
 
-            // Compute the next execution time
-            val executionTime = ExecutionTime.forCron(cron)
-            val now = ZonedDateTime.now()
-            return executionTime.nextExecution(now).getOrNull()?.toInstant()
-        } catch (ex: Exception) {
-            null
-        }
+        // Compute the next execution time
+        val executionTime = ExecutionTime.forCron(cron)
+        val now = ZonedDateTime.now()
+
+        return executionTime.nextExecution(now).getOrNull()?.toInstant()
     }
 }

@@ -48,7 +48,6 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      * specified time or not invokes the activity, if there are errors.
      *
      * @param dataStreamId String
-     * @param dataStreamId String
      * @param jurisdiction String
      * @param daysToRun List<String>
      * @param timeToRun String

@@ -164,7 +164,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             val cronScheduleDescription = runCatching {
                 CronUtils.description(cronScheduleRaw)
             }
-            val nextExecution = CronUtils.nextExecution(cronScheduleRaw)
+            val nextExecution = runCatching { CronUtils.nextExecution(cronScheduleRaw) }.getOrNull()
             val taskName = executionInfo.type.name
             val ts = executionInfo.executionTime
             val lastRun = OffsetDateTime.ofInstant(Instant.ofEpochSecond(ts.seconds, ts.nanos.toLong()), ZoneOffset.UTC)

@@ -39,9 +39,6 @@ class WorkflowQueryService(
                     throw Exception("Service unavailable. Status: ${response.status}")
                 }
             } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    //SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
                 throw Exception(workflowServiceConnection.serviceUnavailable)
             }
         }
