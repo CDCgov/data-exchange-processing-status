@@ -1,24 +1,28 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
 
 /**
- * The main class which subscribes the workflow execution
- * for digest counts and top errors and its frequency for each upload
- * @property cacheService IMemoryCacheService
+ * The main class which subscribes the workflow execution for digest counts and top errors and its frequency for
+ * each upload.
+ *
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
-
  */
-class DataStreamTopErrorsNotificationUnSubscriptionService {
+class DataStreamTopErrorsNotificationUnSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
 
     /**
-     * The main function which is used to cancel the workflow based on the workflowID
+     * The main function which is used to cancel the workflow based on the workflowID.
+     *
      * @param subscriptionId String
      * @return WorkflowSubscriptionResult
      */
@@ -26,7 +30,11 @@ class DataStreamTopErrorsNotificationUnSubscriptionService {
             WorkflowSubscriptionResult {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return cacheService.updateDeadlineCheckUnSubscriptionPreferences(subscriptionId)
+            return WorkflowSubscriptionResult(
+                subscriptionId = subscriptionId,
+                message = "",
+                deliveryReference = ""
+            )
         }
         catch (e:Exception){
             logger.error("Error occurred while unsubscribing and canceling the workflow for digest counts and top errors with workflowId $subscriptionId: ${e.message}")

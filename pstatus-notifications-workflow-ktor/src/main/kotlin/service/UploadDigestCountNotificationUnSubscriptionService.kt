@@ -1,21 +1,23 @@
 package gov.cdc.ocio.processingnotifications.service
 
-
-import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
 
 /**
- * The main class which unsubscribes the workflow execution
- * for daily upload digest counts
- * @property cacheService IMemoryCacheService
+ * The main class which unsubscribes the workflow execution for daily upload digest counts.
+ *
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
-class UploadDigestCountNotificationUnSubscriptionService {
+class UploadDigestCountNotificationUnSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
 
     /**
      * The main method which cancels a workflow based on the workflow Id
@@ -25,9 +27,13 @@ class UploadDigestCountNotificationUnSubscriptionService {
             WorkflowSubscriptionResult {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return WorkflowSubscriptionResult(subscriptionId = subscriptionId, message = "Successfully UnSubscribed for $subscriptionId","")
+            return WorkflowSubscriptionResult(
+                subscriptionId = subscriptionId,
+                message = "Successfully UnSubscribed for $subscriptionId",
+                ""
+            )
         }
-        catch (e:Exception){
+        catch (e:Exception ){
             logger.error("Error occurred while checking for upload deadline: ${e.message}")
         }
         throw Exception("Error occurred while canceling the execution of workflow engine to cancel workflow for workflow Id $subscriptionId")

@@ -1,7 +1,9 @@
 package gov.cdc.ocio.processingnotifications.activity
 
+import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
+
 
 /**
  * Interface which defines the activity methods
@@ -16,7 +18,7 @@ interface NotificationActivities {
     )
     @ActivityMethod
     fun sendUploadErrorsNotification(
-        error:String,
+        error: List<CheckUploadResponse>,
         deliveryReference: String
     )
     @ActivityMethod

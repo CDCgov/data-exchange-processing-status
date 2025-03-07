@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
@@ -9,25 +8,35 @@ import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotifica
 import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotificationWorkflow
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
 
 /**
  * The main class which sets up and subscribes the workflow execution
  * for digest counts and the frequency with which each of the top 5 errors occur
  */
+class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
 
-class DataStreamTopErrorsNotificationSubscriptionService {
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    private val workflowEngine:WorkflowEngine = WorkflowEngine()
-    private val notificationActivitiesImpl:NotificationActivitiesImpl = NotificationActivitiesImpl()
+
+    private val workflowEngine by inject<WorkflowEngine>()
+
+    private val notificationActivitiesImpl = NotificationActivitiesImpl()
+
+    private val description =
+        """
+        Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.
+        """.trimIndent()
+
 
     /**
      * The main method which gets called from the route which executes and kicks off the
      * workflow execution for digest counts and the frequency with which each of the top 5 errors occur
+     *
      * @param subscription DataStreamTopErrorsNotificationSubscription
      */
-    fun run(subscription: DataStreamTopErrorsNotificationSubscription):
-            WorkflowSubscriptionResult {
+    fun run(subscription: DataStreamTopErrorsNotificationSubscription): WorkflowSubscriptionResult {
         try {
             val dataStreamId = subscription.dataStreamId
             val dataStreamRoute = subscription.dataStreamRoute
@@ -37,14 +46,35 @@ class DataStreamTopErrorsNotificationSubscriptionService {
             val deliveryReference= subscription.deliveryReference
             val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
-            val workflow =  workflowEngine.setupWorkflow(taskQueue,daysToRun,timeToRun,
-                DataStreamTopErrorsNotificationWorkflowImpl::class.java ,notificationActivitiesImpl, DataStreamTopErrorsNotificationWorkflow::class.java)
+            val workflow = workflowEngine.setupWorkflow(
+                description,
+                taskQueue,
+                daysToRun,
+                timeToRun,
+                DataStreamTopErrorsNotificationWorkflowImpl::class.java,
+                notificationActivitiesImpl,
+                DataStreamTopErrorsNotificationWorkflow::class.java
+            )
 
-            val execution =  WorkflowClient.start(workflow::checkDataStreamTopErrorsAndNotify, dataStreamId, dataStreamRoute, jurisdiction,daysToRun, timeToRun, deliveryReference)
-            return cacheService.updateSubscriptionPreferences(execution.workflowId,subscription)
+            workflow?.let {
+                val execution = WorkflowClient.start(
+                    workflow::checkDataStreamTopErrorsAndNotify,
+                    dataStreamId,
+                    dataStreamRoute,
+                    jurisdiction,
+                    daysToRun,
+                    timeToRun,
+                    deliveryReference
+                )
+                return WorkflowSubscriptionResult(
+                    subscriptionId = execution.workflowId,
+                    message = "",
+                    deliveryReference = ""
+                )
+            }
         }
-        catch (e:Exception){
-            logger.error("Error occurred while subscribing for digest counts and top errors : ${e.message}")
+        catch (e:Exception) {
+            logger.error("Error occurred while subscribing for digest counts and top errors: ${e.message}")
         }
         throw Exception("Error occurred while subscribing for the workflow engine for digest counts and top errors")
     }
