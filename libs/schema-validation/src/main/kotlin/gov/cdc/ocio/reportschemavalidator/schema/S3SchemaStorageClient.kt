@@ -77,7 +77,7 @@ class S3SchemaStorageClient(
         result.onFailure {
             when (it) {
                 is NoSuchKeyException -> return null
-                is S3Exception -> throw it // such as token expired
+                else -> throw it // such as token expired
             }
         }
         return result.getOrNull()
