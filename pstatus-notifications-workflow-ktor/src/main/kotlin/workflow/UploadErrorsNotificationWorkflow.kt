@@ -16,8 +16,7 @@ interface UploadErrorsNotificationWorkflow {
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     )
 

@@ -13,8 +13,13 @@ import org.koin.core.component.inject
 
 
 /**
- * The main class which sets up and subscribes the workflow execution
- * for digest counts and the frequency with which each of the top 5 errors occur
+ * The main class which sets up and subscribes the workflow execution for digest counts and the frequency with which
+ * each of the top 5 errors occur.
+ *
+ * @property logger KLogger
+ * @property workflowEngine WorkflowEngine
+ * @property notificationActivitiesImpl NotificationActivitiesImpl
+ * @property description String
  */
 class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
 
@@ -41,16 +46,14 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
             val dataStreamId = subscription.dataStreamId
             val dataStreamRoute = subscription.dataStreamRoute
             val jurisdiction = subscription.jurisdiction
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
+            val cronSchedule = subscription.cronSchedule
             val deliveryReference= subscription.deliveryReference
             val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
             val workflow = workflowEngine.setupWorkflow(
                 description,
                 taskQueue,
-                daysToRun,
-                timeToRun,
+                cronSchedule,
                 DataStreamTopErrorsNotificationWorkflowImpl::class.java,
                 notificationActivitiesImpl,
                 DataStreamTopErrorsNotificationWorkflow::class.java
@@ -62,8 +65,7 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
                     dataStreamId,
                     dataStreamRoute,
                     jurisdiction,
-                    daysToRun,
-                    timeToRun,
+                    cronSchedule,
                     deliveryReference
                 )
                 return WorkflowSubscriptionResult(

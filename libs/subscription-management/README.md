@@ -96,16 +96,15 @@ class DeadLineCheckSubscriptionService: KoinComponent {
             val dataStreamId = subscription.dataStreamId
             val dataStreamRoute = subscription.dataStreamRoute
             val jurisdiction = subscription.jurisdiction
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
+            val cronSchedule = subscription.cronSchedule
             val deliveryReference= subscription.deliveryReference
             val taskQueue = "notificationTaskQueue"
 
-            val workflow =  workflowEngine.setupWorkflow(taskQueue,daysToRun,timeToRun,
+            val workflow = workflowEngine.setupWorkflow(taskQueue, cronSchedule,
                 NotificationWorkflowImpl::class.java ,notificationActivitiesImpl, NotificationWorkflow::class.java)
-            val execution =    WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, daysToRun, timeToRun, deliveryReference)
+            val execution = WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, cronSchedule, deliveryReference)
             
-            val workflowSubscription= getWorkflowSubscription(execution.workflowId, jurisdiction, daysToRun)
+            val workflowSubscription= getWorkflowSubscription(execution.workflowId, jurisdiction, cronSchedule)
             val subscriptionId = subscriptionManagementEngine.subscribe(workflowSubscription)
             return WorkflowSubscriptionResult(subscriptionId= subscriptionId, message="Successfully subscribed to the rule", deliveryReference=deliveryReference)
         }
@@ -115,11 +114,11 @@ class DeadLineCheckSubscriptionService: KoinComponent {
         throw Exception("Error occurred while executing workflow engine to subscribe for upload deadline")
     }
     
-     fun getWorkflowSubscription(notificationId:String,jurisdiction:String, daysToRun:List<String>):WorkflowSubscription{
+     fun getWorkflowSubscription(notificationId:String,jurisdiction:String, cronSchedule: String): WorkflowSubscription{
        val notification= "As a data provider, I would like to get a notification if an upload for my jurisdiction has not occurred by 12pm"
        val conditions = mapOf(
             "jurisdiction" to "New York",
-            "daysToRun" to  daysToRun
+            "cronSchedule" to cronSchedule
         )
         val emailAction = EmailNotificationAction(
             email= "xph6@cdc.gov",

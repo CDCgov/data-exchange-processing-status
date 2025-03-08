@@ -43,15 +43,13 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
         try {
             val dataStreams = subscription.dataStreamIds
             val jurisdictionIds = subscription.jurisdictionIds
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
+            val cronSchedule = subscription.cronSchedule
             val deliveryReference= subscription.deliveryReference
             val taskQueue = "uploadDigestCountsTaskQueue"
             val workflow = workflowEngine.setupWorkflow(
                 description,
                 taskQueue,
-                daysToRun,
-                timeToRun,
+                cronSchedule,
                 UploadDigestCountsNotificationWorkflowImpl::class.java,
                 notificationActivitiesImpl,
                 UploadDigestCountsNotificationWorkflow::class.java

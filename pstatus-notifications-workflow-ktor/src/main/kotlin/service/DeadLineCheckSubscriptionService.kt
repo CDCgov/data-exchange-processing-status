@@ -44,15 +44,13 @@ class DeadLineCheckSubscriptionService: KoinComponent {
             val dataStreamId = subscription.dataStreamId
             val jurisdiction = subscription.jurisdiction
             val dataStreamRoute = subscription.dataStreamRoute
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
+            val cronSchedule = subscription.cronSchedule
             val deliveryReference = subscription.deliveryReference
             val taskQueue = "notificationTaskQueue"
             val workflow = workflowEngine.setupWorkflow(
                 description,
                 taskQueue,
-                daysToRun,
-                timeToRun,
+                cronSchedule,
                 NotificationWorkflowImpl::class.java,
                 notificationActivitiesImpl,
                 NotificationWorkflow::class.java
@@ -63,8 +61,7 @@ class DeadLineCheckSubscriptionService: KoinComponent {
                     dataStreamId,
                     dataStreamRoute,
                     jurisdiction,
-                    daysToRun,
-                    timeToRun,
+                    cronSchedule,
                     deliveryReference
                 )
                 return WorkflowSubscriptionResult(

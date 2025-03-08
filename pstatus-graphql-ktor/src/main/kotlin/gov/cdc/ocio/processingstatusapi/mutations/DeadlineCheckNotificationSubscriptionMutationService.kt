@@ -17,16 +17,17 @@ import kotlinx.serialization.Serializable
  * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
- * @param daysToRun List<String>
+ * @param for digest counts and the frequency with which each of the top 5 errors occur String
  * @param deliveryReference String
  */
 @Serializable
-data class DeadlineCheckSubscription( val dataStreamId: String,
-                                      val dataStreamRoute: String,
-                                      val jurisdiction: String,
-                                      val daysToRun: List<String>,
-                                      val timeToRun: String,
-                                      val deliveryReference: String)
+data class DeadlineCheckSubscription(
+    val dataStreamId: String,
+    val dataStreamRoute: String,
+    val jurisdiction: String,
+    val cronSchedule: String,
+    val deliveryReference: String
+)
 
 /**
  * Deadline check unSubscription data class which is serialized back and forth which is in turn used for unsubscribing
@@ -62,8 +63,7 @@ class DeadlineCheckSubscriptionMutationService(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/deadlineCheck")
@@ -77,8 +77,7 @@ class DeadlineCheckSubscriptionMutationService(
                             dataStreamId,
                             dataStreamRoute,
                             jurisdiction,
-                            daysToRun,
-                            timeToRun,
+                            cronSchedule,
                             deliveryReference
                         )
                     )

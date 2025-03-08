@@ -17,8 +17,13 @@ import java.util.*
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
         val subscription = call.receive<DeadlineCheckSubscription>()
-        val deadlineCheckSubscription = DeadlineCheckSubscription(subscription.dataStreamId, subscription.dataStreamRoute, subscription.jurisdiction,
-            subscription.daysToRun, subscription.timeToRun, subscription.deliveryReference)
+        val deadlineCheckSubscription = DeadlineCheckSubscription(
+            subscription.dataStreamId,
+            subscription.dataStreamRoute,
+            subscription.jurisdiction,
+            subscription.cronSchedule,
+            subscription.deliveryReference
+        )
         val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
         call.respond(result)
 
@@ -42,8 +47,12 @@ fun Route.unsubscribeDeadlineCheck() {
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
         val subscription = call.receive<UploadDigestSubscription>()
-        val uploadDigestCountsSubscription = UploadDigestSubscription(subscription.jurisdictionIds, subscription.dataStreamIds,
-            subscription.daysToRun, subscription.timeToRun, subscription.deliveryReference)
+        val uploadDigestCountsSubscription = UploadDigestSubscription(
+            subscription.jurisdictionIds,
+            subscription.dataStreamIds,
+            subscription.cronSchedule,
+            subscription.deliveryReference
+        )
         val result = UploadDigestCountsNotificationSubscriptionService().run(uploadDigestCountsSubscription)
         call.respond(result)
 
@@ -67,9 +76,13 @@ fun Route.unsubscribeUploadDigestCountsRoute() {
 fun Route.subscribeUploadErrorsNotification() {
     post("/subscribe/uploadErrorsNotification") {
         val subscription = call.receive<UploadErrorsNotificationSubscription>()
-        val uploadErrorsNotificationSubscription = UploadErrorsNotificationSubscription(subscription.dataStreamId, subscription.dataStreamRoute,
+        val uploadErrorsNotificationSubscription = UploadErrorsNotificationSubscription(
+            subscription.dataStreamId,
+            subscription.dataStreamRoute,
             subscription.jurisdiction,
-            subscription.daysToRun, subscription.timeToRun,  subscription.deliveryReference)
+            subscription.cronSchedule,
+            subscription.deliveryReference
+        )
         val result = UploadErrorsNotificationSubscriptionService().run(uploadErrorsNotificationSubscription)
         call.respond(result)
 
@@ -93,9 +106,13 @@ fun Route.unsubscribeUploadErrorsNotification() {
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
         val subscription = call.receive<DataStreamTopErrorsNotificationSubscription>()
-        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(subscription.dataStreamId, subscription.dataStreamRoute,
+        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(
+            subscription.dataStreamId,
+            subscription.dataStreamRoute,
             subscription.jurisdiction,
-            subscription.daysToRun, subscription.timeToRun,  subscription.deliveryReference)
+            subscription.cronSchedule,
+            subscription.deliveryReference
+        )
         val result = DataStreamTopErrorsNotificationSubscriptionService().run(dataStreamTopErrorsNotificationSubscription)
         call.respond(result)
 

@@ -8,18 +8,16 @@ package gov.cdc.ocio.processingnotifications.model
  * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
- * @param daysToRun List<String>
- * @param timeToRun String
+ * @param cronSchedule String
  * @param deliveryReference String
  */
 data class DeadlineCheckSubscription(
     override val dataStreamId: String,
     override val dataStreamRoute: String,
     override val jurisdiction: String,
-    override val daysToRun: List<String>,
-    override val timeToRun: String,
-    override val deliveryReference: String)
-    : BaseSubscription(dataStreamId, dataStreamRoute ,jurisdiction, daysToRun, timeToRun, deliveryReference )
+    override val cronSchedule: String,
+    override val deliveryReference: String
+) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, deliveryReference)
 
 /**
  * DeadlineCheckUnSubscription data class which is serialized back and forth when we need to unsubscribe the workflow

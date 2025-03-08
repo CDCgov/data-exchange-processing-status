@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
  * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
- * @param daysToRun List<String>
+ * @param cronSchedule List<String>
  * @param deliveryReference String
  */
 @Serializable
@@ -25,8 +25,7 @@ data class UploadErrorsNotificationSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
     val jurisdiction: String,
-    val daysToRun: List<String>,
-    val timeToRun: String,
+    val cronSchedule: String,
     val deliveryReference: String
 )
 
@@ -64,8 +63,7 @@ class UploadErrorsNotificationSubscriptionMutationService(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/uploadErrorsNotification")
@@ -79,8 +77,7 @@ class UploadErrorsNotificationSubscriptionMutationService(
                             dataStreamId,
                             dataStreamRoute,
                             jurisdiction,
-                            daysToRun,
-                            timeToRun,
+                            cronSchedule,
                             deliveryReference
                         )
                     )

@@ -48,16 +48,14 @@ class UploadErrorsNotificationWorkflowImpl : UploadErrorsNotificationWorkflow, K
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String
-     * @param daysToRun List<String>
-     * @param timeToRun String
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     override fun checkUploadErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ) {
         try {
