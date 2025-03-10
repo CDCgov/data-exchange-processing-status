@@ -13,7 +13,7 @@ import org.koin.core.component.inject
  * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
-class UploadDigestCountNotificationUnSubscriptionService : KoinComponent {
+class UploadDigestCountsNotificationUnSubscriptionService : KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
