@@ -49,13 +49,16 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
     /**
      * Sets up a temporal workflow.
      *
+     * @param description String
      * @param taskName String
      * @param cronSchedule String
      * @param workflowImpl Class<T1>
      * @param activitiesImpl T2
      * @param workflowImplInterface Class<T3>
-     * @return T3
+     * @return T3?
+     * @throws IllegalArgumentException
      */
+    @Throws(IllegalArgumentException::class)
     fun <T1 : Any, T2 : Any, T3 : Any> setupWorkflow(
         description: String,
         taskName: String,
@@ -63,32 +66,31 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         workflowImpl: Class<T1>,
         activitiesImpl: T2,
         workflowImplInterface: Class<T3>
-    ): T3? {
-        try {
-            val factory = WorkerFactory.newInstance(client)
+    ): T3 {
+        CronUtils.checkValid(cronSchedule)
 
-            val worker = factory.newWorker(taskName)
-            worker.registerWorkflowImplementationTypes(workflowImpl)
-            worker.registerActivitiesImplementations(activitiesImpl)
-            logger.info("Workflow and Activity successfully registered")
-            factory.start()
+        client ?: throw IllegalArgumentException("Workflow client is not established")
 
-            val workflowOptions = WorkflowOptions.newBuilder()
-                .setTaskQueue(taskName)
-                .setMemo(mapOf("description" to description))
-                .setCronSchedule(cronSchedule) // Cron schedule: 15 5 * * 1-5 - Every week day at  5:15a
-                .build()
+        val factory = WorkerFactory.newInstance(client)
 
-            val workflow = client?.newWorkflowStub(
-                workflowImplInterface,
-                workflowOptions
-            )
-            logger.info("Workflow successfully started")
-            return workflow
-        } catch (ex: Exception) {
-            logger.error("Error while creating workflow: ${ex.message}")
-        }
-        throw Exception("WorkflowEngine instantiation failed. Please try again")
+        val worker = factory.newWorker(taskName)
+        worker.registerWorkflowImplementationTypes(workflowImpl)
+        worker.registerActivitiesImplementations(activitiesImpl)
+        logger.info("Workflow and Activity successfully registered")
+        factory.start()
+
+        val workflowOptions = WorkflowOptions.newBuilder()
+            .setTaskQueue(taskName)
+            .setMemo(mapOf("description" to description))
+            .setCronSchedule(cronSchedule) // Cron schedule: 15 5 * * 1-5 - Every week day at 5:15a
+            .build()
+
+        val workflow = client!!.newWorkflowStub(
+            workflowImplInterface,
+            workflowOptions
+        )
+        logger.info("Workflow successfully started")
+        return workflow
     }
 
     /**
