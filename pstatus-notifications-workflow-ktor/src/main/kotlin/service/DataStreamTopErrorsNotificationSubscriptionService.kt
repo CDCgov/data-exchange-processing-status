@@ -68,9 +68,11 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
             cronSchedule,
             deliveryReference
         )
+
+        val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = execution.workflowId,
-            message = "",
+            message = "Successfully subscribed for $workflowId",
             deliveryReference = ""
         )
     }

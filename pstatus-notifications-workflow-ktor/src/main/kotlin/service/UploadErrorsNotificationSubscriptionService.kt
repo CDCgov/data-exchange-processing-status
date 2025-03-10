@@ -69,9 +69,10 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
 
         logger.info("Started workflow with id: ${execution.workflowId}")
 
+        val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
-            subscriptionId = execution.workflowId,
-            message = "",
+            subscriptionId = workflowId,
+            message = "Successfully subscribed for $workflowId",
             deliveryReference = ""
         )
     }
