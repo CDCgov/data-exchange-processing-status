@@ -54,7 +54,7 @@ class UploadErrorsNotificationSubscriptionMutationService(
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String
-     * @param daysToRun List<String>
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     @GraphQLDescription("Subscribe upload errors lets you get notifications when there are errors in an upload")

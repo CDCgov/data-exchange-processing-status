@@ -54,7 +54,7 @@ class DeadlineCheckSubscriptionMutationService(
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String
-     * @param daysToRun List<String>
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     @GraphQLDescription("Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm")
