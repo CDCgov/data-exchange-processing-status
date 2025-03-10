@@ -1,82 +1,70 @@
 import { test, expect } from '@fixtures/gql';
 import { SortOrder } from '@gql';
+import { createUploadReport } from 'fixtures/dataGenerator';
 import { report } from 'process';
 
 test.describe('GraphQL getReports', () => {
-    test.skip('returns a report for a known upload id', async ({ gql }) => {
-        const expectedPageSize = 1
-        const expectedPageNumber = 1   
-        const expectedDataStreamId = 'dextesting'
-        const expectedDataStreamRoute = 'testevent1'
+    let uploadReport: any
 
-        const uploadResponse = await gql.getUploads({
-            dataStreamId: expectedDataStreamId,
-            dataStreamRoute: expectedDataStreamRoute,
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+    test.beforeAll(async ({ gql }) => {
+        uploadReport = await createUploadReport();
+        console.log(uploadReport)
+
+        const createReportResult = await gql.upsertReport({
+            action: "create",
+            report: uploadReport
         })
+        console.log(createReportResult)
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
         
-        expect(uploadResponse.getUploads.items.length).toEqual(1)
-        expect(uploadResponse.getUploads.items[0].uploadId).not.toBeNull()
-        expect(uploadResponse.getUploads.items[0].uploadId).not.toBeUndefined()
-        const expectedUploadId = await uploadResponse.getUploads.items[0].uploadId!
-        
+    })
+    
+    test('returns a report for a known upload id', async ({ gql }) => {
         const reportResult = await gql.getReports({
-            uploadId: expectedUploadId,
+            uploadId: uploadReport.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
+        console.log(reportResult.getReports[0])
         expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
 
         await reportResult.getReports.forEach(report => {
-            expect(report.dataStreamId).toEqual(expectedDataStreamId)
-            expect(report.dataStreamRoute).toEqual(expectedDataStreamRoute)
-            expect(report.uploadId).toEqual(expectedUploadId)            
+            expect(report.reportSchemaVersion).toEqual(uploadReport.report_schema_version)
+            expect(report.uploadId).toEqual(uploadReport.upload_id)            
+            expect(report.dataStreamId).toEqual(uploadReport.data_stream_id)
+            expect(report.dataStreamRoute).toEqual(uploadReport.data_stream_route)
+            expect(report.jurisdiction).toEqual(uploadReport.jurisdiction)
+            expect(report.senderId).toEqual(uploadReport.sender_id)
+            expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
+            expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
+            expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
+            expect(report.id).toBeDefined()
+            expect(report.timestamp).toBeDefined()
+            //expect(report.dexIngestDateTime).toEqual(uploadReport.dex_ingest_datetime)
+
+            // Message Metadata Section
+            // expect(report.messageMetadata?.messageUUID).toEqual(uploadReport.message_metadata.message_uuid)
+            // expect(report.messageMetadata?.messageHash).toEqual(uploadReport.message_metadata.message_hash)
+            // expect(report.messageMetadata?.messageIndex).toEqual(uploadReport.message_metadata.message_index)
+            expect(report.messageMetadata?.aggregation).toEqual(uploadReport.message_metadata.aggregation)
+
+            //Content Section
+            expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
+            expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
+            expect(report.content.status).toEqual(uploadReport.content.status)
+
+            //data section
+            expect(report.data.dataField1).toEqual(uploadReport.data.data_field1)
+            
+            //stage info section
+            expect(report.stageInfo?.status).toEqual(uploadReport.stage_info.status)
+            expect(report.stageInfo?.issues).toEqual(uploadReport.stage_info.issues)
+            // expect(report.stageInfo?.startProcessingTime).toEqual(uploadReport.stage_info.start_processing_time)
+            // expect(report.stageInfo?.endProcessingTime).toEqual(uploadReport.end_processing_time)
+            
+            //tags section
+            expect(report.tags.tagField1).toEqual(uploadReport.tags.tag_field1)
         });
     })
 
-    test.only('creates an upload report', async ({ gql }) => {
-
-        const report = {
-            report_schema_version: "1.0.0",
-            upload_id: "e2b3a950-4c2c-4756-868e-f81ec27f27fb",
-            user_id: "test-user2",
-            data_stream_id: "dex-testing",
-            data_stream_route: "test-event1",
-            jurisdiction: "SMOKE1",
-            sender_id: "APHL",
-            data_producer_id: "smoke-test-data-producer",
-            dex_ingest_datetime: "2024-07-10T15:40:10.162+00:00",
-            message_metadata: {
-                message_uuid: "5a1fff57-2ea1-4a64-81de-aa7f3096a1ce",
-                message_hash: "38c2cc0dcc05f2b68c4287040cfcf71",
-                aggregation: "SINGLE",
-                message_index: 1
-            },
-            stage_info: {
-                service: "UPLOAD API",
-                action: "upload-completed",
-                version: "0.0.49-SNAPSHOT",
-                status: "SUCCESS",
-                issues: null,
-                start_processing_time: "2024-07-10T15:40:10.162+00:00",
-                end_processing_time: "2024-07-10T15:40:10.228+00:00"
-            },
-            tags: { tag_field1: "value1" },
-            data: { data_field1: "value1" },
-            content_type: "application/json",
-            content: {
-                content_schema_name: "upload-completed",
-                content_schema_version: "1.0.0",
-                status: "SUCCESS"
-            }
-        }
-
-        const reportResult = await gql.upsertReport({
-            action: "create",
-            report: report
-        })
-
-        console.log(reportResult)
-    })
 } )
