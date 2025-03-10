@@ -5,6 +5,7 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
+import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -95,18 +96,20 @@ class NotificationsMutationService(
         val url = workflowServiceConnection.getUrl("/subscribe/email")
 
         return runBlocking {
-            try {
+            val result = runCatching {
                 val response = workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(EmailSubscription(dataStreamId, dataStreamRoute, email, stageName, statusType))
                 }
-                return@runBlocking ProcessResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
+                return@runCatching ProcessResponse(response)
             }
+            result.onFailure {
+                when (it) {
+                    is ResponseException -> throw it
+                    else -> throw Exception(workflowServiceConnection.serviceUnavailable)
+                }
+            }
+            return@runBlocking result.getOrThrow()
         }
     }
 
