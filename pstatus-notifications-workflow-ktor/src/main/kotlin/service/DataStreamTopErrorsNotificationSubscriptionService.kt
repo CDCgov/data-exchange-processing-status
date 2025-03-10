@@ -34,50 +34,44 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
         Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.
         """.trimIndent()
 
-
     /**
      * The main method which gets called from the route which executes and kicks off the
      * workflow execution for digest counts and the frequency with which each of the top 5 errors occur
      *
      * @param subscription DataStreamTopErrorsNotificationSubscription
      */
-    fun run(subscription: DataStreamTopErrorsNotificationSubscription): WorkflowSubscriptionResult {
-        try {
-            val dataStreamId = subscription.dataStreamId
-            val dataStreamRoute = subscription.dataStreamRoute
-            val jurisdiction = subscription.jurisdiction
-            val cronSchedule = subscription.cronSchedule
-            val deliveryReference= subscription.deliveryReference
-            val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
+    fun run(
+        subscription: DataStreamTopErrorsNotificationSubscription
+    ): WorkflowSubscriptionResult {
 
-            val workflow = workflowEngine.setupWorkflow(
-                description,
-                taskQueue,
-                cronSchedule,
-                DataStreamTopErrorsNotificationWorkflowImpl::class.java,
-                notificationActivitiesImpl,
-                DataStreamTopErrorsNotificationWorkflow::class.java
-            )
+        val dataStreamId = subscription.dataStreamId
+        val dataStreamRoute = subscription.dataStreamRoute
+        val jurisdiction = subscription.jurisdiction
+        val cronSchedule = subscription.cronSchedule
+        val deliveryReference= subscription.deliveryReference
+        val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
-            workflow?.let {
-                val execution = WorkflowClient.start(
-                    workflow::checkDataStreamTopErrorsAndNotify,
-                    dataStreamId,
-                    dataStreamRoute,
-                    jurisdiction,
-                    cronSchedule,
-                    deliveryReference
-                )
-                return WorkflowSubscriptionResult(
-                    subscriptionId = execution.workflowId,
-                    message = "",
-                    deliveryReference = ""
-                )
-            }
-        }
-        catch (e:Exception) {
-            logger.error("Error occurred while subscribing for digest counts and top errors: ${e.message}")
-        }
-        throw Exception("Error occurred while subscribing for the workflow engine for digest counts and top errors")
+        val workflow = workflowEngine.setupWorkflow(
+            description,
+            taskQueue,
+            cronSchedule,
+            DataStreamTopErrorsNotificationWorkflowImpl::class.java,
+            notificationActivitiesImpl,
+            DataStreamTopErrorsNotificationWorkflow::class.java
+        )
+
+        val execution = WorkflowClient.start(
+            workflow::checkDataStreamTopErrorsAndNotify,
+            dataStreamId,
+            dataStreamRoute,
+            jurisdiction,
+            cronSchedule,
+            deliveryReference
+        )
+        return WorkflowSubscriptionResult(
+            subscriptionId = execution.workflowId,
+            message = "",
+            deliveryReference = ""
+        )
     }
 }
