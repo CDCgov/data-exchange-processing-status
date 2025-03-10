@@ -5,6 +5,7 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
+import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -102,7 +103,7 @@ class NotificationsMutationService(
                 return@runBlocking ProcessResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
-                    ProcessErrorCodes(url, e, null)
+                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
                 }
                 throw Exception(workflowServiceConnection.serviceUnavailable)
             }
@@ -129,7 +130,7 @@ class NotificationsMutationService(
                 return@runBlocking ProcessResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
-                    ProcessErrorCodes(url, e, subscriptionId)
+                    SubscriptionResponse.ProcessErrorCodes(url, e, subscriptionId)
                 }
                 throw Exception(workflowServiceConnection.serviceUnavailable)
             }
@@ -166,7 +167,7 @@ class NotificationsMutationService(
                 return@runBlocking ProcessResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
-                    ProcessErrorCodes(url, e, null)
+                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
                 }
                 throw Exception(workflowServiceConnection.serviceUnavailable)
             }
@@ -193,7 +194,7 @@ class NotificationsMutationService(
                 return@runBlocking ProcessResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
-                    ProcessErrorCodes(url, e, subscriptionId)
+                    SubscriptionResponse.ProcessErrorCodes(url, e, subscriptionId)
                 }
                 throw Exception(workflowServiceConnection.serviceUnavailable)
             }
@@ -210,29 +211,9 @@ class NotificationsMutationService(
             if (response.status == HttpStatusCode.OK) {
                 return response.body()
             } else {
-                throw Exception("Notification service is unavailable. Status:${response.status}")
+                throw Exception("Notification service is unavailable. Status: ${response.status}")
             }
         }
     }
 
-}
-
-/**
- * Function to process the http response codes and throw exception accordingly.
- *
- * @param url String
- * @param e Exception
- * @param subscriptionId String?
- */
-@Throws(Exception::class)
-internal fun ProcessErrorCodes(url: String, e: Exception, subscriptionId: String?) {
-    val error = e.message!!.substringAfter("Status:").substringBefore(" ")
-    when (error) {
-        "500" -> throw Exception("Subscription with subscriptionId = $subscriptionId does not exist in the cache")
-        "400" -> throw Exception("Bad Request: Please check the request and retry")
-        "401" -> throw Exception("Unauthorized access to notifications service")
-        "403" -> throw Exception("Access to notifications service is forbidden")
-        "404" -> throw Exception("$url not found")
-        else -> throw Exception(e.message)
-    }
 }
