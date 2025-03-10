@@ -25,7 +25,7 @@ class ServiceConnection(
         "The hostname for the $serviceDescription service has not been provided."
 
     val serviceUnavailable =
-        "$serviceDescription service is unavailable.  Make sure the $serviceDescription service is running."
+        "The $serviceDescription service is unavailable.  Make sure the $serviceDescription service is running."
 
     val client = HttpClient {
         install(ContentNegotiation) {
