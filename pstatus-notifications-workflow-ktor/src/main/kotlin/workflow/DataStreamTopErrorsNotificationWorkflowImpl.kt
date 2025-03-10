@@ -8,12 +8,18 @@ import io.temporal.workflow.Workflow
 import mu.KotlinLogging
 import java.time.Duration
 
+
 /**
- * The implementation class which determines the digest counts and top errors during an upload and its frequency
- * @property activities T
+ * The implementation class which determines the digest counts and top errors during an upload and its frequency.
+ *
+ * @property logger KLogger
+ * @property activities (NotificationActivities..NotificationActivities?)
+ * @property errorList List<String>
  */
 class DataStreamTopErrorsNotificationWorkflowImpl : DataStreamTopErrorsNotificationWorkflow {
+
     private val logger = KotlinLogging.logger {}
+
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
         ActivityOptions.newBuilder()
@@ -44,26 +50,25 @@ class DataStreamTopErrorsNotificationWorkflowImpl : DataStreamTopErrorsNotificat
     )
 
     /**
-     * The function which determines the digest counts and top errors during an upload and its frequency
+     * The function which determines the digest counts and top errors during an upload and its frequency.
+     *
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String
-     * @param daysToRun List<String>
-     * @param timeToRun String
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     override fun checkDataStreamTopErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ) {
         try {
             // Logic to check if the upload occurred*/
             val (totalCount, topErrors)  = getTopErrors(errorList)
-            val errors = topErrors.filter{it.description.isNotEmpty()}.joinToString()
+            val errors = topErrors.filter { it.description.isNotEmpty() }.joinToString()
             if (topErrors.isNotEmpty()) {
                 activities.sendDataStreamTopErrorsNotification("There are $totalCount errors \n These are the top errors : \n $errors \n",deliveryReference)
             }
@@ -73,11 +78,11 @@ class DataStreamTopErrorsNotificationWorkflowImpl : DataStreamTopErrorsNotificat
     }
 
     /**
-     * Function which actually does find the counts and the erroneous fields and its frequency
+     * Function which actually does find the counts and the erroneous fields and its frequency.
+     *
      * @param errors List<String>
      * @return Pair<int, List<ErrorDetail>
      */
-
     private fun getTopErrors(errors: List<String>): Pair<Int, List<ErrorDetail>> {
         // Group the errors by description and count their occurrences
         val errorCounts = errors.groupingBy { it }.eachCount()

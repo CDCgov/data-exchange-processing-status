@@ -4,6 +4,7 @@ import gov.cdc.ocio.processingstatusapi.mutations.models.NotificationSubscriptio
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
+import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -17,16 +18,17 @@ import kotlinx.serialization.Serializable
  * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
- * @param daysToRun List<String>
+ * @param for digest counts and the frequency with which each of the top 5 errors occur String
  * @param deliveryReference String
  */
 @Serializable
-data class DeadlineCheckSubscription( val dataStreamId: String,
-                                      val dataStreamRoute: String,
-                                      val jurisdiction: String,
-                                      val daysToRun: List<String>,
-                                      val timeToRun: String,
-                                      val deliveryReference: String)
+data class DeadlineCheckSubscription(
+    val dataStreamId: String,
+    val dataStreamRoute: String,
+    val jurisdiction: String,
+    val cronSchedule: String,
+    val deliveryReference: String
+)
 
 /**
  * Deadline check unSubscription data class which is serialized back and forth which is in turn used for unsubscribing
@@ -53,7 +55,7 @@ class DeadlineCheckSubscriptionMutationService(
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String
-     * @param daysToRun List<String>
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     @GraphQLDescription("Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm")
@@ -62,14 +64,13 @@ class DeadlineCheckSubscriptionMutationService(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/deadlineCheck")
 
         return runBlocking {
-            try {
+            val result = runCatching {
                 val response = workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(
@@ -77,19 +78,20 @@ class DeadlineCheckSubscriptionMutationService(
                             dataStreamId,
                             dataStreamRoute,
                             jurisdiction,
-                            daysToRun,
-                            timeToRun,
+                            cronSchedule,
                             deliveryReference
                         )
                     )
                 }
-                return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
+                return@runCatching SubscriptionResponse.ProcessNotificationResponse(response)
             }
+            result.onFailure {
+                when (it) {
+                    is ResponseException -> throw it
+                    else -> throw Exception(workflowServiceConnection.serviceUnavailable)
+                }
+            }
+            return@runBlocking result.getOrThrow()
         }
     }
 

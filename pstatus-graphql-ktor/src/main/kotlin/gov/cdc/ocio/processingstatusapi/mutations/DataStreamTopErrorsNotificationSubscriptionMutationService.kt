@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
+import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.models.NotificationSubscriptionResult
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import io.ktor.client.request.*
@@ -17,7 +18,7 @@ import kotlinx.serialization.Serializable
  * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
- * @param daysToRun List<String>
+ * @param cronSchedule String
  * @param deliveryReference String
  */
 @Serializable
@@ -25,8 +26,7 @@ data class DataStreamTopErrorsNotificationSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
     val jurisdiction: String,
-    val daysToRun: List<String>,
-    val timeToRun: String,
+    val cronSchedule: String,
     val deliveryReference: String
 )
 
@@ -55,7 +55,7 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String
-     * @param daysToRun List<String>
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     @GraphQLDescription("Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload")
@@ -64,14 +64,13 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/dataStreamTopErrorsNotification")
 
         return runBlocking {
-            try {
+            val result = runCatching {
                 val response = workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(
@@ -79,19 +78,20 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
                             dataStreamId,
                             dataStreamRoute,
                             jurisdiction,
-                            daysToRun,
-                            timeToRun,
+                            cronSchedule,
                             deliveryReference
                         )
                     )
                 }
-                return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
+                return@runCatching SubscriptionResponse.ProcessNotificationResponse(response)
             }
+            result.onFailure {
+                when (it) {
+                    is ResponseException -> throw it
+                    else -> throw Exception(workflowServiceConnection.serviceUnavailable)
+                }
+            }
+            return@runBlocking result.getOrThrow()
         }
     }
 

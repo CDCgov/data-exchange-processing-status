@@ -49,16 +49,14 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      *
      * @param dataStreamId String
      * @param jurisdiction String
-     * @param daysToRun List<String>
-     * @param timeToRun String
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     override fun checkUploadAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
-        daysToRun: List<String>,
-        timeToRun: String,
+        cronSchedule: String,
         deliveryReference: String
     ) {
         try {

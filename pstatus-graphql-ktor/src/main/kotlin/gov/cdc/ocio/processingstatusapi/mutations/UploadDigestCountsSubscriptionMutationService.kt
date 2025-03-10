@@ -4,6 +4,7 @@ import gov.cdc.ocio.processingstatusapi.mutations.models.NotificationSubscriptio
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
+import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -16,16 +17,14 @@ import kotlinx.serialization.Serializable
  *
  * @param jurisdictionIds List<String>
  * @param dataStreamIds List<String>
- * @param daysToRun List<String>
- * @param timeToRun String
+ * @param cronSchedule String
  * @param deliveryReference String
  */
 @Serializable
 data class UploadDigestCountsSubscription(
     val jurisdictionIds: List<String>,
     val dataStreamIds: List<String>,
-    val daysToRun: List<String>,
-    val timeToRun: String,
+    val cronSchedule: String,
     val deliveryReference: String
 )
 
@@ -53,8 +52,7 @@ class UploadDigestCountsSubscriptionMutationService(
      *
      * @param jurisdictionIds List<String>
      * @param dataStreamIds List<String>
-     * @param daysToRun List<String>
-     * @param timeToRun String
+     * @param cronSchedule String
      * @param deliveryReference String
      */
     @GraphQLDescription("Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past")
@@ -62,33 +60,33 @@ class UploadDigestCountsSubscriptionMutationService(
     fun subscribeUploadDigestCounts(
          jurisdictionIds: List<String>,
          dataStreamIds: List<String>,
-         daysToRun: List<String>,
-         timeToRun: String,
+         cronSchedule: String,
          deliveryReference: String
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/uploadDigestCounts")
 
         return runBlocking {
-            try {
+            val result = runCatching {
                 val response = workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(
                         UploadDigestCountsSubscription(
                             jurisdictionIds,
                             dataStreamIds,
-                            daysToRun,
-                            timeToRun,
+                            cronSchedule,
                             deliveryReference
                         )
                     )
                 }
-                return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
+                return@runCatching SubscriptionResponse.ProcessNotificationResponse(response)
             }
+            result.onFailure {
+                when (it) {
+                    is ResponseException -> throw it
+                    else -> throw Exception(workflowServiceConnection.serviceUnavailable)
+                }
+            }
+            return@runBlocking result.getOrThrow()
         }
     }
 

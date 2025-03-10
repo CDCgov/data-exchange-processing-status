@@ -38,48 +38,42 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
      * @param subscription UploadErrorsNotificationSubscription
      * @return WorkflowSubscriptionResult
      */
-    fun run(subscription: UploadErrorsNotificationSubscription):
-            WorkflowSubscriptionResult {
-        try {
-            val dataStreamId = subscription.dataStreamId
-            val dataStreamRoute = subscription.dataStreamRoute
-            val jurisdiction = subscription.jurisdiction
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
-            val deliveryReference = subscription.deliveryReference
-            val taskQueue = "uploadErrorsNotificationTaskQueue"
+    fun run(
+        subscription: UploadErrorsNotificationSubscription
+    ): WorkflowSubscriptionResult {
 
-            val workflow = workflowEngine.setupWorkflow(
-                description,
-                taskQueue,
-                daysToRun,
-                timeToRun,
-                UploadErrorsNotificationWorkflowImpl::class.java,
-                notificationActivitiesImpl,
-                UploadErrorsNotificationWorkflow::class.java
-            )
+        val dataStreamId = subscription.dataStreamId
+        val dataStreamRoute = subscription.dataStreamRoute
+        val jurisdiction = subscription.jurisdiction
+        val cronSchedule = subscription.cronSchedule
+        val deliveryReference = subscription.deliveryReference
+        val taskQueue = "uploadErrorsNotificationTaskQueue"
 
-            workflow?.let {
-                val execution = WorkflowClient.start(
-                    workflow::checkUploadErrorsAndNotify,
-                    dataStreamId,
-                    dataStreamRoute,
-                    jurisdiction,
-                    daysToRun,
-                    timeToRun,
-                    deliveryReference
-                )
-                logger.info("Started workflow with id: ${execution.workflowId}")
-                return WorkflowSubscriptionResult(
-                    subscriptionId = execution.workflowId,
-                    message = "",
-                    deliveryReference = ""
-                )
-            }
-        }
-        catch (e:Exception) {
-            logger.error("Error occurred while checking for errors in upload: ${e.message}")
-        }
-        throw Exception("Error occurred while executing workflow engine to subscribe for errors in upload")
+        val workflow = workflowEngine.setupWorkflow(
+            description,
+            taskQueue,
+            cronSchedule,
+            UploadErrorsNotificationWorkflowImpl::class.java,
+            notificationActivitiesImpl,
+            UploadErrorsNotificationWorkflow::class.java
+        )
+
+        val execution = WorkflowClient.start(
+            workflow::checkUploadErrorsAndNotify,
+            dataStreamId,
+            dataStreamRoute,
+            jurisdiction,
+            cronSchedule,
+            deliveryReference
+        )
+
+        logger.info("Started workflow with id: ${execution.workflowId}")
+
+        val workflowId = execution.workflowId
+        return WorkflowSubscriptionResult(
+            subscriptionId = workflowId,
+            message = "Successfully subscribed for $workflowId",
+            deliveryReference = ""
+        )
     }
 }

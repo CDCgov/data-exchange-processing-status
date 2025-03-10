@@ -38,45 +38,40 @@ class DeadLineCheckSubscriptionService: KoinComponent {
      *  @param subscription DeadlineCheckSubscription
      *  @return WorkflowSubscriptionResult
      */
-    fun run(subscription: DeadlineCheckSubscription):
-            WorkflowSubscriptionResult {
-        try {
-            val dataStreamId = subscription.dataStreamId
-            val jurisdiction = subscription.jurisdiction
-            val dataStreamRoute = subscription.dataStreamRoute
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
-            val deliveryReference = subscription.deliveryReference
-            val taskQueue = "notificationTaskQueue"
-            val workflow = workflowEngine.setupWorkflow(
-                description,
-                taskQueue,
-                daysToRun,
-                timeToRun,
-                NotificationWorkflowImpl::class.java,
-                notificationActivitiesImpl,
-                NotificationWorkflow::class.java
-            )
-            workflow?.let {
-                val execution = WorkflowClient.start(
-                    workflow::checkUploadAndNotify,
-                    dataStreamId,
-                    dataStreamRoute,
-                    jurisdiction,
-                    daysToRun,
-                    timeToRun,
-                    deliveryReference
-                )
-                return WorkflowSubscriptionResult(
-                    subscriptionId = execution.workflowId,
-                    message = "",
-                    deliveryReference = ""
-                )
-            }
-        }
-        catch (e:Exception) {
-            logger.error("Error occurred while subscribing workflow for upload deadline: ${e.message}")
-        }
-        throw Exception("Error occurred while executing workflow engine to subscribe for upload deadline")
+    fun run(
+        subscription: DeadlineCheckSubscription
+    ): WorkflowSubscriptionResult {
+
+        val dataStreamId = subscription.dataStreamId
+        val jurisdiction = subscription.jurisdiction
+        val dataStreamRoute = subscription.dataStreamRoute
+        val cronSchedule = subscription.cronSchedule
+        val deliveryReference = subscription.deliveryReference
+        val taskQueue = "notificationTaskQueue"
+
+        val workflow = workflowEngine.setupWorkflow(
+            description,
+            taskQueue,
+            cronSchedule,
+            NotificationWorkflowImpl::class.java,
+            notificationActivitiesImpl,
+            NotificationWorkflow::class.java
+        )
+
+        val execution = WorkflowClient.start(
+            workflow::checkUploadAndNotify,
+            dataStreamId,
+            dataStreamRoute,
+            jurisdiction,
+            cronSchedule,
+            deliveryReference
+        )
+
+        val workflowId = execution.workflowId
+        return WorkflowSubscriptionResult(
+            subscriptionId = workflowId,
+            message = "Successfully subscribed for $workflowId",
+            deliveryReference = ""
+        )
     }
 }

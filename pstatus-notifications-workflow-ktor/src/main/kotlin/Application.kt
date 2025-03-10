@@ -5,12 +5,15 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
+import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
@@ -44,6 +47,11 @@ fun Application.module() {
 
             // Serialize OffsetDateTime as ISO-8601
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        }
+    }
+    install(StatusPages) {
+        exception<IllegalArgumentException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to cause.message))
         }
     }
     routing {

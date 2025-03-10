@@ -38,44 +38,37 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
      * @param subscription UploadDigestSubscription
      * @return WorkflowSubscriptionResult
      */
-    fun run(subscription: UploadDigestSubscription):
-            WorkflowSubscriptionResult {
-        try {
-            val dataStreams = subscription.dataStreamIds
-            val jurisdictionIds = subscription.jurisdictionIds
-            val daysToRun = subscription.daysToRun
-            val timeToRun = subscription.timeToRun
-            val deliveryReference= subscription.deliveryReference
-            val taskQueue = "uploadDigestCountsTaskQueue"
-            val workflow = workflowEngine.setupWorkflow(
-                description,
-                taskQueue,
-                daysToRun,
-                timeToRun,
-                UploadDigestCountsNotificationWorkflowImpl::class.java,
-                notificationActivitiesImpl,
-                UploadDigestCountsNotificationWorkflow::class.java
-            )
+    fun run(
+        subscription: UploadDigestSubscription
+    ): WorkflowSubscriptionResult {
 
-            workflow?.let {
-                val execution = WorkflowClient.start(
-                    workflow::processDailyUploadDigest,
-                    jurisdictionIds,
-                    dataStreams,
-                    deliveryReference
-                )
+        val dataStreams = subscription.dataStreamIds
+        val jurisdictionIds = subscription.jurisdictionIds
+        val cronSchedule = subscription.cronSchedule
+        val deliveryReference= subscription.deliveryReference
+        val taskQueue = "uploadDigestCountsTaskQueue"
 
-                val workflowId = execution.workflowId
-                return WorkflowSubscriptionResult(
-                    subscriptionId = workflowId,
-                    message = "Successfully subscribed for $workflowId",
-                    deliveryReference = deliveryReference
-                )
-            }
-        }
-        catch (e:Exception){
-            logger.error("Error occurred while subscribing workflow for daily upload digest counts: ${e.message}")
-        }
-        throw Exception("Error occurred while executing workflow engine to subscribe for daily upload digest counts")
+        val workflow = workflowEngine.setupWorkflow(
+            description,
+            taskQueue,
+            cronSchedule,
+            UploadDigestCountsNotificationWorkflowImpl::class.java,
+            notificationActivitiesImpl,
+            UploadDigestCountsNotificationWorkflow::class.java
+        )
+
+        val execution = WorkflowClient.start(
+            workflow::processDailyUploadDigest,
+            jurisdictionIds,
+            dataStreams,
+            deliveryReference
+        )
+
+        val workflowId = execution.workflowId
+        return WorkflowSubscriptionResult(
+            subscriptionId = workflowId,
+            message = "Successfully subscribed for $workflowId",
+            deliveryReference = deliveryReference
+        )
     }
 }

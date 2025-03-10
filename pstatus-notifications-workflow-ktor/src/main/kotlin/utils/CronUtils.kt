@@ -14,6 +14,22 @@ import kotlin.jvm.optionals.getOrNull
 object CronUtils {
 
     /**
+     * Validates the provided cron expression and throws an IllegalArgumentException if it is invalid.  Note, the
+     * expected CRON type syntax is UNIX.
+     *
+     * @param cronExpression String?
+     * @throws IllegalArgumentException
+     */
+    @Throws(IllegalArgumentException::class)
+    fun checkValid(cronExpression: String?) {
+        if (cronExpression.isNullOrEmpty())
+            throw IllegalArgumentException("Cron expression may not be null or empty")
+
+        val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
+        parser.parse(cronExpression) // throws IllegalArgumentException if invalid
+    }
+
+    /**
      * Returns a human-readable version of the provided cron schedule (UNIX format).
      *
      * @param cronExpression String
