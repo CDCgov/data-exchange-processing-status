@@ -65,7 +65,7 @@ fun Route.subscribeUploadDigestCountsRoute() {
 fun Route.unsubscribeUploadDigestCountsRoute() {
     post("/unsubscribe/uploadDigestCounts") {
         val subscription = call.receive<UploadDigestUnSubscription>()
-        val result = UploadDigestCountNotificationUnSubscriptionService()
+        val result = UploadDigestCountsNotificationUnSubscriptionService()
             .run(subscription.subscriptionId)
         call.respond(result)
     }
