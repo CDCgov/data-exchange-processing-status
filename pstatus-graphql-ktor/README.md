@@ -1,40 +1,11 @@
 # Overview
 The `GraphQL` service is designed to offer users a detailed view of their data across various stages, from upload and routing to validation, through `GraphQL Queries`. Users can also leverage `GraphQL Mutations` to create new reports, validate them, persist them to the database, or update existing reports. Additionally, the service provides the ability to `subscribe` to or `unsubscribe` from different types of notifications.
-## Supported `Mutation` Endpoint Documentation:
-| Name                                            | Return                         | Description                                                                                                                                                               |
-|-------------------------------------------------|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| subscribeEmail(..)                              | SubscriptionResult             | Subscribe Email Notifications.                                                                                                                                            |
-| unsubscribeEmail(..)                            | SubscriptionResult             | Unsubscribe Email Notifications.                                                                                                                                          |
-| subscribeWebhook(..)                            | SubscriptionResult             | Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm.                                                           |
-| unsubscribeWebhook(..)                          | SubscriptionResult             | UnSubscribe Deadline Check lets you unsubscribe from getting notifications when an upload from jurisdictions has not happened by 12pm.                                    |
-| subscribeDataStreamTopErrorsNotification(..)    | NotificationSubscriptionResult | Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload.                                   |
-| unsubscribesDataStreamTopErrorsNotification(..) | NotificationSubscriptionResult | UnSubscribe data stream top errors lets you unsubscribe from getting notifications for top data stream errors and its frequency during an upload.                         |
-| subscribeDeadlineCheck(..)                      | NotificationSubscriptionResult | Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm.                                                           |
-| unsubscribeDeadlineCheck(..)                    | NotificationSubscriptionResult | UnSubscribe Deadline Check lets you unsubscribe from getting notifications when an upload from jurisdictions has not happened by 12pm.                                    |
-| subscribeUploadErrorsNotification(..)           | NotificationSubscriptionResult | Subscribe upload errors lets you get notifications when there are errors in an upload.                                                                                    |
-| unsubscribeUploadErrorsNotification(..)         | NotificationSubscriptionResult | UnSubscribe upload errors lets you unsubscribe from getting notifications when there are errors during an upload.                                                         |
-| subscribeUploadDigestCounts(..)                 | NotificationSubscriptionResult | Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past.   |
-| unsubscribeUploadDigestCounts(..)               | NotificationSubscriptionResult | UnSubscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past. |
-| upsertReport(..)                                | Report                         | Creates a new report or replace an existing one based on specified action.                                                                                                |
 
-## Supported `Query` Endpoint Documentation:
-| Name                                      | Return                              | Description                                                                                                                 |
-|-------------------------------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| getHealth(..)                             | GraphQLHealthCheck                  | Health status.                                                                                                              |
-| getReports(..)                            | list of reports                     | Reports associated with the provided upload ID..                                                                            |
-| getSubmissionDetails(..)                  | SubmissionDetails                   | Submission details for the provided upload ID.                                                                              |
-| processingCounts(..)                      | ProcessingCounts                    | Processing counts for the provided parameters.                                                                              |
-| reportCountsWithParams(..)                | AggregateReportCounts               | Detailed counts within each stage for each matching upload with the provided parameters.                                    |
-| reportCountsWithUploadId(..)              | ReportCounts                        | Detailed counts within each stage for the provided uploadId.                                                                |
-| rollupCountsByStage(..)                   | list of stage counts                | Rolled up counts by stage for the provided parameters.                                                                      |
-| getDeadLetterReportsByDataStream(..)      | list of dead letter reports         | All the dead-letter reports associated with the provided datastreamId, datastreamroute and timestamp date range.            |
-| getDeadLetterReportsByUploadId(..)        | list of dead letter reports         | All the dead-letter reports associated with the provided uploadId.                                                          |
-| getDeadLetterReportsCountByDataStream(..) | int, number of reports              | Count of dead-letter reports associated with the provided datastreamId, (optional) datastreamroute and timestamp date range |
-| getUploadStats(..)                        | UploadStats                         | Various uploads statistics.                                                                                                 |
-| getUploads(..)                            | UploadsStatus                       | Upload statuses for the given filter, sort, and pagination criteria.                                                        |
+Use [GraphQL introspection](https://graphql.org/learn/introspection/) to explore the available queries and mutations in the API.  This will also provide complete documentation for each operation, helping you understand how to use them effectively.
 
+The endpoint for GraphQL introspection when running locally is http://localhost:8080/graphql.
 
-
+The endpoint for the embedded GraphQL web app is http://localhost:8080/graphiql.
 
 ## Environment Variable Setup
 
