@@ -6,13 +6,10 @@ test.describe('GraphQL getReports', () => {
 
     test('returns a report for a typical upload report', async ({ gql }) => {
         const uploadReport = await createUploadReport();
-        console.log(uploadReport)
-
         const createReportResult = await gql.upsertReport({
             action: "create",
             report: uploadReport
         })
-        console.log(createReportResult)
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
@@ -20,76 +17,39 @@ test.describe('GraphQL getReports', () => {
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        console.log(reportResult.getReports[0])
         expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
 
         await reportResult.getReports.forEach(report => {
-            expect(report.reportSchemaVersion).toEqual(uploadReport.report_schema_version)
-            expect(report.uploadId).toEqual(uploadReport.upload_id)
-            expect(report.dataStreamId).toEqual(uploadReport.data_stream_id)
-            expect(report.dataStreamRoute).toEqual(uploadReport.data_stream_route)
-            expect(report.jurisdiction).toEqual(uploadReport.jurisdiction)
-            expect(report.senderId).toEqual(uploadReport.sender_id)
-            expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
-            expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
-            expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
-            expect(report.contentType).toEqual(uploadReport.content_type)
-            expect(report.id).toBeDefined()
-            expect(report.timestamp).toBeDefined()
-            //expect(report.dexIngestDateTime).toEqual(uploadReport.dex_ingest_datetime)
-
-            // Message Metadata Section
-            // expect(report.messageMetadata?.messageUUID).toEqual(uploadReport.message_metadata.message_uuid)
-            // expect(report.messageMetadata?.messageHash).toEqual(uploadReport.message_metadata.message_hash)
-            // expect(report.messageMetadata?.messageIndex).toEqual(uploadReport.message_metadata.message_index)
-            expect(report.messageMetadata?.aggregation).toEqual(uploadReport.message_metadata.aggregation)
-
-            //Content Section
-            expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
-            expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
-            expect(report.content.status).toEqual(uploadReport.content.status)
-
-            //data section
-            expect(report.data.dataField1).toEqual(uploadReport.data.data_field1)
-            
-            //stage info section
-            expect(report.stageInfo?.status).toEqual(uploadReport.stage_info.status)
+            validateBasicFields(report, uploadReport)
+            validateNonRequiredFields(report, uploadReport)
+            validateMessageMetadata(report, uploadReport)
+            validateContentInfo(report, uploadReport)            
+            validateStageInfo(report, uploadReport)
             expect(report.stageInfo?.issues).toBeNull()
-            // expect(report.stageInfo?.startProcessingTime).toEqual(uploadReport.stage_info.start_processing_time)
-            // expect(report.stageInfo?.endProcessingTime).toEqual(uploadReport.end_processing_time)
-            
-            //tags section
-            expect(report.tags.tagField1).toEqual(uploadReport.tags.tag_field1)
+
         });
     });
 
     test('returns a report for a minimal upload report', async ({ gql }) => {
         const uploadReport = await createMinimalReport();
-        console.log(uploadReport)
-
         const createReportResult = await gql.upsertReport({
             action: "create",
             report: uploadReport
         })
-        console.log(createReportResult)
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
-
 
         const reportResult = await gql.getReports({
             uploadId: uploadReport.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        console.log(reportResult.getReports[0])
         expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
+        
         await reportResult.getReports.forEach(report => {
-            expect(report.uploadId).toEqual(uploadReport.upload_id)
-            expect(report.dataStreamId).toEqual(uploadReport.data_stream_id)
-            expect(report.dataStreamRoute).toEqual(uploadReport.data_stream_route)
-            expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
-            expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
-            expect(report.content.status).toEqual(uploadReport.content.status)
-            expect(report.contentType).toEqual(uploadReport.content_type)
+            validateBasicFields(report, uploadReport)
+            validateContentInfo(report, uploadReport)
+            expect(report.stageInfo?.issues).toBeNull()
+
         });
 
     });
@@ -99,7 +59,6 @@ test.describe('GraphQL getReports', () => {
             ...createMinimalReport(),
             stage_info: createStageInfoWithError()
         }
-
         const createReportResult = await gql.upsertReport({
             action: "create",
             report: uploadReport
@@ -111,23 +70,12 @@ test.describe('GraphQL getReports', () => {
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-
         expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
-        await reportResult.getReports.forEach(report => {
-            expect(report.uploadId).toEqual(uploadReport.upload_id)
-            expect(report.dataStreamId).toEqual(uploadReport.data_stream_id)
-            expect(report.dataStreamRoute).toEqual(uploadReport.data_stream_route)
-            expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
-            expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
-            expect(report.content.status).toEqual(uploadReport.content.status)
-            expect(report.contentType).toEqual(uploadReport.content_type)
 
-            //stage info section
-            expect(report.stageInfo?.status).toEqual(uploadReport.stage_info.status)
-            expect(report.stageInfo?.issues).toEqual(uploadReport.stage_info.issues)
-            // expect(report.stageInfo?.startProcessingTime).toEqual(uploadReport.stage_info.start_processing_time)
-            // expect(report.stageInfo?.endProcessingTime).toEqual(uploadReport.end_processing_time)
-           
+        await reportResult.getReports.forEach(report => {
+            validateBasicFields(report, uploadReport)
+            validateContentInfo(report, uploadReport)
+            validateStageInfo(report, uploadReport)
             expect(report.stageInfo?.issues).toHaveLength(1)
             report.stageInfo?.issues?.forEach((issue, index) => {
                 console.log("Recieved issue:", issue)
@@ -143,36 +91,23 @@ test.describe('GraphQL getReports', () => {
             ...createMinimalReport(),
             stage_info: createStageInfoWithWarning()
         }
-
         const createReportResult = await gql.upsertReport({
             action: "create",
             report: uploadReport
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
-
         const reportResult = await gql.getReports({
             uploadId: uploadReport.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-
         expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
-        await reportResult.getReports.forEach(report => {
-            expect(report.uploadId).toEqual(uploadReport.upload_id)
-            expect(report.dataStreamId).toEqual(uploadReport.data_stream_id)
-            expect(report.dataStreamRoute).toEqual(uploadReport.data_stream_route)
-            expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
-            expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
-            expect(report.content.status).toEqual(uploadReport.content.status)
-            expect(report.contentType).toEqual(uploadReport.content_type)
 
-            //stage info section
-            expect(report.stageInfo?.status).toEqual(uploadReport.stage_info.status)
-            expect(report.stageInfo?.issues).toEqual(uploadReport.stage_info.issues)
-            // expect(report.stageInfo?.startProcessingTime).toEqual(uploadReport.stage_info.start_processing_time)
-            // expect(report.stageInfo?.endProcessingTime).toEqual(uploadReport.end_processing_time)
-           
+        await reportResult.getReports.forEach(report => {
+            validateBasicFields(report, uploadReport)
+            validateContentInfo(report, uploadReport)
+            validateStageInfo(report, uploadReport)
             expect(report.stageInfo?.issues).toHaveLength(1)
             report.stageInfo?.issues?.forEach((issue, index) => {
                 console.log("Recieved issue:", issue)
@@ -184,4 +119,45 @@ test.describe('GraphQL getReports', () => {
     });
 
 });
+
+function validateBasicFields(report: any, uploadReport: any) {
+    expect(report.uploadId).toEqual(uploadReport.upload_id)
+    expect(report.dataStreamId).toEqual(uploadReport.data_stream_id)
+    expect(report.dataStreamRoute).toEqual(uploadReport.data_stream_route)
+    expect(report.contentType).toEqual(uploadReport.content_type)
+}
+
+function validateNonRequiredFields(report: any, uploadReport: any) {
+    expect(report.reportSchemaVersion).toEqual(uploadReport.report_schema_version)
+    expect(report.jurisdiction).toEqual(uploadReport.jurisdiction)
+    expect(report.senderId).toEqual(uploadReport.sender_id)
+    expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
+    expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
+    expect(report.dataProducerId).toEqual(uploadReport.data_producer_id)
+    expect(report.contentType).toEqual(uploadReport.content_type)
+    expect(report.id).toBeDefined()
+    expect(report.timestamp).toBeDefined()
+    expect(report.data.dataField1).toEqual(uploadReport.data.data_field1)
+    expect(report.tags.tagField1).toEqual(uploadReport.tags.tag_field1)
+    //expect(report.dexIngestDateTime).toEqual(uploadReport.dex_ingest_datetime)
+}
+
+function validateStageInfo(report: any, uploadReport: any) {
+    expect(report.stageInfo?.status).toEqual(uploadReport.stage_info.status)
+    // expect(report.stageInfo?.startProcessingTime).toEqual(uploadReport.stage_info.start_processing_time)
+    // expect(report.stageInfo?.endProcessingTime).toEqual(uploadReport.end_processing_time)
+}
+
+function validateContentInfo(report: any, uploadReport: any) {
+    expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
+    expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
+    expect(report.content.status).toEqual(uploadReport.content.status)
+}
+
+function validateMessageMetadata(report: any, uploadReport: any) {
+    expect(report.messageMetadata?.aggregation).toEqual(uploadReport.message_metadata.aggregation)
+    // expect(report.messageMetadata?.messageUUID).toEqual(uploadReport.message_metadata.message_uuid)
+    // expect(report.messageMetadata?.messageHash).toEqual(uploadReport.message_metadata.message_hash)
+    // expect(report.messageMetadata?.messageIndex).toEqual(uploadReport.message_metadata.message_index)
+}
 
