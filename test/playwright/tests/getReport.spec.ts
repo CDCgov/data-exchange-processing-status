@@ -17,7 +17,7 @@ test.describe('GraphQL getReports', () => {
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
+        expect(reportResult.getReports.length).toBe(1)
 
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReport)
@@ -43,7 +43,7 @@ test.describe('GraphQL getReports', () => {
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
+        expect(reportResult.getReports.length).toBe(1)
         
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReport)
@@ -70,7 +70,7 @@ test.describe('GraphQL getReports', () => {
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
+        expect(reportResult.getReports.length).toBe(1)
 
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReport)
@@ -78,7 +78,6 @@ test.describe('GraphQL getReports', () => {
             validateStageInfo(report, uploadReport)
             expect(report.stageInfo?.issues).toHaveLength(1)
             report.stageInfo?.issues?.forEach((issue, index) => {
-                console.log("Recieved issue:", issue)
                 expect(issue.level).toEqual(uploadReport.stage_info.issues[index].level)
                 expect(issue.message).toEqual(uploadReport.stage_info.issues[index].message)
             })
@@ -102,7 +101,7 @@ test.describe('GraphQL getReports', () => {
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        expect(reportResult.getReports.length).toBeGreaterThanOrEqual(1)
+        expect(reportResult.getReports.length).toBe(1)
 
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReport)
@@ -110,7 +109,6 @@ test.describe('GraphQL getReports', () => {
             validateStageInfo(report, uploadReport)
             expect(report.stageInfo?.issues).toHaveLength(1)
             report.stageInfo?.issues?.forEach((issue, index) => {
-                console.log("Recieved issue:", issue)
                 expect(issue.level).toEqual(uploadReport.stage_info.issues[index].level)
                 expect(issue.message).toEqual(uploadReport.stage_info.issues[index].message)
             })
