@@ -7,12 +7,12 @@ package gov.cdc.ocio.processingnotifications.model
  * @param dataStreamRoute String
  * @param jurisdiction String
  * @param cronSchedule String
- * @param deliveryReference String
+ * @param emailAddresses List<String>
  */
 open class BaseSubscription(
     open val dataStreamId: String,
     open val dataStreamRoute: String,
     open val jurisdiction: String,
     open val cronSchedule: String,
-    open val deliveryReference: String
+    open val emailAddresses: List<String>
 )

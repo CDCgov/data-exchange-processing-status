@@ -18,14 +18,14 @@ import kotlinx.serialization.Serializable
  * @param jurisdictionIds List<String>
  * @param dataStreamIds List<String>
  * @param cronSchedule String
- * @param deliveryReference String
+ * @param emailAddresses List<String>
  */
 @Serializable
 data class UploadDigestCountsSubscription(
     val jurisdictionIds: List<String>,
     val dataStreamIds: List<String>,
     val cronSchedule: String,
-    val deliveryReference: String
+    val emailAddresses: List<String>
 )
 
 /**
@@ -53,7 +53,7 @@ class UploadDigestCountsSubscriptionMutationService(
      * @param jurisdictionIds List<String>
      * @param dataStreamIds List<String>
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     @GraphQLDescription("Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past")
     @Suppress("unused")
@@ -61,7 +61,7 @@ class UploadDigestCountsSubscriptionMutationService(
          jurisdictionIds: List<String>,
          dataStreamIds: List<String>,
          cronSchedule: String,
-         deliveryReference: String
+         emailAddresses: List<String>
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/uploadDigestCounts")
 
@@ -74,7 +74,7 @@ class UploadDigestCountsSubscriptionMutationService(
                             jurisdictionIds,
                             dataStreamIds,
                             cronSchedule,
-                            deliveryReference
+                            emailAddresses
                         )
                     )
                 }

@@ -30,7 +30,7 @@ class UploadErrorsNotificationUnSubscriptionService : KoinComponent {
             return WorkflowSubscriptionResult(
                 subscriptionId = subscriptionId,
                 message = "",
-                deliveryReference = ""
+                emailAddresses = listOf()
             )
         } catch (e: Exception) {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")

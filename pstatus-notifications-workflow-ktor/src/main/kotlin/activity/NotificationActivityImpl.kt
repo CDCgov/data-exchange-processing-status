@@ -10,35 +10,49 @@ import java.time.LocalDate
  * Implementation class for sending email notifications for various notifications
  */
 class NotificationActivitiesImpl : NotificationActivities {
-    private val emailService: EmailDispatcher = EmailDispatcher()
+
     private val logger = KotlinLogging.logger {}
+
+    private val emailService: EmailDispatcher = EmailDispatcher()
 
     /**
      * Send notification method which uses the email service to send email when an upload fails
      * @param dataStreamId String
      * @param jurisdiction String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     override fun sendNotification(
         dataStreamId: String,
         jurisdiction: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ) {
-        val msg ="Upload deadline over. Failed to get the upload for dataStreamId: $dataStreamId, jurisdiction: $jurisdiction on "+ LocalDate.now()+ "."
+        val msg = ("Upload deadline over. Failed to get the upload for dataStreamId: $dataStreamId, "
+                + "jurisdiction: $jurisdiction on " + LocalDate.now() + ".")
+
         logger.info(msg)
-        emailService.sendEmail("UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " +LocalDate.now() + "",msg, deliveryReference)
+        emailService.sendEmail(
+            "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
+            msg,
+            emailAddresses
+        )
     }
 
     /**
      * Send notification method which uses the email service to send email when there are errors in the upload file.
      *
      * @param error String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
-    override fun sendUploadErrorsNotification(error: List<CheckUploadResponse>, deliveryReference: String) {
+    override fun sendUploadErrorsNotification(
+        error: List<CheckUploadResponse>,
+        emailAddresses: List<String>
+    ) {
         val msg = "Number of uploads with errors while uploading: ${error.size}"
         logger.info(msg)
-        emailService.sendEmail("TEST EMAIL-UPLOAD ERRORS NOTIFICATION", msg, deliveryReference)
+        emailService.sendEmail(
+            "TEST EMAIL-UPLOAD ERRORS NOTIFICATION",
+            msg,
+            emailAddresses)
     }
 
     /**
@@ -46,14 +60,32 @@ class NotificationActivitiesImpl : NotificationActivities {
      * an upload.
      *
      * @param error String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
-    override fun sendDataStreamTopErrorsNotification(error: String, deliveryReference: String) {
+    override fun sendDataStreamTopErrorsNotification(
+        error: String,
+        emailAddresses: List<String>
+    ) {
         logger.info(error)
-        emailService.sendEmail("TEST EMAIL-DATA STREAM TOP ERRORS NOTIFICATION",error, deliveryReference)
+        emailService.sendEmail(
+            "TEST EMAIL-DATA STREAM TOP ERRORS NOTIFICATION",
+            error,
+            emailAddresses)
     }
 
-    override fun sendDigestEmail(emailBody: String, deliveryReference: String) {
-        emailService.sendEmail("DAILY UPLOAD DIGEST COUNTS NOTIFICATION",emailBody, deliveryReference)
+    /**
+     * Sends an email with the daily upload digest counts.
+     *
+     * @param emailBody String
+     * @param emailAddresses List<String>
+     */
+    override fun sendDigestEmail(
+        emailBody: String,
+        emailAddresses: List<String>
+    ) {
+        emailService.sendEmail(
+            "DAILY UPLOAD DIGEST COUNTS NOTIFICATION",
+            emailBody,
+            emailAddresses)
     }
 }

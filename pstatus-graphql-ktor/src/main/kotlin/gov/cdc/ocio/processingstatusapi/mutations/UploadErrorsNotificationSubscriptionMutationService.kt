@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
  * @param dataStreamRoute String
  * @param jurisdiction String
  * @param cronSchedule List<String>
- * @param deliveryReference String
+ * @param emailAddresses List<String>
  */
 @Serializable
 data class UploadErrorsNotificationSubscription(
@@ -27,7 +27,7 @@ data class UploadErrorsNotificationSubscription(
     val dataStreamRoute: String,
     val jurisdiction: String,
     val cronSchedule: String,
-    val deliveryReference: String
+    val emailAddresses: List<String>
 )
 
 /**
@@ -56,7 +56,7 @@ class UploadErrorsNotificationSubscriptionMutationService(
      * @param dataStreamRoute String
      * @param jurisdiction String
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     @GraphQLDescription("Subscribe upload errors lets you get notifications when there are errors in an upload")
     @Suppress("unused")
@@ -65,7 +65,7 @@ class UploadErrorsNotificationSubscriptionMutationService(
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/uploadErrorsNotification")
 
@@ -79,7 +79,7 @@ class UploadErrorsNotificationSubscriptionMutationService(
                             dataStreamRoute,
                             jurisdiction,
                             cronSchedule,
-                            deliveryReference
+                            emailAddresses
                         )
                     )
                 }

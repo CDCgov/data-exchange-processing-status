@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
  * @param dataStreamRoute String
  * @param jurisdiction String
  * @param cronSchedule String
- * @param deliveryReference String
+ * @param emailAddresses List<String>
  */
 @Serializable
 data class DataStreamTopErrorsNotificationSubscription(
@@ -27,7 +27,7 @@ data class DataStreamTopErrorsNotificationSubscription(
     val dataStreamRoute: String,
     val jurisdiction: String,
     val cronSchedule: String,
-    val deliveryReference: String
+    val emailAddresses: List<String>
 )
 
 /**
@@ -56,7 +56,7 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
      * @param dataStreamRoute String
      * @param jurisdiction String
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     @GraphQLDescription("Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload")
     @Suppress("unused")
@@ -65,7 +65,7 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/dataStreamTopErrorsNotification")
 
@@ -79,7 +79,7 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
                             dataStreamRoute,
                             jurisdiction,
                             cronSchedule,
-                            deliveryReference
+                            emailAddresses
                         )
                     )
                 }

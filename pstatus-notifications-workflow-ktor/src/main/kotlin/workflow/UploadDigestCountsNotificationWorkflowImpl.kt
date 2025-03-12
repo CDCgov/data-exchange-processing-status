@@ -45,12 +45,12 @@ class UploadDigestCountsNotificationWorkflowImpl :
      *
      * @param jurisdictionIds: List<String>
      * @param dataStreams: List<String>
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     override fun processDailyUploadDigest(
         jurisdictionIds: List<String>,
         dataStreams: List<String>,
-        deliveryReference: String
+        emailAddresses: List<String>
     ) {
         try {
             val uploadDigestResults = getUploadDigest(jurisdictionIds, dataStreams)
@@ -60,7 +60,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
                 val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
                 // Format the email body
                 val emailBody = formatEmailBody(aggregatedCounts)
-                activities.sendDigestEmail(emailBody, deliveryReference)
+                activities.sendDigestEmail(emailBody, emailAddresses)
             }
         } catch (e: Exception) {
             logger.error("Error occurred while processing daily upload digest: ${e.message}")
@@ -69,7 +69,8 @@ class UploadDigestCountsNotificationWorkflowImpl :
     }
 
     /**
-     * The function which gets the digest counts query and sends it to the corresponding db collection
+     * The function which gets the digest counts query and sends it to the corresponding db collection.
+     *
      * @param jurisdictionIds List<String>
      * @param dataStreams List<String>
      */
@@ -130,6 +131,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
 
     /**
      *  Function for Email Body Formatting
+     *
      *  @param uploadCounts Map<String, Map<String, Int>>
      *  @return String
      */
