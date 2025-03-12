@@ -17,7 +17,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: [['list', { printSteps: true }],['html']],
+  reporter: [['list', { printSteps: true }],['html', {open: 'never'}]],
 
   use: {
     // Collect trace when retrying the failed test.
@@ -32,24 +32,6 @@ export default defineConfig({
           baseURL: 'http://127.0.0.1:8090/graphql'
       },
     },
-    {
-      name: 'GQL-Dev',
-      use: {
-            baseURL: 'https://pstatusgraphql.ocio-eks-dev-ede.cdc.gov/graphql'
-          }
-    },
-    {
-      name: 'GQL-Test',
-      use: {
-            baseURL: 'https://pstatusgraphql.phdo-eks-test.cdc.gov/graphql'
-          }
-    },
-    {
-      name: 'GQL-Stage',
-      use: {
-            baseURL: 'https://pstatusgraphql.phdo-eks-test.cdc.gov/graphql'
-          }
-    }
   ],
 
 });
