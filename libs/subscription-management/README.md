@@ -97,16 +97,16 @@ class DeadLineCheckSubscriptionService: KoinComponent {
             val dataStreamRoute = subscription.dataStreamRoute
             val jurisdiction = subscription.jurisdiction
             val cronSchedule = subscription.cronSchedule
-            val deliveryReference= subscription.deliveryReference
+            val emailAddresses = subscription.emailAddresses
             val taskQueue = "notificationTaskQueue"
 
             val workflow = workflowEngine.setupWorkflow(taskQueue, cronSchedule,
                 NotificationWorkflowImpl::class.java ,notificationActivitiesImpl, NotificationWorkflow::class.java)
-            val execution = WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, cronSchedule, deliveryReference)
+            val execution = WorkflowClient.start(workflow::checkUploadAndNotify, jurisdiction, dataStreamId, dataStreamRoute, cronSchedule, emailAddresses)
             
             val workflowSubscription= getWorkflowSubscription(execution.workflowId, jurisdiction, cronSchedule)
             val subscriptionId = subscriptionManagementEngine.subscribe(workflowSubscription)
-            return WorkflowSubscriptionResult(subscriptionId= subscriptionId, message="Successfully subscribed to the rule", deliveryReference=deliveryReference)
+            return WorkflowSubscriptionResult(subscriptionId= subscriptionId, message="Successfully subscribed to the rule", emailAddresses=emailAddresses)
         }
         catch (e:Exception){
             logger.error("Error occurred while subscribing workflow for upload deadline: ${e.message}")
