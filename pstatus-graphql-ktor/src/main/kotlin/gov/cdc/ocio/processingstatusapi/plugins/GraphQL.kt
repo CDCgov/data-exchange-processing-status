@@ -36,9 +36,9 @@ fun Application.graphQLModule() {
 
     install(GraphQL) {
         schema {
-            packages = listOf("gov.cdc.ocio.processingstatusapi")
+            packages = listOf("gov.cdc.ocio.processingstatusapi","gov.cdc.ocio.types.health")
             queries = listOf(
-                HealthQueryService(),
+                HealthQueryService(), // ✅ Manually passing dependencies
                 ReportQueryService(),
                 ReportSchemaQueryService(),
                 ReportCountsQueryService(),

@@ -1,8 +1,12 @@
 package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.processingstatusapi.models.query.GraphQLHealth
+import gov.cdc.ocio.processingstatusapi.models.query.HealthConfigLoader
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
+import gov.cdc.ocio.processingstatusapi.queries.HealthCheckService
+import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import gov.cdc.ocio.processingstatusapi.utils.SchemaSecurityConfigKoinCreator
 import graphql.scalars.ExtendedScalars
@@ -12,6 +16,7 @@ import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import org.koin.core.KoinApplication
+import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 
@@ -19,7 +24,13 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val schemaLoaderModule = SchemaLoaderKoinCreator.moduleFromAppEnv(environment)
     val schemaSecurityConfig = SchemaSecurityConfigKoinCreator.moduleFromAppEnv(environment)
-    return modules(listOf(databaseModule, schemaLoaderModule, schemaSecurityConfig))
+    val healthModule = module {
+        single { HealthConfigLoader(environment.config) }
+        single { GraphQLHealth() }
+        single { HealthCheckService() } // Register HealthCheckService
+        single { HealthQueryService() } // Register HealthQueryService
+    }
+    return modules(listOf(databaseModule, schemaLoaderModule, schemaSecurityConfig,healthModule))
 }
 
 fun main(args: Array<String>) {
@@ -33,6 +44,7 @@ fun Application.module() {
     install(Koin) {
         loadKoinModules(environment)
     }
+
     graphQLModule()
     configureRouting()
 
