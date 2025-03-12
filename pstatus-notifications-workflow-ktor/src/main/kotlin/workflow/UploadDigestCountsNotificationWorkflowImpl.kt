@@ -11,16 +11,22 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Duration
 
+
 /**
- * The implementation class which determines the daily digest counts of the list of jurisdictions for the set data stream id list
+ * The implementation class which determines the daily digest counts of the list of jurisdictions for the set data
+ * stream id list.
+ *
  * @property repository ProcessingStatusRepository
  * @property logger logger
  * @property activities T
-
  */
-class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificationWorkflow, KoinComponent {
-    private val repository by inject<ProcessingStatusRepository>()
+class UploadDigestCountsNotificationWorkflowImpl :
+    UploadDigestCountsNotificationWorkflow, KoinComponent {
+
     private val logger = KotlinLogging.logger {}
+
+    private val repository by inject<ProcessingStatusRepository>()
+
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
         ActivityOptions.newBuilder()
@@ -35,7 +41,8 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
     )
 
     /**
-     * The main function which is used by temporal workflow engine for orchestrating the daily upload digest counts
+     * The main function which is used by temporal workflow engine for orchestrating the daily upload digest counts.
+     *
      * @param jurisdictionIds: List<String>
      * @param dataStreams: List<String>
      * @param deliveryReference String
@@ -46,22 +53,20 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
         deliveryReference: String
     ) {
         try {
-            val uploadDigestResults = getUploadDigest(jurisdictionIds,dataStreams)
+            val uploadDigestResults = getUploadDigest(jurisdictionIds, dataStreams)
 
-            if(uploadDigestResults.isNotEmpty()) {
+            if (uploadDigestResults.isNotEmpty()) {
                 // Aggregate the upload counts
                 val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
                 // Format the email body
                 val emailBody = formatEmailBody(aggregatedCounts)
                 activities.sendDigestEmail(emailBody, deliveryReference)
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             logger.error("Error occurred while processing daily upload digest: ${e.message}")
             throw e
         }
     }
-
 
     /**
      * The function which gets the digest counts query and sends it to the corresponding db collection
@@ -71,7 +76,7 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
     private fun getUploadDigest(
         jurisdictionIds: List<String>,
         dataStreams: List<String>,
-        ): List<UploadDigestResponse> {
+    ): List<UploadDigestResponse> {
         try {
             val query = buildDigestQuery(jurisdictionIds, dataStreams)
             return repository.reportsCollection.queryItems(query, UploadDigestResponse::class.java)
@@ -83,33 +88,35 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
     }
 
     /**
-     * Function which uses SQL-compatible query statement in PartiQL for dynamo or sql statements for other db types
+     * Function which uses SQL-compatible query statement in PartiQL for dynamo or sql statements for other db types.
+     *
      * @param jurisdictionIds List<String>
      * @param dataStreamIds List<String>
      * @return String
      */
-
     private fun buildDigestQuery(jurisdictionIds: List<String>, dataStreamIds: List<String>): String {
         val jurisdictionIdsList = jurisdictionIds.joinToString(", ") { "'$it'" }
         val dataStreamsList = dataStreamIds.joinToString(", ") { "'$it'" }
 
-        val reportsCollection =repository.reportsCollection
-        val collectionName =reportsCollection.collectionNameForQuery
+        val reportsCollection = repository.reportsCollection
+        val collectionName = reportsCollection.collectionNameForQuery
         val cVar = reportsCollection.collectionVariable
-        val cPrefix =reportsCollection.collectionVariablePrefix
+        val cPrefix = reportsCollection.collectionVariablePrefix
+        val openBkt = reportsCollection.openBracketChar
+        val closeBkt = reportsCollection.closeBracketChar
 
         return """
-        SELECT  ${cPrefix}id,  ${cPrefix}jurisdiction, ${cPrefix}dataStreamId
-        FROM $collectionName $cVar
-        WHERE  ${cPrefix}jurisdiction IN ($jurisdictionIdsList) AND  ${cPrefix}dataStreamId IN ($dataStreamsList)
-       
-    """.trimIndent()
-
+            SELECT ${cPrefix}id,  ${cPrefix}jurisdiction, ${cPrefix}dataStreamId
+            FROM $collectionName $cVar
+            WHERE ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
+            AND ${cPrefix}dataStreamId IN ${openBkt}$dataStreamsList${closeBkt}
+        """.trimIndent()
     }
 
     /**
      *  DynamoDB does not support GROUP BY, so this function is used to aggregate the counts
      *  Function that groups by jurisdictionId and dataStreamId to aggregate counts.
+     *
      *  @param uploadCounts List<UploadDigestResponse>
      *  @return Map<String, Map<String, Int>>
      */
@@ -117,7 +124,7 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
         return uploadCounts.groupBy { it.jurisdiction }
             .mapValues { (_, counts) ->
                 counts.groupBy { it.dataStreamId }
-                    .mapValues { (_, streamCounts) -> streamCounts.count()}
+                    .mapValues { (_, streamCounts) -> streamCounts.count() }
             }
     }
 
