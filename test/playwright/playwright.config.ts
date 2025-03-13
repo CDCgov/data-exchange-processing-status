@@ -19,6 +19,8 @@ export default defineConfig({
   // Reporter to use
   reporter: [['list', { printSteps: true }],['html', {open: 'never'}]],
 
+  snapshotPathTemplate: `{testDir}/__snapshot__/{testFileName}/{testName}-{arg}{ext}`,
+  
   use: {
     // Collect trace when retrying the failed test.
     trace: 'on-first-retry',
