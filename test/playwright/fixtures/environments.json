@@ -20,6 +20,16 @@
         "url": "https://pstatusreport.ocio-eks-dev-ede.cdc.gov"
     },
     {
+        "environment": "dev",
+        "name": "notifications-rules-engine",
+        "url": "https://pstatusnotification.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "dev",
+        "name": "notifications-workflow",
+        "url": "https://notifications-workflow-service.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
         "environment": "test",
         "name": "graphql",
         "url": "https://pstatusgraphql.phdo-eks-test.cdc.gov"
@@ -28,6 +38,16 @@
         "environment": "test",
         "name": "report-sink",
         "url": "https://pstatusreport.phdo-eks-test.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "notifications-rules-engine",
+        "url": "https://pstatusnotification.phdo-eks-test.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "notifications-workflow",
+        "url": "https://notifications-workflow-service.phdo-eks-test.cdc.gov"
     },
     {
         "environment": "stage",
