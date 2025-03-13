@@ -21,12 +21,6 @@ test.describe('GraphQL getHealth', () => {
         expect(res.getHealth.status).toEqual('UP')
         expect(res.getHealth.totalChecksDuration).toBeDefined()
         expect(res.getHealth.dependencyHealthChecks).toStrictEqual(expectedDepenedencyHealthChecks)
-            //.toDeepEqual(
-            // expect.arrayContaining([
-            //     expect.objectContaining({'service': 'Couchbase DB', 'status': 'UP', 'healthIssues': null })
-            // ])
-
-        //)
     })
 
     test('returns healtheck data snapshot check', async ({ gql }) => {
