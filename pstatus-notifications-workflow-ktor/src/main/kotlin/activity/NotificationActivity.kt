@@ -23,7 +23,7 @@ interface NotificationActivities {
     )
     @ActivityMethod
     fun sendDataStreamTopErrorsNotification(
-        error:String,
+        emailBody: String,
         emailAddresses: List<String>
     )
 

@@ -59,17 +59,17 @@ class NotificationActivitiesImpl : NotificationActivities {
      * Send notification method which uses the email service to send email with the digest counts of the top errors in
      * an upload.
      *
-     * @param error String
+     * @param emailBody String
      * @param emailAddresses List<String>
      */
     override fun sendDataStreamTopErrorsNotification(
-        error: String,
+        emailBody: String,
         emailAddresses: List<String>
     ) {
-        logger.info(error)
+        logger.info(emailBody)
         emailService.sendEmail(
             "TEST EMAIL-DATA STREAM TOP ERRORS NOTIFICATION",
-            error,
+            emailBody,
             emailAddresses)
     }
 
