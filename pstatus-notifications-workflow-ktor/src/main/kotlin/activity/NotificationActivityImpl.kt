@@ -13,7 +13,7 @@ class NotificationActivitiesImpl : NotificationActivities {
 
     private val logger = KotlinLogging.logger {}
 
-    private val emailService: EmailDispatcher = EmailDispatcher()
+    private val emailService = EmailDispatcher()
 
     /**
      * Send notification method which uses the email service to send email when an upload fails
