@@ -65,12 +65,6 @@ dependencies {
     implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
     implementation ("software.amazon.awssdk:sts:2.29.34")
     implementation ("com.cronutils:cron-utils:9.2.1")
-
-    // include for JVM target
-//    implementation ("org.jetbrains.kotlinx:kotlinx-html-jvm:$kotlinxHtmlVersion")
-    // include for JS target
-//    implementation ("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinxHtmlVersion")
-    // include for Common module
     implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion")
 
     testImplementation(kotlin("test"))
