@@ -22,21 +22,21 @@
     {
         "environment": "test",
         "name": "graphql",
-        "url": "https://pstatusgraphql.ocio-eks-test-ede.cdc.gov"
+        "url": "https://pstatusgraphql.phdo-eks-test.cdc.gov"
     },
     {
         "environment": "test",
         "name": "report-sink",
-        "url": "https://pstatusreport.ocio-eks-test-ede.cdc.gov"
+        "url": "https://pstatusreport.phdo-eks-test.cdc.gov"
     },
     {
         "environment": "stage",
         "name": "graphql",
-        "url": "https://pstatusgraphql.ocio-eks-stg-ede.cdc.gov"
+        "url": "https://pstatusgraphql.phdo-eks-stg.cdc.gov"
     },
     {
         "environment": "stage",
         "name": "report-sink",
-        "url": "https://pstatusreport.ocio-eks-stg-ede.cdc.gov"
+        "url": "https://pstatusreport.phdo-eks-stg.cdc.gov"
     }
 ]
