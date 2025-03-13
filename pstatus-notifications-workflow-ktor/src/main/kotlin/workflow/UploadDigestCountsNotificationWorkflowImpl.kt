@@ -43,17 +43,19 @@ class UploadDigestCountsNotificationWorkflowImpl :
     /**
      * The main function which is used by temporal workflow engine for orchestrating the daily upload digest counts.
      *
-     * @param jurisdictionIds: List<String>
-     * @param dataStreams: List<String>
+     * @param dataStreamIds: List<String>
+     * @param dataStreamRoutes: List<String>
+     * @param jurisdictions: List<String>
      * @param emailAddresses List<String>
      */
     override fun processDailyUploadDigest(
-        jurisdictionIds: List<String>,
-        dataStreams: List<String>,
+        dataStreamIds: List<String>,
+        dataStreamRoutes: List<String>,
+        jurisdictions: List<String>,
         emailAddresses: List<String>
     ) {
         try {
-            val uploadDigestResults = getUploadDigest(jurisdictionIds, dataStreams)
+            val uploadDigestResults = getUploadDigest(dataStreamIds, dataStreamRoutes, jurisdictions)
 
             if (uploadDigestResults.isNotEmpty()) {
                 // Aggregate the upload counts
@@ -71,17 +73,18 @@ class UploadDigestCountsNotificationWorkflowImpl :
     /**
      * The function which gets the digest counts query and sends it to the corresponding db collection.
      *
-     * @param jurisdictionIds List<String>
-     * @param dataStreams List<String>
+     * @param dataStreamIds List<String>
+     * @param dataStreamRoutes List<String>
+     * @param jurisdictions List<String>
      */
     private fun getUploadDigest(
-        jurisdictionIds: List<String>,
-        dataStreams: List<String>,
+        dataStreamIds: List<String>,
+        dataStreamRoutes: List<String>,
+        jurisdictions: List<String>,
     ): List<UploadDigestResponse> {
         try {
-            val query = buildDigestQuery(jurisdictionIds, dataStreams)
+            val query = buildDigestQuery(dataStreamIds, dataStreamRoutes, jurisdictions)
             return repository.reportsCollection.queryItems(query, UploadDigestResponse::class.java)
-
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
             throw e
@@ -91,13 +94,19 @@ class UploadDigestCountsNotificationWorkflowImpl :
     /**
      * Function which uses SQL-compatible query statement in PartiQL for dynamo or sql statements for other db types.
      *
-     * @param jurisdictionIds List<String>
      * @param dataStreamIds List<String>
+     * @param dataStreamRoutes List<String>
+     * @param jurisdictions List<String>
      * @return String
      */
-    private fun buildDigestQuery(jurisdictionIds: List<String>, dataStreamIds: List<String>): String {
-        val jurisdictionIdsList = jurisdictionIds.joinToString(", ") { "'$it'" }
-        val dataStreamsList = dataStreamIds.joinToString(", ") { "'$it'" }
+    private fun buildDigestQuery(
+        dataStreamIds: List<String>,
+        dataStreamRoutes: List<String>,
+        jurisdictions: List<String>,
+    ): String {
+        val jurisdictionIdsList = jurisdictions.joinToString(", ") { "'$it'" }
+        val dataStreamIdsList = dataStreamIds.joinToString(", ") { "'$it'" }
+        val dataStreamRoutesList = dataStreamRoutes.joinToString(", ") { "'$it'" }
 
         val reportsCollection = repository.reportsCollection
         val collectionName = reportsCollection.collectionNameForQuery
@@ -107,10 +116,11 @@ class UploadDigestCountsNotificationWorkflowImpl :
         val closeBkt = reportsCollection.closeBracketChar
 
         return """
-            SELECT ${cPrefix}id,  ${cPrefix}jurisdiction, ${cPrefix}dataStreamId
+            SELECT ${cPrefix}id, ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
             FROM $collectionName $cVar
-            WHERE ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
-            AND ${cPrefix}dataStreamId IN ${openBkt}$dataStreamsList${closeBkt}
+            WHERE ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
+            AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
+            AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
         """.trimIndent()
     }
 
@@ -121,7 +131,9 @@ class UploadDigestCountsNotificationWorkflowImpl :
      *  @param uploadCounts List<UploadDigestResponse>
      *  @return Map<String, Map<String, Int>>
      */
-    private fun aggregateUploadCounts(uploadCounts: List<UploadDigestResponse>): Map<String, Map<String, Int>> {
+    private fun aggregateUploadCounts(
+        uploadCounts: List<UploadDigestResponse>
+    ): Map<String, Map<String, Int>> {
         return uploadCounts.groupBy { it.jurisdiction }
             .mapValues { (_, counts) ->
                 counts.groupBy { it.dataStreamId }

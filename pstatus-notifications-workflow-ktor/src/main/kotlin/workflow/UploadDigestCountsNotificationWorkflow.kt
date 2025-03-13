@@ -12,8 +12,9 @@ interface UploadDigestCountsNotificationWorkflow {
 
     @WorkflowMethod
     fun processDailyUploadDigest(
-        jurisdictionIds: List<String>,
-        dataStreams: List<String>,
+        dataStreamIds: List<String>,
+        dataStreamRoutes: List<String>,
+        jurisdictions: List<String>,
         emailAddresses: List<String>
     )
 
