@@ -50,7 +50,7 @@ class NotificationActivitiesImpl : NotificationActivities {
         val msg = "Number of uploads with errors while uploading: ${error.size}"
         logger.info(msg)
         emailService.sendEmail(
-            "TEST EMAIL-UPLOAD ERRORS NOTIFICATION",
+            "UPLOAD ERRORS NOTIFICATION",
             msg,
             emailAddresses)
     }
@@ -68,7 +68,7 @@ class NotificationActivitiesImpl : NotificationActivities {
     ) {
         logger.info(emailBody)
         emailService.sendEmail(
-            "TEST EMAIL-DATA STREAM TOP ERRORS NOTIFICATION",
+            "DATA STREAM TOP ERRORS NOTIFICATION",
             emailBody,
             emailAddresses)
     }
