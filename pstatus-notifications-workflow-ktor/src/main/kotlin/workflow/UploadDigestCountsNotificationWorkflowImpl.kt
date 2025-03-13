@@ -6,6 +6,8 @@ import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
+import kotlinx.html.*
+import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -150,15 +152,28 @@ class UploadDigestCountsNotificationWorkflowImpl :
     private fun formatEmailBody(uploadCounts: Map<String, Map<String, Int>>): String {
         val builder = StringBuilder()
         builder.append("Daily Upload Digest for Data Streams:\n\n")
-        builder.append("JurisdictionIds:\n")
-        uploadCounts.forEach { (jurisdictionId, streams) ->
-            builder.append("\t$jurisdictionId\n")
+        builder.append("Jurisdictions:\n")
+        uploadCounts.forEach { (jurisdiction, streams) ->
+            builder.append("\t$jurisdiction\n")
             builder.append("DataStreamIds:\n")
             streams.forEach { (stream, count) ->
                 builder.append("\t$stream: $count uploads\n")
             }
             builder.append("\n")
         }
-        return builder.toString()
+
+        val html = buildString {
+            appendHTML().html {
+//                head { title("Welcome!") }
+                body {
+                    h1 { +"Hello!" }
+                    p { +"Thank you for signing up for this email." }
+                    a(href = "https://cdc.gov") { +"Click here to get started" }
+                }
+            }
+        }
+        return html
+
+//        return builder.toString()
     }
 }
