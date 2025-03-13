@@ -1,16 +1,9 @@
 import { test, expect, request} from '@playwright/test';
+import { Environments } from 'fixtures/environment';
 
-type Environment = {
-    environment: string;
-    name: string;
-    url: string;
-}
-
-const environments: [Environment] = JSON.parse(JSON.stringify(require('fixtures/environments.json')))
-const environment = environments.filter((env: any) => {return env.environment === process.env.ENV?.toString()})
-
+let testEnvironments = new Environments(process.env.ENV?.toString());
 test.describe('Healthcheck', () => {
-    environment.forEach(({ environment, name, url }) => {
+    testEnvironments.envs.forEach(({ environment, name, url }) => {
         test(`[${environment}] ${name}@${url}`, async ({ request }) => {
             const healthRequest = await request.get(`${url}/health`)
             expect(await healthRequest.ok()).toBeTruthy()
@@ -21,7 +14,7 @@ test.describe('Healthcheck', () => {
 })
 
 test.describe('Version', () => {
-    environment.forEach(({ environment, name, url }) => {
+    testEnvironments.envs.forEach(({ environment, name, url }) => {
         test(`[${environment}] ${name}@${url}`, async ({ request }) => {
             const version = await request.get(`${url}/version`)
             expect(await version.ok()).toBeTruthy()
