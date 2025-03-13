@@ -15,15 +15,18 @@ import kotlinx.serialization.Serializable
 /**
  * Daily Upload Digest Counts Subscription data class.
  *
- * @param jurisdictionIds List<String>
- * @param dataStreamIds List<String>
- * @param cronSchedule String
- * @param emailAddresses List<String>
+ * @property dataStreamIds List<String>
+ * @property dataStreamRoutes List<String>
+ * @property jurisdictions List<String>
+ * @property cronSchedule String
+ * @property emailAddresses List<String>
+ * @constructor
  */
 @Serializable
 data class UploadDigestCountsSubscription(
-    val jurisdictionIds: List<String>,
     val dataStreamIds: List<String>,
+    val dataStreamRoutes: List<String>,
+    val jurisdictions: List<String>,
     val cronSchedule: String,
     val emailAddresses: List<String>
 )
@@ -50,18 +53,21 @@ class UploadDigestCountsSubscriptionMutationService(
     /**
      * The mutation function which invokes the daily digest counts microservice route to subscribe.
      *
-     * @param jurisdictionIds List<String>
      * @param dataStreamIds List<String>
+     * @param dataStreamRoutes List<String>
+     * @param jurisdictions List<String>
      * @param cronSchedule String
      * @param emailAddresses List<String>
+     * @return NotificationSubscriptionResult
      */
     @GraphQLDescription("Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past")
     @Suppress("unused")
     fun subscribeUploadDigestCounts(
-         jurisdictionIds: List<String>,
-         dataStreamIds: List<String>,
-         cronSchedule: String,
-         emailAddresses: List<String>
+        dataStreamIds: List<String>,
+        dataStreamRoutes: List<String>,
+        jurisdictions: List<String>,
+        cronSchedule: String,
+        emailAddresses: List<String>
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.getUrl("/subscribe/uploadDigestCounts")
 
@@ -71,8 +77,9 @@ class UploadDigestCountsSubscriptionMutationService(
                     contentType(ContentType.Application.Json)
                     setBody(
                         UploadDigestCountsSubscription(
-                            jurisdictionIds,
                             dataStreamIds,
+                            dataStreamRoutes,
+                            jurisdictions,
                             cronSchedule,
                             emailAddresses
                         )
