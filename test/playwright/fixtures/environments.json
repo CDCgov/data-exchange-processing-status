@@ -12,6 +12,31 @@
     {
         "environment": "dev",
         "name": "graphql",
-        "url": "http://dev:8080"
+        "url": "https://pstatusgraphql.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "dev",
+        "name": "report-sink",
+        "url": "https://pstatusreport.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "graphql",
+        "url": "https://pstatusgraphql.ocio-eks-test-ede.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "report-sink",
+        "url": "https://pstatusreport.ocio-eks-test-ede.cdc.gov"
+    },
+    {
+        "environment": "stage",
+        "name": "graphql",
+        "url": "https://pstatusgraphql.ocio-eks-stg-ede.cdc.gov"
+    },
+    {
+        "environment": "stage",
+        "name": "report-sink",
+        "url": "https://pstatusreport.ocio-eks-stg-ede.cdc.gov"
     }
 ]
