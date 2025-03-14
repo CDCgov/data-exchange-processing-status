@@ -42,6 +42,7 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
         subscription: UploadDigestSubscription
     ): WorkflowSubscriptionResult {
 
+        val numDaysAgoToRun = subscription.numDaysAgoToRun
         val dataStreamIds = subscription.dataStreamIds
         val dataStreamRoutes = subscription.dataStreamRoutes
         val jurisdictions = subscription.jurisdictions
@@ -60,6 +61,7 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
 
         val execution = WorkflowClient.start(
             workflow::processDailyUploadDigest,
+            numDaysAgoToRun,
             dataStreamIds,
             dataStreamRoutes,
             jurisdictions,

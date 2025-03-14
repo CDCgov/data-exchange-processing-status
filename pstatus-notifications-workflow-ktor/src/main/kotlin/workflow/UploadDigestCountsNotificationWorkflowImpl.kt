@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications.workflow
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
+import gov.cdc.ocio.types.InstantRange
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -12,6 +13,8 @@ import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Duration
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -45,25 +48,30 @@ class UploadDigestCountsNotificationWorkflowImpl :
     /**
      * The main function which is used by temporal workflow engine for orchestrating the daily upload digest counts.
      *
-     * @param dataStreamIds: List<String>
-     * @param dataStreamRoutes: List<String>
-     * @param jurisdictions: List<String>
+     * @param numDaysAgoToRun Long
+     * @param dataStreamIds List<String>
+     * @param dataStreamRoutes List<String>
+     * @param jurisdictions List<String>
      * @param emailAddresses List<String>
      */
     override fun processDailyUploadDigest(
+        numDaysAgoToRun: Long,
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
         emailAddresses: List<String>
     ) {
         try {
-            val uploadDigestResults = getUploadDigest(dataStreamIds, dataStreamRoutes, jurisdictions)
+            val utcDateToRun = LocalDate.now().minusDays(numDaysAgoToRun)
+            val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
+            val dateToRun = utcDateToRun.format(formatter)
+            val uploadDigestResults = getUploadDigest(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
             if (uploadDigestResults.isNotEmpty()) {
                 // Aggregate the upload counts
                 val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
                 // Format the email body
-                val emailBody = formatEmailBody(aggregatedCounts)
+                val emailBody = formatEmailBody(dateToRun, aggregatedCounts)
                 activities.sendDigestEmail(emailBody, emailAddresses)
             }
         } catch (e: Exception) {
@@ -75,17 +83,19 @@ class UploadDigestCountsNotificationWorkflowImpl :
     /**
      * The function which gets the digest counts query and sends it to the corresponding db collection.
      *
+     * @param utcDateToRun LocalDate
      * @param dataStreamIds List<String>
      * @param dataStreamRoutes List<String>
      * @param jurisdictions List<String>
      */
     private fun getUploadDigest(
+        utcDateToRun: LocalDate,
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
     ): List<UploadDigestResponse> {
         try {
-            val query = buildDigestQuery(dataStreamIds, dataStreamRoutes, jurisdictions)
+            val query = buildDigestQuery(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
             return repository.reportsCollection.queryItems(query, UploadDigestResponse::class.java)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
@@ -96,16 +106,22 @@ class UploadDigestCountsNotificationWorkflowImpl :
     /**
      * Function which uses SQL-compatible query statement in PartiQL for dynamo or sql statements for other db types.
      *
+     * @param utcDateToRun LocalDate
      * @param dataStreamIds List<String>
      * @param dataStreamRoutes List<String>
      * @param jurisdictions List<String>
      * @return String
      */
     private fun buildDigestQuery(
+        utcDateToRun: LocalDate,
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
     ): String {
+        val instantRange = InstantRange.fromLocalDate(utcDateToRun)
+        val startEpoch = instantRange.start.epochSecond * 1000
+        val endEpoch = instantRange.endInclusive.epochSecond * 1000
+
         val jurisdictionIdsList = jurisdictions.joinToString(", ") { "'$it'" }
         val dataStreamIdsList = dataStreamIds.joinToString(", ") { "'$it'" }
         val dataStreamRoutesList = dataStreamRoutes.joinToString(", ") { "'$it'" }
@@ -118,11 +134,14 @@ class UploadDigestCountsNotificationWorkflowImpl :
         val closeBkt = reportsCollection.closeBracketChar
 
         return """
-            SELECT ${cPrefix}id, ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
+            SELECT ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
             FROM $collectionName $cVar
             WHERE ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
+            AND ${cPrefix}stageInfo.action = 'upload-completed' AND ${cPrefix}stageInfo.status = 'SUCCESS'
             AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
             AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
+            AND ${cPrefix}dexIngestDateTime >= $startEpoch
+            AND ${cPrefix}dexIngestDateTime < $endEpoch
         """.trimIndent()
     }
 
@@ -131,49 +150,99 @@ class UploadDigestCountsNotificationWorkflowImpl :
      *  Function that groups by jurisdictionId and dataStreamId to aggregate counts.
      *
      *  @param uploadCounts List<UploadDigestResponse>
-     *  @return Map<String, Map<String, Int>>
+     *  @return Map<String, Map<String, Map<String, Int>>>
      */
     private fun aggregateUploadCounts(
         uploadCounts: List<UploadDigestResponse>
-    ): Map<String, Map<String, Int>> {
-        return uploadCounts.groupBy { it.jurisdiction }
+    ): Map<String/*dataStreamId*/, Map<String/*dataStreamRoute*/, Map<String/*jurisdiction*/, Int>>> {
+        return uploadCounts.groupBy { it.dataStreamId }
             .mapValues { (_, counts) ->
-                counts.groupBy { it.dataStreamId }
-                    .mapValues { (_, streamCounts) -> streamCounts.count() }
+                counts.groupBy { it.dataStreamRoute }
+                    .mapValues { (_, routeCounts) ->
+                        routeCounts.groupBy { it.jurisdiction }
+                            .mapValues { (_, jurisdictionCounts) -> jurisdictionCounts.count() }
+                    }
             }
     }
 
     /**
-     *  Function for Email Body Formatting
+     * Function for Email Body Formatting
      *
-     *  @param uploadCounts Map<String, Map<String, Int>>
-     *  @return String
+     * @param runDateUtc String
+     * @param uploadCounts Map<String, Map<String, Map<String, Int>>>
+     * @return String HTML formatted email
      */
-    private fun formatEmailBody(uploadCounts: Map<String, Map<String, Int>>): String {
-        val builder = StringBuilder()
-        builder.append("Daily Upload Digest for Data Streams:\n\n")
-        builder.append("Jurisdictions:\n")
-        uploadCounts.forEach { (jurisdiction, streams) ->
-            builder.append("\t$jurisdiction\n")
-            builder.append("DataStreamIds:\n")
-            streams.forEach { (stream, count) ->
-                builder.append("\t$stream: $count uploads\n")
-            }
-            builder.append("\n")
-        }
-
-        val html = buildString {
+    private fun formatEmailBody(
+        runDateUtc: String,
+        uploadCounts: Map<String, Map<String, Map<String, Int>>>
+    ): String {
+        return buildString {
             appendHTML().html {
-//                head { title("Welcome!") }
                 body {
-                    h1 { +"Hello!" }
-                    p { +"Thank you for signing up for this email." }
-                    a(href = "https://cdc.gov") { +"Click here to get started" }
+                    h2 { +"Daily Upload Digest for Data Streams" }
+                    div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
+                    br
+                    h3 { +"Summary" }
+                    table {
+                        thead {
+                            tr {
+                                th { +"Data Stream ID" }
+                                th { +"Data Stream Route" }
+                                th { +"Jurisdictions" }
+                                th { +"Upload Counts" }
+                            }
+                        }
+                        tbody {
+                            uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+                                dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                    tr {
+                                        td { +dataStreamId }
+                                        td { +dataStreamRoute }
+                                        td { +jurisdictions.size.toString() }
+                                        td { +jurisdictions.values.sum().toString() }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    br
+                    h3 { +"Details" }
+                    table {
+                        thead {
+                            tr {
+                                th { +"Data Stream ID" }
+                                th { +"Data Stream Route" }
+                                th { +"Jurisdiction" }
+                                th { +"Upload Counts" }
+                            }
+                        }
+                        tbody {
+                            uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+                                dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                    jurisdictions.forEach { (jurisdiction, count) ->
+                                        tr {
+                                            td { +dataStreamId }
+                                            td { +dataStreamRoute }
+                                            td { +jurisdiction }
+                                            td { +count.toString() }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    p {
+                        +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
+                                + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe."
+                                )
+                    }
+                    p {
+                        a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
+                        +" for more information."
+                    }
                 }
             }
         }
-        return html
-
-//        return builder.toString()
     }
 }

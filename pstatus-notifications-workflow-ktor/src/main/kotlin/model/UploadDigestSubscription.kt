@@ -4,6 +4,7 @@ package gov.cdc.ocio.processingnotifications.model
 /**
  * Digest of upload counts subscription definition.
  *
+ * @property numDaysAgoToRun Long
  * @property dataStreamIds List<String>
  * @property dataStreamRoutes List<String>
  * @property jurisdictions List<String>
@@ -12,6 +13,7 @@ package gov.cdc.ocio.processingnotifications.model
  * @constructor
  */
 class UploadDigestSubscription(
+    val numDaysAgoToRun: Long,
     val dataStreamIds: List<String>,
     val dataStreamRoutes: List<String>,
     val jurisdictions: List<String>,

@@ -47,6 +47,7 @@ fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
         val subscription = call.receive<UploadDigestSubscription>()
         val uploadDigestCountsSubscription = UploadDigestSubscription(
+            subscription.numDaysAgoToRun,
             subscription.dataStreamIds,
             subscription.dataStreamRoutes,
             subscription.jurisdictions,

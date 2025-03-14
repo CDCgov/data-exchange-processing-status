@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 /**
  * Daily Upload Digest Counts Subscription data class.
  *
+ * @property numDaysAgoToRun Long
  * @property dataStreamIds List<String>
  * @property dataStreamRoutes List<String>
  * @property jurisdictions List<String>
@@ -24,6 +25,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class UploadDigestCountsSubscription(
+    val numDaysAgoToRun: Long,
     val dataStreamIds: List<String>,
     val dataStreamRoutes: List<String>,
     val jurisdictions: List<String>,
@@ -63,6 +65,7 @@ class UploadDigestCountsSubscriptionMutationService(
     @GraphQLDescription("Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past")
     @Suppress("unused")
     fun subscribeUploadDigestCounts(
+        numDaysAgoToRun: Long,
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
@@ -77,6 +80,7 @@ class UploadDigestCountsSubscriptionMutationService(
                     contentType(ContentType.Application.Json)
                     setBody(
                         UploadDigestCountsSubscription(
+                            numDaysAgoToRun,
                             dataStreamIds,
                             dataStreamRoutes,
                             jurisdictions,
