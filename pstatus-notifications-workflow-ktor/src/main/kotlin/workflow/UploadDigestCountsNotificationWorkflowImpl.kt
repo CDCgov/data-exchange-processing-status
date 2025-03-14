@@ -133,16 +133,35 @@ class UploadDigestCountsNotificationWorkflowImpl :
         val openBkt = reportsCollection.openBracketChar
         val closeBkt = reportsCollection.closeBracketChar
 
-        return """
+        val querySB = StringBuilder()
+
+        querySB.append("""
             SELECT ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
             FROM $collectionName $cVar
-            WHERE ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
-            AND ${cPrefix}stageInfo.action = 'upload-completed' AND ${cPrefix}stageInfo.status = 'SUCCESS'
-            AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
-            AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
+            WHERE ${cPrefix}stageInfo.action = 'upload-completed' AND ${cPrefix}stageInfo.status = 'SUCCESS'
+            """)
+
+        if (dataStreamIds.isNotEmpty())
+            querySB.append("""
+                AND ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
+                """)
+
+        if (dataStreamRoutesList.isNotEmpty())
+            querySB.append("""
+                AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
+                """)
+
+        if (jurisdictionIdsList.isNotEmpty())
+            querySB.append("""
+                AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
+                """)
+
+        querySB.append("""
             AND ${cPrefix}dexIngestDateTime >= $startEpoch
             AND ${cPrefix}dexIngestDateTime < $endEpoch
-        """.trimIndent()
+            """)
+
+        return querySB.toString().trimIndent()
     }
 
     /**

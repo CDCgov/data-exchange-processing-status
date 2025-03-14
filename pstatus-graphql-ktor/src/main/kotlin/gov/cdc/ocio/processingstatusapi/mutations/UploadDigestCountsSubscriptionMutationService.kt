@@ -66,9 +66,9 @@ class UploadDigestCountsSubscriptionMutationService(
     @Suppress("unused")
     fun subscribeUploadDigestCounts(
         numDaysAgoToRun: Long,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
+        dataStreamIds: List<String>? = emptyList(),
+        dataStreamRoutes: List<String>? = emptyList(),
+        jurisdictions: List<String>? = emptyList(),
         cronSchedule: String,
         emailAddresses: List<String>
     ): NotificationSubscriptionResult {
@@ -81,9 +81,9 @@ class UploadDigestCountsSubscriptionMutationService(
                     setBody(
                         UploadDigestCountsSubscription(
                             numDaysAgoToRun,
-                            dataStreamIds,
-                            dataStreamRoutes,
-                            jurisdictions,
+                            dataStreamIds ?: emptyList(),
+                            dataStreamRoutes ?: emptyList(),
+                            jurisdictions ?: emptyList(),
                             cronSchedule,
                             emailAddresses
                         )
