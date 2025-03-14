@@ -67,13 +67,12 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val dateToRun = utcDateToRun.format(formatter)
             val uploadDigestResults = getUploadDigest(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
-            if (uploadDigestResults.isNotEmpty()) {
-                // Aggregate the upload counts
-                val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
-                // Format the email body
-                val emailBody = formatEmailBody(dateToRun, aggregatedCounts)
-                activities.sendDigestEmail(emailBody, emailAddresses)
-            }
+            // Aggregate the upload counts
+            val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
+
+            // Format the email body
+            val emailBody = formatEmailBody(dateToRun, aggregatedCounts)
+            activities.sendDigestEmail(emailBody, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while processing daily upload digest: ${e.message}")
             throw e
@@ -96,6 +95,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
     ): List<UploadDigestResponse> {
         try {
             val query = buildDigestQuery(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
+            logger.info("Upload digest counts query:\n$query")
             return repository.reportsCollection.queryItems(query, UploadDigestResponse::class.java)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
@@ -174,6 +174,9 @@ class UploadDigestCountsNotificationWorkflowImpl :
     private fun aggregateUploadCounts(
         uploadCounts: List<UploadDigestResponse>
     ): Map<String/*dataStreamId*/, Map<String/*dataStreamRoute*/, Map<String/*jurisdiction*/, Int>>> {
+
+//        if (uploadCounts.isEmpty()) return mapOf()
+
         return uploadCounts.groupBy { it.dataStreamId }
             .mapValues { (_, counts) ->
                 counts.groupBy { it.dataStreamRoute }
@@ -203,47 +206,53 @@ class UploadDigestCountsNotificationWorkflowImpl :
                     br
                     h3 { +"Summary" }
                     table {
-                        thead {
-                            tr {
-                                th { +"Data Stream ID" }
-                                th { +"Data Stream Route" }
-                                th { +"Jurisdictions" }
-                                th { +"Upload Counts" }
+                        if (uploadCounts.isEmpty()) {
+                            +"No uploads found."
+                        } else {
+                            thead {
+                                tr {
+                                    th { +"Data Stream ID" }
+                                    th { +"Data Stream Route" }
+                                    th { +"Jurisdictions" }
+                                    th { +"Upload Counts" }
+                                }
                             }
-                        }
-                        tbody {
-                            uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
-                                dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
-                                    tr {
-                                        td { +dataStreamId }
-                                        td { +dataStreamRoute }
-                                        td { +jurisdictions.size.toString() }
-                                        td { +jurisdictions.values.sum().toString() }
+                            tbody {
+                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                        tr {
+                                            td { +dataStreamId }
+                                            td { +dataStreamRoute }
+                                            td { +jurisdictions.size.toString() }
+                                            td { +jurisdictions.values.sum().toString() }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                    br
-                    h3 { +"Details" }
-                    table {
-                        thead {
-                            tr {
-                                th { +"Data Stream ID" }
-                                th { +"Data Stream Route" }
-                                th { +"Jurisdiction" }
-                                th { +"Upload Counts" }
+                    if (uploadCounts.isNotEmpty()) {
+                        br
+                        h3 { +"Details" }
+                        table {
+                            thead {
+                                tr {
+                                    th { +"Data Stream ID" }
+                                    th { +"Data Stream Route" }
+                                    th { +"Jurisdiction" }
+                                    th { +"Upload Counts" }
+                                }
                             }
-                        }
-                        tbody {
-                            uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
-                                dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
-                                    jurisdictions.forEach { (jurisdiction, count) ->
-                                        tr {
-                                            td { +dataStreamId }
-                                            td { +dataStreamRoute }
-                                            td { +jurisdiction }
-                                            td { +count.toString() }
+                            tbody {
+                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                        jurisdictions.forEach { (jurisdiction, count) ->
+                                            tr {
+                                                td { +dataStreamId }
+                                                td { +dataStreamRoute }
+                                                td { +jurisdiction }
+                                                td { +count.toString() }
+                                            }
                                         }
                                     }
                                 }
