@@ -175,8 +175,6 @@ class UploadDigestCountsNotificationWorkflowImpl :
         uploadCounts: List<UploadDigestResponse>
     ): Map<String/*dataStreamId*/, Map<String/*dataStreamRoute*/, Map<String/*jurisdiction*/, Int>>> {
 
-//        if (uploadCounts.isEmpty()) return mapOf()
-
         return uploadCounts.groupBy { it.dataStreamId }
             .mapValues { (_, counts) ->
                 counts.groupBy { it.dataStreamRoute }
