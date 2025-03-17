@@ -10,6 +10,7 @@ import gov.cdc.ocio.messagesystem.rabbitmq.RabbitMQMessageSystem
 import gov.cdc.ocio.messagesystem.servicebus.AzureServiceBusMessageSystem
 import gov.cdc.ocio.messagesystem.sqs.AWSSQSMessageSystem
 import gov.cdc.ocio.messagesystem.unsupported.UnsupportedMessageSystem
+import gov.cdc.ocio.processingstatusapi.models.MessageProcessorConfig
 import gov.cdc.ocio.processingstatusapi.plugins.*
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import io.ktor.serialization.jackson.*
@@ -49,6 +50,21 @@ private fun createMessageSystem(environment: ApplicationEnvironment): MessageSys
 }
 
 /**
+ * Creates the message processor configuration from the provided application environment.
+ *
+ * @param environment ApplicationEnvironment
+ * @return MessageProcessorConfig
+ */
+private fun createMessageProcessorConfig(environment: ApplicationEnvironment): MessageProcessorConfig {
+    val forwardValidatedReports = environment.config
+        .tryGetString("ktor.message_processor.forward_validated_reports")
+        ?.toBooleanStrictOrNull() ?: false
+    return MessageProcessorConfig(
+        forwardValidatedReports = forwardValidatedReports
+    )
+}
+
+/**
  * Load the environment configuration values
  *
  * @receiver KoinApplication
@@ -60,6 +76,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val schemaLoaderModule = SchemaLoaderKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = module {
         single(createdAtStart = true) { createMessageSystem(environment) }
+        single { createMessageProcessorConfig(environment) }
     }
 
     return modules(

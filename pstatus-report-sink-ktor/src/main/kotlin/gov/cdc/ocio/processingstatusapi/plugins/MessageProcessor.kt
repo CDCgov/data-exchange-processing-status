@@ -7,6 +7,7 @@ import gov.cdc.ocio.messagesystem.exceptions.BadStateException
 import gov.cdc.ocio.messagesystem.models.Source
 import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.models.ValidationComponents
+import gov.cdc.ocio.processingstatusapi.models.MessageProcessorConfig
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
@@ -24,7 +25,7 @@ abstract class MessageProcessor: KoinComponent {
 
     private val messageSystem by inject<MessageSystem>()
 
-    private val notificationSystemEnabled = true
+    private val messageProcessorConfig by inject<MessageProcessorConfig>()
 
     @Throws(BadRequestException::class, BadStateException::class)
     fun processMessage(message: String) {
@@ -64,8 +65,8 @@ abstract class MessageProcessor: KoinComponent {
                         source
                     )
 
-                    // Forward the validated report if the notification system is enabled
-                    if (notificationSystemEnabled)
+                    // Forward the validated report if enabled
+                    if (messageProcessorConfig.forwardValidatedReports)
                         messageSystem.send(message)
                 } else {
                     components.logger.info { "The message failed to validate, creating dead-letter report." }
