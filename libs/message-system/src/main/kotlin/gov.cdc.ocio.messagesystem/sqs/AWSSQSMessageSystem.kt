@@ -15,4 +15,8 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
 class AWSSQSMessageSystem(val sqsClient: SqsClient, queueUrl: String): MessageSystem {
 
     override var healthCheckSystem = HealthCheckAWSSQS(system, sqsClient, queueUrl) as HealthCheckSystem
+
+    override fun send(message: String) {
+        TODO("Not yet implemented")
+    }
 }

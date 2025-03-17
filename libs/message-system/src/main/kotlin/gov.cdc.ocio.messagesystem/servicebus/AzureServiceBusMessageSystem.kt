@@ -17,4 +17,8 @@ class AzureServiceBusMessageSystem(
 ): MessageSystem {
 
     override var healthCheckSystem = HealthCheckServiceBus(system, config) as HealthCheckSystem
+
+    override fun send(message: String) {
+        TODO("Not yet implemented")
+    }
 }

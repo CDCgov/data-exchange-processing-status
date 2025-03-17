@@ -11,6 +11,7 @@ import org.apache.qpid.proton.TimeoutException
 import org.koin.java.KoinJavaComponent.getKoin
 import java.io.IOException
 
+
 val RabbitMQPlugin = createApplicationPlugin(
     name = "RabbitMQ",
     configurationPath = "rabbitMQ",
@@ -18,7 +19,7 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     val logger = KotlinLogging.logger {}
 
-    val queueName = pluginConfig.queue
+    val queueName = pluginConfig.listenQueueName
     var connection: Connection? = null
     var channel: Channel? = null
 

@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
 import com.google.gson.JsonSyntaxException
+import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
 import gov.cdc.ocio.messagesystem.exceptions.BadStateException
 import gov.cdc.ocio.messagesystem.models.Source
@@ -14,10 +15,16 @@ import org.koin.core.component.inject
 
 
 abstract class MessageProcessor: KoinComponent {
+
     protected abstract val source: Source
+
     private val components = ValidationComponents.getComponents()
 
     private val schemaLoader by inject<SchemaLoader>()
+
+    private val messageSystem by inject<MessageSystem>()
+
+    private val notificationSystemEnabled = true
 
     @Throws(BadRequestException::class, BadStateException::class)
     fun processMessage(message: String) {
@@ -56,6 +63,10 @@ abstract class MessageProcessor: KoinComponent {
                         components.gson.fromJson(message, CreateReportMessage::class.java),
                         source
                     )
+
+                    // Forward the validated report if the notification system is enabled
+                    if (notificationSystemEnabled)
+                        messageSystem.send(message)
                 } else {
                     components.logger.info { "The message failed to validate, creating dead-letter report." }
                     SchemaValidation().sendToDeadLetter(
