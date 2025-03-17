@@ -14,21 +14,21 @@ interface NotificationActivities {
     fun sendNotification(
         dataStreamId: String,
         jurisdiction: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     )
     @ActivityMethod
     fun sendUploadErrorsNotification(
         error: List<CheckUploadResponse>,
-        deliveryReference: String
+        emailAddresses: List<String>
     )
     @ActivityMethod
     fun sendDataStreamTopErrorsNotification(
-        error:String,
-        deliveryReference: String
+        emailBody: String,
+        emailAddresses: List<String>
     )
 
     @ActivityMethod
     fun sendDigestEmail(
         emailBody: String,
-        deliveryReference: String)
+        emailAddresses: List<String>)
 }

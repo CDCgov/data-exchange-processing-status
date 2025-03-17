@@ -9,6 +9,7 @@ import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.client.WorkflowClient
+import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
@@ -42,7 +43,10 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
     init {
         runCatching {
             service = WorkflowServiceStubs.newServiceStubs(serviceOptions)
-            client = WorkflowClient.newInstance(service)
+
+            client = WorkflowClient.newInstance(service, WorkflowClientOptions.newBuilder()
+                .setNamespace(temporalConfig.namespace)
+                .build())
         }
     }
 

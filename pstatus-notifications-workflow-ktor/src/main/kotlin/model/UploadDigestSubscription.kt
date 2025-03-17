@@ -1,19 +1,24 @@
 package gov.cdc.ocio.processingnotifications.model
 
+
 /**
- * Upload subscription definition.
+ * Digest of upload counts subscription definition.
  *
- * @property jurisdictionIds List<String>
+ * @property numDaysAgoToRun Long
  * @property dataStreamIds List<String>
+ * @property dataStreamRoutes List<String>
+ * @property jurisdictions List<String>
  * @property cronSchedule String
- * @property deliveryReference String
+ * @property emailAddresses List<String>
  * @constructor
  */
 class UploadDigestSubscription(
-    val jurisdictionIds: List<String>,
+    val numDaysAgoToRun: Long,
     val dataStreamIds: List<String>,
+    val dataStreamRoutes: List<String>,
+    val jurisdictions: List<String>,
     val cronSchedule: String,
-    val deliveryReference: String
+    val emailAddresses: List<String>
 )
 
 /**

@@ -49,20 +49,20 @@ class UploadErrorsNotificationWorkflowImpl : UploadErrorsNotificationWorkflow, K
      * @param dataStreamRoute String
      * @param jurisdiction String
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     override fun checkUploadErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ) {
         try {
             // Logic to check if the upload occurred
             val uploadIdsWithErrors = checkUploadErrors(dataStreamId, dataStreamRoute, jurisdiction)
             if (uploadIdsWithErrors.isNotEmpty()) {
-                activities.sendUploadErrorsNotification(uploadIdsWithErrors, deliveryReference)
+                activities.sendUploadErrorsNotification(uploadIdsWithErrors, emailAddresses)
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for errors in upload. Errors are : ${e.message}")

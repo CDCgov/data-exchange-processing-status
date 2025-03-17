@@ -22,11 +22,10 @@ fun Route.subscribeDeadlineCheckRoute() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
         call.respond(result)
-
     }
 }
 
@@ -48,10 +47,12 @@ fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
         val subscription = call.receive<UploadDigestSubscription>()
         val uploadDigestCountsSubscription = UploadDigestSubscription(
-            subscription.jurisdictionIds,
+            subscription.numDaysAgoToRun,
             subscription.dataStreamIds,
+            subscription.dataStreamRoutes,
+            subscription.jurisdictions,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = UploadDigestCountsNotificationSubscriptionService()
             .run(uploadDigestCountsSubscription)
@@ -82,7 +83,7 @@ fun Route.subscribeUploadErrorsNotification() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = UploadErrorsNotificationSubscriptionService()
             .run(uploadErrorsNotificationSubscription)
@@ -113,7 +114,7 @@ fun Route.subscribeDataStreamTopErrorsNotification() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = DataStreamTopErrorsNotificationSubscriptionService()
             .run(dataStreamTopErrorsNotificationSubscription)

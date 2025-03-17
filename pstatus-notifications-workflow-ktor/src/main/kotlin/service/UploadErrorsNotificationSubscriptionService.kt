@@ -46,7 +46,7 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
         val dataStreamRoute = subscription.dataStreamRoute
         val jurisdiction = subscription.jurisdiction
         val cronSchedule = subscription.cronSchedule
-        val deliveryReference = subscription.deliveryReference
+        val emailAddresses = subscription.emailAddresses
         val taskQueue = "uploadErrorsNotificationTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
@@ -64,7 +64,7 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
             dataStreamRoute,
             jurisdiction,
             cronSchedule,
-            deliveryReference
+            emailAddresses
         )
 
         logger.info("Started workflow with id: ${execution.workflowId}")
@@ -73,7 +73,7 @@ class UploadErrorsNotificationSubscriptionService : KoinComponent {
         return WorkflowSubscriptionResult(
             subscriptionId = workflowId,
             message = "Successfully subscribed for $workflowId",
-            deliveryReference = ""
+            emailAddresses = subscription.emailAddresses
         )
     }
 }
