@@ -10,7 +10,7 @@ buildscript {
     }
 }
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'io.ktor.plugin' version '2.3.11'
     id("com.google.cloud.tools.jib") version "3.3.0" // Add Jib plugin
     id "maven-publish"

@@ -7,7 +7,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.1.10"
     id("com.google.cloud.tools.jib") version "3.3.0"
     id ("io.ktor.plugin") version "2.3.11"
     id ("maven-publish")
