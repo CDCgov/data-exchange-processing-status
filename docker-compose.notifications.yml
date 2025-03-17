@@ -1,0 +1,113 @@
+name: pstatus-api-notifications
+
+services:
+  postgresql:
+    container_name: temporal-postgresql
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    image: postgres:latest
+    networks:
+      - temporal-network
+    ports:
+      - 5432:5432
+    volumes:
+      - /var/lib/postgresql/data
+
+  temporal:
+    container_name: temporal
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yml
+    image: temporalio/auto-setup:latest
+    networks:
+      - temporal-network
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-admin-tools:
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:latest
+    networks:
+      - temporal-network
+    stdin_open: true
+    tty: true
+
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:latest
+    networks:
+      - temporal-network
+    ports:
+      - 80:8080
+
+  notifications-workflow:
+    container_name: notifications-workflow
+    image: quay.io/us-cdcgov/phdo/pstatus-notifications-workflow
+    networks:
+      - temporal-network
+      - core-services
+    ports:
+      - 8000:8080
+    environment: 
+      COUCHBASE_CONNECTION_STRING: couchbase://couchbase
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_USERNAME: admin
+      DATABASE: couchbase
+      TEMPORAL_SERVICE_TARGET: localhost:7233
+      TEMPORAL_NAMESPACE: psapi
+    depends_on:
+      - postgresql
+      - temporal
+
+  notifications-rules-engine:
+    image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine
+    networks:
+      - temporal-network
+      - core-services
+    ports:
+      - 8001:8080
+    environment:
+      COUCHBASE_CONNECTION_STRING: couchbase://localhost
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_USERNAME: admin
+      DATABASE: couchbase
+      MSG_SYSTEM: rabbitmq
+      RABBITMQ_HOST: localhost
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VALIDATION_QUEUE_NAME: PSAPIValidation
+      RABBITMQ_VIRTUAL_HOST: /
+      REPORT_SCHEMA_LOADER_SYSTEM: file_system
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: ./reports
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
+    depends_on:
+      - postgresql
+      - temporal
+
+networks:
+  temporal-network:
+    driver: bridge
+    name: temporal-network
+  core-services:
+    external: true
