@@ -20,8 +20,8 @@ fun createAzureServiceBusPlugin(processor: MessageSystemProcessor) = createAppli
 
     val logger = KotlinLogging.logger {}
 
-    val queueName = pluginConfig.queueName
-    val topicName = pluginConfig.topicName
+    val queueName = pluginConfig.listenQueueName
+    val topicName = pluginConfig.listenTopicName
     val subscriptionName = pluginConfig.subscriptionName
 
     val processorQueueClient by lazy {

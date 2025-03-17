@@ -43,7 +43,7 @@ private fun createMessageSystem(environment: ApplicationEnvironment): MessageSys
         }
         MessageSystemType.AWS -> {
             val config = AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
-            AWSSQSMessageSystem(config.createSQSClient(), config.queueURL)
+            AWSSQSMessageSystem(config.createSQSClient(), config.listenQueueURL, config.sendQueueURL)
         }
         else -> { UnsupportedMessageSystem(environment.config.tryGetString("ktor.message_system")) }
     }

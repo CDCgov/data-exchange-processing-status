@@ -19,7 +19,8 @@ class AzureServiceBusConfiguration(
 
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
     val connectionString = config.tryGetString("${configPath}service_bus.connection_string") ?: ""
-    val queueName = config.tryGetString("${configPath}service_bus.queue_name") ?: ""
-    val topicName = config.tryGetString("${configPath}service_bus.topic_name") ?: ""
+    val listenQueueName = config.tryGetString("${configPath}service_bus.listen_queue_name") ?: ""
+    val listenTopicName = config.tryGetString("${configPath}service_bus.listen_topic_name") ?: ""
+    val sendQueueName = config.tryGetString("${configPath}service_bus.send_queue_name") ?: ""
     val subscriptionName = config.tryGetString("${configPath}service_bus.subscription_name") ?: ""
 }

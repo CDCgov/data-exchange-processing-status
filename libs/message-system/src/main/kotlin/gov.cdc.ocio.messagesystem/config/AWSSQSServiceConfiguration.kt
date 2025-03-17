@@ -17,13 +17,14 @@ import java.nio.file.Path
  */
 class AWSSQSServiceConfiguration(config: ApplicationConfig, configurationPath: String? = null) {
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
-    val queueURL: String = config.tryGetString("${configPath}sqs.url") ?: ""
-    private val roleArn: String = config.tryGetString("${configPath}role_arn") ?: ""
-    private val webIdentityTokenFile: String = config.tryGetString("${configPath}web_identity_token_file") ?: ""
+    val listenQueueURL = config.tryGetString("${configPath}sqs.listenUrl") ?: ""
+    val sendQueueURL = config.tryGetString("${configPath}sqs.sendUrl") ?: ""
+    private val roleArn = config.tryGetString("${configPath}role_arn") ?: ""
+    private val webIdentityTokenFile = config.tryGetString("${configPath}web_identity_token_file") ?: ""
     private val accessKeyId = config.tryGetString("${configPath}access_key_id") ?: ""
     private val secretAccessKey = config.tryGetString("${configPath}secret_access_key") ?: ""
     private val region = config.tryGetString("${configPath}region") ?: "us-east-1"
-    private val endpoint: Url? = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
+    private val endpoint = config.tryGetString("${configPath}endpoint")?.let { Url.parse(it) }
 
     fun createSQSClient(): SqsClient {
         return SqsClient {
