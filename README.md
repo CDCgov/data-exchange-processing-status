@@ -190,6 +190,27 @@ query GetReports {
 Run this query and you should see an output that looks like this:
 ![PS API GraphiQL Get Reports](./resources/ps-api-graphiql-get-reports.png)
 
+
+### Notifications
+The PS API Notifications services can be deployed along with the core services using docker compose as well. In order to accomplish this you must have PS API already running which can be done by following the steps outlined in the [Docker Compose](#docker-compose) section. Once the core services are up and running successfully you can run the following to deploy the Notifications services:
+
+- Step 1: Run docker compose with the notifications file specified to launch
+  ```shell
+    docker compose -f docker-compose.notifications.yml up –d
+  ```
+    You should see the following:
+    ```
+    [+] Running 6/6
+    ✔ Container temporal-postgresql                                     Started                                                                                                                0.8s 
+    ✔ Container temporal                                                Started                                                                                                                1.0s 
+    ✔ Container temporal-admin-tools                                    Started                                                                                                                1.5s 
+    ✔ Container temporal-ui                                             Started                                                                                                                1.7s 
+    ✔ Container pstatus-api-notifications-notifications-rules-engine-1 Started                                                                                                                2.2s 
+    ✔ Container notifications-workflow                                  Started
+  ```
+- Step 2: Verify that all services are running in Docker Desktop or by running `docker ps`.
+
+ 
 ### Next Steps
 Please continue to explore in GraphQL for all the types of queries and mutations that can be done.  GraphQL provides a
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.
