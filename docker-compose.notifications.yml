@@ -79,6 +79,7 @@ services:
       - temporal
 
   notifications-rules-engine:
+    container_name: notifications-rules-engine
     image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine
     networks:
       - temporal-network
