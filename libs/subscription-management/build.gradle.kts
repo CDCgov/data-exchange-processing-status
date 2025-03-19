@@ -2,7 +2,7 @@
 
 
 plugins {
-    id ("org.jetbrains.kotlin.jvm") version "1.9.23"
+    id ("org.jetbrains.kotlin.jvm") version "2.1.10"
     id ("java-library")
 }
 
@@ -17,12 +17,12 @@ tasks.register("prepareKotlinBuildScriptModel"){}
 
 dependencies {
     implementation(kotlin("stdlib"))
-  //  implementation ("io.ktor:ktor-serialization-jackson:1.9.24")
+  //  implementation ("io.ktor:ktor-serialization-jackson:2.1.10")
     implementation("io.insert-koin:koin-core:3.4.0") // Add this if missing
     implementation(project(":libs:commons-database"))
-    implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23")
-    implementation ("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.23")
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.10")
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
     implementation ("com.sun.activation:javax.activation:1.2.0")
     implementation ("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
     implementation("com.networknt:json-schema-validator:1.0.73")
@@ -33,7 +33,7 @@ dependencies {
     implementation ("ch.qos.logback.contrib", "logback-json-classic", "0.1.5")
     implementation ("ch.qos.logback.contrib", "logback-jackson", "0.1.5")
     testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.23")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.1.10")
 }
 
 tasks.test {
