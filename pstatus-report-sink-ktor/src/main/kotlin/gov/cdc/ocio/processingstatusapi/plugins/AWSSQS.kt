@@ -33,7 +33,7 @@ val AWSSQSPlugin = createApplicationPlugin(
     lateinit var queueUrl: String
 
     try {
-        queueUrl = pluginConfig.queueURL
+        queueUrl = pluginConfig.listenQueueURL
         logger.info("Connection to the AWS SQS was successfully established")
     } catch (e: SqsException) {
         logger.error("Failed to create AWS SQS client ${e.message}")

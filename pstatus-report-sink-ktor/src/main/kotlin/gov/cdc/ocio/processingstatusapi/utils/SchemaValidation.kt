@@ -58,6 +58,7 @@ class SchemaValidation {
             logger.error("createReport - Failed to process message:${e.message}")
         }
     }
+
     /**
      *  Sends invalid report to dead-letter container in Cosmos DB.
      *
