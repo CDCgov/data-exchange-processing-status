@@ -76,7 +76,7 @@ class HealthQueryService: KoinComponent {
                 .buildClient()
 
             // Get the properties of the topic to check the connection
-            val result = adminClient.getTopic(config.topicName)
+            val result = adminClient.getTopic(config.listenTopicName)
             if (result.status == EntityStatus.ACTIVE)
                 Result.success(true)
             Result.failure(Exception("Failed to get the status of the topic"))

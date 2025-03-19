@@ -34,7 +34,7 @@ import org.koin.ktor.plugin.Koin
 private fun createMessageSystem(environment: ApplicationEnvironment): MessageSystem {
     return when (getMessageSystem(environment)) {
         MessageSystemType.AZURE_SERVICE_BUS -> {
-            val config = AzureServiceBusConfiguration(environment.config, configurationPath = "azure")
+            val config = AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus")
             AzureServiceBusMessageSystem(config)
         }
         MessageSystemType.RABBITMQ -> {
