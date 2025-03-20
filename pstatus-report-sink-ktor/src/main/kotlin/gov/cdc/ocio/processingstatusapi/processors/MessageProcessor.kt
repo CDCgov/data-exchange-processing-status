@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.plugins
+package gov.cdc.ocio.processingstatusapi.processors
 
 import com.google.gson.JsonSyntaxException
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
 import gov.cdc.ocio.messagesystem.exceptions.BadStateException
@@ -15,7 +16,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 
-abstract class MessageProcessor: KoinComponent {
+abstract class MessageProcessor: MessageProcessorInterface, KoinComponent {
 
     protected abstract val source: Source
 
@@ -28,7 +29,7 @@ abstract class MessageProcessor: KoinComponent {
     private val messageProcessorConfig by inject<MessageProcessorConfig>()
 
     @Throws(BadRequestException::class, BadStateException::class)
-    fun processMessage(message: String) {
+    override fun processMessage(message: String) {
         try {
             components.logger.info { "Received message from $source : $message" }
 

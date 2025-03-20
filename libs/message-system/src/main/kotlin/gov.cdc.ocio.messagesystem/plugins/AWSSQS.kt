@@ -1,10 +1,11 @@
-package gov.cdc.ocio.processingstatusapi.plugins
+package gov.cdc.ocio.messagesystem.plugins
 
 import aws.sdk.kotlin.runtime.AwsServiceException
 import aws.sdk.kotlin.runtime.ClientException
 
 import aws.sdk.kotlin.services.sqs.SqsClient
 import aws.sdk.kotlin.services.sqs.model.*
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.messagesystem.sqs.AWSSQSMessageSystem
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.config.AWSSQSServiceConfiguration
@@ -66,23 +67,25 @@ val AWSSQSPlugin = createApplicationPlugin(
             }
         }
     }
+
     /**
-     * Validates messages from the AWS SQS Service
+     * Validates messages from the AWS SQS Service.
+     *
      * @param receivedMessages the list of message(s) received from the queue to be validated
-     * @throws Exception thrown during validation `and` it's important to delete the message as it will be persisted to dead-letter container
-     *                    in configured database
+     * @throws Exception thrown during validation `and` it's important to delete the message as it will be persisted to
+     * dead-letter container in configured database.
      */
     suspend fun validate(receivedMessages: ReceiveMessageResponse) {
         try {
             receivedMessages.messages?.forEach { message ->
                 logger.info("Received message from AWS SQS: ${message.body}")
-                val awsSQSProcessor = AWSSQSProcessor()
+                val awsSQSProcessor = pluginConfig.messageProcessor
                 message.body?.let {
                    awsSQSProcessor.processMessage(it)
                 }
             }
             deleteMessage(receivedMessages)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.error("An Exception occurred during validation ${e.message}")
             deleteMessage(receivedMessages)
         }
@@ -159,8 +162,10 @@ private fun cleanupResourcesAndUnsubscribe(
 /**
  * The main application module which runs always
  */
-fun Application.awsSQSModule() {
-    install(AWSSQSPlugin)
+fun Application.awsSQSModule(messageProcessorImpl: MessageProcessorInterface) {
+    install(AWSSQSPlugin) {
+        messageProcessor = messageProcessorImpl
+    }
 }
 
 /**

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.plugins
+package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.processingstatusapi.health.HealthQueryService
 import gov.cdc.ocio.types.health.HealthStatusType

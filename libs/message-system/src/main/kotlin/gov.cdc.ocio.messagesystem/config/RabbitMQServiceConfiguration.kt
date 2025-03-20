@@ -1,6 +1,7 @@
 package gov.cdc.ocio.messagesystem.config
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import io.ktor.server.config.*
 
 
@@ -22,6 +23,8 @@ class RabbitMQServiceConfiguration(
         const val DEFAULT_USERNAME = "guest"
         const val DEFAULT_PASSWORD = "guest"
     }
+
+    lateinit var messageProcessor: MessageProcessorInterface
 
     private val connectionFactory = ConnectionFactory()
     private val configPath = if (configurationPath != null) "$configurationPath." else ""

@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionType
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingstatusnotifications.model.cache.NotificationSubscription
 import mu.KotlinLogging

@@ -1,6 +1,7 @@
-package gov.cdc.ocio.processingstatusapi.plugins
+package gov.cdc.ocio.messagesystem.plugins
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.config.RabbitMQServiceConfiguration
 import gov.cdc.ocio.messagesystem.rabbitmq.RabbitMQMessageSystem
@@ -43,7 +44,7 @@ val RabbitMQPlugin = createApplicationPlugin(
                 ) {
                     val routingKey = envelope.routingKey
                     val deliveryTag = envelope.deliveryTag
-                    val rabbitMQProcessor = RabbitMQProcessor()
+                    val rabbitMQProcessor = pluginConfig.messageProcessor
 
                     val message = String(body, Charsets.UTF_8)
                     logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
@@ -59,7 +60,7 @@ val RabbitMQPlugin = createApplicationPlugin(
 
     }
 
-    on(MonitoringEvent(ApplicationStarted)) { application ->
+    on(MonitoringEvent(ApplicationStarted)) {
         logger.info("Application started successfully.")
         try {
             val msgSystem = getKoin().get<MessageSystem>() as RabbitMQMessageSystem
@@ -105,6 +106,8 @@ private fun cleanupResourcesAndUnsubscribe(channel: Channel, connection: Connect
 /**
  * The main application module which runs always
  */
-fun Application.rabbitMQModule() {
-    install(RabbitMQPlugin)
+fun Application.rabbitMQModule(messageProcessorImpl: MessageProcessorInterface) {
+    install(RabbitMQPlugin) {
+        messageProcessor = messageProcessorImpl
+    }
 }

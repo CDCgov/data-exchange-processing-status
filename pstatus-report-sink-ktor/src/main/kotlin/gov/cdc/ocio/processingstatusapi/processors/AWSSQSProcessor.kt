@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.plugins
+package gov.cdc.ocio.processingstatusapi.processors
 
 import gov.cdc.ocio.messagesystem.models.Source
 
@@ -10,6 +10,6 @@ import gov.cdc.ocio.messagesystem.models.Source
  * @property source indicates the source of the message as `AWS`, is included in the persisted report,
  *                  for origin tracking.
  */
-class AWSSQSProcessor : MessageProcessor(){
+class AWSSQSProcessor : MessageProcessor() {
     override val source: Source = Source.AWS
 }

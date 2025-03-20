@@ -3,10 +3,10 @@ package gov.cdc.ocio.processingstatusnotifications.servicebus
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext
 import com.azure.messaging.servicebus.models.DeadLetterOptions
 import gov.cdc.ocio.messagesystem.MessageSystemProcessor
-import gov.cdc.ocio.messagesystem.plugins.createAzureServiceBusPlugin
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import io.ktor.server.application.*
 import org.slf4j.LoggerFactory
+
 
 class ReportsProcessor : MessageSystemProcessor {
     private val logger = LoggerFactory.getLogger(ReportsNotificationProcessor::class.java)
@@ -42,5 +42,5 @@ class ReportsProcessor : MessageSystemProcessor {
  * The main application module which runs always
  */
 fun Application.serviceBusModule() {
-    install(createAzureServiceBusPlugin(ReportsProcessor()))
+//    install(azure)
 }

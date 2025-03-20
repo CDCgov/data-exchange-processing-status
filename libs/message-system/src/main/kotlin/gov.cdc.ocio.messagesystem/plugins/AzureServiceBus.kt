@@ -1,8 +1,9 @@
-package gov.cdc.ocio.processingstatusapi.plugins
+package gov.cdc.ocio.messagesystem.plugins
 
 import com.azure.core.amqp.AmqpTransportType
 import com.azure.core.amqp.exception.AmqpException
 import com.azure.messaging.servicebus.*
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.messagesystem.config.AzureServiceBusConfiguration
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
@@ -19,7 +20,7 @@ val azureServiceBusPlugin = createApplicationPlugin(
 
     val logger = KotlinLogging.logger {}
 
-    val processor = ServiceBusProcessor()
+    val processor = pluginConfig.messageProcessor
 
     val queueName = pluginConfig.listenQueueName
     val topicName = pluginConfig.listenTopicName
@@ -75,7 +76,10 @@ val azureServiceBusPlugin = createApplicationPlugin(
     }
 }
 
-private fun processMessage(context: ServiceBusReceivedMessageContext, processor: ServiceBusProcessor) {
+private fun processMessage(
+    context: ServiceBusReceivedMessageContext,
+    processor: MessageProcessorInterface
+) {
     val logger = KotlinLogging.logger {}
 
     val message = context.message
@@ -123,6 +127,8 @@ private fun processError(context: ServiceBusErrorContext) {
     }
 }
 
-fun Application.serviceBusModule() {
-    install(azureServiceBusPlugin)
+fun Application.serviceBusModule(messageProcessorImpl: MessageProcessorInterface) {
+    install(azureServiceBusPlugin) {
+        messageProcessor = messageProcessorImpl
+    }
 }

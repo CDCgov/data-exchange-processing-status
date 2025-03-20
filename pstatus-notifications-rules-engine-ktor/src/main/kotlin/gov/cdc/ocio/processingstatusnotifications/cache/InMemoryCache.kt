@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusnotifications.cache
 
-import gov.cdc.ocio.processingstatusnotifications.*
 import gov.cdc.ocio.processingstatusnotifications.exception.*
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.model.cache.*
 import mu.KotlinLogging
 import java.util.*

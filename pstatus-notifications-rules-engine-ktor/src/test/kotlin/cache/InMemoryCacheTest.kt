@@ -1,7 +1,7 @@
 package cache
 
 
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionType
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCache
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import org.testng.Assert
