@@ -3,6 +3,7 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.Scope
+import com.couchbase.client.java.transactions.Transactions
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.health.HealthCheckSystem
@@ -47,8 +48,22 @@ class CouchbaseRepository(
 
     private val logger = KotlinLogging.logger {}
 
+    /**
+     * Lazily instantiate Couchbase transactions. This way, you do not need to pass a transactions
+     * instance into the constructor.
+     */
+
+
     // Connect without customizing the cluster environment
     private var cluster = Cluster.connect(connectionString, username, password)
+
+    /**
+     * Lazily obtain the Transactions instance from the Cluster.
+     * This ensures that the Transactions object is created only when first needed.
+     */
+    private val transactions: Transactions by lazy {
+        cluster.transactions()  // Assumes that your Cluster instance has a `transactions()` method.
+    }
 
     private val processingStatusBucket = cluster.bucket(bucketName)
 
@@ -99,4 +114,19 @@ class CouchbaseRepository(
         ) as Collection
 
     override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
+
+    /**
+     * Convenience method to run an action within a transaction.
+     */
+    /**
+     * When we need transaction in the future we can use this function
+     */
+   /* fun runTransaction(action: (TransactionAttemptContext) -> Unit) {
+              transactions.run({ ctx ->
+            action(ctx)
+        },
+            TransactionOptions.transactionOptions().timeout(Duration.ofSeconds(30))) // Increase timeout to 30s)
+           TransactionOptions.transactionOptions().durabilityLevel(DurabilityLevel.NONE)
+
+    }*/
 }

@@ -24,6 +24,8 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.12'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
+
 
     implementation("io.insert-koin:koin-ktor:3.5.6")
 

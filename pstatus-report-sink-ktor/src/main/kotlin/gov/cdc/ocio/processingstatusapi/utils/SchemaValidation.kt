@@ -36,6 +36,7 @@ class SchemaValidation {
 
             ReportManager().createReportWithUploadId(
                 createReportMessage.reportSchemaVersion!!,
+                createReportMessage.reportId,
                 uploadId!!,
                 createReportMessage.dataStreamId!!,
                 createReportMessage.dataStreamRoute!!,

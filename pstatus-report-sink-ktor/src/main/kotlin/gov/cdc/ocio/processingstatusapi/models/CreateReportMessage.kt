@@ -9,6 +9,7 @@ import java.time.Instant
 /**
  * Create a report service bus message.
  *
+ * @property reportId String?
  * @property uploadId String?
  * @property dataStreamId String?
  * @property dataStreamRoute String?
@@ -27,6 +28,9 @@ class CreateReportMessage: MessageBase() {
 
     @SerializedName("report_schema_version")
     var reportSchemaVersion: String? = null
+
+    @SerializedName("report_id")
+    var reportId: String? = null
 
     @SerializedName("upload_id")
     var uploadId: String? = null

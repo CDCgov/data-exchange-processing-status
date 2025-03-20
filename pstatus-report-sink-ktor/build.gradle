@@ -64,7 +64,7 @@ dependencies {
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.29.0'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation group: 'io.github.microutils', name: 'kotlin-logging-jvm', version: '3.0.5'
-    //implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+   //implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
   //  implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.7'
     /*implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'*/
