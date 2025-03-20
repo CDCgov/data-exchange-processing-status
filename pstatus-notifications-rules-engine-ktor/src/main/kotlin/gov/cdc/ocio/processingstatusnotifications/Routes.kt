@@ -2,6 +2,7 @@
 
 package gov.cdc.ocio.processingstatusnotifications
 
+import gov.cdc.ocio.processingstatusnotifications.health.HealthQueryService
 import gov.cdc.ocio.processingstatusnotifications.notifications.UnSubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeWebhookNotifications

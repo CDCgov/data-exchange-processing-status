@@ -1,6 +1,9 @@
 package gov.cdc.ocio.processingstatusnotifications
 
+import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
+import gov.cdc.ocio.messagesystem.utils.createMessageSystemPlugin
+import gov.cdc.ocio.processingstatusnotifications.processors.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -28,13 +31,6 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    install(Koin) {
-        loadKoinModules(environment)
-    }
-
-    install(ContentNegotiation) {
-        jackson()
-    }
 
     routing {
         subscribeEmailNotificationRoute()
@@ -43,5 +39,15 @@ fun Application.module() {
         unsubscribeWebhookRoute()
         healthCheckRoute()
         versionRoute()
+    }
+
+    createMessageSystemPlugin(MessageSystemType.getFromAppEnv(environment), MessageProcessor())
+
+    install(Koin) {
+        loadKoinModules(environment)
+    }
+
+    install(ContentNegotiation) {
+        jackson()
     }
 }

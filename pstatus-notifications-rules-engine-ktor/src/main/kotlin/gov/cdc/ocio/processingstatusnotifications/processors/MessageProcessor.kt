@@ -1,9 +1,9 @@
-package gov.cdc.ocio.processingstatusnotifications.servicebus
+package gov.cdc.ocio.processingstatusnotifications.processors
 
-import com.azure.messaging.servicebus.ServiceBusReceivedMessage
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
@@ -14,7 +14,11 @@ import gov.cdc.ocio.processingstatusnotifications.model.message.SchemaDefinition
 import gov.cdc.ocio.processingstatusnotifications.parser.ReportParser
 import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
 
-class ReportsNotificationProcessor {
+
+/**
+ * Processor for handling messages received.
+ */
+class MessageProcessor: MessageProcessorInterface {
 
     private val logger = mu.KotlinLogging.logger {}
 
@@ -23,20 +27,14 @@ class ReportsNotificationProcessor {
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .create()
 
-    /**
-     * Process a service bus message with the provided message.
-     *
-     * @param message String
-     * @throws BadStateException
-     */
-    @Throws(BadRequestException::class, InvalidSchemaDefException::class)
-    fun withMessage(message: ServiceBusReceivedMessage): String {
-        val sbMessage = message.body.toString()
+    override fun processMessage(message: String) {
         try {
-            return sendNotificationForReportStatus(gson.fromJson(sbMessage, ReportNotificationServiceBusMessage::class.java))
+            val report = gson.fromJson(message, ReportNotificationServiceBusMessage::class.java)
+            val status = sendNotificationForReportStatus(report)
+            logger.info { "Processed report with resulting status: $status" }
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
-            throw BadRequestException("Unable to interpret the create report message")
+            throw BadRequestException("Failed to interpret the report")
         }
     }
 
@@ -46,7 +44,7 @@ class ReportsNotificationProcessor {
      * @param reportNotification ReportNotificationMessage
      * @throws BadRequestException
      */
-    @Throws(BadRequestException::class,InvalidSchemaDefException::class)
+    @Throws(BadRequestException::class, InvalidSchemaDefException::class)
     private fun sendNotificationForReportStatus(reportNotification: ReportNotificationServiceBusMessage): String {
 
         val dataStreamId = reportNotification.dataStreamId

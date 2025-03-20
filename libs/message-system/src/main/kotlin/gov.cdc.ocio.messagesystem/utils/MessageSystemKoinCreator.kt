@@ -29,7 +29,8 @@ object MessageSystemKoinCreator {
     private fun createMessageSystem(
         environment: ApplicationEnvironment
     ): MessageSystem {
-        return when (MessageSystemType.getFromAppEnv(environment)) {
+        val messageSystemType = MessageSystemType.getFromAppEnv(environment)
+        return when (messageSystemType) {
             MessageSystemType.AZURE_SERVICE_BUS -> {
                 val config = AzureServiceBusConfiguration(environment.config, configurationPath = "azure.service_bus")
                 AzureServiceBusMessageSystem(config)
@@ -42,7 +43,9 @@ object MessageSystemKoinCreator {
                 val config = AWSSQSServiceConfiguration(environment.config, configurationPath = "aws")
                 AWSSQSMessageSystem(config.createSQSClient(), config.listenQueueURL, config.sendQueueURL)
             }
-            else -> { UnsupportedMessageSystem(environment.config.tryGetString("ktor.message_system")) }
+            else -> {
+                UnsupportedMessageSystem(environment.config.tryGetString("ktor.message_system"))
+            }
         }
     }
 
@@ -54,7 +57,9 @@ object MessageSystemKoinCreator {
      */
     fun moduleFromAppEnv(environment: ApplicationEnvironment): Module {
         return module {
-            single { createMessageSystem(environment) }
+            single {
+                createMessageSystem(environment)
+            }
         }
     }
 }
