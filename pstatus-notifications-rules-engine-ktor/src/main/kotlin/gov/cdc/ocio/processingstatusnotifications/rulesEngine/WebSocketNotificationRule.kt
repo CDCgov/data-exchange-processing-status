@@ -16,7 +16,7 @@ class WebsocketNotificationRule(): Rule {
     override fun evaluateAndDispatch(ruleId: String, cacheService: InMemoryCacheService): String {
         val subscribers: List<NotificationSubscription> = cacheService.getSubscription(ruleId)
         for(subscriber in subscribers) {
-            if (subscriber.subscriberType == SubscriptionType.WEBHOOK) {
+            if (subscriber.subscriptionType == SubscriptionType.WEBHOOK) {
                 return dispatchEvent(subscriber)
             }
         }

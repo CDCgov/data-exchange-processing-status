@@ -10,29 +10,25 @@ import java.time.Instant
 
 
 /**
- * This method is used by graphL endpoints to subscribe for Webhook notifications
- * based on rules sent in required parameters/arguments
- *              dataStreamId
- *              dataStreamRoute
- *              stageName
- *              statusType ("warning", "success", "error")
- *              url (websocket url)
- *
- *
-
+ * This class is used by graphL endpoints to subscribe for Webhook notifications
+ * based on rules sent in required parameters/arguments:
+ *   - dataStreamId
+ *   - dataStreamRoute
+ *   - stage info, namely the stage's "service" and "action"
+ *   - status ("success", "failure")
+ *   - url (websocket url)
  * @property logger KLogger
  * @property cacheService InMemoryCacheService
- * @constructor
  */
 class SubscribeWebhookNotifications {
     private val logger = KotlinLogging.logger {}
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
     /**
-     * The function which validates and subscribes for webhook notifications
-     *  @param subscription WebhookSubscription
+     * Validates and subscribes for webhook notifications
+     *
+     * @param subscription WebhookSubscription
      */
-
     fun run(subscription: WebhookSubscription): SubscriptionResult {
 
         val dataStreamId = subscription.dataStreamId
@@ -60,13 +56,15 @@ class SubscribeWebhookNotifications {
     }
 
     /**
-     * This function validates and updates the notification preferences of the cacheService
+     * Validates and updates the notification preferences of the cacheService
      *
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param url String
-     * @param stageName String
-     * @param statusType String
+     * @param url String?
+     * @param service String?
+     * @param action String?
+     * @param status Status
+     * @return SubscriptionResult
      */
     private fun subscribeForWebhook(
         dataStreamId: String,

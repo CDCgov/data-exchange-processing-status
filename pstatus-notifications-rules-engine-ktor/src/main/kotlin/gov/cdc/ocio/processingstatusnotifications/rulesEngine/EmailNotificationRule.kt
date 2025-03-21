@@ -22,7 +22,7 @@ class EmailNotificationRule(): Rule {
     override fun evaluateAndDispatch(ruleId: String, cacheService: InMemoryCacheService): String {
         val subscribers: List<NotificationSubscription> = cacheService.getSubscription(ruleId)
         for(subscriber in subscribers) {
-            if (subscriber.subscriberType == SubscriptionType.EMAIL) {
+            if (subscriber.subscriptionType == SubscriptionType.EMAIL) {
                 return dispatchEvent(subscriber)
             }
         }
