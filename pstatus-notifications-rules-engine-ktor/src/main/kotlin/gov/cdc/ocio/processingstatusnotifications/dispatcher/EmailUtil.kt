@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusnotifications.dispatcher
 
-
 import java.util.*
 import javax.mail.Message
 import javax.mail.Session
@@ -8,9 +7,12 @@ import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
+
 object EmailUtil {
+
     /**
-     * Utility method to send simple HTML email
+     * Utility method to send simple HTML email.
+     *
      * @param session
      * @param toEmail
      * @param subject

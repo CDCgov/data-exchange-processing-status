@@ -35,7 +35,7 @@ class MessageProcessor: MessageProcessorInterface {
     override fun processMessage(message: String) {
         try {
             val report = gson.fromJson(message, ReportMessage::class.java)
-            val status = sendNotificationForReportStatus(report)
+            val status = evaluateRulesForReport(report)
             logger.info { "Processed report with resulting status: $status" }
         } catch (e: JsonSyntaxException) {
             logger.error("Failed to parse CreateReportSBMessage: ${e.localizedMessage}")
@@ -44,13 +44,15 @@ class MessageProcessor: MessageProcessorInterface {
     }
 
     /**
-     * Subscribe for notifications from the provided service bus message.
+     * Runs the rules engine against the report received.
      *
-     * @param report ReportNotificationMessage
+     * @param report ReportMessage
+     * @return Status?
      * @throws BadRequestException
+     * @throws InvalidSchemaDefException
      */
     @Throws(BadRequestException::class, InvalidSchemaDefException::class)
-    private fun sendNotificationForReportStatus(
+    private fun evaluateRulesForReport(
         report: ReportMessage
     ): Status? {
 
@@ -80,10 +82,10 @@ class MessageProcessor: MessageProcessorInterface {
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)
-        } catch(ex: InvalidSchemaDefException) {
+        } catch (ex: InvalidSchemaDefException) {
             // assume an invalid request
             throw InvalidSchemaDefException(ex.localizedMessage)
-        } catch(ex: ContentException) {
+        } catch (ex: ContentException) {
             // assume an invalid request
             throw ContentException(ex.localizedMessage)
         }

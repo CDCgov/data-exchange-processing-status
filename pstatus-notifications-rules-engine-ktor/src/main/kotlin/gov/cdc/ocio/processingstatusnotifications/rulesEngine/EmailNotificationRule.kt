@@ -11,7 +11,7 @@ import mu.KotlinLogging
  * Class to evaluate existing rules in Datastore for email notifications.
  * If matching rule exist, we can send an email using EmailDispatcher
  */
-class EmailNotificationRule() : Rule {
+class EmailNotificationRule : Rule {
     private val logger = KotlinLogging.logger {}
 
     /**
