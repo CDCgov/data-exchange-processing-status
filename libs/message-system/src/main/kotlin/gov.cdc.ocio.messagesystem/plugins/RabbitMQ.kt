@@ -73,8 +73,7 @@ val RabbitMQPlugin = createApplicationPlugin(
         } catch (e: TimeoutException){
             logger.error("TimeoutException occurred $e.message")
         }
-        if (channel != null)
-            consumeMessages(channel!!, queueName)
+        channel?.let { consumeMessages(it, queueName) }
     }
 
     on(MonitoringEvent(ApplicationStopped)) { application ->
