@@ -1,5 +1,6 @@
 package gov.cdc.ocio.messagesystem.config
 
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import io.ktor.server.config.*
 
 
@@ -18,7 +19,10 @@ class AzureServiceBusConfiguration(
     config: ApplicationConfig,
     configurationPath: String? = null
 ) {
+    lateinit var messageProcessor: MessageProcessorInterface
+
     private val configPath = if (configurationPath != null) "$configurationPath." else ""
+
     val connectionString = config.tryGetString("${configPath}connection_string") ?: ""
     val listenQueueName = config.tryGetString("${configPath}listen_queue_name") ?: ""
     val listenTopicName = config.tryGetString("${configPath}listen_topic_name") ?: ""

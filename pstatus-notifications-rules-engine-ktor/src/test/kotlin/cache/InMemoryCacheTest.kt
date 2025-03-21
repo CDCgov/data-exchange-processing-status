@@ -1,7 +1,7 @@
 package cache
 
 
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionType
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCache
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import org.testng.Assert
@@ -33,7 +33,7 @@ class InMemoryCacheTest {
         val subscriptionRule1 = "subscriptionRuleUnique1"
 
         val subscriptionId1 = inMemoryCache.updateCacheForSubscription(subscriptionRule1, SubscriptionType.EMAIL, "trr@ddf.ccc")
-        val subscriptionId2 = inMemoryCache.updateCacheForSubscription(subscriptionRule1, SubscriptionType.WEBSOCKET, "tre@ddf.ccc")
+        val subscriptionId2 = inMemoryCache.updateCacheForSubscription(subscriptionRule1, SubscriptionType.WEBHOOK, "tre@ddf.ccc")
         Assert.assertEquals(subscriptionId1, subscriptionId2)
     }
 
