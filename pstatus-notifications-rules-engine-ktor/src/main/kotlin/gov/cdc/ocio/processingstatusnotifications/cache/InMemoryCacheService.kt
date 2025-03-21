@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusnotifications.cache
 import gov.cdc.ocio.processingstatusnotifications.exception.*
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.model.cache.*
+import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 
 
 /**
@@ -26,13 +27,20 @@ class InMemoryCacheService {
     fun updateNotificationsPreferences(
         dataStreamId: String,
         dataStreamRoute: String,
-        stageName: String,
-        statusType: String,
+        service: String?,
+        action: String?,
+        status: Status,
         emailOrUrl: String,
         subscriptionType: SubscriptionType
     ): String {
         try {
-            val subscriptionRule = SubscriptionRule(dataStreamId, dataStreamRoute, stageName, statusType)
+            val subscriptionRule = SubscriptionRule(
+                dataStreamId,
+                dataStreamRoute,
+                service ?: "unknown",
+                action ?: "unknown",
+                status
+            )
             val subscriptionId =
                 InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
             return subscriptionId

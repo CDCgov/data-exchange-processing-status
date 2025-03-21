@@ -4,16 +4,19 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.processingstatusnotifications.exception.InvalidSchemaDefException
 
+
 /**
  * Schema definition for all stages.  Every stage must inherit this class.
  *
- * @property schemaName String?
- * @property schemaVersion String?
+ * @property contentSchemaName String?
+ * @property contentSchemaVersion String?
  * @constructor
  */
-open class SchemaDefinition(@SerializedName("schema_name") var schemaName: String? = null,
-                            @SerializedName("schema_version") var schemaVersion: String? = null,
-                            @Transient private val priority: Int = 0) :
+open class SchemaDefinition(
+    @SerializedName("content_schema_name") var contentSchemaName: String? = null,
+    @SerializedName("content_schema_version") var contentSchemaVersion: String? = null,
+    @Transient private val priority: Int = 0
+) :
     Comparable<SchemaDefinition> {
 
     /**
@@ -22,8 +25,8 @@ open class SchemaDefinition(@SerializedName("schema_name") var schemaName: Strin
      * @return Int
      */
     override fun hashCode(): Int {
-        var result = schemaName?.hashCode() ?: 0
-        result = 31 * result + (schemaVersion?.hashCode() ?: 0)
+        var result = contentSchemaName?.hashCode() ?: 0
+        result = 31 * result + (contentSchemaVersion?.hashCode() ?: 0)
         return result
     }
 
@@ -49,8 +52,8 @@ open class SchemaDefinition(@SerializedName("schema_name") var schemaName: Strin
 
         other as SchemaDefinition
 
-        if (schemaName != other.schemaName) return false
-        if (schemaVersion != other.schemaVersion) return false
+        if (contentSchemaName != other.contentSchemaName) return false
+        if (contentSchemaVersion != other.contentSchemaVersion) return false
 
         return true
     }
@@ -61,7 +64,7 @@ open class SchemaDefinition(@SerializedName("schema_name") var schemaName: Strin
      * @return String
      */
     override fun toString(): String {
-        return "SchemaDefinition(schemaName=$schemaName, schemaVersion=$schemaVersion)"
+        return "SchemaDefinition(contentSchemaName=$contentSchemaName, contentSchemaVersion=$contentSchemaVersion)"
     }
 
     companion object {
@@ -71,11 +74,11 @@ open class SchemaDefinition(@SerializedName("schema_name") var schemaName: Strin
             if (jsonContent == null) throw InvalidSchemaDefException("Missing schema definition")
 
             val schemaDefinition = Gson().fromJson(jsonContent, SchemaDefinition::class.java)
-            if (schemaDefinition?.schemaName.isNullOrEmpty())
-                throw InvalidSchemaDefException("Invalid schema_name provided")
+            if (schemaDefinition?.contentSchemaName.isNullOrEmpty())
+                throw InvalidSchemaDefException("Invalid content_schema_name provided")
 
-            if (schemaDefinition.schemaVersion.isNullOrEmpty())
-                throw InvalidSchemaDefException("Invalid schema_version provided")
+            if (schemaDefinition.contentSchemaVersion.isNullOrEmpty())
+                throw InvalidSchemaDefException("Invalid content_schema_version provided")
 
             return schemaDefinition
         }

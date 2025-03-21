@@ -3,6 +3,7 @@
 package gov.cdc.ocio.processingstatusnotifications
 
 import gov.cdc.ocio.processingstatusnotifications.health.HealthQueryService
+import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import gov.cdc.ocio.processingstatusnotifications.notifications.UnSubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeWebhookNotifications
@@ -18,19 +19,26 @@ import java.util.*
 /**
  * Email Subscription data class which is serialized back and forth
  */
-data class EmailSubscription(val dataStreamId:String,
-                             val dataStreamRoute:String,
-                             val email: String,
-                             val stageName: String,
-                             val statusType:String)
+data class EmailSubscription(
+    val dataStreamId: String,
+    val dataStreamRoute: String,
+    val email: String,
+    val service: String,
+    val action: String,
+    val status: Status
+)
+
 /**
  * Webhook Subscription data class which is serialized back and forth
  */
-data class WebhookSubscription(val dataStreamId:String,
-                             val dataStreamRoute:String,
-                             val url: String,
-                             val stageName: String,
-                             val statusType:String)
+data class WebhookSubscription(
+    val dataStreamId: String,
+    val dataStreamRoute: String,
+    val url: String,
+    val service: String,
+    val action: String,
+    val status: Status
+)
 
 /**
  * UnSubscription data class which is serialized back and forth when we need to unsubscribe by the subscriptionId
@@ -53,7 +61,14 @@ data class SubscriptionResult(
 fun Route.subscribeEmailNotificationRoute() {
     post("/subscribe/email") {
         val subscription = call.receive<EmailSubscription>()
-        val emailSubscription =EmailSubscription(subscription.dataStreamId, subscription.dataStreamRoute, subscription.email, subscription.stageName, subscription.statusType)
+        val emailSubscription =EmailSubscription(
+            subscription.dataStreamId,
+            subscription.dataStreamRoute,
+            subscription.email,
+            subscription.service,
+            subscription.action,
+            subscription.status
+        )
         val result = SubscribeEmailNotifications().run(emailSubscription)
         call.respond(result)
 
@@ -75,12 +90,18 @@ fun Route.unsubscribeEmailNotificationRoute() {
 fun Route.subscribeWebhookRoute() {
     post("/subscribe/webhook") {
         val subscription = call.receive<WebhookSubscription>()
-        val webhookSubscription = WebhookSubscription(subscription.dataStreamId, subscription.dataStreamRoute, subscription.url, subscription.stageName, subscription.statusType)
+        val webhookSubscription = WebhookSubscription(
+            subscription.dataStreamId,
+            subscription.dataStreamRoute,
+            subscription.url,
+            subscription.service,
+            subscription.action,
+            subscription.status)
         val result = SubscribeWebhookNotifications().run(webhookSubscription)
         call.respond(result)
-
     }
 }
+
 /**
  * Route to unsubscribe for webhook notifications
  */

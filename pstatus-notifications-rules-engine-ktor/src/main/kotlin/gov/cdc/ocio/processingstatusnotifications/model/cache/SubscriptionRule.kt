@@ -1,15 +1,21 @@
 package gov.cdc.ocio.processingstatusnotifications.model.cache
 
-class SubscriptionRule(val dataStreamId: String,
-                       val dataStreamRoute: String,
-                       val stageName: String,
-                       val statusType: String) {
+import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 
+
+class SubscriptionRule(
+    val dataStreamId: String,
+    val dataStreamRoute: String,
+    val service: String,
+    val action: String,
+    val status: Status
+) {
     override fun hashCode(): Int {
         var result = dataStreamId.lowercase().hashCode()
         result = 31 * result + dataStreamRoute.lowercase().hashCode()
-        result = 31 * result + stageName.lowercase().hashCode()
-        result = 31 * result + statusType.lowercase().hashCode()
+        result = 31 * result + service.lowercase().hashCode()
+        result = 31 * result + action.lowercase().hashCode()
+        result = 31 * result + status.name.hashCode()
         return result
     }
 
@@ -25,8 +31,9 @@ class SubscriptionRule(val dataStreamId: String,
 
         if (dataStreamId != other.dataStreamId) return false
         if (dataStreamRoute != other.dataStreamRoute) return false
-        if (stageName != other.stageName) return false
-        if (statusType != other.statusType) return false
+        if (service != other.service) return false
+        if (action != other.action) return false
+        if (status != other.status) return false
 
         return true
     }

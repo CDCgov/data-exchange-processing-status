@@ -9,10 +9,10 @@ import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
 import gov.cdc.ocio.processingstatusnotifications.exception.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusnotifications.model.cache.SubscriptionRule
-import gov.cdc.ocio.processingstatusnotifications.model.message.ReportNotificationServiceBusMessage
-import gov.cdc.ocio.processingstatusnotifications.model.message.SchemaDefinition
-import gov.cdc.ocio.processingstatusnotifications.parser.ReportParser
+import gov.cdc.ocio.processingstatusnotifications.model.message.ReportMessage
+import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
+import mu.KotlinLogging
 
 
 /**
@@ -20,16 +20,21 @@ import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
  */
 class MessageProcessor: MessageProcessorInterface {
 
-    private val logger = mu.KotlinLogging.logger {}
+    private val logger = KotlinLogging.logger {}
 
     // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     private val gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .create()
 
+    /**
+     * Process the incoming reports, which are already validated.
+     *
+     * @param message String
+     */
     override fun processMessage(message: String) {
         try {
-            val report = gson.fromJson(message, ReportNotificationServiceBusMessage::class.java)
+            val report = gson.fromJson(message, ReportMessage::class.java)
             val status = sendNotificationForReportStatus(report)
             logger.info { "Processed report with resulting status: $status" }
         } catch (e: JsonSyntaxException) {
@@ -41,35 +46,37 @@ class MessageProcessor: MessageProcessorInterface {
     /**
      * Subscribe for notifications from the provided service bus message.
      *
-     * @param reportNotification ReportNotificationMessage
+     * @param report ReportNotificationMessage
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class, InvalidSchemaDefException::class)
-    private fun sendNotificationForReportStatus(reportNotification: ReportNotificationServiceBusMessage): String {
+    private fun sendNotificationForReportStatus(
+        report: ReportMessage
+    ): Status? {
 
-        val dataStreamId = reportNotification.dataStreamId
+        val dataStreamId = report.dataStreamId
             ?: throw BadRequestException("Missing required field data_stream_id")
 
-        val dataStreamRoute = reportNotification.dataStreamRoute
+        val dataStreamRoute = report.dataStreamRoute
             ?: throw BadRequestException("Missing required field data_stream_route")
 
-        val stageName = reportNotification.stageName
-            ?: throw BadRequestException("Missing required field stage_name")
+        val dispositionType = report.dispositionType
+            ?: throw BadRequestException("Missing required field disposition_type")
 
-        val contentType = reportNotification.contentType
-            ?: throw BadRequestException("Missing required field content_type")
+        val status = report.stageInfo?.status
 
-        val content: String
-        val status: String
-        try {
-            content = reportNotification.contentAsString
-                ?: throw BadRequestException("Missing required field content")
-            val schemaDef = SchemaDefinition.fromJsonString(content)
-
-            status = ReportParser().parseReportForStatus(content, schemaDef.schemaName)
-            logger.debug("Report parsed for status $status")
-            RuleEngine.evaluateAllRules(SubscriptionRule(dataStreamId, dataStreamRoute, stageName, status).getStringHash())
-            return status.lowercase()
+        return try {
+            logger.debug { "Report status: $status" }
+            RuleEngine.evaluateAllRules(
+                SubscriptionRule(
+                    dataStreamId,
+                    dataStreamRoute,
+                    report.stageInfo?.service ?: "unknown",
+                    report.stageInfo?.action ?: "unknown",
+                    report.stageInfo?.status ?: Status.FAILURE
+                )
+                    .getStringHash())
+            status
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)

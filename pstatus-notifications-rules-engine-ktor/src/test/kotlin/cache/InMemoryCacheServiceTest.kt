@@ -1,12 +1,12 @@
 package cache
 
-
-
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
+import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import org.testng.Assert
 import org.testng.annotations.Test
+
 
 class InMemoryCacheServiceTest {
 
@@ -16,12 +16,12 @@ class InMemoryCacheServiceTest {
     fun testAddingSameNotificationPreferencesSuccess() {
         val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
-            "stageName1","warning",
+            "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
         )
         val subscriptionId2 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
-            "stageName1","warning",
+            "service1","action1", Status.FAILURE,
             "rty@trh.com", SubscriptionType.EMAIL
         )
         Assert.assertEquals(subscriptionId1, subscriptionId2)
@@ -31,12 +31,12 @@ class InMemoryCacheServiceTest {
     fun testAddingDifferentNotificationPreferencesSuccess() {
         val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
-            "stageName1","warning",
+            "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
         )
         val subscriptionId2 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
-            "stageName1","success",
+            "service1","action1", Status.SUCCESS,
             "abc@trh.com", SubscriptionType.EMAIL
         )
         Assert.assertNotEquals(subscriptionId1, subscriptionId2)
@@ -46,7 +46,7 @@ class InMemoryCacheServiceTest {
     fun testUnsubscribingSubscriptionSuccess() {
         val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
-            "stageName1","warning",
+            "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
         )
 
@@ -57,7 +57,7 @@ class InMemoryCacheServiceTest {
     fun testUnsubscribingSubscriptionException() {
         val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
             "destination1","dataStreamRoute1",
-            "stageName1","warning",
+            "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
         )
         // Remove subscription first

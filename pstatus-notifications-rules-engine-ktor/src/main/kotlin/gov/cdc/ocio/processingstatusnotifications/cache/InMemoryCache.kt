@@ -44,7 +44,7 @@ object InMemoryCache {
     fun updateCacheForSubscription(subscriptionRule: String,
                                    subscriptionType: SubscriptionType,
                                    emailOrUrl: String): String {
-        if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBSOCKET) {
+        if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBHOOK) {
             // If subscription type is EMAIL or WEBSOCKET then proceed else throw BadState Exception
             val subscriptionId = updateSubscriptionRuleCache(subscriptionRule)
             updateSubscriberCache(subscriptionId, NotificationSubscription(subscriptionId, emailOrUrl, subscriptionType))
