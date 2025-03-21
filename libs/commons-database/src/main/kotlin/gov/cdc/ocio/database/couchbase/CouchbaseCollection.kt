@@ -4,9 +4,9 @@ import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
 import com.google.gson.*
-import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.adapters.OffsetDateTimeTypeAdapter
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*

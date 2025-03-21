@@ -1,4 +1,4 @@
-package gov.cdc.ocio.database.utils
+package gov.cdc.ocio.types.adapters
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext

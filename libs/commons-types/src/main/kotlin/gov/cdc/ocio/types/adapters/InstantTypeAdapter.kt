@@ -1,4 +1,4 @@
-package gov.cdc.ocio.database.utils
+package gov.cdc.ocio.types.adapters
 
 import com.google.gson.*
 import java.lang.reflect.Type

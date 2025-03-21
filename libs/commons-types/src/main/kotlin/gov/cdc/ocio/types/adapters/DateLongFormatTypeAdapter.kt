@@ -1,4 +1,4 @@
-package gov.cdc.ocio.database.utils
+package gov.cdc.ocio.types.adapters
 
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader

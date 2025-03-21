@@ -6,7 +6,7 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.database.persistence.Collection
-import gov.cdc.ocio.database.utils.EpochToInstantConverter
+import gov.cdc.ocio.types.adapters.EpochToInstantConverter
 import io.netty.handler.codec.http.HttpResponseStatus
 import mu.KotlinLogging
 import java.time.Instant

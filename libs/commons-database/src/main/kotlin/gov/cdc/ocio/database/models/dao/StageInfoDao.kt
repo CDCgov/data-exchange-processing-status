@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
 import gov.cdc.ocio.database.models.Issue
 import gov.cdc.ocio.database.models.Status
-import gov.cdc.ocio.database.utils.EpochToInstantConverter
+import gov.cdc.ocio.types.adapters.EpochToInstantConverter
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 import com.fasterxml.jackson.annotation.JsonProperty
