@@ -6,11 +6,12 @@ import gov.cdc.ocio.processingstatusnotifications.dispatcher.EmailDispatcher
 import gov.cdc.ocio.processingstatusnotifications.model.cache.NotificationSubscription
 import mu.KotlinLogging
 
+
 /**
  * Class to evaluate existing rules in Datastore for email notifications.
  * If matching rule exist, we can send an email using EmailDispatcher
  */
-class EmailNotificationRule(): Rule {
+class EmailNotificationRule() : Rule {
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -21,7 +22,7 @@ class EmailNotificationRule(): Rule {
      */
     override fun evaluateAndDispatch(ruleId: String, cacheService: InMemoryCacheService): String {
         val subscribers: List<NotificationSubscription> = cacheService.getSubscription(ruleId)
-        for(subscriber in subscribers) {
+        for (subscriber in subscribers) {
             if (subscriber.subscriptionType == SubscriptionType.EMAIL) {
                 return dispatchEvent(subscriber)
             }

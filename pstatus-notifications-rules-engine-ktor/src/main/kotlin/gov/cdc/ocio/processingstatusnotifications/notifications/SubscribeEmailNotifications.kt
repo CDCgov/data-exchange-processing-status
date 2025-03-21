@@ -8,19 +8,19 @@ import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import mu.KotlinLogging
 import java.time.Instant
 
+
 /**
- * This method is used by graphL endpoints to subscribe for Webhook notifications
- *  * based on rules sent in required parameters/arguments
- *          dataStreamId
- *          dataStreamRoute
- *          email
- *          stageName
- *          statusType ("warning", "success", "error")
- *
+ * This method is used by graphL endpoints to subscribe for Webhook notifications based on rules sent in required
+ * parameters/arguments:
+ *   - dataStreamId
+ *   - dataStreamRoute
+ *   - email
+ *   - stage info, namely the stage's "service" and "action"
+ *   - status ("success", "failure")
  */
 class SubscribeEmailNotifications{
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
+    private val cacheService = InMemoryCacheService()
 
     /**
      * The function which validates and subscribes for email notifications

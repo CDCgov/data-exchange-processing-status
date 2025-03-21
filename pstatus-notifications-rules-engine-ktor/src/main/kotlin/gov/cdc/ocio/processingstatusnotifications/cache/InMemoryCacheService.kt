@@ -7,19 +7,20 @@ import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 
 
 /**
- * This class is a service that interacts with InMemory Cache in order to subscribe/unsubscribe users
+ * This class is a service that interacts with InMemory Cache in order to subscribe/unsubscribe users.
  */
 class InMemoryCacheService {
 
     /**
      * This method creates a hash of the rule keys (dataStreamId, stageName, dataStreamRoute, statusType)
      * to use as a key for SubscriptionRuleCache and creates a new or existing subscription (if exist)
-     * and creates a new entry in subscriberCache for the user with the susbscriptionRuleKey
+     * and creates a new entry in subscriberCache for the user with the subscriptionRuleKey
      *
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param stageName String
-     * @param statusType String
+     * @param service String?
+     * @param action String?
+     * @param status Status
      * @param emailOrUrl String
      * @param subscriptionType SubscriptionType
      * @return String
@@ -47,7 +48,6 @@ class InMemoryCacheService {
         } catch (e: BadStateException) {
             throw e
         }
-
     }
 
     /**
@@ -66,8 +66,9 @@ class InMemoryCacheService {
     }
 
     /**
-     * This methods checks for subscription rule and gets the subscriptionId.
-     * In turn uses the subscription Id to retrieve the NotificationSubscription details
+     * Checks for subscription rule and gets the subscriptionId, using the subscription id to retrieve the
+     * NotificationSubscription details.
+     *
      * @param ruleId String
      * @return Boolean
      */

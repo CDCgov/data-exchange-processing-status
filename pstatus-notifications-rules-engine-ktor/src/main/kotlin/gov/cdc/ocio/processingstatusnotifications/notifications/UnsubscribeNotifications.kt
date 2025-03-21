@@ -12,21 +12,23 @@ import mu.KotlinLogging
  * @property cacheService InMemoryCacheService
  * @constructor
  */
-class UnSubscribeNotifications
- {
+class UnSubscribeNotifications {
+
     private val logger = KotlinLogging.logger {}
+
     private val cacheService: InMemoryCacheService = InMemoryCacheService()
 
-     /**
-      * The function which validates and Unsubscribes for webhook notifications
-      * @param subscriptionId String
-      */
+    /**
+     * The function which validates and Unsubscribes for webhook notifications.
+     *
+     * @param subscriptionId String
+     */
     fun run(subscriptionId: String): SubscriptionResult {
         logger.debug { "SubscriptionId $subscriptionId" }
 
         val result = SubscriptionResult()
         val unsubscribeSuccessful = unsubscribeNotifications(subscriptionId)
-         if (subscriptionId.isNotBlank() && unsubscribeSuccessful) {
+        if (subscriptionId.isNotBlank() && unsubscribeSuccessful) {
             result.subscription_id = subscriptionId
             result.timestamp = Instant.now().epochSecond
             result.status = false
@@ -37,13 +39,14 @@ class UnSubscribeNotifications
             result.message = "UnSubscription unsuccessful"
 
         }
-        return  result
+        return result
     }
 
-     /**
-      *  Function which unsubscribes based on subscription id from the cache service
-      *  @param subscriptionId String
-      */
+    /**
+     * Function which unsubscribes based on subscription id from the cache service.
+     *
+     * @param subscriptionId String
+     */
     private fun unsubscribeNotifications(
         subscriptionId: String,
     ): Boolean {

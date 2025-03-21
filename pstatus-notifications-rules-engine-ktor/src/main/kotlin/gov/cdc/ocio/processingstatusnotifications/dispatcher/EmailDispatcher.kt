@@ -1,27 +1,25 @@
 package gov.cdc.ocio.processingstatusnotifications.dispatcher
 
-
 import gov.cdc.ocio.processingstatusnotifications.model.cache.*
-
 import mu.KotlinLogging
-
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Socket
 import javax.mail.MessagingException
 import javax.mail.Session
 
+
 /**
- * EMail dispatcher implements IDispatcher which will implement code to send out emails
+ * Email dispatcher implements IDispatcher which will implement code to send out emails
  * to the subscribers of teh rules (if the rule matches in rule engine evaluation phase)
  * @property logger KLogger
  */
-class EmailDispatcher(): IDispatcher {
+class EmailDispatcher() : IDispatcher {
     private val logger = KotlinLogging.logger {}
     override fun dispatchEvent(subscription: NotificationSubscription): String {
 
         // Call the function to check SMTP status
-        return if(checkSMTPStatusWithoutCredentials(subscription)) {
+        return if (checkSMTPStatusWithoutCredentials()) {
             sendEmail(subscription)
             logger.info { "Email sent successfully" }
             "Email sent successfully"
@@ -29,15 +27,14 @@ class EmailDispatcher(): IDispatcher {
             logger.info { "Error occurred while sending email" }
             "Email server not reachable"
         }
-
     }
 
     /**
-     * Method to check teh status of the SMTP server
-     * @param subscription NotificationSubscription
+     * Method to check the status of the SMTP server.
+     *
      * @return String
      */
-    private fun checkSMTPStatusWithoutCredentials(subscription: NotificationSubscription): Boolean {
+    private fun checkSMTPStatusWithoutCredentials(): Boolean {
         // This is to get the status from curl statement to see if server is connected
         try {
             // TODO : Uncomment this later
@@ -54,7 +51,7 @@ class EmailDispatcher(): IDispatcher {
             println("Server response: $response")
             // Close the socket
             socket.close()
-            return response !=null
+            return response != null
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -62,24 +59,28 @@ class EmailDispatcher(): IDispatcher {
     }
 
     /**
-     * Method to send email
+     * Method to send email.
+     *
      * @param subscription NotificationSubscription
      * @return String
      */
     private fun sendEmail(subscription: NotificationSubscription) {
-
-        try{
+        try {
             // TODO : Change this into properties
-            val toEmalId = subscription.subscriberAddressOrUrl
+            val toEmailId = subscription.subscriberAddressOrUrl
             val props = System.getProperties()
             props["mail.smtp.host"] = "smtpgw.cdc.gov"
             props["mail.smtp.port"] = 25
             val session = Session.getInstance(props, null)
-           EmailUtil.sendEmail(session, toEmalId, "${System.getenv("ReplyToName")} : Notification for report", "You have signed up for this notification subscription, please check the portal")
-        } catch(_: MessagingException) {
+            EmailUtil.sendEmail(
+                session,
+                toEmailId,
+                "${System.getenv("ReplyToName")} : Notification for report",
+                "You have signed up for this notification subscription, please check the portal"
+            )
+        } catch (_: MessagingException) {
             logger.info("Unable to send email")
         }
-
     }
 
 }
