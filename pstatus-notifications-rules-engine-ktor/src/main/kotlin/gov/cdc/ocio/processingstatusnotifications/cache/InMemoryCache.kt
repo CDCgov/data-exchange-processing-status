@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusnotifications.cache
 
 import gov.cdc.ocio.processingstatusnotifications.exception.*
+import gov.cdc.ocio.processingstatusnotifications.model.Subscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.model.cache.*
 import mu.KotlinLogging
@@ -41,12 +42,12 @@ object InMemoryCache {
      * @param emailOrUrl String - Valid EmailId or Valid WebSocket Url
      * @return String
      */
-    fun updateCacheForSubscription(subscriptionRule: String,
+    fun updateCacheForSubscription(subscription: Subscription,
                                    subscriptionType: SubscriptionType,
                                    emailOrUrl: String): String {
         if (subscriptionType == SubscriptionType.EMAIL || subscriptionType == SubscriptionType.WEBHOOK) {
             // If subscription type is EMAIL or WEBSOCKET then proceed else throw BadState Exception
-            val subscriptionId = updateSubscriptionRuleCache(subscriptionRule)
+            val subscriptionId = updateSubscriptionRuleCache(subscription)
             updateSubscriberCache(subscriptionId, NotificationSubscription(subscriptionId, emailOrUrl, subscriptionType))
             return subscriptionId
         } else {
@@ -61,12 +62,12 @@ object InMemoryCache {
      * @param subscriptionRule String
      * @return String
      */
-    private fun updateSubscriptionRuleCache(subscriptionRule: String): String {
+    private fun updateSubscriptionRuleCache(subscription: Subscription): String {
         // Just using write lock for the entire process to ensure atomicity
         readWriteLock.writeLock().lock()
         try {
             // Try to read from the cache
-            val existingSubscriptionId = subscriptionRuleCache[subscriptionRule]
+            val existingSubscriptionId = subscriptionRuleCache[subscription.subscriptionId]
 
             // If a subscription already exists, return it
             if (existingSubscriptionId != null) {
@@ -75,29 +76,14 @@ object InMemoryCache {
             }
 
             // Create a unique subscription and add it to the cache
-            val subscriptionId = generateUniqueSubscriptionId()
+            val subscriptionId = UUID.randomUUID().toString()
             logger.debug("Subscription Id for this new rule has been generated $subscriptionId")
-            subscriptionRuleCache[subscriptionRule] = subscriptionId
+            subscriptionRuleCache[subscription.subscriptionId] = subscriptionId
             return subscriptionId
         } finally {
             // Always release the lock
             readWriteLock.writeLock().unlock()
         }
-    }
-
-
-    /**
-     * This method generates new unique subscriptionId for caches
-     * @return String
-     */
-    internal fun generateUniqueSubscriptionId(): String {
-        // TODO: This could be handled to background task to populate
-        //  uniqueSubscriptionIds bucket of size 20 or 50, may be?
-        var subscriptionId = UUID.randomUUID().toString()
-        while(subscriberCache.contains(subscriptionId)) {
-            subscriptionId = UUID.randomUUID().toString()
-        }
-        return subscriptionId
     }
 
     /**

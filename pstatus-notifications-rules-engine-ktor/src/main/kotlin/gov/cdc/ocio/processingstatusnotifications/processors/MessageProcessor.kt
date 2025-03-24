@@ -8,11 +8,12 @@ import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
 import gov.cdc.ocio.processingstatusnotifications.exception.InvalidSchemaDefException
-import gov.cdc.ocio.processingstatusnotifications.model.cache.SubscriptionRule
 import gov.cdc.ocio.processingstatusnotifications.model.message.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import mu.KotlinLogging
+import java.time.Instant
 
 
 /**
@@ -25,6 +26,7 @@ class MessageProcessor: MessageProcessorInterface {
     // Use the LONG_OR_DOUBLE number policy, which will prevent Longs from being made into Doubles
     private val gson = GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
         .create()
 
     /**
@@ -69,15 +71,7 @@ class MessageProcessor: MessageProcessorInterface {
 
         return try {
             logger.debug { "Report status: $status" }
-            RuleEngine.evaluateAllRules(
-                SubscriptionRule(
-                    dataStreamId,
-                    dataStreamRoute,
-                    report.stageInfo?.service ?: "unknown",
-                    report.stageInfo?.action ?: "unknown",
-                    report.stageInfo?.status ?: Status.FAILURE
-                )
-                    .getStringHash())
+            RuleEngine.evaluateAllRules(report)
             status
         } catch (ex: BadStateException) {
             // assume a bad request

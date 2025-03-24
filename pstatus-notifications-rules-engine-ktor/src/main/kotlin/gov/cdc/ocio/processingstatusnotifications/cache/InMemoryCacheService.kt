@@ -1,9 +1,12 @@
 package gov.cdc.ocio.processingstatusnotifications.cache
 
 import gov.cdc.ocio.processingstatusnotifications.exception.*
+import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
+import gov.cdc.ocio.processingstatusnotifications.model.Subscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.model.cache.*
 import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import java.util.*
 
 
 /**
@@ -14,22 +17,22 @@ class InMemoryCacheService {
     /**
      * This method creates a hash of the rule keys (dataStreamId, stageName, dataStreamRoute, statusType)
      * to use as a key for SubscriptionRuleCache and creates a new or existing subscription (if exist)
-     * and creates a new entry in subscriberCache for the user with the subscriptionRuleKey
+     * and creates a new entry in subscriberCache for the user with the subscriptionRuleKey.
      *
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param service String?
-     * @param action String?
+     * @param service String
+     * @param action String
      * @param status Status
      * @param emailOrUrl String
      * @param subscriptionType SubscriptionType
-     * @return String
+     * @return String?
      */
     fun updateNotificationsPreferences(
         dataStreamId: String,
         dataStreamRoute: String,
-        service: String?,
-        action: String?,
+        service: String,
+        action: String,
         status: Status,
         emailOrUrl: String,
         subscriptionType: SubscriptionType
@@ -38,12 +41,16 @@ class InMemoryCacheService {
             val subscriptionRule = SubscriptionRule(
                 dataStreamId,
                 dataStreamRoute,
-                service ?: "unknown",
-                action ?: "unknown",
-                status
+                null,
+                ""
+            )
+            val subscription = Subscription(
+                subscriptionId = UUID.randomUUID().toString(),
+                subscriptionRule,
+                EmailNotification(listOf(emailOrUrl))
             )
             val subscriptionId =
-                InMemoryCache.updateCacheForSubscription(subscriptionRule.getStringHash(), subscriptionType, emailOrUrl)
+                InMemoryCache.updateCacheForSubscription(subscription, subscriptionType, emailOrUrl)
             return subscriptionId
         } catch (e: BadStateException) {
             throw e

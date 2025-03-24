@@ -14,7 +14,7 @@ import javax.mail.Session
  * to the subscribers of teh rules (if the rule matches in rule engine evaluation phase)
  * @property logger KLogger
  */
-class EmailDispatcher() : IDispatcher {
+class EmailDispatcher : IDispatcher {
     private val logger = KotlinLogging.logger {}
     override fun dispatchEvent(subscription: NotificationSubscription): String {
 
