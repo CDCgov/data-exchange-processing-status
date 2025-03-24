@@ -8,6 +8,7 @@ import gov.cdc.ocio.processingstatusnotifications.model.cache.SubscriptionRule
 import gov.cdc.ocio.processingstatusnotifications.model.WebhookNotification
 import gov.cdc.ocio.processingstatusnotifications.model.message.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import gov.cdc.ocio.processingstatusnotifications.utils.ObjectMapper
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import io.ktor.util.*
@@ -19,27 +20,6 @@ import org.jeasy.rules.mvel.MVELRule
 import java.time.Instant
 import java.util.*
 
-
-/**
- * Wrapper to facilitate calling actions with a lambda expression.
- *
- * @property action Function3<String, String, String, Unit>
- * @constructor
- */
-class LambdaWrapper(val action: (String, String, String) -> Unit) {
-    /**
-     * Wrapper to call the action with the provided parameters.
-     *
-     * @param subscriptionId String
-     * @param ruleConditionBase64Encoded String
-     * @param reportJsonBase64Encoded String
-     */
-    fun call(
-        subscriptionId: String,
-        ruleConditionBase64Encoded: String,
-        reportJsonBase64Encoded: String
-    ) = action(subscriptionId, ruleConditionBase64Encoded, reportJsonBase64Encoded)
-}
 
 /**
  * Manages the rules engine
@@ -97,7 +77,7 @@ object RuleEngine {
     ) {
         // Create facts
         val facts = Facts()
-        val map = pojoToMap(report)
+        val map = ObjectMapper.anyToMap(report)
         map.forEach {
             facts.put(it.key, it.value)
         }
@@ -142,10 +122,4 @@ object RuleEngine {
         subscription.doNotify(report)
     }
 
-    private fun pojoToMap(pojo: Any): Map<String, Any?> {
-        return pojo::class.java.declaredFields.associate { field ->
-            field.isAccessible = true
-            field.name to field.get(pojo)
-        }
-    }
 }
