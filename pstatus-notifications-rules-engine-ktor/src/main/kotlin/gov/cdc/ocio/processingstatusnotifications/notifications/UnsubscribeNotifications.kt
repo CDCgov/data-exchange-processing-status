@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.notifications
 
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import java.time.Instant
 import mu.KotlinLogging
@@ -12,7 +12,7 @@ import mu.KotlinLogging
  * @property cacheService InMemoryCacheService
  * @constructor
  */
-class UnSubscribeNotifications {
+class UnsubscribeNotifications {
 
     private val logger = KotlinLogging.logger {}
 
@@ -29,7 +29,7 @@ class UnSubscribeNotifications {
         val result = SubscriptionResult()
         val unsubscribeSuccessful = unsubscribeNotifications(subscriptionId)
         if (subscriptionId.isNotBlank() && unsubscribeSuccessful) {
-            result.subscription_id = subscriptionId
+            result.subscriptionId = subscriptionId
             result.timestamp = Instant.now().epochSecond
             result.status = false
             result.message = "UnSubscription successful"

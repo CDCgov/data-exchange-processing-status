@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusnotifications.notifications
 
-import gov.cdc.ocio.processingstatusnotifications.EmailSubscription
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
+import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingstatusnotifications.model.message.Status
@@ -50,7 +50,7 @@ class SubscribeEmailNotifications{
             action,
             status
         )
-            if (subscriptionResult.subscription_id == null) {
+            if (subscriptionResult.subscriptionId == null) {
                 subscriptionResult.message = "Invalid Request"
                 subscriptionResult.status = false
             }
@@ -89,7 +89,7 @@ class SubscribeEmailNotifications{
             result.status = false
             result.message = "Not valid status"
         } else {
-            result.subscription_id = cacheService.updateNotificationsPreferences(
+            result.subscriptionId = cacheService.updateNotificationsPreferences(
                 dataStreamId,
                 dataStreamRoute,
                 service,

@@ -48,7 +48,7 @@ object RuleEngine {
 
     private val rulesEngine = DefaultRulesEngine()
 
-    private val gson: Gson by lazy {
+    private val gson by lazy {
         GsonBuilder()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
@@ -78,11 +78,12 @@ object RuleEngine {
             notification = WebhookNotification(
                 webhookUrl = ""
             )
-
         )
     )
 
-    fun evaluateAllRules(report: ReportMessage) {
+    fun evaluateAllRules(
+        report: ReportMessage
+    ) {
         for (subscription in subscriptions) {
             evaluateSubscription(report, subscription)
         }

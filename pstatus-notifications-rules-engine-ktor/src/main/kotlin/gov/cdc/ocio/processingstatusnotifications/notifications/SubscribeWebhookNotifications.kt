@@ -1,8 +1,8 @@
 package gov.cdc.ocio.processingstatusnotifications.notifications
 
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
-import gov.cdc.ocio.processingstatusnotifications.WebhookSubscription
+import gov.cdc.ocio.processingstatusnotifications.model.WebhookSubscription
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import mu.KotlinLogging
@@ -45,7 +45,7 @@ class SubscribeWebhookNotifications {
         logger.debug("Status: $status")
 
         val subscriptionResult = subscribeForWebhook(dataStreamId, dataStreamRoute, url, service, action, status)
-        if (subscriptionResult.subscription_id != null) {
+        if (subscriptionResult.subscriptionId != null) {
             subscriptionResult.message = "Subscription successful"
             return subscriptionResult
         }
@@ -83,7 +83,7 @@ class SubscribeWebhookNotifications {
             result.status = false
             result.message = "Not valid url address"
         } else {
-            result.subscription_id = cacheService.updateNotificationsPreferences(
+            result.subscriptionId = cacheService.updateNotificationsPreferences(
                 dataStreamId,
                 dataStreamRoute,
                 service,

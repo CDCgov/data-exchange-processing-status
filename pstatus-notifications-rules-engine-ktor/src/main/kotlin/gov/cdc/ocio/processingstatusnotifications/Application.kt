@@ -34,9 +34,8 @@ fun Application.module() {
 
     routing {
         subscribeEmailNotificationRoute()
-        unsubscribeEmailNotificationRoute()
         subscribeWebhookRoute()
-        unsubscribeWebhookRoute()
+        unsubscribeNotificationRoute()
         healthCheckRoute()
         versionRoute()
     }
