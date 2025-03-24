@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
@@ -12,6 +11,7 @@ import gov.cdc.ocio.processingstatusnotifications.model.message.Status
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import io.ktor.util.*
+import mu.KotlinLogging
 import org.jeasy.rules.api.Facts
 import org.jeasy.rules.api.Rules
 import org.jeasy.rules.core.DefaultRulesEngine
@@ -45,6 +45,8 @@ class LambdaWrapper(val action: (String, String, String) -> Unit) {
  * Manages the rules engine
  */
 object RuleEngine {
+
+    private val logger = KotlinLogging.logger {}
 
     private val rulesEngine = DefaultRulesEngine()
 
@@ -134,7 +136,7 @@ object RuleEngine {
 
     private fun ruleActionFunction(subscriptionId: String, ruleConditionBase64Encoded: String, reportJsonBase64Encoded: String) {
         val ruleCondition = ruleConditionBase64Encoded.decodeBase64String()
-        println("Function ruleActionFunction() was called with subscription id: $subscriptionId, rule condition: $ruleCondition")
+        logger.info { "Function ruleActionFunction() was called with subscription id: $subscriptionId, rule condition: $ruleCondition" }
         val subscription = subscriptions.first { it.subscriptionId == subscriptionId }
         val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), ReportMessage::class.java)
         subscription.doNotify(report)
