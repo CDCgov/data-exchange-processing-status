@@ -7,7 +7,6 @@ import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
-import gov.cdc.ocio.processingstatusnotifications.exception.InvalidSchemaDefException
 import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
@@ -51,21 +50,20 @@ class MessageProcessor: MessageProcessorInterface {
      * @param report ReportMessage
      * @return Status?
      * @throws BadRequestException
-     * @throws InvalidSchemaDefException
      */
-    @Throws(BadRequestException::class, InvalidSchemaDefException::class)
+    @Throws(BadRequestException::class)
     private fun evaluateRulesForReport(
         report: ReportMessage
     ): Status? {
 
-        val dataStreamId = report.dataStreamId
-            ?: throw BadRequestException("Missing required field data_stream_id")
+        report.dataStreamId
+            ?: throw BadRequestException("Missing required field dataStreamId")
 
-        val dataStreamRoute = report.dataStreamRoute
-            ?: throw BadRequestException("Missing required field data_stream_route")
+        report.dataStreamRoute
+            ?: throw BadRequestException("Missing required field dataStreamRoute")
 
-        val dispositionType = report.dispositionType
-            ?: throw BadRequestException("Missing required field disposition_type")
+        report.dispositionType
+            ?: throw BadRequestException("Missing required field dispositionType")
 
         val status = report.stageInfo?.status
 
@@ -76,9 +74,6 @@ class MessageProcessor: MessageProcessorInterface {
         } catch (ex: BadStateException) {
             // assume a bad request
             throw BadRequestException(ex.localizedMessage)
-        } catch (ex: InvalidSchemaDefException) {
-            // assume an invalid request
-            throw InvalidSchemaDefException(ex.localizedMessage)
         } catch (ex: ContentException) {
             // assume an invalid request
             throw ContentException(ex.localizedMessage)
