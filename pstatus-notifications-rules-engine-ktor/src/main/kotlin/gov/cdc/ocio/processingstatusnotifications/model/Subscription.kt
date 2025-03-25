@@ -1,9 +1,15 @@
 package gov.cdc.ocio.processingstatusnotifications.model
 
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.util.*
 
 
 /**
@@ -29,8 +35,15 @@ data class Subscription(
 
             SubscriptionType.WEBHOOK -> {
                 CoroutineScope(Dispatchers.Default).launch {
+                    val gson =
+                        GsonBuilder()
+                            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+                            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+                            .create()
+
                     // Don't wait for a response to the call to the webhook.
-                    notification.doNotify("todo")
+                    notification.doNotify(gson.toJson(report))
                 }
             }
         }

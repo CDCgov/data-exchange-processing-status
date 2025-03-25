@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionRule
@@ -17,6 +18,8 @@ import org.jeasy.rules.api.Facts
 import org.jeasy.rules.api.Rules
 import org.jeasy.rules.core.DefaultRulesEngine
 import org.jeasy.rules.mvel.MVELRule
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.time.Instant
 import java.util.*
 
@@ -24,9 +27,11 @@ import java.util.*
 /**
  * Manages the rules engine
  */
-object RuleEngine {
+object RuleEngine: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
+
+//    private val repository by inject<ProcessingStatusRepository>()
 
     private val rulesEngine = DefaultRulesEngine()
 
@@ -37,6 +42,8 @@ object RuleEngine {
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .create()
     }
+
+//    private val notificationSubscriptions = repository.notificationSubscriptionsCollection
 
     private val subscriptions = mapOf(
         UUID.randomUUID().toString() to Subscription(
@@ -58,7 +65,7 @@ object RuleEngine {
                 mvelRuleCondition = "stageInfo.service == 'UPLOAD API' && stageInfo.action == 'upload-completed' && stageInfo.status == Status.SUCCESS"
             ),
             notification = WebhookNotification(
-                webhookUrl = ""
+                webhookUrl = "https://webhook.site/8267e7c4-48a0-4f1d-8005-3c43a039d7e0"
             )
         )
     )

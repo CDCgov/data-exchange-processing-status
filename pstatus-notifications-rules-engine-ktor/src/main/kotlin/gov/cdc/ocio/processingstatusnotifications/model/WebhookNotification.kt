@@ -8,6 +8,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 
+
 data class WebhookNotification(
     private val webhookUrl: String
 ) : Notification(SubscriptionType.WEBHOOK) {
