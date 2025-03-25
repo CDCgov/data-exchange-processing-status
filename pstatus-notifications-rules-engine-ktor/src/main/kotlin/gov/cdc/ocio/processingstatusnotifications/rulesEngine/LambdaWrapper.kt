@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
+
 /**
  * Wrapper to facilitate calling actions with a lambda expression.
  *
@@ -7,6 +8,7 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
  * @constructor
  */
 class LambdaWrapper(val action: (String, String, String) -> Unit) {
+
     /**
      * Wrapper to call the action with the provided parameters.
      *
@@ -14,9 +16,11 @@ class LambdaWrapper(val action: (String, String, String) -> Unit) {
      * @param ruleConditionBase64Encoded String
      * @param reportJsonBase64Encoded String
      */
+    @Suppress("unused")
     fun call(
         subscriptionId: String,
         ruleConditionBase64Encoded: String,
         reportJsonBase64Encoded: String
     ) = action(subscriptionId, ruleConditionBase64Encoded, reportJsonBase64Encoded)
+
 }
