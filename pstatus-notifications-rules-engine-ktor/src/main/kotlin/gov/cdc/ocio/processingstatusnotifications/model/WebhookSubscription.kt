@@ -7,7 +7,7 @@ package gov.cdc.ocio.processingstatusnotifications.model
 data class WebhookSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
-    val jurisdiction: String,
+    val jurisdiction: String?,
     val mvelCondition: String,
     val webhookUrl: String
 )

@@ -7,58 +7,72 @@ import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.plugins.*
 import io.ktor.client.request.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.statement.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 
 /**
- * Email Subscription data class.
+ * Email subscription data class.
  *
- * @param dataStreamId String
- * @param dataStreamRoute String
- * @param email String
- * @param stageName String
- * @param statusType String
+ * @property dataStreamId String
+ * @property dataStreamRoute String
+ * @property jurisdiction String?
+ * @property mvelCondition String
+ * @property emailAddresses List<String>
+ * @constructor
  */
 @Serializable
 data class EmailSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
-    val email: String,
-    val stageName: String,
-    val statusType: String
+    val jurisdiction: String?,
+    val mvelCondition: String,
+    val emailAddresses: List<String>
 )
 
 /**
- * UnSubscription data class which is serialized back and forth which is in turn used for unsubscribing from the
- * cache for emails and webhooks using the given subscriberId.
+ * Webhook subscription data class.
+ *
+ * @property dataStreamId String
+ * @property dataStreamRoute String
+ * @property jurisdiction String?
+ * @property mvelCondition String
+ * @property webhookUrl String
+ * @constructor
+ */
+@Serializable
+data class WebhookSubscription(
+    val dataStreamId: String,
+    val dataStreamRoute: String,
+    val jurisdiction: String?,
+    val mvelCondition: String,
+    val webhookUrl: String
+)
+
+/**
+ * Unsubscribe request, which only requires the subscription id to unsubscribe.
  *
  * @param subscriptionId
  */
 @Serializable
-data class UnSubscription(val subscriptionId: String)
+data class UnsubscribeRequest(val subscriptionId: String)
 
 /**
  * SubscriptionResult is the response class which is serialized back and forth which is in turn used for getting the
  * response which contains the subscriberId, message and the status of subscribe/unsubscribe operations.
  *
- * @param subscription_id
+ * @param subscriptionId
  * @param timestamp
  * @param status
  * @param message
  */
 @Serializable
 data class SubscriptionResult(
-    var subscription_id: String? = null,
+    var subscriptionId: String? = null,
     var timestamp: Long? = null,
     var status: Boolean? = false,
     var message: String? = ""
@@ -67,12 +81,12 @@ data class SubscriptionResult(
 /**
  * The graphQL mutation class for notifications
  */
-class NotificationsMutationService(
-    workflowServiceUrl: String?
+class NotificationsRulesEngineMutationService(
+    rulesEngineServiceUrl: String?
 ) : Mutation {
 
-    private val workflowServiceConnection =
-        ServiceConnection("notifications workflow", workflowServiceUrl)
+    private val rulesEngineServiceConnection =
+        ServiceConnection("notifications rules engine", rulesEngineServiceUrl)
 
     /**
      * SubscribeEmail function which in turn uses the http client to invoke the notifications ktor microservice
@@ -80,63 +94,37 @@ class NotificationsMutationService(
      *
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param email String
-     * @param stageName String
-     * @param statusType String
+     * @param jurisdiction String?
+     * @param mvelCondition String
+     * @param emailAddresses List<String>
+     * @return SubscriptionResult
      */
     @GraphQLDescription("Subscribe Email Notifications")
     @Suppress("unused")
     fun subscribeEmail(
         dataStreamId: String,
         dataStreamRoute: String,
-        email: String,
-        stageName: String,
-        statusType: String
+        jurisdiction: String?,
+        mvelCondition: String,
+        emailAddresses: List<String>
     ): SubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/subscribe/email")
+        val url = rulesEngineServiceConnection.getUrl("/subscribe/email")
 
         return runBlocking {
             val result = runCatching {
-                val response = workflowServiceConnection.client.post(url) {
+                val response = rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(EmailSubscription(dataStreamId, dataStreamRoute, email, stageName, statusType))
+                    setBody(EmailSubscription(dataStreamId, dataStreamRoute, jurisdiction, mvelCondition, emailAddresses))
                 }
-                return@runCatching ProcessResponse(response)
+                return@runCatching processResponse(response)
             }
             result.onFailure {
                 when (it) {
                     is ResponseException -> throw it
-                    else -> throw Exception(workflowServiceConnection.serviceUnavailable)
+                    else -> throw Exception(rulesEngineServiceConnection.serviceUnavailable)
                 }
             }
             return@runBlocking result.getOrThrow()
-        }
-    }
-
-    /**
-     * UnSubscribeEmail function which in turn uses the http client to invoke the notifications ktor microservice
-     * route to unsubscribe email notifications using the subscriberId.
-     *
-     * @param subscriptionId String
-     */
-    @GraphQLDescription("Unsubscribe Email Notifications")
-    @Suppress("unused")
-    fun unsubscribeEmail(subscriptionId: String): SubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/unsubscribe/email")
-
-        return runBlocking {
-            try {
-                val response = workflowServiceConnection.client.post(url) {
-                    contentType(ContentType.Application.Json)
-                    setBody(UnSubscription(subscriptionId))
-                }
-                return@runBlocking ProcessResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, subscriptionId)
-                }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
-            }
         }
     }
 
@@ -146,33 +134,34 @@ class NotificationsMutationService(
      *
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param email String
-     * @param stageName String
-     * @param statusType String
+     * @param jurisdiction String?
+     * @param mvelCondition String
+     * @param webhookUrl String
+     * @return SubscriptionResult
      */
     @GraphQLDescription("Subscribe Webhook Notifications")
     @Suppress("unused")
     fun subscribeWebhook(
         dataStreamId: String,
         dataStreamRoute: String,
-        email: String,
-        stageName: String,
-        statusType: String
+        jurisdiction: String?,
+        mvelCondition: String,
+        webhookUrl: String
     ): SubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/subscribe/webhook")
+        val url = rulesEngineServiceConnection.getUrl("/subscribe/webhook")
 
         return runBlocking {
             try {
-                val response = workflowServiceConnection.client.post(url) {
+                val response = rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(EmailSubscription(dataStreamId, dataStreamRoute, email, stageName, statusType))
+                    setBody(WebhookSubscription(dataStreamId, dataStreamRoute, jurisdiction, mvelCondition, webhookUrl))
                 }
-                return@runBlocking ProcessResponse(response)
+                return@runBlocking processResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
                     SubscriptionResponse.ProcessErrorCodes(url, e, null)
                 }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
+                throw Exception(rulesEngineServiceConnection.serviceUnavailable)
             }
         }
     }
@@ -183,23 +172,23 @@ class NotificationsMutationService(
      *
      * @param subscriptionId String
      */
-    @GraphQLDescription("Unsubscribe Webhook Notifications")
+    @GraphQLDescription("Unsubscribe Notifications")
     @Suppress("unused")
-    fun unsubscribeWebhook(subscriptionId: String): SubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/unsubscribe/webhook")
+    fun unsubscribe(subscriptionId: String): SubscriptionResult {
+        val url = rulesEngineServiceConnection.getUrl("/unsubscribe")
 
         return runBlocking {
             try {
-                val response = workflowServiceConnection.client.post(url) {
+                val response = rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(UnSubscription(subscriptionId))
+                    setBody(UnsubscribeRequest(subscriptionId))
                 }
-                return@runBlocking ProcessResponse(response)
+                return@runBlocking processResponse(response)
             } catch (e: Exception) {
                 if (e.message!!.contains("Status:")) {
                     SubscriptionResponse.ProcessErrorCodes(url, e, subscriptionId)
                 }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
+                throw Exception(rulesEngineServiceConnection.serviceUnavailable)
             }
         }
     }
@@ -210,11 +199,11 @@ class NotificationsMutationService(
          * Function to process the http response coming from notifications service
          * @param response HttpResponse
          */
-        private suspend fun ProcessResponse(response: HttpResponse): SubscriptionResult {
+        private suspend fun processResponse(response: HttpResponse): SubscriptionResult {
             if (response.status == HttpStatusCode.OK) {
                 return response.body()
             } else {
-                throw Exception("Notification service is unavailable. Status: ${response.status}")
+                throw Exception("Notification rules engine service is unavailable. Status: ${response.status}")
             }
         }
     }
