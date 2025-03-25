@@ -93,7 +93,7 @@ class CouchbaseRepository(
 
     override var notificationSubscriptionsCollection =
         CouchbaseCollection(
-            reportsDeadLetterCollectionName,
+            notificationSubscriptionsCollectionName,
             scope,
             notificationSubscriptionsCouchbaseCollection
         ) as Collection
