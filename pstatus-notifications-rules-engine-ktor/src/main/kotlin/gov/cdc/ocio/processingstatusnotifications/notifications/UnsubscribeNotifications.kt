@@ -46,10 +46,13 @@ class UnsubscribeNotifications {
      * Function which unsubscribes based on subscription id from the cache service.
      *
      * @param subscriptionId String
+     * @return Boolean true if successful, false otherwise
      */
     private fun unsubscribeNotifications(
         subscriptionId: String,
     ): Boolean {
-        return cacheService.unsubscribeNotifications(subscriptionId)
+        return runCatching {
+            cacheService.unsubscribeNotifications(subscriptionId)
+        }.isSuccess
     }
 }

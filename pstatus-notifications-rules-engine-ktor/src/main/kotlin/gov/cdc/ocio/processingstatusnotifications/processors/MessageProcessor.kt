@@ -8,8 +8,8 @@ import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
 import gov.cdc.ocio.processingstatusnotifications.exception.InvalidSchemaDefException
-import gov.cdc.ocio.processingstatusnotifications.model.message.ReportMessage
-import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
+import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import mu.KotlinLogging

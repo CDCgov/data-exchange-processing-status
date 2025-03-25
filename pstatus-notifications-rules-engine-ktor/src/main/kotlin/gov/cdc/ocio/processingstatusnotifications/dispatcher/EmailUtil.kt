@@ -40,7 +40,7 @@ object EmailUtil {
             msg.setText(body, "UTF-8")
             msg.sentDate = Date()
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail, false))
-//            Transport.send(msg)
+            Transport.send(msg)
         } catch (e: Exception) {
             e.printStackTrace()
         }

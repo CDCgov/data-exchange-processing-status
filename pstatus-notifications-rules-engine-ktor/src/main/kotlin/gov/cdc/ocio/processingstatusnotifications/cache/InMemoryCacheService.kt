@@ -1,11 +1,9 @@
 package gov.cdc.ocio.processingstatusnotifications.cache
 
 import gov.cdc.ocio.processingstatusnotifications.exception.*
-import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
+import gov.cdc.ocio.processingstatusnotifications.model.Notification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
-import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
-import gov.cdc.ocio.processingstatusnotifications.model.cache.*
-import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionRule
 import java.util.*
 
 
@@ -15,42 +13,45 @@ import java.util.*
 class InMemoryCacheService {
 
     /**
-     * This method creates a hash of the rule keys (dataStreamId, stageName, dataStreamRoute, statusType)
-     * to use as a key for SubscriptionRuleCache and creates a new or existing subscription (if exist)
-     * and creates a new entry in subscriberCache for the user with the subscriptionRuleKey.
+     * Upserts a subscription.  If the subscription exists it is updated, otherwise a new subscription is created.
      *
      * @param dataStreamId String
      * @param dataStreamRoute String
-     * @param service String
-     * @param action String
-     * @param status Status
-     * @param emailOrUrl String
-     * @param subscriptionType SubscriptionType
-     * @return String?
+     * @param jurisdiction String?
+     * @param mvelCondition String
+     * @param notification Notification
+     * @return String
      */
-    fun updateNotificationsPreferences(
+    fun upsertSubscription(
         dataStreamId: String,
         dataStreamRoute: String,
-        service: String,
-        action: String,
-        status: Status,
-        emailOrUrl: String,
-        subscriptionType: SubscriptionType
+        jurisdiction: String?,
+        mvelCondition: String,
+        notification: Notification
     ): String {
         try {
+            // Create the subscription rule
             val subscriptionRule = SubscriptionRule(
                 dataStreamId,
                 dataStreamRoute,
-                null,
-                ""
+                jurisdiction,
+                mvelCondition
             )
+
+            // Create the subscription
             val subscription = Subscription(
-                subscriptionId = UUID.randomUUID().toString(),
                 subscriptionRule,
-                EmailNotification(listOf(emailOrUrl))
+                notification
             )
-            val subscriptionId =
-                InMemoryCache.updateCacheForSubscription(subscription, subscriptionType, emailOrUrl)
+
+            // Check if the subscription id already exists and if so, get the subscription id so we can replace it.
+            // Otherwise, generate a new subscription id.
+            val subscriptionId = InMemoryCache.findSubscriptionId(subscription)
+                ?: UUID.randomUUID().toString()
+
+            // Add/replace the subscription
+            InMemoryCache.subscribe(subscriptionId, subscription)
+
             return subscriptionId
         } catch (e: BadStateException) {
             throw e
@@ -58,36 +59,20 @@ class InMemoryCacheService {
     }
 
     /**
-     * This method removes subscriber from subscription rule.
-     * If the rule doesn't exist then it throws BadStateException
+     * Attempts to remove the subscription with the provided subscription id.
      *
      * @param subscriptionId String
      * @return Boolean
+     * @throws BadStateException thrown if subscription not found
      */
-    fun unsubscribeNotifications(subscriptionId: String): Boolean {
-        try {
-            return InMemoryCache.unsubscribeSubscriber(subscriptionId)
-        } catch (e: BadStateException) {
-            throw e
-        }
-    }
+    @Throws(BadStateException::class)
+    fun unsubscribeNotifications(subscriptionId: String) = InMemoryCache.unsubscribe(subscriptionId)
 
     /**
-     * Checks for subscription rule and gets the subscriptionId, using the subscription id to retrieve the
-     * NotificationSubscription details.
+     *  Checks for subscription rule and gets the subscriptionId, using the subscription id to retrieve the details.
      *
-     * @param ruleId String
-     * @return Boolean
+     * @param subscriptionId String
+     * @return Subscription?
      */
-    fun getSubscription(ruleId: String): List<NotificationSubscription> {
-        try {
-            val subscriptionId = InMemoryCache.getSubscriptionId(ruleId)
-            if (subscriptionId != null) {
-                return InMemoryCache.getSubscriptionDetails(subscriptionId).orEmpty()
-            }
-            return emptyList()
-        } catch (e: BadStateException) {
-            throw e
-        }
-    }
+    fun getSubscription(subscriptionId: String) = InMemoryCache.getSubscriptionDetails(subscriptionId)
 }

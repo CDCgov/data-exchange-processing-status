@@ -4,10 +4,10 @@ import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
-import gov.cdc.ocio.processingstatusnotifications.model.cache.SubscriptionRule
+import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionRule
 import gov.cdc.ocio.processingstatusnotifications.model.WebhookNotification
-import gov.cdc.ocio.processingstatusnotifications.model.message.ReportMessage
-import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
+import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import gov.cdc.ocio.processingstatusnotifications.utils.ObjectMapper
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
@@ -38,8 +38,8 @@ object RuleEngine {
             .create()
     }
 
-    private val subscriptions = listOf(
-        Subscription(
+    private val subscriptions = mapOf(
+        UUID.randomUUID().toString() to Subscription(
             subscriptionRule = SubscriptionRule(
                 dataStreamId = "dex-testing1",
                 dataStreamRoute = "test-event1",
@@ -50,7 +50,7 @@ object RuleEngine {
                 emailAddresses = listOf("ygj6@cdc.gov")
             )
         ),
-        Subscription(
+        UUID.randomUUID().toString() to Subscription(
             subscriptionRule = SubscriptionRule(
                 dataStreamId = "dex-testing1",
                 dataStreamRoute = "test-event1",
@@ -63,6 +63,11 @@ object RuleEngine {
         )
     )
 
+    /**
+     * Evaluate all subscriptions to see if a notification needs to be sent.
+     *
+     * @param report ReportMessage
+     */
     fun evaluateAllRules(
         report: ReportMessage
     ) {
@@ -71,10 +76,20 @@ object RuleEngine {
         }
     }
 
+    /**
+     * Evaluate the provided subscription to determine whether the conditions for the subscription have been met and
+     * if so, send the notification.
+     *
+     * @param report ReportMessage
+     * @param subscriptionEntry Entry<String, Subscription>
+     */
     private fun evaluateSubscription(
         report: ReportMessage,
-        subscription: Subscription
+        subscriptionEntry: Map.Entry<String, Subscription>
     ) {
+        val subscriptionId = subscriptionEntry.key
+        val subscription = subscriptionEntry.value
+
         // Create facts
         val facts = Facts()
         val map = ObjectMapper.anyToMap(report)
@@ -82,11 +97,7 @@ object RuleEngine {
             facts.put(it.key, it.value)
         }
 
-        facts.put("ruleAction",
-            LambdaWrapper { subscriptionId, conditionBase64Encoded, reportJsonBase64Encoded ->
-                ruleActionFunction(subscriptionId, conditionBase64Encoded, reportJsonBase64Encoded)
-            }
-        )
+        facts.put("ruleAction", ruleActionLambda())
 
         // Pass the enum constants into the facts object
         facts.put("Status", Status::class.java)
@@ -106,7 +117,7 @@ object RuleEngine {
         // Fire rules
         val rule = MVELRule()
             .`when`(condition)
-            .then("ruleAction.call('${subscription.subscriptionId}', '${condition.encodeBase64()}', '${reportMsgJson.encodeBase64()}');")
+            .then("ruleAction.call('$subscriptionId', '${condition.encodeBase64()}', '${reportMsgJson.encodeBase64()}');")
 
         val rules = Rules(rule)
         rules.register(rule)
@@ -114,12 +125,32 @@ object RuleEngine {
         rulesEngine.fire(rules, facts)
     }
 
-    private fun ruleActionFunction(subscriptionId: String, ruleConditionBase64Encoded: String, reportJsonBase64Encoded: String) {
+    /**
+     * Generate the rule action lambda wrapper.
+     *
+     * @return LambdaWrapper
+     */
+    private fun ruleActionLambda() = LambdaWrapper { subscriptionId, conditionBase64Encoded, reportJsonBase64Encoded ->
+        ruleActionFunction(subscriptionId, conditionBase64Encoded, reportJsonBase64Encoded)
+    }
+
+    /**
+     * The rule action function is what is invoked by the rules engine whenever the conditions for the rule are met.
+     *
+     * @param subscriptionId String
+     * @param ruleConditionBase64Encoded String
+     * @param reportJsonBase64Encoded String
+     */
+    private fun ruleActionFunction(
+        subscriptionId: String,
+        ruleConditionBase64Encoded: String,
+        reportJsonBase64Encoded: String
+    ) {
         val ruleCondition = ruleConditionBase64Encoded.decodeBase64String()
         logger.info { "Function ruleActionFunction() was called with subscription id: $subscriptionId, rule condition: $ruleCondition" }
-        val subscription = subscriptions.first { it.subscriptionId == subscriptionId }
+        val subscription = subscriptions.entries.firstOrNull { it.key == subscriptionId }?.value
         val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), ReportMessage::class.java)
-        subscription.doNotify(report)
+        subscription?.doNotify(report)
     }
 
 }

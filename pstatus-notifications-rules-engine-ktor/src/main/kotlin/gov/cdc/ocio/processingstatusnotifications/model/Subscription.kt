@@ -1,22 +1,19 @@
 package gov.cdc.ocio.processingstatusnotifications.model
 
-import gov.cdc.ocio.processingstatusnotifications.model.cache.SubscriptionRule
-import gov.cdc.ocio.processingstatusnotifications.model.message.ReportMessage
+import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.*
+
 
 /**
  * Subscription definition that is persisted.
  *
- * @property subscriptionId String
  * @property subscriptionRule SubscriptionRule1
  * @property notification Notification
  * @constructor
  */
 data class Subscription(
-    val subscriptionId: String = UUID.randomUUID().toString(),
     val subscriptionRule: SubscriptionRule,
     val notification: Notification
 ) {
@@ -38,4 +35,23 @@ data class Subscription(
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Subscription
+
+        if (subscriptionRule != other.subscriptionRule) return false
+        if (notification != other.notification) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = subscriptionRule.hashCode()
+        result = 31 * result + notification.hashCode()
+        return result
+    }
+
 }

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusnotifications.model.cache
+package gov.cdc.ocio.processingstatusnotifications.model
 
 
 /**

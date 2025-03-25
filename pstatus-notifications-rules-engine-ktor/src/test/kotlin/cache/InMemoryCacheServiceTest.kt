@@ -3,7 +3,7 @@ package cache
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
 import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
-import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import org.testng.Assert
 import org.testng.annotations.Test
 
@@ -14,12 +14,12 @@ class InMemoryCacheServiceTest {
 
     @Test(description = "This test asserts true for generating two unique subscriptionIds for same user")
     fun testAddingSameNotificationPreferencesSuccess() {
-        val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
+        val subscriptionId1 = inMemoryCacheService.upsertSubscription(
             "destination1","dataStreamRoute1",
             "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
         )
-        val subscriptionId2 = inMemoryCacheService.updateNotificationsPreferences(
+        val subscriptionId2 = inMemoryCacheService.upsertSubscription(
             "destination1","dataStreamRoute1",
             "service1","action1", Status.FAILURE,
             "rty@trh.com", SubscriptionType.EMAIL
@@ -29,12 +29,12 @@ class InMemoryCacheServiceTest {
 
     @Test(description = "This test asserts true for generating two unique subscriptionIds for different set of rules for same user")
     fun testAddingDifferentNotificationPreferencesSuccess() {
-        val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
+        val subscriptionId1 = inMemoryCacheService.upsertSubscription(
             "destination1","dataStreamRoute1",
             "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
         )
-        val subscriptionId2 = inMemoryCacheService.updateNotificationsPreferences(
+        val subscriptionId2 = inMemoryCacheService.upsertSubscription(
             "destination1","dataStreamRoute1",
             "service1","action1", Status.SUCCESS,
             "abc@trh.com", SubscriptionType.EMAIL
@@ -44,7 +44,7 @@ class InMemoryCacheServiceTest {
 
     @Test(description = "This test asserts true for unsubscribing existing susbcription")
     fun testUnsubscribingSubscriptionSuccess() {
-        val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
+        val subscriptionId1 = inMemoryCacheService.upsertSubscription(
             "destination1","dataStreamRoute1",
             "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL
@@ -55,7 +55,7 @@ class InMemoryCacheServiceTest {
 
     @Test(description = "This test throws exception for unsubscribing susbcriptionId that doesn't exist")
     fun testUnsubscribingSubscriptionException() {
-        val subscriptionId1 = inMemoryCacheService.updateNotificationsPreferences(
+        val subscriptionId1 = inMemoryCacheService.upsertSubscription(
             "destination1","dataStreamRoute1",
             "service1","action1", Status.FAILURE,
             "abc@trh.com", SubscriptionType.EMAIL

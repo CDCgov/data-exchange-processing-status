@@ -4,7 +4,7 @@ package gov.cdc.ocio.processingstatusnotifications
 
 import gov.cdc.ocio.processingstatusnotifications.health.HealthQueryService
 import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
-import gov.cdc.ocio.processingstatusnotifications.model.Unsubscribe
+import gov.cdc.ocio.processingstatusnotifications.model.UnsubscribeRequest
 import gov.cdc.ocio.processingstatusnotifications.model.WebhookSubscription
 import gov.cdc.ocio.processingstatusnotifications.notifications.UnsubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
@@ -23,15 +23,7 @@ import java.util.*
  */
 fun Route.subscribeEmailNotificationRoute() {
     post("/subscribe/email") {
-        val subscription = call.receive<EmailSubscription>()
-        val emailSubscription = EmailSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.email,
-            subscription.service,
-            subscription.action,
-            subscription.status
-        )
+        val emailSubscription = call.receive<EmailSubscription>()
         val result = SubscribeEmailNotifications().run(emailSubscription)
         call.respond(result)
     }
@@ -42,14 +34,7 @@ fun Route.subscribeEmailNotificationRoute() {
  */
 fun Route.subscribeWebhookRoute() {
     post("/subscribe/webhook") {
-        val subscription = call.receive<WebhookSubscription>()
-        val webhookSubscription = WebhookSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.url,
-            subscription.service,
-            subscription.action,
-            subscription.status)
+        val webhookSubscription = call.receive<WebhookSubscription>()
         val result = SubscribeWebhookNotifications().run(webhookSubscription)
         call.respond(result)
     }
@@ -60,7 +45,7 @@ fun Route.subscribeWebhookRoute() {
  */
 fun Route.unsubscribeNotificationRoute() {
     post("/unsubscribe") {
-        val subscription = call.receive<Unsubscribe>()
+        val subscription = call.receive<UnsubscribeRequest>()
         val result = UnsubscribeNotifications().run(subscription.subscriptionId)
         call.respond(result)
     }
