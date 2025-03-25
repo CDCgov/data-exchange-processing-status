@@ -4,7 +4,8 @@ import gov.cdc.ocio.processingstatusnotifications.dispatcher.EmailUtil
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import javax.mail.Session
 
-class EmailNotification(
+
+data class EmailNotification(
     private val emailAddresses: Collection<String>
 ) : Notification(SubscriptionType.EMAIL) {
 

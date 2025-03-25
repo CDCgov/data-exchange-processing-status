@@ -35,23 +35,4 @@ data class Subscription(
             }
         }
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Subscription
-
-        if (subscriptionRule != other.subscriptionRule) return false
-        if (notification != other.notification) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = subscriptionRule.hashCode()
-        result = 31 * result + notification.hashCode()
-        return result
-    }
-
 }
