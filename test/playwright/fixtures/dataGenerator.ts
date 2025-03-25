@@ -25,7 +25,6 @@ const baseReport = {
         status: "SUCCESS"
     }
 }
-    
 
 const minimalReport = {
     upload_id: "uuid",
@@ -101,6 +100,26 @@ export function createStageInfoWithError(date: Date = new Date()) {
     return stage_info_error
 }
 
+export function createContentUploadStarted() {
+    const content = {
+        content_schema_name: "upload-started",
+        content_schema_version: "1.0.0",
+        status: "SUCCESS"
+    }
+
+    return content
+}
+
+export function createContentUploadCompleted() {
+    const content = {
+        content_schema_name: "upload-completed",
+        content_schema_version: "1.0.0",
+        status: "SUCCESS"
+    }
+    return content
+}
+
+
 function getFormattedDate(date: Date = new Date()): string {
     // Get timezone offset in minutes and convert to hours:minutes format
     const offset = -date.getTimezoneOffset();
@@ -124,3 +143,18 @@ function addSeconds(date: Date, seconds: number) {
     newDate.setSeconds(date.getSeconds() + seconds)
     return newDate
 }
+
+const dataGenerator = {
+    addSeconds,
+    createMinimalReport,
+    randomTime,
+    getFormattedDate,
+    createUploadReport,
+    createStageInfo,
+    createStageInfoWithWarning,
+    createStageInfoWithError,
+    createContentUploadStarted,
+    createContentUploadCompleted,
+
+}
+export default dataGenerator;
