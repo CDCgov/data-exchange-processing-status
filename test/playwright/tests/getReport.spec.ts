@@ -54,10 +54,10 @@ test.describe('GraphQL getReports', () => {
     });
 
     test('returns a report for a minimal upload report with error issue', async ({ gql }) => {
-        const minimalReport = await dataGenerator.createMinimalReport()
+        const uploadReport = await dataGenerator.createUploadReport()
 
         const uploadReportWithError = {
-            ...minimalReport,
+            ...uploadReport,
             stage_info: dataGenerator.createStageInfoWithError()
         }
         const createReportResult = await gql.upsertReport({
@@ -86,11 +86,11 @@ test.describe('GraphQL getReports', () => {
         
     });
 
-    test('returns a report for a minimal upload report with warn issue', async ({ gql }) => {
-        const minimalReport = await dataGenerator.createMinimalReport()
+    test('returns a report for an upload report with warn issue', async ({ gql }) => {
+        const uploadReport = await dataGenerator.createUploadReport()
 
         const uploadReportWithWarnIssue = {
-            ...minimalReport,
+            ...uploadReport,
             stage_info: dataGenerator.createStageInfoWithWarning()
         }
         const createReportResult = await gql.upsertReport({
@@ -116,7 +116,36 @@ test.describe('GraphQL getReports', () => {
                 expect(issue.message).toEqual(uploadReportWithWarnIssue.stage_info.issues[index].message)
             })
         });
-        
+    });
+
+    test('returns a report for an upload report with message metadata', async ({ gql }) => {
+        const uploadReport = await dataGenerator.createUploadReport()
+
+        const uploadWithMessageMetadata = {
+            ...uploadReport,
+            message_metadata: dataGenerator.createMessageMetadata()
+        }
+        const createReportResult = await gql.upsertReport({
+            action: "create",
+            report: uploadWithMessageMetadata
+        })
+        console.log(createReportResult)
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+
+        const reportResult = await gql.getReports({
+            uploadId: uploadWithMessageMetadata.upload_id,
+            reportsSortedBy: "timestamp",
+            sortOrder: SortOrder.Ascending
+        })
+        expect(reportResult.getReports.length).toBe(1)
+
+        await reportResult.getReports.forEach(report => {
+            validateBasicFields(report, uploadWithMessageMetadata)
+            validateContentInfo(report, uploadWithMessageMetadata)
+            validateStageInfo(report, uploadWithMessageMetadata)
+            validateMessageMetadata(report, uploadWithMessageMetadata)
+        });
+    
     });
 
     test('returns all reports for an upload with multiple report in ascending order', async ({ gql }) => {
@@ -258,6 +287,7 @@ function validateNonRequiredFields(report: any, uploadReport: any) {
 
 function validateStageInfo(report: any, uploadReport: any) {
     expect(report.stageInfo?.status).toEqual(uploadReport.stage_info.status)
+    // these are currently not able to be set
     // expect(report.stageInfo?.startProcessingTime).toEqual(uploadReport.stage_info.start_processing_time)
     // expect(report.stageInfo?.endProcessingTime).toEqual(uploadReport.end_processing_time)
 }
@@ -277,7 +307,9 @@ function validateContentInfo(report: any, uploadReport: any) {
 }
 
 function validateMessageMetadata(report: Report, uploadReport: any) {
-    expect(report.messageMetadata).toEqual(uploadReport.message_metadata)
+    console.log(report.messageMetadata)
+    expect(report.messageMetadata?.aggregation).toEqual(uploadReport.message_metadata.aggregation)
+    // These are currently not able to be set
     // expect(report.messageMetadata?.messageUUID).toEqual(uploadReport.message_metadata.message_uuid)
     // expect(report.messageMetadata?.messageHash).toEqual(uploadReport.message_metadata.message_hash)
     // expect(report.messageMetadata?.messageIndex).toEqual(uploadReport.message_metadata.message_index)

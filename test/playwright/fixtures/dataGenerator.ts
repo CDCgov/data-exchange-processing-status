@@ -130,7 +130,7 @@ export function createUploadReportCompleted(report?: UploadReport): UploadReport
 
 export function createMessageMetadata() : MessageMetadata {    
     const messageMetadata: MessageMetadata = {
-        message_uuid: "2-2-2-2-2",
+        message_uuid: faker.string.uuid(),
         message_hash: 'messagehash',
         aggregation: Aggregation.SINGLE,
         message_index: 1
@@ -241,6 +241,7 @@ const dataGenerator = {
     createStageInfo,   
     createStageInfoWithWarning,
     createStageInfoWithError,
+    createMessageMetadata,
     createContentUploadStarted,
     createContentUploadCompleted,
     createUploadReportStarted,
