@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.health
 
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckResult
@@ -21,6 +22,8 @@ class HealthQueryService: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
+    private val repository by inject<ProcessingStatusRepository>()
+
     private val messageSystem by inject<MessageSystem>()
 
     /**
@@ -29,34 +32,25 @@ class HealthQueryService: KoinComponent {
      * @return HealthCheck
      */
     fun getHealth(): HealthCheck {
+        var databaseHealthCheck: HealthCheckResult
         var messageSystemHealthCheck: HealthCheckResult
 
         val time = measureTimeMillis {
+            databaseHealthCheck = repository.healthCheckSystem.doHealthCheck()
             messageSystemHealthCheck = messageSystem.healthCheckSystem.doHealthCheck()
         }
 
-        return compileHealthChecks(messageSystemHealthCheck, time)
-    }
-
-    /**
-     * Compiles health checks for supported services
-     *
-     * @param messageSystemHealth HealthCheckSystem? Health check for the messaging system
-     * @param totalTime Long
-     * @return HealthCheck
-     */
-    private fun compileHealthChecks(
-        messageSystemHealth: HealthCheckResult,
-        totalTime: Long
-    ): HealthCheck {
-
         return HealthCheck().apply {
-            status = if (messageSystemHealth.status == HealthStatusType.STATUS_UP)
-                HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
+            status = if (databaseHealthCheck.status == HealthStatusType.STATUS_UP
+                && messageSystemHealthCheck.status == HealthStatusType.STATUS_UP
+            )
+                HealthStatusType.STATUS_UP
+            else
+                HealthStatusType.STATUS_DOWN
 
-            totalChecksDuration = TimeUtils.formatMillisToHMS(totalTime)
-
-            dependencyHealthChecks.add(messageSystemHealth)
+            totalChecksDuration = TimeUtils.formatMillisToHMS(time)
+            dependencyHealthChecks.add(databaseHealthCheck)
+            dependencyHealthChecks.add(messageSystemHealthCheck)
         }
     }
 }

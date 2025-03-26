@@ -23,6 +23,7 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.12'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
     implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
+    implementation("com.google.code.gson:gson:2.10.1")
 
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0'

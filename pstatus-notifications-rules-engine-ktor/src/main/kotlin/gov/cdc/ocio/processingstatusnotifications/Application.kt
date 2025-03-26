@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications
 
+import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.messagesystem.utils.createMessageSystemPlugin
@@ -22,8 +23,9 @@ import org.koin.ktor.plugin.Koin
 fun KoinApplication.loadKoinModules(
     environment: ApplicationEnvironment
 ): KoinApplication {
+    val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
-    return modules(listOf(messageSystemModule))
+    return modules(listOf(databaseModule, messageSystemModule))
 }
 
 fun main(args: Array<String>) {
@@ -34,9 +36,8 @@ fun Application.module() {
 
     routing {
         subscribeEmailNotificationRoute()
-        unsubscribeEmailNotificationRoute()
         subscribeWebhookRoute()
-        unsubscribeWebhookRoute()
+        unsubscribeNotificationRoute()
         healthCheckRoute()
         versionRoute()
     }

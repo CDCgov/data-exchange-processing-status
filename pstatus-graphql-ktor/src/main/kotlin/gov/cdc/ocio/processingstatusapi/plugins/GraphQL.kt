@@ -47,7 +47,7 @@ fun Application.graphQLModule() {
                 WorkflowQueryService(workflowServiceUrl)
             )
             mutations = listOf(
-                NotificationsMutationService(workflowServiceUrl),
+                NotificationsRulesEngineMutationService(rulesEngineServiceUrl),
                 DataStreamTopErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
                 DeadlineCheckSubscriptionMutationService(workflowServiceUrl),
                 UploadDigestCountsSubscriptionMutationService(workflowServiceUrl),
