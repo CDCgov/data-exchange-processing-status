@@ -1,186 +1,237 @@
 import { test, expect } from '@fixtures/gql';
-import { SortOrder } from '@gql';
-import dataGenerator from 'fixtures/dataGenerator';
+import { SortOrder, Report } from '@gql';
+import dataGenerator, { createUploadReport, UploadReport } from 'fixtures/dataGenerator';
 
 test.describe('GraphQL getReports', () => {
 
     test('returns a report for a typical upload report', async ({ gql }) => {
-        const uploadReport = await dataGenerator.createUploadReport();
+        const typicalReport = await dataGenerator.createUploadReport()
+
         const createReportResult = await gql.upsertReport({
             action: "create",
-            report: uploadReport
+            report: typicalReport
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
-            uploadId: uploadReport.upload_id,
+            uploadId: typicalReport.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
         expect(reportResult.getReports.length).toBe(1)
 
         await reportResult.getReports.forEach(report => {
-            validateBasicFields(report, uploadReport)
-            validateNonRequiredFields(report, uploadReport)
-            validateMessageMetadata(report, uploadReport)
-            validateContentInfo(report, uploadReport)            
-            validateStageInfo(report, uploadReport)
+            validateBasicFields(report, typicalReport)
+            validateNonRequiredFields(report, typicalReport)
+            validateContentInfo(report, typicalReport)            
+            validateStageInfo(report, typicalReport)
             expect(report.stageInfo?.issues).toBeNull()
-
         });
     });
 
     test('returns a report for a minimal upload report', async ({ gql }) => {
-        const uploadReport = await dataGenerator.createMinimalReport();
+        const minimalReport = await dataGenerator.createMinimalReport()
+
         const createReportResult = await gql.upsertReport({
             action: "create",
-            report: uploadReport
+            report: minimalReport
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
-            uploadId: uploadReport.upload_id,
+            uploadId: minimalReport.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
         expect(reportResult.getReports.length).toBe(1)
         
         await reportResult.getReports.forEach(report => {
-            validateBasicFields(report, uploadReport)
-            validateContentInfo(report, uploadReport)
+            validateBasicFields(report, minimalReport)
+            validateContentInfo(report, minimalReport)
             expect(report.stageInfo?.issues).toBeNull()
-
         });
 
     });
 
     test('returns a report for a minimal upload report with error issue', async ({ gql }) => {
-        const uploadReport = {
-            ...dataGenerator.createMinimalReport(),
+        const minimalReport = await dataGenerator.createMinimalReport()
+
+        const uploadReportWithError = {
+            ...minimalReport,
             stage_info: dataGenerator.createStageInfoWithError()
         }
         const createReportResult = await gql.upsertReport({
             action: "create",
-            report: uploadReport
+            report: uploadReportWithError
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
-            uploadId: uploadReport.upload_id,
+            uploadId: uploadReportWithError.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
         expect(reportResult.getReports.length).toBe(1)
 
         await reportResult.getReports.forEach(report => {
-            validateBasicFields(report, uploadReport)
-            validateContentInfo(report, uploadReport)
-            validateStageInfo(report, uploadReport)
+            validateBasicFields(report, uploadReportWithError)
+            validateContentInfo(report, uploadReportWithError)
+            validateStageInfo(report, uploadReportWithError)
             expect(report.stageInfo?.issues).toHaveLength(1)
             report.stageInfo?.issues?.forEach((issue, index) => {
-                expect(issue.level).toEqual(uploadReport.stage_info.issues[index].level)
-                expect(issue.message).toEqual(uploadReport.stage_info.issues[index].message)
+                expect(issue.level).toEqual(uploadReportWithError.stage_info.issues[index].level)
+                expect(issue.message).toEqual(uploadReportWithError.stage_info.issues[index].message)
             })
         });
         
     });
 
     test('returns a report for a minimal upload report with warn issue', async ({ gql }) => {
-        const uploadReport = {
-            ...dataGenerator.createMinimalReport(),
+        const minimalReport = await dataGenerator.createMinimalReport()
+
+        const uploadReportWithWarnIssue = {
+            ...minimalReport,
             stage_info: dataGenerator.createStageInfoWithWarning()
         }
         const createReportResult = await gql.upsertReport({
             action: "create",
-            report: uploadReport
+            report: uploadReportWithWarnIssue
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
-            uploadId: uploadReport.upload_id,
+            uploadId: uploadReportWithWarnIssue.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
         expect(reportResult.getReports.length).toBe(1)
 
         await reportResult.getReports.forEach(report => {
-            validateBasicFields(report, uploadReport)
-            validateContentInfo(report, uploadReport)
-            validateStageInfo(report, uploadReport)
+            validateBasicFields(report, uploadReportWithWarnIssue)
+            validateContentInfo(report, uploadReportWithWarnIssue)
+            validateStageInfo(report, uploadReportWithWarnIssue)
             expect(report.stageInfo?.issues).toHaveLength(1)
             report.stageInfo?.issues?.forEach((issue, index) => {
-                expect(issue.level).toEqual(uploadReport.stage_info.issues[index].level)
-                expect(issue.message).toEqual(uploadReport.stage_info.issues[index].message)
+                expect(issue.level).toEqual(uploadReportWithWarnIssue.stage_info.issues[index].level)
+                expect(issue.message).toEqual(uploadReportWithWarnIssue.stage_info.issues[index].message)
             })
         });
         
     });
 
-    test('returns all reports for an upload with multiple report in ascending orderr', async({ gql }) => {
-        const uploadReportStart = await dataGenerator.createUploadReport();
-        uploadReportStart.content = dataGenerator.createContentUploadStarted()
-        const createStartReportResult = await gql.upsertReport({
+    test('returns all reports for an upload with multiple report in ascending order', async ({ gql }) => {
+        const uploadReportStart = await dataGenerator.createUploadReportStarted()
+        const uploadReportStatus = await dataGenerator.createUploadReportStatus(uploadReportStart)
+        const uploadReportComplete = await dataGenerator.createUploadReportCompleted(uploadReportStart)
+
+        const upsertReportStartResult = await gql.upsertReport({
             action: "create",
             report: uploadReportStart
         })
-        expect(createStartReportResult.upsertReport.result).toBe("SUCCESS")
+        expect(upsertReportStartResult.upsertReport.result).toBe("SUCCESS")
 
-        const uploadReportComplete = JSON.parse(JSON.stringify(uploadReportStart))
-        uploadReportComplete.content = dataGenerator.createContentUploadCompleted()
-        const createCompleteReportResult = await gql.upsertReport({
+        const upsertReportStatusResult = await gql.upsertReport({
+            action: "create",
+            report: uploadReportStatus
+        })
+        expect(upsertReportStatusResult.upsertReport.result).toBe("SUCCESS")
+
+        const upsertReportCompleteResult = await gql.upsertReport({
             action: "create",
             report: uploadReportComplete
         })
-        expect(createCompleteReportResult.upsertReport.result).toBe("SUCCESS")
+        expect(upsertReportCompleteResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
             uploadId: uploadReportStart.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Ascending
         })
-        expect(reportResult.getReports.length).toBe(2)
+        expect(reportResult.getReports.length).toBe(3)
 
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReportStart)
         });
+        console.log("Ascending report: ", reportResult.getReports)
 
         validateContentInfo(reportResult.getReports[0], uploadReportStart)
-        validateContentInfo(reportResult.getReports[1], uploadReportComplete)
+        validateContentInfo(reportResult.getReports[1], uploadReportStatus)
+        validateContentInfo(reportResult.getReports[2], uploadReportComplete)
     });
 
-    test('returns all reports for an upload with multiple reports in descending order', async({ gql }) => {
-        const uploadReportStart = await dataGenerator.createUploadReport();
-        uploadReportStart.content = dataGenerator.createContentUploadStarted()
-        const uploadReportComplete = JSON.parse(JSON.stringify(uploadReportStart))
-        
-        const createStartReportResult = await gql.upsertReport({
+    test('returns all reports for an upload with multiple reports in descending order', async ({ gql }) => {
+        const uploadReportStart = await dataGenerator.createUploadReportStarted()
+        const uploadReportStatus = await dataGenerator.createUploadReportStatus(uploadReportStart)
+        const uploadReportComplete = await dataGenerator.createUploadReportCompleted(uploadReportStart)
+
+        const upsertReportStartResult = await gql.upsertReport({
             action: "create",
             report: uploadReportStart
         })
-        expect(createStartReportResult.upsertReport.result).toBe("SUCCESS")
+        expect(upsertReportStartResult.upsertReport.result).toBe("SUCCESS")
 
-        uploadReportComplete.content = dataGenerator.createContentUploadCompleted()
-        const createCompleteReportResult = await gql.upsertReport({
+        const upsertReportStatusResult = await gql.upsertReport({
+            action: "create",
+            report: uploadReportStatus
+        })
+        expect(upsertReportStatusResult.upsertReport.result).toBe("SUCCESS")
+
+        const upsertReportCompleteResult = await gql.upsertReport({
             action: "create",
             report: uploadReportComplete
         })
-        expect(createCompleteReportResult.upsertReport.result).toBe("SUCCESS")
+        expect(upsertReportCompleteResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
             uploadId: uploadReportStart.upload_id,
             reportsSortedBy: "timestamp",
             sortOrder: SortOrder.Descending
         })
-        expect(reportResult.getReports.length).toBe(2)
+        expect(reportResult.getReports.length).toBe(3)
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReportStart)
         });
 
-        validateContentInfo(reportResult.getReports[0], uploadReportComplete)
-        validateContentInfo(reportResult.getReports[1], uploadReportStart)
-    });
-    
+        console.log("Descending report: ", reportResult.getReports)
 
+        validateContentInfo(reportResult.getReports[0], uploadReportComplete)
+        validateContentInfo(reportResult.getReports[2], uploadReportStart)
+        validateContentInfo(reportResult.getReports[1], uploadReportStatus)
+    });
+
+    test('returns a report that has been updated after initial entry', async ({ gql }) => {
+        const typicalReport = await dataGenerator.createUploadReport()
+
+        const createReportResult = await gql.upsertReport({
+            action: "create",
+            report: typicalReport
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+
+        const newReport: UploadReport = createUploadReport()
+        newReport.upload_id = typicalReport.upload_id
+
+        const createNewReportResult = await gql.upsertReport({
+            action: "replace",
+            report: newReport
+        })
+        expect(createNewReportResult.upsertReport.result).toBe("SUCCESS")
+
+        const reportResult = await gql.getReports({
+            uploadId: newReport.upload_id,
+            reportsSortedBy: "timestamp",
+            sortOrder: SortOrder.Ascending
+        })
+        expect(reportResult.getReports.length).toBe(1)
+
+        await reportResult.getReports.forEach(report => {
+            validateBasicFields(report, newReport)
+            validateNonRequiredFields(report, newReport)
+            validateContentInfo(report, newReport)            
+            validateStageInfo(report, newReport)
+            expect(report.stageInfo?.issues).toBeNull()
+        });
+    })
 });
 
 function validateBasicFields(report: any, uploadReport: any) {
@@ -214,11 +265,19 @@ function validateStageInfo(report: any, uploadReport: any) {
 function validateContentInfo(report: any, uploadReport: any) {
     expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
     expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
-    expect(report.content.status).toEqual(uploadReport.content.status)
+    if (uploadReport.content.content_schema_name === "upload-started" || "upload-completed") {
+        expect(report.content.status).toEqual(uploadReport.content.status)
+    }
+    if (uploadReport.content.content_schema_name === "upload-status") {
+        expect(report.content.filename).toEqual(uploadReport.content.filename)
+        expect(report.content.offset).toEqual(uploadReport.content.offset)
+        expect(report.content.size).toEqual(uploadReport.content.size)
+        expect(report.content.tguid).toEqual(uploadReport.content.tguid)
+    }
 }
 
-function validateMessageMetadata(report: any, uploadReport: any) {
-    expect(report.messageMetadata?.aggregation).toEqual(uploadReport.message_metadata.aggregation)
+function validateMessageMetadata(report: Report, uploadReport: any) {
+    expect(report.messageMetadata).toEqual(uploadReport.message_metadata)
     // expect(report.messageMetadata?.messageUUID).toEqual(uploadReport.message_metadata.message_uuid)
     // expect(report.messageMetadata?.messageHash).toEqual(uploadReport.message_metadata.message_hash)
     // expect(report.messageMetadata?.messageIndex).toEqual(uploadReport.message_metadata.message_index)
