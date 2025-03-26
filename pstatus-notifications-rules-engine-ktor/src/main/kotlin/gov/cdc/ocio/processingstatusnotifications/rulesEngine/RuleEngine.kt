@@ -2,11 +2,11 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
-import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.model.*
 import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.model.report.Status
+import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
 import gov.cdc.ocio.processingstatusnotifications.utils.ObjectMapper
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
@@ -29,7 +29,7 @@ object RuleEngine: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val repository by inject<ProcessingStatusRepository>()
+    private val cachedSubscriptionLoader by inject<CachedSubscriptionLoader>()
 
     private val rulesEngine = DefaultRulesEngine()
 
@@ -40,11 +40,6 @@ object RuleEngine: KoinComponent {
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .create()
     }
-
-    private val notificationSubscriptions = repository.notificationSubscriptionsCollection
-
-    private val cName = notificationSubscriptions.collectionNameForQuery
-    private val cVar = notificationSubscriptions.collectionVariable
 
     /**
      * Evaluate all subscriptions to see if a notification needs to be sent.
@@ -59,7 +54,7 @@ object RuleEngine: KoinComponent {
     }
 
     private fun getSubscriptions(): Map<String, Subscription> {
-        val subscriptionItems = notificationSubscriptions.queryItems("select * from $cName $cVar", Subscription::class.java)
+        val subscriptionItems = cachedSubscriptionLoader.getSubscriptions()
         return subscriptionItems.associateBy { it.subscriptionId }
     }
 
