@@ -77,12 +77,12 @@ class CosmosCollection(
             classType
         )
         try {
-            val response =items?.map {
+            val response = items?.map {
                 objectMapper.convertValue(it, classType)
             } ?: listOf()
             return  response
         }
-        catch (e:Exception){
+        catch (e:Exception) {
             logger.error { e.message }
         }
        return items?.toList() ?: listOf()
@@ -166,9 +166,6 @@ class CosmosCollection(
         )
         return response != null
     }
-
-
-
 
     /**
      * The function which calculates the interval after which the retry should occur
