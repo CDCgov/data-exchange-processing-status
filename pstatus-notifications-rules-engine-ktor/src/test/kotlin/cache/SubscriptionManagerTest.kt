@@ -1,15 +1,43 @@
 package cache
 
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.types.model.WebhookNotification
-import org.testng.Assert
+import io.mockk.every
+import io.mockk.mockk
+import org.testng.annotations.BeforeTest
+import org.testng.annotations.AfterTest
 import org.testng.annotations.Test
+import org.testng.Assert
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 
 
 class SubscriptionManagerTest {
 
-    private var subscriptionManager = SubscriptionManager()
+    private val processingStatusRepoMock = mockk<ProcessingStatusRepository>()
+
+    private lateinit var subscriptionManager: SubscriptionManager
+
+    @BeforeTest
+    fun setup() {
+        startKoin {
+            modules(
+                module {
+                    single<ProcessingStatusRepository> { processingStatusRepoMock }
+                }
+            )
+        }
+        every { processingStatusRepoMock.notificationSubscriptionsCollection } returns MockCollection()
+        subscriptionManager = SubscriptionManager()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        stopKoin()
+    }
 
     @Test(description = "This test asserts true for generating two unique subscriptionIds for same user")
     fun testAddingSameNotificationPreferencesSuccess() {
