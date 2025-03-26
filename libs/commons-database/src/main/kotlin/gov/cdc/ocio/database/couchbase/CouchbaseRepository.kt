@@ -5,8 +5,11 @@ import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.Scope
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.model.Notification
 import mu.KotlinLogging
+import java.lang.reflect.Type
 import java.time.Duration
 
 
@@ -95,7 +98,8 @@ class CouchbaseRepository(
         CouchbaseCollection(
             notificationSubscriptionsCollectionName,
             scope,
-            notificationSubscriptionsCouchbaseCollection
+            notificationSubscriptionsCouchbaseCollection,
+            typeAdapters = mapOf(Notification::class.java to NotificationTypeAdapter())
         ) as Collection
 
     override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem

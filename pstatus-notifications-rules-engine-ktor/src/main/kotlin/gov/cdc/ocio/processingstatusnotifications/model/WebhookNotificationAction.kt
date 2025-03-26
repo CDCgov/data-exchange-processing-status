@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusnotifications.model
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
+import gov.cdc.ocio.types.model.WebhookNotification
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
@@ -9,9 +10,9 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 
 
-data class WebhookNotification(
-    private val webhookUrl: String
-) : Notification(SubscriptionType.WEBHOOK) {
+class WebhookNotificationAction(
+    private val webhookNotification: WebhookNotification
+) : NotificationAction {
 
     /**
      * For webhooks, the payload should be a JSON string.
@@ -25,7 +26,7 @@ data class WebhookNotification(
         runBlocking {
             val client = HttpClient(CIO)
 
-            client.post(webhookUrl) {
+            client.post(webhookNotification.webhookUrl) {
                 contentType(ContentType.Application.Json)
                 setBody(payload)
             }

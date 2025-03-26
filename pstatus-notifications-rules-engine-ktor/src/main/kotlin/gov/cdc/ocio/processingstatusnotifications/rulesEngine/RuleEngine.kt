@@ -3,10 +3,8 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
-import gov.cdc.ocio.processingstatusnotifications.model.Subscription
-import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionRule
-import gov.cdc.ocio.processingstatusnotifications.model.WebhookNotification
+import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
+import gov.cdc.ocio.processingstatusnotifications.model.*
 import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import gov.cdc.ocio.processingstatusnotifications.utils.ObjectMapper
@@ -31,7 +29,7 @@ object RuleEngine: KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-//    private val repository by inject<ProcessingStatusRepository>()
+    private val repository by inject<ProcessingStatusRepository>()
 
     private val rulesEngine = DefaultRulesEngine()
 
@@ -43,32 +41,10 @@ object RuleEngine: KoinComponent {
             .create()
     }
 
-//    private val notificationSubscriptions = repository.notificationSubscriptionsCollection
+    private val notificationSubscriptions = repository.notificationSubscriptionsCollection
 
-    private val subscriptions = mapOf(
-        UUID.randomUUID().toString() to Subscription(
-            subscriptionRule = SubscriptionRule(
-                dataStreamId = "dex-testing1",
-                dataStreamRoute = "test-event1",
-                jurisdiction = null,
-                mvelRuleCondition = "stageInfo.service == 'UPLOAD API' && stageInfo.action == 'upload-status' && stageInfo.status != Status.SUCCESS"
-            ),
-            notification = EmailNotification(
-                emailAddresses = listOf("ygj6@cdc.gov")
-            )
-        ),
-        UUID.randomUUID().toString() to Subscription(
-            subscriptionRule = SubscriptionRule(
-                dataStreamId = "dex-testing1",
-                dataStreamRoute = "test-event1",
-                jurisdiction = null,
-                mvelRuleCondition = "stageInfo.service == 'UPLOAD API' && stageInfo.action == 'upload-completed' && stageInfo.status == Status.SUCCESS"
-            ),
-            notification = WebhookNotification(
-                webhookUrl = "https://webhook.site/8267e7c4-48a0-4f1d-8005-3c43a039d7e0"
-            )
-        )
-    )
+    private val cName = notificationSubscriptions.collectionNameForQuery
+    private val cVar = notificationSubscriptions.collectionVariable
 
     /**
      * Evaluate all subscriptions to see if a notification needs to be sent.
@@ -78,9 +54,13 @@ object RuleEngine: KoinComponent {
     fun evaluateAllRules(
         report: ReportMessage
     ) {
-        for (subscription in subscriptions) {
-            evaluateSubscription(report, subscription)
-        }
+        val subscriptions = getSubscriptions()
+        subscriptions.forEach { evaluateSubscription(report, it) }
+    }
+
+    private fun getSubscriptions(): Map<String, Subscription> {
+        val subscriptionItems = notificationSubscriptions.queryItems("select * from $cName $cVar", Subscription::class.java)
+        return subscriptionItems.associateBy { it.subscriptionId }
     }
 
     /**
@@ -155,9 +135,14 @@ object RuleEngine: KoinComponent {
     ) {
         val ruleCondition = ruleConditionBase64Encoded.decodeBase64String()
         logger.info { "Function ruleActionFunction() was called with subscription id: $subscriptionId, rule condition: $ruleCondition" }
+
+        val subscriptions = getSubscriptions()
         val subscription = subscriptions.entries.firstOrNull { it.key == subscriptionId }?.value
         val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), ReportMessage::class.java)
-        subscription?.doNotify(report)
+        val notification = subscription?.notification
+        notification?.let {
+            subscription.doNotify(report)
+        } ?: throw BadStateException("Unable to dispatch notification")
     }
 
 }

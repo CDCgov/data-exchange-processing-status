@@ -2,12 +2,13 @@ package gov.cdc.ocio.processingstatusnotifications.model
 
 import gov.cdc.ocio.processingstatusnotifications.dispatcher.EmailUtil
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
+import gov.cdc.ocio.types.model.EmailNotification
 import javax.mail.Session
 
 
-data class EmailNotification(
-    private val emailAddresses: Collection<String>
-) : Notification(SubscriptionType.EMAIL) {
+class EmailNotificationAction(
+    private val emailNotification: EmailNotification
+) : NotificationAction {
 
     /**
      * For emails, the payload should be a string containing HTML.
@@ -16,7 +17,7 @@ data class EmailNotification(
     override fun doNotify(payload: Any) {
         if (payload !is EmailPayload) throw BadRequestException("Email payload is not in the expected format")
 
-        val toEmail = emailAddresses.joinToString(",")
+        val toEmail = emailNotification.emailAddresses.joinToString(",")
         val props = System.getProperties()
         props["mail.smtp.host"] = "smtpgw.cdc.gov"
         props["mail.smtp.port"] = 25

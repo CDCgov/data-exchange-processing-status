@@ -1,16 +1,23 @@
-package gov.cdc.ocio.processingstatusnotifications.cache
+package gov.cdc.ocio.processingstatusnotifications.subscription
 
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusnotifications.exception.*
-import gov.cdc.ocio.processingstatusnotifications.model.Notification
+import gov.cdc.ocio.types.model.Notification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionRule
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.*
 
 
 /**
  * This class is a service that interacts with InMemory Cache in order to subscribe/unsubscribe users.
  */
-class InMemoryCacheService {
+class SubscriptionManager : KoinComponent {
+
+    private val repository by inject<ProcessingStatusRepository>()
+
+    private val notificationSubscriptions = repository.notificationSubscriptionsCollection
 
     /**
      * Upserts a subscription.  If the subscription exists it is updated, otherwise a new subscription is created.
@@ -38,8 +45,11 @@ class InMemoryCacheService {
                 mvelCondition
             )
 
+            val newSubscriptionId = UUID.randomUUID().toString()
+
             // Create the subscription
             val subscription = Subscription(
+                newSubscriptionId,
                 subscriptionRule,
                 notification
             )
@@ -47,10 +57,13 @@ class InMemoryCacheService {
             // Check if the subscription id already exists and if so, get the subscription id so we can replace it.
             // Otherwise, generate a new subscription id.
             val subscriptionId = InMemoryCache.findSubscriptionId(subscription)
-                ?: UUID.randomUUID().toString()
+                ?: newSubscriptionId
 
             // Add/replace the subscription
             InMemoryCache.subscribe(subscriptionId, subscription)
+
+            // Write the subscription to the repository
+            notificationSubscriptions.createItem(subscriptionId, subscription, Subscription::class.java, subscriptionId)
 
             return subscriptionId
         } catch (e: BadStateException) {
@@ -66,7 +79,10 @@ class InMemoryCacheService {
      * @throws BadStateException thrown if subscription not found
      */
     @Throws(BadStateException::class)
-    fun unsubscribeNotifications(subscriptionId: String) = InMemoryCache.unsubscribe(subscriptionId)
+    fun unsubscribeNotifications(subscriptionId: String) {
+        InMemoryCache.unsubscribe(subscriptionId)
+        notificationSubscriptions.deleteItem(subscriptionId, subscriptionId)
+    }
 
     /**
      *  Checks for subscription rule and gets the subscriptionId, using the subscription id to retrieve the details.

@@ -9,6 +9,7 @@ import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import gov.cdc.ocio.types.adapters.OffsetDateTimeTypeAdapter
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.lang.reflect.Type
 import java.util.*
 
 
@@ -26,15 +27,24 @@ import java.util.*
 class CouchbaseCollection(
     collectionName: String,
     private val couchbaseScope: Scope,
-    private val couchbaseCollection: com.couchbase.client.java.Collection
+    private val couchbaseCollection: com.couchbase.client.java.Collection,
+    private val typeAdapters: Map<Type, Any> = emptyMap()
 ): Collection {
 
-    private val gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
-        .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-        .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
-        .create()
+    private val gson = createGson()
+
+    private fun createGson(): Gson {
+        val builder = GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
+
+        typeAdapters.forEach { (type, adapter) ->
+            builder.registerTypeAdapter(type, adapter)
+        }
+        return builder.create()
+    }
 
     /**
      * Get a specific item by its ID.

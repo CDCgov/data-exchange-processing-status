@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusnotifications.cache
+package gov.cdc.ocio.processingstatusnotifications.subscription
 
 import gov.cdc.ocio.processingstatusnotifications.exception.*
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription

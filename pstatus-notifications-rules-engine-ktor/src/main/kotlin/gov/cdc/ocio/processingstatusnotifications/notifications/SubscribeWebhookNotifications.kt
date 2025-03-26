@@ -1,7 +1,8 @@
 package gov.cdc.ocio.processingstatusnotifications.notifications
 
-import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
+import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.processingstatusnotifications.model.*
+import gov.cdc.ocio.types.model.WebhookNotification
 import mu.KotlinLogging
 import java.time.Instant
 
@@ -16,7 +17,7 @@ class SubscribeWebhookNotifications {
 
     private val logger = KotlinLogging.logger {}
 
-    private val cacheService = InMemoryCacheService()
+    private val cacheService = SubscriptionManager()
 
     /**
      * Validates and subscribes for webhook notifications

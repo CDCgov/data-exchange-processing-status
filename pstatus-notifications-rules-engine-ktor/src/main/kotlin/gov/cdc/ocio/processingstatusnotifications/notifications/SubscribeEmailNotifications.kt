@@ -2,8 +2,8 @@ package gov.cdc.ocio.processingstatusnotifications.notifications
 
 import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
-import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
-import gov.cdc.ocio.processingstatusnotifications.model.EmailNotification
+import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
+import gov.cdc.ocio.types.model.EmailNotification
 import java.time.Instant
 
 
@@ -12,7 +12,7 @@ import java.time.Instant
  */
 class SubscribeEmailNotifications {
 
-    private val cacheService = InMemoryCacheService()
+    private val cacheService = SubscriptionManager()
 
     /**
      * Validates and subscribes for email notifications
