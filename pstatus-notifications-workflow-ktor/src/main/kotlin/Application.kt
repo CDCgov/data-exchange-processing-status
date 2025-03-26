@@ -57,8 +57,6 @@ fun Application.module() {
     routing {
         subscribeDeadlineCheckRoute()
         unsubscribeDeadlineCheck()
-        subscribeUploadErrorsNotification()
-        unsubscribeUploadErrorsNotification()
         subscribeDataStreamTopErrorsNotification()
         unsubscribesDataStreamTopErrorsNotification()
         subscribeUploadDigestCountsRoute()
