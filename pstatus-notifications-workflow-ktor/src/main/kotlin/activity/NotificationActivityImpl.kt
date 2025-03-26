@@ -38,24 +38,6 @@ class NotificationActivitiesImpl : NotificationActivities {
     }
 
     /**
-     * Send notification method which uses the email service to send email when there are errors in the upload file.
-     *
-     * @param error String
-     * @param emailAddresses List<String>
-     */
-    override fun sendUploadErrorsNotification(
-        error: List<CheckUploadResponse>,
-        emailAddresses: List<String>
-    ) {
-        val msg = "Number of uploads with errors while uploading: ${error.size}"
-        logger.info(msg)
-        emailService.sendEmail(
-            "UPLOAD ERRORS NOTIFICATION",
-            msg,
-            emailAddresses)
-    }
-
-    /**
      * Send notification method which uses the email service to send email with the digest counts of the top errors in
      * an upload.
      *
