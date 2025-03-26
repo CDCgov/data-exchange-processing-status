@@ -55,8 +55,9 @@ dependencies {
     implementation "io.ktor:ktor-server-netty:2.1.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
 
-    implementation(project(":libs:commons-types"))
-    implementation project(':libs:message-system')
+    implementation project(":libs:commons-types")
+    implementation project(":libs:commons-database")
+    implementation project(":libs:message-system")
 
     // EasyRules libraries
     implementation("org.jeasy:easy-rules-core:4.1.0")
