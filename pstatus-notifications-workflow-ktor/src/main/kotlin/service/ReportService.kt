@@ -1,0 +1,63 @@
+package gov.cdc.ocio.processingnotifications.service
+
+import gov.cdc.ocio.database.models.Report
+import gov.cdc.ocio.database.models.Status
+import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.processingnotifications.model.UploadInfo
+import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import java.time.Instant
+
+class ReportService: KoinComponent {
+    private val repository by inject<ProcessingStatusRepository>()
+    private val cName = repository.reportsCollection.collectionNameForQuery
+    private val cVar = repository.reportsCollection.collectionVariable
+    private val cPrefix = repository.reportsCollection.collectionVariablePrefix
+    private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val logger = KotlinLogging.logger {}
+
+    fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: String): Int {
+        val query = "select value count(1) from $cName $cVar " +
+                "where ${cPrefix}stageInfo.${cElFunc("status")} = 'FAILURE' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '$action' " +
+                "and dataStreamId = '$dataStreamId' " +
+                "and dataStreamRoute = '$dataStreamRoute'"
+
+        return repository.reportsCollection.queryItems(query, Int::class.java).firstOrNull() ?: 0
+    }
+
+    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String): List<String> {
+        // first, get uploads that have upload-started reports older than 1 hour
+        val oneHourAgo = Instant.now().minusSeconds(3600).epochSecond
+        val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
+                "where dataStreamId = '$dataStreamId' " +
+                "and dataStreamRoute = '$dataStreamRoute' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-started' " +
+                "and ${cPrefix}dexIngestDateTime < '$oneHourAgo'"
+        val uploadsStarted = repository.reportsCollection.queryItems(uploadsStartedQuery, UploadInfo::class.java)
+            .map { it.uploadId }
+            .toSet()
+
+        // then, get uploads that have upload-completed reports older than 1 hour
+        val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
+                "where dataStreamId = '$dataStreamId' " +
+                "and dataStreamRoute = '$dataStreamRoute' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
+                "and ${cPrefix}dexIngestDateTime < '$oneHourAgo'"
+        val uploadsCompleted = repository.reportsCollection.queryItems(uploadsCompletedQuery, UploadInfo::class.java)
+            .map { it.uploadId }
+            .toSet()
+
+        // then take the difference of those to get uploads that don't have upload-completed
+        return (uploadsStarted - uploadsCompleted).toList()
+    }
+
+//    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String): List<Report> {
+//
+//    }
+
+//    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String): List<Report> {}
+//
+//    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String): List<Report> {}
+}

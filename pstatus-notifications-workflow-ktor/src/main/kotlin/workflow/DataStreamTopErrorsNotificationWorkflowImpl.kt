@@ -2,9 +2,12 @@ package gov.cdc.ocio.processingnotifications.workflow
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
+import gov.cdc.ocio.processingnotifications.service.ReportService
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
+import kotlinx.html.*
+import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
 import java.time.Duration
 
@@ -20,6 +23,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     : DataStreamTopErrorsNotificationWorkflow {
 
     private val logger = KotlinLogging.logger {}
+    private val reportService = ReportService()
 
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
@@ -68,13 +72,38 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     ) {
         try {
             // Logic to check if the upload occurred*/
-            val (totalCount, topErrors)  = getTopErrors(errorList)
-            val errors = topErrors.filter { it.description.isNotEmpty() }.joinToString()
-            if (topErrors.isNotEmpty()) {
-                activities.sendDataStreamTopErrorsNotification("There are $totalCount errors \n These are the top errors : \n $errors \n", emailAddresses)
-            }
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify")
+            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute)
+            val body = formatEmailBody(dataStreamId, dataStreamRoute, failedMetadataVerifyCount, delayedUploads)
+            activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
+        }
+    }
+
+    private fun formatEmailBody(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        failedMetadataValidationCount: Int,
+        delayedUploads: List<String>
+    ): String {
+        return buildString {
+            appendHTML().html {
+                body {
+                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues" }
+                    br {  }
+                    h3 { +"Total: ${failedMetadataValidationCount + delayedUploads.size }" }
+                    ul {
+                        li { +"Metadata Validation: $failedMetadataValidationCount" }
+                        li { +"Delayed Uploads: ${delayedUploads.size}" }
+                    }
+                    br {  }
+                    h3 { +"Delayed Uploads" }
+                    ul {
+                        delayedUploads.map { li { +it } }
+                    }
+                }
+            }
         }
     }
 
