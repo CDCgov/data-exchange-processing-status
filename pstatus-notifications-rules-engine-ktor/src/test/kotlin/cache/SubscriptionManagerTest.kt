@@ -5,6 +5,7 @@ import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManag
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
 import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscriptionLoader
+import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.model.WebhookNotification
 import io.mockk.every
 import io.mockk.mockk
@@ -34,6 +35,7 @@ class SubscriptionManagerTest {
             )
         }
         every { processingStatusRepoMock.notificationSubscriptionsCollection } returns MockCollection()
+        every { processingStatusRepoMock.healthCheckSystem } returns MockHealthCheckSystem("Database", "Mock DB")
         subscriptionManager = SubscriptionManager()
     }
 
