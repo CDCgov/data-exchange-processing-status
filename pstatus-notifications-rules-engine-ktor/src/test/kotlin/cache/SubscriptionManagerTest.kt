@@ -5,7 +5,6 @@ import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManag
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
 import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscriptionLoader
-import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.model.WebhookNotification
 import io.mockk.every
 import io.mockk.mockk
