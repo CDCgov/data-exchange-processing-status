@@ -106,5 +106,5 @@ class CachedSubscriptionLoader(
     override fun findSubscriptionId(subscription: Subscription): String?
         = subscriptionListCache.get(0).firstOrNull { subscription == it }?.subscriptionId
 
-//    override var healthCheckSystem = subscriptionLoaderImpl.healthCheckSystem
+    override var healthCheckSystem = subscriptionLoaderImpl.healthCheckSystem
 }

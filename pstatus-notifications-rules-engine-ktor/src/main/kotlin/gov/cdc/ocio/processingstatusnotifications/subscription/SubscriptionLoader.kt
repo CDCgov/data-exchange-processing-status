@@ -1,15 +1,13 @@
 package gov.cdc.ocio.processingstatusnotifications.subscription
 
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
+import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 /**
  * The interface which loads notification subscriptions.
  */
 interface SubscriptionLoader {
-
-    val system: String
-        get() = "Subscription Loader"
 
     /**
      * Defines the interface for retrieving all the notification subscriptions.
@@ -51,5 +49,5 @@ interface SubscriptionLoader {
      */
     fun findSubscriptionId(subscription: Subscription): String?
 
-//    var healthCheckSystem: HealthCheckSystem
+    var healthCheckSystem: HealthCheckSystem
 }

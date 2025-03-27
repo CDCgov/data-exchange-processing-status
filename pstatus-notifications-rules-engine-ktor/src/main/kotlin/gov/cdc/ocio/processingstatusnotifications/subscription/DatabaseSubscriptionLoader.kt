@@ -76,9 +76,5 @@ class DatabaseSubscriptionLoader: KoinComponent, SubscriptionLoader {
         throw NotImplementedError("Should never be called, caching should handle this.")
     }
 
-//    override var healthCheckSystem: HealthCheckSystem
-//        get() = TODO("Not yet implemented")
-//        set(value) {}
-
-//    override var healthCheckSystem = HealthCheckDatabase(system, schemaLocalSystemFilePath) as HealthCheckSystem
+    override var healthCheckSystem = repository.healthCheckSystem
 }
