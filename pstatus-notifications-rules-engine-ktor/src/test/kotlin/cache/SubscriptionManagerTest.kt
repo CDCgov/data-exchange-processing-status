@@ -60,12 +60,12 @@ class SubscriptionManagerTest {
     @Test(description = "This test asserts true for generating two unique subscriptionIds for different set of rules for same user")
     fun testAddingDifferentNotificationPreferencesSuccess() {
         val subscriptionId1 = subscriptionManager.upsertSubscription(
-            "destination1","dataStreamRoute1",
+            "destination2","dataStreamRoute1",
             "jurisdiction1","stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
         val subscriptionId2 = subscriptionManager.upsertSubscription(
-            "destination1","dataStreamRoute1",
+            "destination2","dataStreamRoute1",
             "jurisdiction1","stageInfo.status == Status.FAILURE",
             WebhookNotification("http://somewebhook.com")
         )
@@ -75,7 +75,7 @@ class SubscriptionManagerTest {
     @Test(description = "This test asserts true for unsubscribing existing susbcription")
     fun testUnsubscribingSubscriptionSuccess() {
         val subscriptionId = subscriptionManager.upsertSubscription(
-            "destination2","dataStreamRoute2",
+            "destination3","dataStreamRoute2",
             "jurisdiction2","stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
@@ -93,7 +93,7 @@ class SubscriptionManagerTest {
     )
     fun testUnsubscribingSubscriptionException() {
         val subscriptionId = subscriptionManager.upsertSubscription(
-            "destination2","dataStreamRoute2",
+            "destination4","dataStreamRoute2",
             "jurisdiction2","stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )

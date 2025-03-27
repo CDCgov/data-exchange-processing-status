@@ -74,7 +74,9 @@ class SubscriptionManager : KoinComponent {
      */
     @Throws(BadStateException::class)
     fun unsubscribeNotifications(subscriptionId: String) {
-        cachedSubscriptionLoader.removeSubscription(subscriptionId)
+        cachedSubscriptionLoader.removeSubscription(subscriptionId).also {
+            if (!it) throw BadStateException("Subscription id provided not found")
+        }
     }
 
     /**

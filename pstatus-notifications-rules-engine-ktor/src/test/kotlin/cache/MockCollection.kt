@@ -19,8 +19,7 @@ class MockCollection : Collection {
     }
 
     override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
-        items.remove(itemId)
-        return true
+        return items.remove(itemId) != null
     }
 
     override val collectionVariable = "r"
