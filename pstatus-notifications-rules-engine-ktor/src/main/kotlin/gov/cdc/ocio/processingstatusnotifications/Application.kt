@@ -5,6 +5,8 @@ import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.messagesystem.utils.createMessageSystemPlugin
 import gov.cdc.ocio.processingstatusnotifications.processors.*
+import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
+import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscriptionLoader
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -13,7 +15,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.routing.*
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
-
+import org.koin.dsl.module
 
 /**
  * Load the environment configuration values
@@ -25,7 +27,8 @@ fun KoinApplication.loadKoinModules(
 ): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
-    return modules(listOf(databaseModule, messageSystemModule))
+    val subscriptionLoaderModule = module { single { CachedSubscriptionLoader(DatabaseSubscriptionLoader()) } }
+    return modules(listOf(databaseModule, messageSystemModule, subscriptionLoaderModule))
 }
 
 fun main(args: Array<String>) {

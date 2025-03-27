@@ -59,6 +59,9 @@ dependencies {
     implementation project(":libs:commons-database")
     implementation project(":libs:message-system")
 
+    // Google library used for caching
+    implementation("com.google.guava:guava:33.4.0-jre")
+
     // EasyRules libraries
     implementation("org.jeasy:easy-rules-core:4.1.0")
     implementation("org.jeasy:easy-rules-mvel:4.1.0")

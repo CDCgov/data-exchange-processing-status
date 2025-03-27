@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusnotifications.subscription
 
-import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusnotifications.exception.*
 import gov.cdc.ocio.types.model.Notification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
@@ -15,9 +14,7 @@ import java.util.*
  */
 class SubscriptionManager : KoinComponent {
 
-    private val repository by inject<ProcessingStatusRepository>()
-
-    private val notificationSubscriptions = repository.notificationSubscriptionsCollection
+    private val cachedSubscriptionLoader by inject<CachedSubscriptionLoader>()
 
     /**
      * Upserts a subscription.  If the subscription exists it is updated, otherwise a new subscription is created.
@@ -56,14 +53,11 @@ class SubscriptionManager : KoinComponent {
 
             // Check if the subscription id already exists and if so, get the subscription id so we can replace it.
             // Otherwise, generate a new subscription id.
-            val subscriptionId = InMemoryCache.findSubscriptionId(subscription)
+            val subscriptionId = cachedSubscriptionLoader.findSubscriptionId(subscription)
                 ?: newSubscriptionId
 
             // Add/replace the subscription
-            InMemoryCache.subscribe(subscriptionId, subscription)
-
-            // Write the subscription to the repository
-            notificationSubscriptions.createItem(subscriptionId, subscription, Subscription::class.java, subscriptionId)
+            cachedSubscriptionLoader.upsertSubscription(subscriptionId, subscription)
 
             return subscriptionId
         } catch (e: BadStateException) {
@@ -80,8 +74,9 @@ class SubscriptionManager : KoinComponent {
      */
     @Throws(BadStateException::class)
     fun unsubscribeNotifications(subscriptionId: String) {
-        InMemoryCache.unsubscribe(subscriptionId)
-        notificationSubscriptions.deleteItem(subscriptionId, subscriptionId)
+        cachedSubscriptionLoader.removeSubscription(subscriptionId).also {
+            if (!it) throw BadStateException("Subscription id provided not found")
+        }
     }
 
     /**
@@ -90,5 +85,5 @@ class SubscriptionManager : KoinComponent {
      * @param subscriptionId String
      * @return Subscription?
      */
-    fun getSubscription(subscriptionId: String) = InMemoryCache.getSubscriptionDetails(subscriptionId)
+    fun getSubscription(subscriptionId: String) = cachedSubscriptionLoader.getSubscription(subscriptionId)
 }
