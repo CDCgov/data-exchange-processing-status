@@ -9,7 +9,6 @@ import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.model.Notification
 import mu.KotlinLogging
-import java.lang.reflect.Type
 import java.time.Duration
 
 
