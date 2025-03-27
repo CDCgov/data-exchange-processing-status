@@ -3,6 +3,8 @@ package cache
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
+import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
+import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscriptionLoader
 import gov.cdc.ocio.types.model.WebhookNotification
 import io.mockk.every
 import io.mockk.mockk
@@ -26,7 +28,8 @@ class SubscriptionManagerTest {
         startKoin {
             modules(
                 module {
-                    single<ProcessingStatusRepository> { processingStatusRepoMock }
+                    single { processingStatusRepoMock }
+                    single { CachedSubscriptionLoader(DatabaseSubscriptionLoader()) }
                 }
             )
         }
