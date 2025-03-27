@@ -6,6 +6,15 @@ import gov.cdc.ocio.processingstatusnotifications.model.Subscription
 import java.util.concurrent.TimeUnit
 
 
+/**
+ * Cached subscription loader for the notification subscriptions.
+ *
+ * @property subscriptionLoaderImpl [SubscriptionLoader] - implementation that backs the cached loader; i.e. database
+ * subscription loader such as the [DatabaseSubscriptionLoader]
+ * @property subscriptionCache
+ * @property subscriptionListCache
+ * @constructor
+ */
 class CachedSubscriptionLoader(
     private val subscriptionLoaderImpl: SubscriptionLoader
 ) : SubscriptionLoader {
@@ -42,10 +51,28 @@ class CachedSubscriptionLoader(
             }
         )
 
+    /**
+     * Defines the interface for retrieving all the notification subscriptions.
+     *
+     * @return [List]<[Subscription]>
+     */
     override fun getSubscriptions(): List<Subscription> = subscriptionListCache.get(0)
 
+    /**
+     * Get the subscription associated with the subscription id provided.
+     *
+     * @param subscriptionId [String]
+     * @return [Subscription]
+     */
     override fun getSubscription(subscriptionId: String): Subscription = subscriptionCache.get(subscriptionId)
 
+    /**
+     * Upserts a subscription -- if it does not exist it is added, otherwise the subscription is replaced.
+     *
+     * @param subscriptionId String
+     * @param subscription Subscription
+     * @return Boolean - true if successful, false otherwise
+     */
     override fun upsertSubscription(subscriptionId: String, subscription: Subscription): Boolean {
         // Invalid this subscription in the subscription cache.
         subscriptionCache.invalidate(subscriptionId)
@@ -55,6 +82,12 @@ class CachedSubscriptionLoader(
         return subscriptionLoaderImpl.upsertSubscription(subscriptionId, subscription)
     }
 
+    /**
+     * Removes the subscription associated with the subscription id provided.
+     *
+     * @param subscriptionId String
+     * @return Boolean - true if successful, false otherwise
+     */
     override fun removeSubscription(subscriptionId: String): Boolean {
         // Invalidate this subscription from the subscription cache.
         subscriptionCache.invalidate(subscriptionId)
@@ -64,6 +97,12 @@ class CachedSubscriptionLoader(
         return subscriptionLoaderImpl.removeSubscription(subscriptionId)
     }
 
+    /**
+     * Attempts to find a matching subscription.
+     *
+     * @param subscription [Subscription]
+     * @return [String]? - returns the subscription id, otherwise it returns null.
+     */
     override fun findSubscriptionId(subscription: Subscription): String?
         = subscriptionListCache.get(0).firstOrNull { subscription == it }?.subscriptionId
 

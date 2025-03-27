@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.subscription
 
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
-import gov.cdc.ocio.types.health.HealthCheckSystem
 
 
 /**
