@@ -10,7 +10,7 @@ class MockCollection : Collection {
     }
 
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
-        return items.map { it as T }
+        return items.values.map { it as T }
     }
 
     override fun <T> createItem(id: String, item: T, classType: Class<T>, partitionKey: String?): Boolean {
