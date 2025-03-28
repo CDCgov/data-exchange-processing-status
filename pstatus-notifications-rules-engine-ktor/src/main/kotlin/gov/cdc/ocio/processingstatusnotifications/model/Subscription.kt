@@ -5,10 +5,7 @@ import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
-import gov.cdc.ocio.types.model.EmailNotification
-import gov.cdc.ocio.types.model.Notification
-import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WebhookNotification
+import gov.cdc.ocio.types.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

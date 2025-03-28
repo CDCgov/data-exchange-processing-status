@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusnotifications.model
+package gov.cdc.ocio.types.model
 
 
 /**

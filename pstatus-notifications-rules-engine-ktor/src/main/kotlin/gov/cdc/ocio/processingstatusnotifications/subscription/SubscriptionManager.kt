@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingstatusnotifications.subscription
 import gov.cdc.ocio.processingstatusnotifications.exception.*
 import gov.cdc.ocio.types.model.Notification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
-import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionRule
+import gov.cdc.ocio.types.model.SubscriptionRule
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.*
@@ -80,10 +80,17 @@ class SubscriptionManager : KoinComponent {
     }
 
     /**
-     *  Checks for subscription rule and gets the subscriptionId, using the subscription id to retrieve the details.
+     * Returns the subscription for the subscriptionId provided.
      *
      * @param subscriptionId String
      * @return Subscription?
      */
     fun getSubscription(subscriptionId: String) = cachedSubscriptionLoader.getSubscription(subscriptionId)
+
+    /**
+     * Returns all the subscriptions.
+     *
+     * @return List<Subscription>
+     */
+    fun getSubscriptions() = cachedSubscriptionLoader.getSubscriptions()
 }

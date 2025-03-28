@@ -9,5 +9,5 @@ data class EmailSubscription(
     val dataStreamRoute: String,
     val jurisdiction: String?,
     val mvelCondition: String,
-    val emailAddresses: Collection<String>
+    val emailAddresses: List<String>
 )

@@ -53,6 +53,11 @@ object RuleEngine: KoinComponent {
         subscriptions.forEach { evaluateSubscription(report, it) }
     }
 
+    /**
+     * Retrieve all the subscriptions from the cache and associate each by its own subscription id in a map.
+     *
+     * @return Map<String, Subscription>
+     */
     private fun getSubscriptions(): Map<String, Subscription> {
         val subscriptionItems = cachedSubscriptionLoader.getSubscriptions()
         return subscriptionItems.associateBy { it.subscriptionId }

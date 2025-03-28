@@ -38,6 +38,7 @@ fun main(args: Array<String>) {
 fun Application.module() {
 
     routing {
+        notificationSubscriptionsRoute()
         subscribeEmailNotificationRoute()
         subscribeWebhookRoute()
         unsubscribeNotificationRoute()
