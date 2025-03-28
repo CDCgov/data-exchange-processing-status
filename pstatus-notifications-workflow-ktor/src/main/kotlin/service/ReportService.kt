@@ -1,7 +1,5 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.database.models.Report
-import gov.cdc.ocio.database.models.Status
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import mu.KotlinLogging
@@ -29,7 +27,7 @@ class ReportService: KoinComponent {
 
     fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String): List<String> {
         // first, get uploads that have upload-started reports older than 1 hour
-        val oneHourAgo = Instant.now().minusSeconds(3600).epochSecond
+        val oneHourAgo = Instant.now().minusSeconds(3600).toEpochMilli()
         val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +

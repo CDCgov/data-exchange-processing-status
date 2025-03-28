@@ -100,4 +100,81 @@ class ReportServiceTest : KoinTest {
         val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify")
         assertEquals(1, failedMetadataVerifyCount)
     }
+
+    @Test
+    fun `returns delayed uploads`() {
+        val newUploadStartedReport = ReportDao(
+            id = "sampleId1",
+            uploadId = "uploadId1",
+            reportId = "sampleId1",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now(),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+        )
+        val oldUploadStartedReport = ReportDao(
+            id = "sampleId2",
+            uploadId = "uploadId2",
+            reportId = "sampleId2",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+        )
+        val oldUploadStartedCompleteReport = ReportDao(
+            id = "sampleId3",
+            uploadId = "uploadId3",
+            reportId = "sampleId3",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+        )
+        val oldUploadCompletedReport = ReportDao(
+            id = "sampleId4",
+            uploadId = "uploadId3",
+            reportId = "sampleId4",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+        )
+        repository.reportsCollection.createItem(newUploadStartedReport.id!!, newUploadStartedReport, ReportDao::class.java, null)
+        repository.reportsCollection.createItem(oldUploadStartedReport.id!!, oldUploadStartedReport, ReportDao::class.java, null)
+        repository.reportsCollection.createItem(oldUploadStartedCompleteReport.id!!, oldUploadStartedCompleteReport, ReportDao::class.java, null)
+        repository.reportsCollection.createItem(oldUploadCompletedReport.id!!, oldUploadCompletedReport, ReportDao::class.java, null)
+
+        val delayedUploads = service.getDelayedUploads("dextesting", "testevent1")
+
+        assertEquals(1, delayedUploads.size)
+        assertEquals(delayedUploads.first(), oldUploadStartedReport.uploadId)
+    }
 }
