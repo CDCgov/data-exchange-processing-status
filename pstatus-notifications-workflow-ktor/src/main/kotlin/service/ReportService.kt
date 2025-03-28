@@ -53,11 +53,29 @@ class ReportService: KoinComponent {
         return (uploadsStarted - uploadsCompleted).toList()
     }
 
-//    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String): List<Report> {
-//
-//    }
+    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String): List<String> {
+        // first, get completed uploads older than 1 hour
+        val oneHourAgo = Instant.now().minusSeconds(3600).epochSecond
+        val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
+                "where dataStreamId = '$dataStreamId' " +
+                "and dataStreamRoute = '$dataStreamRoute' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
+                "and ${cPrefix}dexIngestDateTime < '$oneHourAgo'"
+        val uploadsCompleted = repository.reportsCollection.queryItems(uploadsCompletedQuery, UploadInfo::class.java)
+            .map { it.uploadId }
+            .toSet()
 
-//    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String): List<Report> {}
-//
-//    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String): List<Report> {}
+        // then, get uploads that have been successfully delivered
+        val uploadsDeliveredQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
+                "where dataStreamId = '$dataStreamId' " +
+                "and dataStreamRoute = '$dataStreamRoute' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'blob-file-copy' " +
+                "and ${cPrefix}dexIngestDateTime < '$oneHourAgo'"
+        val uploadsDelivered = repository.reportsCollection.queryItems(uploadsDeliveredQuery, UploadInfo::class.java)
+            .map { it.uploadId }
+            .toSet()
+
+        // finally, take the difference to get uploads that haven't been delivered in over an hour
+        return (uploadsCompleted - uploadsDelivered).toList()
+    }
 }

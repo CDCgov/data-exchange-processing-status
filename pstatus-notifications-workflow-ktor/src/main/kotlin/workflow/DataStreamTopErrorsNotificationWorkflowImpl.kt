@@ -74,7 +74,8 @@ class DataStreamTopErrorsNotificationWorkflowImpl
             // Logic to check if the upload occurred*/
             val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify")
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute)
-            val body = formatEmailBody(dataStreamId, dataStreamRoute, failedMetadataVerifyCount, delayedUploads)
+            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute)
+            val body = formatEmailBody(dataStreamId, dataStreamRoute, failedMetadataVerifyCount, delayedUploads, delayedDeliveries)
             activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
@@ -85,22 +86,29 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         dataStreamId: String,
         dataStreamRoute: String,
         failedMetadataValidationCount: Int,
-        delayedUploads: List<String>
+        delayedUploads: List<String>,
+        delayedDeliveries: List<String>
     ): String {
         return buildString {
             appendHTML().html {
                 body {
                     h2 { +"$dataStreamId $dataStreamRoute Upload Issues" }
                     br {  }
-                    h3 { +"Total: ${failedMetadataValidationCount + delayedUploads.size }" }
+                    h3 { +"Total: ${failedMetadataValidationCount + delayedUploads.size + delayedDeliveries.size }" }
                     ul {
                         li { +"Metadata Validation: $failedMetadataValidationCount" }
                         li { +"Delayed Uploads: ${delayedUploads.size}" }
+                        li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
                     }
                     br {  }
                     h3 { +"Delayed Uploads" }
                     ul {
                         delayedUploads.map { li { +it } }
+                    }
+                    br {  }
+                    h3 { +"Delayed Deliveries" }
+                    ul {
+                        delayedDeliveries.map{ li { +it }}
                     }
                 }
             }
