@@ -51,6 +51,6 @@ abstract class ProcessingStatusRepository {
         return jsonMap
     }
 
-    open suspend fun createCollection(name: String) {}
-    open suspend fun deleteCollection(name: String) {}
+    open fun createCollection(name: String) {}
+    open fun deleteCollection(name: String) {}
 }

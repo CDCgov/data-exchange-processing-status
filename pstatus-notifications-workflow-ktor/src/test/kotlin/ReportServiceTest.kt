@@ -36,21 +36,22 @@ class ReportServiceTest : KoinTest {
 
     @Before
     fun init() {
-        runBlocking {
-            repository.createCollection("TestReports")
-        }
+        repository.createCollection("TestReports")
     }
 
     @After
     fun cleanup() {
-        runBlocking {
-            repository.deleteCollection("TestReports")
-        }
+        repository.deleteCollection("TestReports")
     }
 
     @Test
-    fun `returns zero failures when database empty`() {
-        val failedCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify")
-        assertEquals(0, failedCount)
+    fun `returns zero failures when database is empty`() {
+        val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify")
+        val delayedUploads = service.getDelayedUploads("dextesting", "testevent1")
+        val delayedDeliveries = service.getDelayedDeliveries("dextesting", "testevent1")
+
+        assertEquals(0, failedMetadataVerifyCount)
+        assertEquals(0, delayedUploads.size)
+        assertEquals(0, delayedDeliveries.size)
     }
 }

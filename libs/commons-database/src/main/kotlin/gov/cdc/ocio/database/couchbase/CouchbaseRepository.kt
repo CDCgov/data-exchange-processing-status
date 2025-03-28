@@ -5,6 +5,7 @@ import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.manager.collection.CollectionSpec
+import com.couchbase.client.java.manager.collection.CreateCollectionSettings
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.health.HealthCheckSystem
@@ -102,16 +103,16 @@ class CouchbaseRepository(
 
     override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
 
-    override suspend fun createCollection(name: String) {
+    override fun createCollection(name: String) {
         val cm = processingStatusBucket.collections()
         try {
-            cm.createCollection("data", name)
+            cm.createCollection("data", name, CreateCollectionSettings.createCollectionSettings())
         } catch (e: CollectionExistsException) {
             logger.warn("collection $name already exists")
         }
     }
 
-    override suspend fun deleteCollection(name: String) {
+    override fun deleteCollection(name: String) {
         val cm = processingStatusBucket.collections()
         cm.dropCollection("data", name)
     }
