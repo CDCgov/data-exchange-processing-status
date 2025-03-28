@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusnotifications.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.types.model.WebhookNotification
 import io.ktor.client.*
@@ -15,12 +14,12 @@ class WebhookNotificationAction(
 ) : NotificationAction {
 
     /**
-     * For webhooks, the payload should be a JSON string.
+     * For webhooks, the payload should be [WebhookContent].
      *
      * @param payload Any
      */
     override fun doNotify(payload: Any) {
-        if (payload !is String || !isJsonValid(payload))
+        if (payload !is WebhookContent)
             throw BadRequestException("Webhook payload is not in the expected format")
 
         runBlocking {
@@ -28,19 +27,10 @@ class WebhookNotificationAction(
 
             client.post(webhookNotification.webhookUrl) {
                 contentType(ContentType.Application.Json)
-                setBody(payload)
+                setBody(payload.toJson())
             }
 
             client.close()
-        }
-    }
-
-    private fun isJsonValid(jsonString: String): Boolean {
-        return try {
-            ObjectMapper().readTree(jsonString)
-            true
-        } catch (e: Exception) {
-            false
         }
     }
 }

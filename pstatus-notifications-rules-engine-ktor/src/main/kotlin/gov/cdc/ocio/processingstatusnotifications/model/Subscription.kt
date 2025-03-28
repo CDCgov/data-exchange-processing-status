@@ -1,16 +1,10 @@
 package gov.cdc.ocio.processingstatusnotifications.model
 
-import com.google.gson.GsonBuilder
-import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
-import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
-import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import gov.cdc.ocio.types.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.util.*
 
 
 /**
@@ -32,27 +26,23 @@ data class Subscription(
                     // Fire and forget and don't wait for the email to be sent since the SMTP server may be down and if
                     // it is, this will wait until that times out and that can be 10s of seconds.
                     val notificationAction = EmailNotificationAction(notification as EmailNotification)
-                    notificationAction.doNotify(EmailPayload("MBK was here", "upload id = ${report.uploadId}"))
+                    val emailContent = EmailContent(
+                        subscriptionId,
+                        subscriptionRule,
+                        report,
+                        "Triggered: ${subscriptionRule.ruleDescription}"
+                    )
+                    notificationAction.doNotify(emailContent)
                 }
             }
 
             NotificationType.WEBHOOK -> {
                 CoroutineScope(Dispatchers.Default).launch {
-                    val gson =
-                        GsonBuilder()
-                            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-                            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
-                            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-                            .create()
-
                     val notificationAction = WebhookNotificationAction(notification as WebhookNotification)
-                    val webhookContent = mapOf(
-                        "subscriptionId" to subscriptionId,
-                        "subscriptionRule" to subscriptionRule,
-                        "report" to report,
-                    )
+                    val webhookContent = WebhookContent(subscriptionId, subscriptionRule, report)
+
                     // Don't wait for a response to the call to the webhook.
-                    notificationAction.doNotify(gson.toJson(webhookContent))
+                    notificationAction.doNotify(webhookContent)
                 }
             }
         }

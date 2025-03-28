@@ -54,6 +54,7 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.3.1'
     implementation "io.ktor:ktor-server-netty:2.1.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-html:$kotlinx_html_version"
 
     implementation project(":libs:commons-types")
     implementation project(":libs:commons-database")
