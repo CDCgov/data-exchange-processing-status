@@ -46,8 +46,13 @@ data class Subscription(
                             .create()
 
                     val notificationAction = WebhookNotificationAction(notification as WebhookNotification)
+                    val webhookContent = mapOf(
+                        "subscriptionId" to subscriptionId,
+                        "subscriptionRule" to subscriptionRule,
+                        "report" to report,
+                    )
                     // Don't wait for a response to the call to the webhook.
-                    notificationAction.doNotify(gson.toJson(report))
+                    notificationAction.doNotify(gson.toJson(webhookContent))
                 }
             }
         }
