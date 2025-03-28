@@ -31,11 +31,23 @@ data class Subscription(
         /**
          * Deserialize the provided json string into a list of subscriptions.
          *
-         * @param json String
+         * @param json String - contains json array of Subscriptions
          * @return List<Subscription>
          */
-        fun fromJson(json: String): List<Subscription> {
+        fun fromJsonArray(json: String): List<Subscription> {
             return gson.fromJson(json, listType)
+        }
+
+        /**
+         * Deserializes the provided json string into a subscription.
+         *
+         * @param json String
+         * @return Subscription?
+         */
+        fun fromJson(json: String): Subscription? {
+            return runCatching {
+                gson.fromJson(json, Subscription::class.java)
+            }.getOrNull()
         }
     }
 }

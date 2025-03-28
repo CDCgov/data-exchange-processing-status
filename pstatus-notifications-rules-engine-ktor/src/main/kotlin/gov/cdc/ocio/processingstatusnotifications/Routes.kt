@@ -30,6 +30,17 @@ fun Route.notificationSubscriptionsRoute() {
 }
 
 /**
+ * Route to get a subscription by its id
+ */
+fun Route.notificationSubscriptionRoute() {
+    get("/subscription/{id}") {
+        call.parameters["id"]?.let {
+            call.respond(SubscriptionManager().getSubscription(it))
+        } ?: call.respond(HttpStatusCode.BadRequest, "Missing subscription ID")
+    }
+}
+
+/**
  * Route to subscribe for email notifications
  */
 fun Route.subscribeEmailNotificationRoute() {

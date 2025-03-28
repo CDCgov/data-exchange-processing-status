@@ -108,7 +108,7 @@ class NotificationsRulesEngineMutationService(
         mvelCondition: String,
         emailAddresses: List<String>
     ): SubscriptionResult {
-        val url = rulesEngineServiceConnection.getUrl("/subscribe/email")
+        val url = rulesEngineServiceConnection.buildUrl("/subscribe/email")
 
         return runBlocking {
             val result = runCatching {
@@ -148,7 +148,7 @@ class NotificationsRulesEngineMutationService(
         mvelCondition: String,
         webhookUrl: String
     ): SubscriptionResult {
-        val url = rulesEngineServiceConnection.getUrl("/subscribe/webhook")
+        val url = rulesEngineServiceConnection.buildUrl("/subscribe/webhook")
 
         return runBlocking {
             try {
@@ -175,7 +175,7 @@ class NotificationsRulesEngineMutationService(
     @GraphQLDescription("Unsubscribe Notifications")
     @Suppress("unused")
     fun unsubscribe(subscriptionId: String): SubscriptionResult {
-        val url = rulesEngineServiceConnection.getUrl("/unsubscribe")
+        val url = rulesEngineServiceConnection.buildUrl("/unsubscribe")
 
         return runBlocking {
             try {

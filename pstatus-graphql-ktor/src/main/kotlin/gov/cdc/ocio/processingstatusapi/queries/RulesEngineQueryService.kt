@@ -23,10 +23,31 @@ class RulesEngineQueryService(
     private val rulesEngineServiceConnection =
         ServiceConnection("notifications rules engine", rulesEngineServiceUrl)
 
-    @GraphQLDescription("A subscription describes the conditions under which a report is scrutinized and a notification emitted if the conditions are met.")
+    @GraphQLDescription("Retrieves all of the notification rules-engine based subscriptions. A subscription describes the conditions under which a report is scrutinized and a notification emitted if the conditions are met.")
     @Suppress("unused")
     fun getAllSubscriptions(): List<Subscription> {
-        val url = rulesEngineServiceConnection.getUrl("/subscriptions")
+        val url = rulesEngineServiceConnection.buildUrl("/subscriptions")
+
+        return runBlocking {
+            try {
+                val response = rulesEngineServiceConnection.client.get(url) {
+                    contentType(ContentType.Application.Json)
+                }
+                if (response.status == HttpStatusCode.OK) {
+                    return@runBlocking Subscription.fromJsonArray(response.body())
+                } else {
+                    throw Exception("Service unavailable. Status: ${response.status}")
+                }
+            } catch (e: Exception) {
+                throw Exception(rulesEngineServiceConnection.serviceUnavailable)
+            }
+        }
+    }
+
+    @GraphQLDescription("Retrieves the notification rules-engine based subscription from the subscription identifier provided.  A subscription describes the conditions under which a report is scrutinized and a notification emitted if the conditions are met.")
+    @Suppress("unused")
+    fun getSubscription(subscriptionId: String): Subscription? {
+        val url = rulesEngineServiceConnection.buildUrl("/subscription/$subscriptionId")
 
         return runBlocking {
             try {

@@ -72,7 +72,7 @@ class UploadDigestCountsSubscriptionMutationService(
         cronSchedule: String,
         emailAddresses: List<String>
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/subscribe/uploadDigestCounts")
+        val url = workflowServiceConnection.buildUrl("/subscribe/uploadDigestCounts")
 
         return runBlocking {
             val result = runCatching {
@@ -111,7 +111,7 @@ class UploadDigestCountsSubscriptionMutationService(
     fun unsubscribeUploadDigestCounts(
         subscriptionId: String
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/unsubscribe/uploadDigestCounts")
+        val url = workflowServiceConnection.buildUrl("/unsubscribe/uploadDigestCounts")
 
         return runBlocking {
             try {
