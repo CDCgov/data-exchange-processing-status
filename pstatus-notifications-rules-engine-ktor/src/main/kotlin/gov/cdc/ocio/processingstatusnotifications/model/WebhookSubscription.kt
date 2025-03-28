@@ -8,6 +8,7 @@ data class WebhookSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
     val jurisdiction: String?,
+    val ruleDescription: String?,
     val mvelCondition: String,
     val webhookUrl: String
 )

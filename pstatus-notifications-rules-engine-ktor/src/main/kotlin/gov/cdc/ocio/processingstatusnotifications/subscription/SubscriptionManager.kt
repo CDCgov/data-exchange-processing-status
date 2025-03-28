@@ -22,6 +22,7 @@ class SubscriptionManager : KoinComponent {
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String?
+     * @param ruleDescription String?
      * @param mvelCondition String
      * @param notification Notification
      * @return String
@@ -30,6 +31,7 @@ class SubscriptionManager : KoinComponent {
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String?,
+        ruleDescription: String?,
         mvelCondition: String,
         notification: Notification
     ): String {
@@ -39,6 +41,7 @@ class SubscriptionManager : KoinComponent {
                 dataStreamId,
                 dataStreamRoute,
                 jurisdiction,
+                ruleDescription,
                 mvelCondition
             )
 
