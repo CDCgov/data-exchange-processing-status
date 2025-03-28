@@ -50,4 +50,7 @@ abstract class ProcessingStatusRepository {
             gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
         return jsonMap
     }
+
+    open suspend fun createCollection(name: String) {}
+    open suspend fun deleteCollection(name: String) {}
 }
