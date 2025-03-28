@@ -305,7 +305,7 @@ async def simulate(message_system: MessageSystem, upload_id: str, dex_ingest_dat
         print(f"Sending UPLOAD-STATUS ({offset} of {size} bytes) report...")
         message = reports.create_upload_status(upload_id, dex_ingest_datetime, offset, size)
         await message_system.send_message(message)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
     # Send upload completed
     print("Sending UPLOAD-COMPLETED report...")
