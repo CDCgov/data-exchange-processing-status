@@ -59,10 +59,22 @@ data class EmailContent(
                                 white-space: pre-wrap;
                                 word-wrap: break-word;
                             }
+                            .bold-uppercase {
+                                font-weight: bold;
+                                text-transform: uppercase;
+                            }
+                            .uppercase {
+                                text-transform: uppercase;
+                            }
                         """.trimIndent()
                     }
                 }
                 body {
+                    div {
+                        span(classes = "bold-uppercase") { +"\u271A Public Health" }
+                        span(classes = "uppercase") { +" Data Observability" }
+                    }
+                    hr {  }
                     h2 { +"Rule: ${subscriptionRule.ruleDescription}" }
                     div {
                         +"Subscription ID: "
