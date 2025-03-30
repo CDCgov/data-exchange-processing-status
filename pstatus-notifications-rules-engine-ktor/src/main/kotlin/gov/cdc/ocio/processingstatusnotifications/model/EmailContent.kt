@@ -49,6 +49,15 @@ data class EmailContent(
                                 font-family: Arial, sans-serif;
                                 margin: 20px;
                             }
+                            table {
+                                border-collapse: collapse;
+                            }
+                            td {
+                                padding: 4px 0;
+                            }
+                            td:first-child {
+                                padding-right: 20px;
+                            }
                             .json-container {
                                 background: #ededed;
                                 color: #000000;
@@ -76,28 +85,36 @@ data class EmailContent(
                     }
                     hr {  }
                     h2 { +"Rule: ${subscriptionRule.ruleDescription}" }
-                    div {
-                        +"Subscription ID: "
-                        b { +subscriptionId }
+                    table {
+                        tr {
+                            td { +"Subscription ID" }
+                            td { strong { +subscriptionId } }
+                        }
+                        tr {
+                            td { +"Data Stream ID" }
+                            td { strong { +subscriptionRule.dataStreamId } }
+                        }
+                        tr {
+                            td { +"Data Stream Route" }
+                            td { strong { +subscriptionRule.dataStreamRoute } }
+                        }
+                        tr {
+                            td { +"Jurisdiction" }
+                            td { strong { +jurisdiction } }
+                        }
+                        tr {
+                            td { +"Triggered" }
+                            td { strong { +DateTimeFormatter.ISO_INSTANT.format(Instant.now()) } }
+                        }
                     }
                     div {
-                        +"Data Stream ID: "
-                        b { +subscriptionRule.dataStreamId }
-                    }
-                    div {
-                        +"Data Stream Route: "
-                        b { +subscriptionRule.dataStreamRoute }
-                    }
-                    div {
-                        +"Jurisdiction: "
-                        b { +jurisdiction }
-                    }
-                    div {
-                        +"Triggered: "
-                        b { +DateTimeFormatter.ISO_INSTANT.format(Instant.now()) }
-                    }
-                    div {
-                        br { b { +"Trigger Condition (MVEL notation):" } }
+                        br {
+                            b {
+                                +"Trigger Condition ("
+                                a(href = "http://mvel.documentnode.com/#basic-syntax") { +"MVEL notation" }
+                                +"):"
+                            }
+                        }
                         br {
                             pre(classes = "json-container") {
                                 code {
@@ -106,8 +123,18 @@ data class EmailContent(
                             }
                         }
                     }
-                    div { h3 { +"Triggering Report:" } }
+                    div { b { +"Triggering Report:" } }
                     pre(classes = "json-container") { code { +reportJson } }
+                    br { }
+                    hr {  }
+                    div {
+                        small {
+                            +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
+                                    + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe "
+                                    + "with the subscription ID provided above."
+                                    )
+                        }
+                    }
                 }
             }
         }
