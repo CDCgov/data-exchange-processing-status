@@ -33,7 +33,7 @@ data class EmailContent(
                 .setPrettyPrinting()
                 .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
                 .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
-                .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+                .registerTypeAdapter(Instant::class.java, InstantTypeAdapter(asEpoch = false))
                 .create()
         val jurisdiction = subscriptionRule.jurisdiction ?: "All"
         val mvelCondition = subscriptionRule.mvelRuleCondition
