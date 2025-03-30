@@ -84,7 +84,7 @@ data class EmailContent(
                         span(classes = "uppercase") { +" Data Observability" }
                     }
                     hr {  }
-                    h2 { +"Rule: ${subscriptionRule.ruleDescription}" }
+                    h3 { +"Rule: ${subscriptionRule.ruleDescription}" }
                     table {
                         tr {
                             td { +"Subscription ID" }
