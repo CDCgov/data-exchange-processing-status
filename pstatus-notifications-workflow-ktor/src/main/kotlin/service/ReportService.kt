@@ -32,7 +32,7 @@ class ReportService: KoinComponent {
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-started' " +
-                "and ${cPrefix}dexIngestDateTime < '$oneHourAgo'"
+                "and ${cPrefix}dexIngestDateTime < $oneHourAgo"
         val uploadsStarted = repository.reportsCollection.queryItems(uploadsStartedQuery, UploadInfo::class.java)
             .map { it.uploadId }
             .toSet()
@@ -42,7 +42,7 @@ class ReportService: KoinComponent {
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
-                "and ${cPrefix}dexIngestDateTime < '$oneHourAgo'"
+                "and ${cPrefix}dexIngestDateTime < $oneHourAgo"
         val uploadsCompleted = repository.reportsCollection.queryItems(uploadsCompletedQuery, UploadInfo::class.java)
             .map { it.uploadId }
             .toSet()
