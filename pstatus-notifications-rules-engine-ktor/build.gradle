@@ -34,6 +34,7 @@ mainClassName = "gov.cdc.ocio.processingstatusnotifications.ApplicationKt"
 dependencies {
     implementation "io.ktor:ktor-server-core:2.3.2"
     implementation "io.ktor:ktor-server-netty:2.3.2"
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation "io.ktor:ktor-server-content-negotiation:2.3.2"
     implementation "io.ktor:ktor-serialization-jackson:$ktor_version"
     implementation "io.ktor:ktor-serialization-kotlinx-json:2.3.2"
@@ -53,9 +54,19 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.3.1'
     implementation "io.ktor:ktor-server-netty:2.1.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.1.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-html:$kotlinx_html_version"
 
-    implementation(project(":libs:commons-types"))
-    implementation project(':libs:message-system')
+    implementation project(":libs:commons-types")
+    implementation project(":libs:commons-database")
+    implementation project(":libs:message-system")
+
+    // Google library used for caching
+    implementation("com.google.guava:guava:33.4.0-jre")
+
+    // EasyRules libraries
+    implementation("org.jeasy:easy-rules-core:4.1.0")
+    implementation("org.jeasy:easy-rules-mvel:4.1.0")
+    implementation("org.jeasy:easy-rules-support:4.1.0")
 
     testImplementation "org.mockito.kotlin:mockito-kotlin:4.0.0"
     testImplementation 'org.testng:testng:7.7.0'

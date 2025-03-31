@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.utils
 
 import gov.cdc.ocio.processingstatusapi.ReportManager
-import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
 import gov.cdc.ocio.messagesystem.models.Source
 import mu.KotlinLogging
@@ -18,39 +18,39 @@ class SchemaValidation {
     /**
      * Creates report using ReportManager() and persists to Cosmos DB.
      *
-     * @param createReportMessage The message that contains details about the report to be processed
+     * @param reportMessage The message that contains details about the report to be processed
      * The message may come from Azure Service Bus, AWS SQS or RabbitMQ.
      * @throws BadRequestException
      * @throws Exception
      */
-    fun createReport(createReportMessage: CreateReportMessage, source: Source) {
+    fun createReport(reportMessage: ReportMessage, source: Source) {
         try {
-            val uploadId = createReportMessage.uploadId
-            var stageName = createReportMessage.stageInfo?.action
+            val uploadId = reportMessage.uploadId
+            var stageName = reportMessage.stageInfo?.action
             //set report source: AWS, RabbitMQ or Azure Service Bus
-            createReportMessage.source = source
+            reportMessage.source = source
             if (stageName.isNullOrEmpty()) {
                 stageName = ""
             }
             logger.info("Creating report for uploadId = $uploadId with stageName = $stageName and source = $source")
 
             ReportManager().createReportWithUploadId(
-                createReportMessage.reportSchemaVersion!!,
+                reportMessage.reportSchemaVersion!!,
                 uploadId!!,
-                createReportMessage.dataStreamId!!,
-                createReportMessage.dataStreamRoute!!,
-                createReportMessage.dexIngestDateTime!!,
-                createReportMessage.messageMetadata,
-                createReportMessage.stageInfo,
-                createReportMessage.tags,
-                createReportMessage.data,
-                createReportMessage.contentType!!,
-                createReportMessage.content!!, // it was Content I changed to ContentAsString
-                createReportMessage.jurisdiction,
-                createReportMessage.senderId,
-                createReportMessage.dataProducerId,
-                createReportMessage.dispositionType,
-                createReportMessage.source
+                reportMessage.dataStreamId!!,
+                reportMessage.dataStreamRoute!!,
+                reportMessage.dexIngestDateTime!!,
+                reportMessage.messageMetadata,
+                reportMessage.stageInfo,
+                reportMessage.tags,
+                reportMessage.data,
+                reportMessage.contentType!!,
+                reportMessage.content!!, // it was Content I changed to ContentAsString
+                reportMessage.jurisdiction,
+                reportMessage.senderId,
+                reportMessage.dataProducerId,
+                reportMessage.dispositionType,
+                reportMessage.source
             )
         } catch (e: BadRequestException) {
             logger.error("createReport - bad request exception: ${e.message}")
@@ -79,7 +79,7 @@ class SchemaValidation {
      *
      * @param invalidData list of reason(s) why report failed
      * @param validationSchemaFileNames schema files used during validation process
-     * @param createReportMessage The message that contains details about the report to be processed
+     * @param reportMessage The message that contains details about the report to be processed
      * The message may come from  Azure Service Bus, AWS SQS or RabbitMQ.
      * @throws BadRequestException
      */
@@ -87,27 +87,27 @@ class SchemaValidation {
         source: Source,
         invalidData: MutableList<String>,
         validationSchemaFileNames: MutableList<String>,
-        createReportMessage: CreateReportMessage
+        reportMessage: ReportMessage
     ) {
         if (invalidData.isNotEmpty()) {
             //This should not run for unit tests
             if (System.getProperty("isTestEnvironment") != "true") {
                 ReportManager().createDeadLetterReport(
-                    createReportMessage.reportSchemaVersion,
-                    createReportMessage.uploadId,
-                    createReportMessage.dataStreamId,
-                    createReportMessage.dataStreamRoute,
-                    createReportMessage.dexIngestDateTime,
-                    createReportMessage.messageMetadata,
-                    createReportMessage.stageInfo,
-                    createReportMessage.tags,
-                    createReportMessage.data,
-                    createReportMessage.dispositionType,
-                    createReportMessage.contentType,
-                    createReportMessage.content,
-                    createReportMessage.jurisdiction,
-                    createReportMessage.senderId,
-                    createReportMessage.dataProducerId,
+                    reportMessage.reportSchemaVersion,
+                    reportMessage.uploadId,
+                    reportMessage.dataStreamId,
+                    reportMessage.dataStreamRoute,
+                    reportMessage.dexIngestDateTime,
+                    reportMessage.messageMetadata,
+                    reportMessage.stageInfo,
+                    reportMessage.tags,
+                    reportMessage.data,
+                    reportMessage.dispositionType,
+                    reportMessage.contentType,
+                    reportMessage.content,
+                    reportMessage.jurisdiction,
+                    reportMessage.senderId,
+                    reportMessage.dataProducerId,
                     source,
                     invalidData,
                     validationSchemaFileNames

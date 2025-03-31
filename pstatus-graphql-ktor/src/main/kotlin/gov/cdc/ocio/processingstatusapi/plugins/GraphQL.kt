@@ -36,7 +36,10 @@ fun Application.graphQLModule() {
 
     install(GraphQL) {
         schema {
-            packages = listOf("gov.cdc.ocio.processingstatusapi")
+            packages = listOf(
+                "gov.cdc.ocio.processingstatusapi",
+                "gov.cdc.ocio.types" // for the types defined in the "commons-types" library
+            )
             queries = listOf(
                 HealthQueryService(),
                 ReportQueryService(),
@@ -44,10 +47,11 @@ fun Application.graphQLModule() {
                 ReportCountsQueryService(),
                 ReportDeadLetterQueryService(),
                 UploadQueryService(),
+                RulesEngineQueryService(rulesEngineServiceUrl),
                 WorkflowQueryService(workflowServiceUrl)
             )
             mutations = listOf(
-                NotificationsMutationService(workflowServiceUrl),
+                NotificationsRulesEngineMutationService(rulesEngineServiceUrl),
                 DataStreamTopErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
                 DeadlineCheckSubscriptionMutationService(workflowServiceUrl),
                 UploadDigestCountsSubscriptionMutationService(workflowServiceUrl),

@@ -5,9 +5,9 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.database.models.Report
-import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.adapters.OffsetDateTimeTypeAdapter
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase

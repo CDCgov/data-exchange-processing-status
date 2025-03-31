@@ -40,7 +40,7 @@ class CosmosRepository(
     private val reportsDeadLetterContainer =
         CosmosContainerManager.initDatabaseContainer(uri, authKey, reportsDeadLetterContainerName, partitionKey)
 
-    private val subscriptionManagementContainer =
+    private val notificationSubscriptionsContainer =
         CosmosContainerManager.initDatabaseContainer(uri, authKey, notificationSubscriptionsContainerName, partitionKey)
 
     override var reportsCollection = CosmosCollection(reportsContainer) as Collection
@@ -48,8 +48,8 @@ class CosmosRepository(
     override var reportsDeadLetterCollection =
         CosmosCollection(reportsDeadLetterContainer) as Collection
 
-    override var subscriptionManagementCollection =
-        CosmosCollection(subscriptionManagementContainer) as Collection
+    override var notificationSubscriptionsCollection =
+        CosmosCollection(notificationSubscriptionsContainer) as Collection
 
     override var healthCheckSystem = HealthCheckCosmosDb(
         system,

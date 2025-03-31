@@ -1,102 +1,73 @@
 package gov.cdc.ocio.processingstatusnotifications.notifications
 
-import gov.cdc.ocio.processingstatusnotifications.SubscriptionResult
-import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionType
-import gov.cdc.ocio.processingstatusnotifications.WebhookSubscription
-import gov.cdc.ocio.processingstatusnotifications.cache.InMemoryCacheService
-import gov.cdc.ocio.processingstatusnotifications.model.message.Status
+import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
+import gov.cdc.ocio.processingstatusnotifications.model.*
+import gov.cdc.ocio.types.model.WebhookNotification
 import mu.KotlinLogging
 import java.time.Instant
 
 
 /**
- * This class is used by graphL endpoints to subscribe for Webhook notifications
- * based on rules sent in required parameters/arguments:
- *   - dataStreamId
- *   - dataStreamRoute
- *   - stage info, namely the stage's "service" and "action"
- *   - status ("success", "failure")
- *   - url (websocket url)
+ * This class is used by graphQL endpoints to subscribe for webhook notifications.
+ *
  * @property logger KLogger
  * @property cacheService InMemoryCacheService
  */
 class SubscribeWebhookNotifications {
+
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
+
+    private val cacheService = SubscriptionManager()
 
     /**
      * Validates and subscribes for webhook notifications
      *
      * @param subscription WebhookSubscription
      */
-    fun run(subscription: WebhookSubscription): SubscriptionResult {
-
+    fun run(
+        subscription: WebhookSubscription
+    ): SubscriptionResult {
         val dataStreamId = subscription.dataStreamId
         val dataStreamRoute = subscription.dataStreamRoute
-        val url = subscription.url
-        val service = subscription.service
-        val action = subscription.action
-        val status = subscription.status
+        val jurisdiction = subscription.jurisdiction
+        val ruleDescription = subscription.ruleDescription
+        val mvelCondition = subscription.mvelCondition
+        val webhookUrl = subscription.webhookUrl
 
-        logger.debug("dataStreamId: $dataStreamId")
-        logger.debug("dataStreamRoute: $dataStreamRoute")
-        logger.debug("Subscription Url: $url")
-        logger.debug("service: $service, action: $action")
-        logger.debug("Status: $status")
-
-        val subscriptionResult = subscribeForWebhook(dataStreamId, dataStreamRoute, url, service, action, status)
-        if (subscriptionResult.subscription_id != null) {
-            subscriptionResult.message = "Subscription successful"
-            return subscriptionResult
+        if (dataStreamId.isBlank() || dataStreamRoute.isBlank() || mvelCondition.isBlank() || webhookUrl.isBlank()) {
+            return SubscriptionResult(
+                status = false,
+                message = "Required fields not sent in request"
+            )
         }
-        subscriptionResult.message = "Invalid Request"
-        subscriptionResult.status = false
 
-        return subscriptionResult
-    }
+        if (!webhookUrl.lowercase().startsWith("http://")
+            && !webhookUrl.lowercase().startsWith("https://")) {
+            return SubscriptionResult(
+                status = false,
+                message = "Not a valid url address, url must begin with http:// or https://"
+            )
+        }
 
-    /**
-     * Validates and updates the notification preferences of the cacheService
-     *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param url String?
-     * @param service String?
-     * @param action String?
-     * @param status Status
-     * @return SubscriptionResult
-     */
-    private fun subscribeForWebhook(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        url: String?,
-        service: String?,
-        action: String?,
-        status: Status
-    ): SubscriptionResult {
-
-        val result = SubscriptionResult()
-        if (dataStreamId.isBlank() || dataStreamRoute.isBlank() || url.isNullOrBlank() || service.isNullOrBlank() || action.isNullOrBlank()) {
-            result.status = false
-            result.message = "Required fields not sent in request"
-        } else if (!url.lowercase().startsWith("ws")) {
-            result.status = false
-            result.message = "Not valid url address"
-        } else {
-            result.subscription_id = cacheService.updateNotificationsPreferences(
+        val subscriptionResult = SubscriptionResult(
+            status = true,
+            subscriptionId = cacheService.upsertSubscription(
                 dataStreamId,
                 dataStreamRoute,
-                service,
-                action,
-                status,
-                url,
-                SubscriptionType.WEBHOOK
-            )
-            result.timestamp = Instant.now().epochSecond
-            result.status = true
-            result.message = "Subscription for Webhook setup"
+                jurisdiction,
+                ruleDescription,
+                mvelCondition,
+                WebhookNotification(webhookUrl)
+            ),
+            timestamp = Instant.now().epochSecond,
+            message = "Subscription for webhook setup"
+        )
+
+        if (subscriptionResult.subscriptionId == null) {
+            subscriptionResult.status = false
+            subscriptionResult.message = "Invalid Request"
         }
 
-        return result
+        return subscriptionResult
     }
 }

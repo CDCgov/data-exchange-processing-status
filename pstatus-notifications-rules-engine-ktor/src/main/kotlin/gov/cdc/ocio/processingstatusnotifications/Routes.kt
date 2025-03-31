@@ -3,10 +3,13 @@
 package gov.cdc.ocio.processingstatusnotifications
 
 import gov.cdc.ocio.processingstatusnotifications.health.HealthQueryService
-import gov.cdc.ocio.processingstatusnotifications.model.message.Status
-import gov.cdc.ocio.processingstatusnotifications.notifications.UnSubscribeNotifications
+import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
+import gov.cdc.ocio.processingstatusnotifications.model.UnsubscribeRequest
+import gov.cdc.ocio.processingstatusnotifications.model.WebhookSubscription
+import gov.cdc.ocio.processingstatusnotifications.notifications.UnsubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeWebhookNotifications
+import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.types.health.HealthStatusType
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,98 +20,55 @@ import java.util.*
 
 
 /**
- * Email Subscription data class which is serialized back and forth
+ * Route to get list of subscriptions
  */
-data class EmailSubscription(
-    val dataStreamId: String,
-    val dataStreamRoute: String,
-    val email: String,
-    val service: String,
-    val action: String,
-    val status: Status
-)
+fun Route.notificationSubscriptionsRoute() {
+    get("/subscriptions") {
+        val result = SubscriptionManager().getSubscriptions()
+        call.respond(result)
+    }
+}
 
 /**
- * Webhook Subscription data class which is serialized back and forth
+ * Route to get a subscription by its id
  */
-data class WebhookSubscription(
-    val dataStreamId: String,
-    val dataStreamRoute: String,
-    val url: String,
-    val service: String,
-    val action: String,
-    val status: Status
-)
-
-/**
- * UnSubscription data class which is serialized back and forth when we need to unsubscribe by the subscriptionId
- */
-data class UnSubscription(val subscriptionId:String)
-
-/**
- * The resultant class for subscription of email/webhooks
- */
-data class SubscriptionResult(
-    var subscription_id: String? = null,
-    var timestamp: Long? = null,
-    var status: Boolean? = false,
-    var message: String? = ""
-)
+fun Route.notificationSubscriptionRoute() {
+    get("/subscription/{id}") {
+        call.parameters["id"]?.let {
+            call.respond(SubscriptionManager().getSubscription(it))
+        } ?: call.respond(HttpStatusCode.BadRequest, "Missing subscription ID")
+    }
+}
 
 /**
  * Route to subscribe for email notifications
  */
 fun Route.subscribeEmailNotificationRoute() {
     post("/subscribe/email") {
-        val subscription = call.receive<EmailSubscription>()
-        val emailSubscription =EmailSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.email,
-            subscription.service,
-            subscription.action,
-            subscription.status
-        )
+        val emailSubscription = call.receive<EmailSubscription>()
         val result = SubscribeEmailNotifications().run(emailSubscription)
         call.respond(result)
+    }
+}
 
-    }
-}
-/**
- * Route to Unsubscribe for email notifications
- */
-fun Route.unsubscribeEmailNotificationRoute() {
-    post("/unsubscribe/email") {
-        val subscription = call.receive<UnSubscription>()
-        val result = UnSubscribeNotifications().run(subscription.subscriptionId)
-        call.respond(result)
-    }
-}
 /**
  * Route to subscribe for webhook notifications
  */
 fun Route.subscribeWebhookRoute() {
     post("/subscribe/webhook") {
-        val subscription = call.receive<WebhookSubscription>()
-        val webhookSubscription = WebhookSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.url,
-            subscription.service,
-            subscription.action,
-            subscription.status)
+        val webhookSubscription = call.receive<WebhookSubscription>()
         val result = SubscribeWebhookNotifications().run(webhookSubscription)
         call.respond(result)
     }
 }
 
 /**
- * Route to unsubscribe for webhook notifications
+ * Route to unsubscribe from a notification
  */
-fun Route.unsubscribeWebhookRoute() {
-    post("/unsubscribe/webhook") {
-        val subscription = call.receive<UnSubscription>()
-        val result = UnSubscribeNotifications().run(subscription.subscriptionId)
+fun Route.unsubscribeNotificationRoute() {
+    post("/unsubscribe") {
+        val subscription = call.receive<UnsubscribeRequest>()
+        val result = UnsubscribeNotifications().run(subscription.subscriptionId)
         call.respond(result)
     }
 }

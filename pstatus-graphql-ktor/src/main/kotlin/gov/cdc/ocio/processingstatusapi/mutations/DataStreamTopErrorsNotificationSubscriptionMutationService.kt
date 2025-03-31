@@ -106,7 +106,7 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
     fun unsubscribesDataStreamTopErrorsNotification(
         subscriptionId: String
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/unsubscribe/dataStreamTopErrorsNotification")
+        val url = workflowServiceConnection.buildUrl("/unsubscribe/dataStreamTopErrorsNotification")
 
         return runBlocking {
             try {
