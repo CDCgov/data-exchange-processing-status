@@ -38,22 +38,6 @@ class DataStreamTopErrorsNotificationWorkflowImpl
             .build()
     )
 
-    //TODO : This should come  from db in real application
-    val errorList = listOf(
-        "DataStreamId missing",
-        "DataStreamRoute missing",
-        "Jurisdiction missing",
-        "DataStreamId missing",
-        "Jurisdiction missing",
-        "DataStreamRoute missing",
-        "DataStreamRoute missing",
-        "DataStreamId missing",
-        "DataStreamId missing",
-        "DataStreamRoute missing",
-        "DataStreamId missing",
-        "DataStreamId missing",
-    )
-
     /**
      * The function which determines the digest counts and top errors during an upload and its frequency.
      *
@@ -68,15 +52,25 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>
+        emailAddresses: List<String>,
+        daysInterval: Int?
     ) {
+        val di = daysInterval ?: 5 // TODO make this default value configurable
         try {
             // Logic to check if the upload occurred*/
-            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify")
-            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy")
-            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute)
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", di)
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", di)
+            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, daysInterval)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute)
-            val body = formatEmailBody(dataStreamId, dataStreamRoute, failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)
+            val body = formatEmailBody(
+                dataStreamId,
+                dataStreamRoute,
+                failedMetadataVerifyCount,
+                failedDeliveryCount,
+                delayedUploads,
+                delayedDeliveries,
+                di
+            )
             activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
@@ -89,12 +83,13 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         failedMetadataValidationCount: Int,
         failedDeliveryCount: Int,
         delayedUploads: List<String>,
-        delayedDeliveries: List<String>
+        delayedDeliveries: List<String>,
+        daysInterval: Int
     ): String {
         return buildString {
             appendHTML().html {
                 body {
-                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues" }
+                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues in the last $daysInterval days" }
                     br {  }
                     h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size }" }
                     ul {
