@@ -1,10 +1,10 @@
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
 import gov.cdc.ocio.database.couchbase.CouchbaseRepository
-import gov.cdc.ocio.database.models.Status
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.database.models.dao.StageInfoDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.service.ReportService
+import gov.cdc.ocio.types.model.Status
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
