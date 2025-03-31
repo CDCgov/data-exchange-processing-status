@@ -6,7 +6,7 @@ import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
 import gov.cdc.ocio.messagesystem.exceptions.BadStateException
 import gov.cdc.ocio.messagesystem.models.Source
-import gov.cdc.ocio.messagesystem.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.processingstatusapi.models.ValidationComponents
 import gov.cdc.ocio.processingstatusapi.models.MessageProcessorConfig
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
@@ -62,7 +62,7 @@ abstract class MessageProcessor: MessageProcessorInterface, KoinComponent {
                 if (validationResult.status) {
                     components.logger.info { "The message has been successfully validated, creating report." }
                     SchemaValidation().createReport(
-                        components.gson.fromJson(message, CreateReportMessage::class.java),
+                        components.gson.fromJson(message, ReportMessage::class.java),
                         source
                     )
 
@@ -75,7 +75,7 @@ abstract class MessageProcessor: MessageProcessorInterface, KoinComponent {
                         source,
                         validationResult.invalidData,
                         validationResult.schemaFileNames,
-                        components.gson.fromJson(message, CreateReportMessage::class.java)
+                        components.gson.fromJson(message, ReportMessage::class.java)
                     )
                     return
                 }

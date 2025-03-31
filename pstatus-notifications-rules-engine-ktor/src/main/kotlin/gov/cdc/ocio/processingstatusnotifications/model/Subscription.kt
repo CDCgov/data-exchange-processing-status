@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingstatusnotifications.model
 
-import gov.cdc.ocio.messagesystem.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.types.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ data class Subscription(
     val subscriptionRule: SubscriptionRule,
     val notification: Notification
 ) {
-    fun doNotify(report: CreateReportMessage) {
+    fun doNotify(report: ReportMessage) {
        when (notification.notificationType) {
             NotificationType.EMAIL -> {
                 CoroutineScope(Dispatchers.Default).launch {

@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
-import gov.cdc.ocio.messagesystem.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.model.*
 import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
@@ -44,10 +44,10 @@ object RuleEngine: KoinComponent {
     /**
      * Evaluate all subscriptions to see if a notification needs to be sent.
      *
-     * @param report CreateReportMessage
+     * @param report ReportMessage
      */
     fun evaluateAllRules(
-        report: CreateReportMessage
+        report: ReportMessage
     ) {
         val subscriptions = getSubscriptions()
         subscriptions.forEach { evaluateSubscription(report, it) }
@@ -71,7 +71,7 @@ object RuleEngine: KoinComponent {
      * @param subscriptionEntry Entry<String, Subscription>
      */
     private fun evaluateSubscription(
-        report: CreateReportMessage,
+        report: ReportMessage,
         subscriptionEntry: Map.Entry<String, Subscription>
     ) {
         val subscriptionId = subscriptionEntry.key
@@ -138,7 +138,7 @@ object RuleEngine: KoinComponent {
 
         val subscriptions = getSubscriptions()
         val subscription = subscriptions.entries.firstOrNull { it.key == subscriptionId }?.value
-        val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), CreateReportMessage::class.java)
+        val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), ReportMessage::class.java)
         val notification = subscription?.notification
         notification?.let {
             subscription.doNotify(report)

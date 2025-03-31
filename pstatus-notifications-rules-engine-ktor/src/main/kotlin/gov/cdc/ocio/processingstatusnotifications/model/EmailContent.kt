@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingstatusnotifications.model
 
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
-import gov.cdc.ocio.messagesystem.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import gov.cdc.ocio.types.model.SubscriptionRule
@@ -17,14 +17,14 @@ import java.util.*
  *
  * @property subscriptionId String
  * @property subscriptionRule SubscriptionRule
- * @property report CreateReportMessage
+ * @property report ReportMessage
  * @property emailSubject String
  * @constructor
  */
 data class EmailContent(
     val subscriptionId: String,
     val subscriptionRule: SubscriptionRule,
-    val report: CreateReportMessage,
+    val report: ReportMessage,
     val emailSubject: String
 ) {
     fun toHtml(): String {

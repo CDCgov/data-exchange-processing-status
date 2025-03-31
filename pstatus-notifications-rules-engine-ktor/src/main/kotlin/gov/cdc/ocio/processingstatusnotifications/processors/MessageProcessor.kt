@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.messagesystem.MessageProcessorInterface
-import gov.cdc.ocio.messagesystem.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
@@ -35,7 +35,7 @@ class MessageProcessor: MessageProcessorInterface {
      */
     override fun processMessage(message: String) {
         try {
-            val report = gson.fromJson(message, CreateReportMessage::class.java)
+            val report = gson.fromJson(message, ReportMessage::class.java)
             val status = evaluateRulesForReport(report)
             logger.info { "Processed report with resulting status: $status" }
         } catch (e: JsonSyntaxException) {
@@ -47,13 +47,13 @@ class MessageProcessor: MessageProcessorInterface {
     /**
      * Runs the rules engine against the report received.
      *
-     * @param report CreateReportMessage
+     * @param report ReportMessage
      * @return Status?
      * @throws BadRequestException
      */
     @Throws(BadRequestException::class)
     private fun evaluateRulesForReport(
-        report: CreateReportMessage
+        report: ReportMessage
     ): Status? {
 
         report.dataStreamId
