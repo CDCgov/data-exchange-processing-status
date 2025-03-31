@@ -146,4 +146,7 @@ class CouchbaseCollection(
     override val collectionNameForQuery = "${couchbaseScope.bucketName()}.${couchbaseScope.name()}.`$collectionName`"
 
     override val collectionElementForQuery = { name: String -> name }
+
+    override val timeConversionForQuery: (Long) -> String
+        get() = { timeEpoch: Long -> (timeEpoch * 1000).toString() }
 }
