@@ -53,7 +53,7 @@ class ReportServiceTest : KoinTest {
     fun `returns zero failures when database is empty`() {
         val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify", null)
         val delayedUploads = service.getDelayedUploads("dextesting", "testevent1", null)
-        val delayedDeliveries = service.getDelayedDeliveries("dextesting", "testevent1")
+        val delayedDeliveries = service.getDelayedDeliveries("dextesting", "testevent1", null)
 
         assertEquals(0, failedMetadataVerifyCount)
         assertEquals(0, delayedUploads.size)
@@ -329,7 +329,7 @@ class ReportServiceTest : KoinTest {
     }
 
     @Test
-    fun `return delayed deliveries`() {
+    fun `return delayed deliveries all time`() {
         val successfulDeliveryReport = ReportDao(
             id = "sampleId1",
             uploadId = "uploadId1",
@@ -383,7 +383,84 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val delayedUploads = service.getDelayedDeliveries("dextesting", "testevent1")
+        val delayedUploads = service.getDelayedDeliveries("dextesting", "testevent1", null)
+
+        assertEquals(1, delayedUploads.size)
+        assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first())
+    }
+
+    @Test
+    fun `return delayed deliveries days interval`() {
+        val successfulDeliveryReport = ReportDao(
+            id = "sampleId1",
+            uploadId = "uploadId1",
+            reportId = "sampleId1",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now(),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.SUCCESS)
+        )
+        val newUndeliveredReport = ReportDao(
+            id = "sampleId2",
+            uploadId = "uploadId2",
+            reportId = "sampleId2",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now(),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+        )
+        val oldUndeliveredReport = ReportDao(
+            id = "sampleId3",
+            uploadId = "uploadId3",
+            reportId = "sampleId3",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now().minusSeconds(4000),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now().minusSeconds(4000),
+            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+        )
+        val reallyOldUndeliveredReport = ReportDao(
+            id = "sampleId3",
+            uploadId = "uploadId3",
+            reportId = "sampleId3",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now().minusSeconds(172800),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now().minusSeconds(172800),
+            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+        )
+
+        listOf(successfulDeliveryReport, newUndeliveredReport, oldUndeliveredReport).forEach {
+            repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
+        }
+
+        val delayedUploads = service.getDelayedDeliveries("dextesting", "testevent1", 1)
 
         assertEquals(1, delayedUploads.size)
         assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first())

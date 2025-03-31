@@ -60,8 +60,8 @@ class DataStreamTopErrorsNotificationWorkflowImpl
             // Logic to check if the upload occurred*/
             val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", di)
             val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", di)
-            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, daysInterval)
-            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute)
+            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, di)
+            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, di)
             val body = formatEmailBody(
                 dataStreamId,
                 dataStreamRoute,
