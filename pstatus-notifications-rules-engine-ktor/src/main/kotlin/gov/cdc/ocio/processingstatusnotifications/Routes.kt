@@ -9,6 +9,7 @@ import gov.cdc.ocio.processingstatusnotifications.model.WebhookSubscription
 import gov.cdc.ocio.processingstatusnotifications.notifications.UnsubscribeNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeEmailNotifications
 import gov.cdc.ocio.processingstatusnotifications.notifications.SubscribeWebhookNotifications
+import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.types.health.HealthStatusType
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,6 +18,27 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.*
 
+
+/**
+ * Route to get list of subscriptions
+ */
+fun Route.notificationSubscriptionsRoute() {
+    get("/subscriptions") {
+        val result = SubscriptionManager().getSubscriptions()
+        call.respond(result)
+    }
+}
+
+/**
+ * Route to get a subscription by its id
+ */
+fun Route.notificationSubscriptionRoute() {
+    get("/subscription/{id}") {
+        call.parameters["id"]?.let {
+            call.respond(SubscriptionManager().getSubscription(it))
+        } ?: call.respond(HttpStatusCode.BadRequest, "Missing subscription ID")
+    }
+}
 
 /**
  * Route to subscribe for email notifications

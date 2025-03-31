@@ -4,13 +4,13 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.messagesystem.MessageProcessorInterface
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.exception.ContentException
-import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
-import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import gov.cdc.ocio.processingstatusnotifications.rulesEngine.RuleEngine
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.model.Status
 import mu.KotlinLogging
 import java.time.Instant
 

@@ -11,11 +11,12 @@ class EmailNotificationAction(
 ) : NotificationAction {
 
     /**
-     * For emails, the payload should be a string containing HTML.
+     * For emails, the payload should be [EmailContent].
+     *
      * @param payload Any
      */
     override fun doNotify(payload: Any) {
-        if (payload !is EmailPayload) throw BadRequestException("Email payload is not in the expected format")
+        if (payload !is EmailContent) throw BadRequestException("Email payload is not in the expected format")
 
         val toEmail = emailNotification.emailAddresses.joinToString(",")
         val props = System.getProperties()
@@ -27,7 +28,7 @@ class EmailNotificationAction(
             session,
             toEmail,
             payload.emailSubject,
-            payload.htmlBody
+            payload.toHtml()
         )
     }
 }

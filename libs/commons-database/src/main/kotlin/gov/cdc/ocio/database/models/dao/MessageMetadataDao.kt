@@ -1,7 +1,7 @@
 package gov.cdc.ocio.database.models.dao
 
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.database.models.Aggregation
+import gov.cdc.ocio.types.model.Aggregation
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 
 

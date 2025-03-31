@@ -48,7 +48,7 @@ class ServiceConnection(
      * @param path String
      * @return String
      */
-    fun getUrl(path: String): String {
+    fun buildUrl(path: String): String {
         if (serviceUrl.isNullOrBlank())
             throw Exception(unspecifiedUrl)
 

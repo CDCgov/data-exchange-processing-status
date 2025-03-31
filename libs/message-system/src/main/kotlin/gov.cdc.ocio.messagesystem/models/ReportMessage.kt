@@ -1,13 +1,11 @@
-package gov.cdc.ocio.processingstatusapi.models
+package gov.cdc.ocio.messagesystem.models
 
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.messagesystem.models.MessageBase
-import gov.cdc.ocio.messagesystem.models.Source
 import java.time.Instant
 
 
 /**
- * Create a report service bus message.
+ * Report message definition.
  *
  * @property uploadId String?
  * @property dataStreamId String?
@@ -23,7 +21,7 @@ import java.time.Instant
  * @property contentType String?
  * @property content Any?
  */
-class CreateReportMessage: MessageBase() {
+class ReportMessage: MessageBase() {
 
     @SerializedName("report_schema_version")
     var reportSchemaVersion: String? = null

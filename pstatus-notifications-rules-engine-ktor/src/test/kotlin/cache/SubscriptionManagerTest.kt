@@ -46,13 +46,13 @@ class SubscriptionManagerTest {
     @Test(description = "This test asserts true for generating two unique subscriptionIds for same user")
     fun testAddingSameNotificationPreferencesSuccess() {
         val subscriptionId1 = subscriptionManager.upsertSubscription(
-            "destination1","dataStreamRoute1",
-            "jurisdiction1","stageInfo.status == Status.SUCCESS",
+            "destination1","dataStreamRoute1", "jurisdiction1",
+            "Some rule 1", "stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
         val subscriptionId2 = subscriptionManager.upsertSubscription(
-            "destination1","dataStreamRoute1",
-            "jurisdiction1","stageInfo.status == Status.SUCCESS",
+            "destination1","dataStreamRoute1", "jurisdiction1",
+            "Some rule 1", "stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
         Assert.assertEquals(subscriptionId1, subscriptionId2)
@@ -61,13 +61,13 @@ class SubscriptionManagerTest {
     @Test(description = "This test asserts true for generating two unique subscriptionIds for different set of rules for same user")
     fun testAddingDifferentNotificationPreferencesSuccess() {
         val subscriptionId1 = subscriptionManager.upsertSubscription(
-            "destination2","dataStreamRoute1",
-            "jurisdiction1","stageInfo.status == Status.SUCCESS",
+            "destination2","dataStreamRoute1", "jurisdiction1",
+            "Some rule 2", "stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
         val subscriptionId2 = subscriptionManager.upsertSubscription(
-            "destination2","dataStreamRoute1",
-            "jurisdiction1","stageInfo.status == Status.FAILURE",
+            "destination2","dataStreamRoute1", "jurisdiction1",
+            "Some rule 2", "stageInfo.status == Status.FAILURE",
             WebhookNotification("http://somewebhook.com")
         )
         Assert.assertNotEquals(subscriptionId1, subscriptionId2)
@@ -76,8 +76,8 @@ class SubscriptionManagerTest {
     @Test(description = "This test asserts true for unsubscribing existing susbcription")
     fun testUnsubscribingSubscriptionSuccess() {
         val subscriptionId = subscriptionManager.upsertSubscription(
-            "destination3","dataStreamRoute2",
-            "jurisdiction2","stageInfo.status == Status.SUCCESS",
+            "destination3","dataStreamRoute2", "jurisdiction2",
+            "Some rule 3", "stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
 
@@ -94,8 +94,8 @@ class SubscriptionManagerTest {
     )
     fun testUnsubscribingSubscriptionException() {
         val subscriptionId = subscriptionManager.upsertSubscription(
-            "destination4","dataStreamRoute2",
-            "jurisdiction2","stageInfo.status == Status.SUCCESS",
+            "destination4","dataStreamRoute2", "jurisdiction2",
+            "Some rule 4", "stageInfo.status == Status.SUCCESS",
             WebhookNotification("http://somewebhook.com")
         )
         // Remove subscription first

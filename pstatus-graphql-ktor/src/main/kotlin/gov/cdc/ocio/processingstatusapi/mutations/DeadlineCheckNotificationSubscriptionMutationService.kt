@@ -67,7 +67,7 @@ class DeadlineCheckSubscriptionMutationService(
         cronSchedule: String,
         emailAddresses: List<String>
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/subscribe/deadlineCheck")
+        val url = workflowServiceConnection.buildUrl("/subscribe/deadlineCheck")
 
         return runBlocking {
             val result = runCatching {
@@ -105,7 +105,7 @@ class DeadlineCheckSubscriptionMutationService(
     fun unsubscribeDeadlineCheck(
         subscriptionId: String
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/unsubscribe/deadlineCheck")
+        val url = workflowServiceConnection.buildUrl("/unsubscribe/deadlineCheck")
 
         return runBlocking {
             try {

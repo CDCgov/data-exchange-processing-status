@@ -21,6 +21,7 @@ import kotlinx.serialization.Serializable
  * @property dataStreamId String
  * @property dataStreamRoute String
  * @property jurisdiction String?
+ * @property ruleDescription String?
  * @property mvelCondition String
  * @property emailAddresses List<String>
  * @constructor
@@ -30,6 +31,7 @@ data class EmailSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
     val jurisdiction: String?,
+    val ruleDescription: String?,
     val mvelCondition: String,
     val emailAddresses: List<String>
 )
@@ -40,6 +42,7 @@ data class EmailSubscription(
  * @property dataStreamId String
  * @property dataStreamRoute String
  * @property jurisdiction String?
+ * @property ruleDescription String?
  * @property mvelCondition String
  * @property webhookUrl String
  * @constructor
@@ -49,6 +52,7 @@ data class WebhookSubscription(
     val dataStreamId: String,
     val dataStreamRoute: String,
     val jurisdiction: String?,
+    val ruleDescription: String?,
     val mvelCondition: String,
     val webhookUrl: String
 )
@@ -95,6 +99,7 @@ class NotificationsRulesEngineMutationService(
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String?
+     * @param ruleDescription String?
      * @param mvelCondition String
      * @param emailAddresses List<String>
      * @return SubscriptionResult
@@ -105,16 +110,24 @@ class NotificationsRulesEngineMutationService(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String?,
+        ruleDescription: String?,
         mvelCondition: String,
         emailAddresses: List<String>
     ): SubscriptionResult {
-        val url = rulesEngineServiceConnection.getUrl("/subscribe/email")
+        val url = rulesEngineServiceConnection.buildUrl("/subscribe/email")
 
         return runBlocking {
             val result = runCatching {
                 val response = rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(EmailSubscription(dataStreamId, dataStreamRoute, jurisdiction, mvelCondition, emailAddresses))
+                    setBody(EmailSubscription(
+                        dataStreamId,
+                        dataStreamRoute,
+                        jurisdiction,
+                        ruleDescription,
+                        mvelCondition,
+                        emailAddresses)
+                    )
                 }
                 return@runCatching processResponse(response)
             }
@@ -135,6 +148,7 @@ class NotificationsRulesEngineMutationService(
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param jurisdiction String?
+     * @param ruleDescription String?
      * @param mvelCondition String
      * @param webhookUrl String
      * @return SubscriptionResult
@@ -145,16 +159,24 @@ class NotificationsRulesEngineMutationService(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String?,
+        ruleDescription: String?,
         mvelCondition: String,
         webhookUrl: String
     ): SubscriptionResult {
-        val url = rulesEngineServiceConnection.getUrl("/subscribe/webhook")
+        val url = rulesEngineServiceConnection.buildUrl("/subscribe/webhook")
 
         return runBlocking {
             try {
                 val response = rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(WebhookSubscription(dataStreamId, dataStreamRoute, jurisdiction, mvelCondition, webhookUrl))
+                    setBody(WebhookSubscription(
+                        dataStreamId,
+                        dataStreamRoute,
+                        jurisdiction,
+                        ruleDescription,
+                        mvelCondition,
+                        webhookUrl)
+                    )
                 }
                 return@runBlocking processResponse(response)
             } catch (e: Exception) {
@@ -175,7 +197,7 @@ class NotificationsRulesEngineMutationService(
     @GraphQLDescription("Unsubscribe Notifications")
     @Suppress("unused")
     fun unsubscribe(subscriptionId: String): SubscriptionResult {
-        val url = rulesEngineServiceConnection.getUrl("/unsubscribe")
+        val url = rulesEngineServiceConnection.buildUrl("/unsubscribe")
 
         return runBlocking {
             try {

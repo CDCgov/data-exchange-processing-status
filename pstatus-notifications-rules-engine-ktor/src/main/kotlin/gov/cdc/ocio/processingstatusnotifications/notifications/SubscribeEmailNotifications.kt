@@ -25,6 +25,7 @@ class SubscribeEmailNotifications {
         val dataStreamId = subscription.dataStreamId
         val dataStreamRoute = subscription.dataStreamRoute
         val jurisdiction = subscription.jurisdiction
+        val ruleDescription = subscription.ruleDescription
         val mvelCondition = subscription.mvelCondition
         val emailAddresses = subscription.emailAddresses
 
@@ -56,6 +57,7 @@ class SubscribeEmailNotifications {
                 dataStreamId,
                 dataStreamRoute,
                 jurisdiction,
+                ruleDescription,
                 mvelCondition,
                 EmailNotification(emailAddresses)
             ),

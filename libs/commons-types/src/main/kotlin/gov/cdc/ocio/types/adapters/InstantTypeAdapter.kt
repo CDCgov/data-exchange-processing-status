@@ -3,15 +3,19 @@ package gov.cdc.ocio.types.adapters
 import com.google.gson.*
 import java.lang.reflect.Type
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 
 /**
  * Instant type adaptor used by gson
  */
-class InstantTypeAdapter :
+class InstantTypeAdapter(private val asEpoch: Boolean = true) :
     JsonSerializer<Instant?>,
     JsonDeserializer<Instant?>
 {
+    private val formatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC)
+
     /**
      * Serialize implementation for the Instant type.
      *
@@ -21,7 +25,10 @@ class InstantTypeAdapter :
      * @return JsonElement
      */
     override fun serialize(date: Instant?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-        return JsonPrimitive(date?.toEpochMilli())
+        return when (asEpoch) {
+            true -> JsonPrimitive(date?.toEpochMilli())
+            false -> JsonPrimitive(date?.let { formatter.format(it) })
+        }
     }
 
     /**

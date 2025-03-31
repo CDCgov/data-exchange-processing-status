@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusnotifications.model.report
+package gov.cdc.ocio.types.model
 
 import com.google.gson.annotations.SerializedName
 
