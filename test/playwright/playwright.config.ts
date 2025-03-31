@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
+
 export default defineConfig({
   // Look for test files in the "tests" directory, relative to this configuration file.
   testDir: 'tests',
@@ -29,9 +30,9 @@ export default defineConfig({
   // Configure projects for major browsers.
   projects: [
     {
-      name: 'GQL-Local',
+      name: 'GQL',
           use: { 
-          baseURL: 'http://127.0.0.1:8090/graphql'
+            baseURL: process.env.BASEURL
       },
     },
   ],
