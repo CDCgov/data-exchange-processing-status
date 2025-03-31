@@ -94,8 +94,9 @@ class ReportServiceTest : KoinTest {
             timestamp = Instant.now(),
             stageInfo = StageInfoDao(action = "metadata-verify", status = Status.SUCCESS)
         )
-        repository.reportsCollection.createItem(failedMetadataVerifyReport.id!!, failedMetadataVerifyReport, ReportDao::class.java, null)
-        repository.reportsCollection.createItem(successfulMetadataVerifyReport.id!!, successfulMetadataVerifyReport, ReportDao::class.java, null)
+        listOf(failedMetadataVerifyReport, successfulMetadataVerifyReport).forEach {
+            repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
+        }
 
         val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify")
         assertEquals(1, failedMetadataVerifyCount)
@@ -167,14 +168,57 @@ class ReportServiceTest : KoinTest {
             timestamp = Instant.now(),
             stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
         )
-        repository.reportsCollection.createItem(newUploadStartedReport.id!!, newUploadStartedReport, ReportDao::class.java, null)
-        repository.reportsCollection.createItem(oldUploadStartedReport.id!!, oldUploadStartedReport, ReportDao::class.java, null)
-        repository.reportsCollection.createItem(oldUploadStartedCompleteReport.id!!, oldUploadStartedCompleteReport, ReportDao::class.java, null)
-        repository.reportsCollection.createItem(oldUploadCompletedReport.id!!, oldUploadCompletedReport, ReportDao::class.java, null)
+        listOf(newUploadStartedReport, oldUploadStartedCompleteReport, oldUploadCompletedReport, oldUploadStartedReport).forEach {
+            repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
+        }
 
         val delayedUploads = service.getDelayedUploads("dextesting", "testevent1")
 
         assertEquals(1, delayedUploads.size)
         assertEquals(delayedUploads.first(), oldUploadStartedReport.uploadId)
+    }
+
+    @Test
+    fun `returns failed deliveries`() {
+        val failedDeliveryReport = ReportDao(
+            id = "sampleId1",
+            uploadId = "uploadId1",
+            reportId = "sampleId1",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now(),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.FAILURE)
+        )
+        val successfulDeliveryReport = ReportDao(
+            id = "sampleId1",
+            uploadId = "uploadId1",
+            reportId = "sampleId1",
+            dataStreamId = "dextesting",
+            dataStreamRoute = "testevent1",
+            dexIngestDateTime = Instant.now(),
+            tags = mapOf("tag1" to "value1", "tag2" to "value2"),
+            data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
+            contentType = "application/json",
+            jurisdiction = "jurisdictionXYZ",
+            senderId = "sender123",
+            dataProducerId="dataProducer123",
+            timestamp = Instant.now(),
+            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.FAILURE)
+        )
+
+        listOf(failedDeliveryReport, successfulDeliveryReport).forEach {
+            repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
+        }
+
+        val failedDeliveryCount = service.countFailedReports("dextesting", "testevent1", "blob-file-copy")
+
+        assertEquals(1, failedDeliveryCount)
     }
 }

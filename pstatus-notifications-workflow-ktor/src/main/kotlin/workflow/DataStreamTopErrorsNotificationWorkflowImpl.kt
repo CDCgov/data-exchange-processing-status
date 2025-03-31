@@ -73,9 +73,10 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         try {
             // Logic to check if the upload occurred*/
             val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify")
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy")
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute)
-            val body = formatEmailBody(dataStreamId, dataStreamRoute, failedMetadataVerifyCount, delayedUploads, delayedDeliveries)
+            val body = formatEmailBody(dataStreamId, dataStreamRoute, failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)
             activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
@@ -86,6 +87,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         dataStreamId: String,
         dataStreamRoute: String,
         failedMetadataValidationCount: Int,
+        failedDeliveryCount: Int,
         delayedUploads: List<String>,
         delayedDeliveries: List<String>
     ): String {
@@ -94,9 +96,10 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                 body {
                     h2 { +"$dataStreamId $dataStreamRoute Upload Issues" }
                     br {  }
-                    h3 { +"Total: ${failedMetadataValidationCount + delayedUploads.size + delayedDeliveries.size }" }
+                    h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size }" }
                     ul {
-                        li { +"Metadata Validation: $failedMetadataValidationCount" }
+                        li { +"Failed Metadata Validation: $failedMetadataValidationCount" }
+                        li { +"Failed Deliveries: $failedDeliveryCount" }
                         li { +"Delayed Uploads: ${delayedUploads.size}" }
                         li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
                     }
