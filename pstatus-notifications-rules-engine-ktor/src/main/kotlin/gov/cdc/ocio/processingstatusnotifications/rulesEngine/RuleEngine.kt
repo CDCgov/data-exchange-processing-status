@@ -2,12 +2,12 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
+import gov.cdc.ocio.messagesystem.models.CreateReportMessage
 import gov.cdc.ocio.processingstatusnotifications.exception.BadStateException
 import gov.cdc.ocio.processingstatusnotifications.model.*
-import gov.cdc.ocio.processingstatusnotifications.model.report.ReportMessage
-import gov.cdc.ocio.processingstatusnotifications.model.report.Status
 import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
 import gov.cdc.ocio.processingstatusnotifications.utils.ObjectMapper
+import gov.cdc.ocio.types.model.Status
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import io.ktor.util.*
@@ -44,10 +44,10 @@ object RuleEngine: KoinComponent {
     /**
      * Evaluate all subscriptions to see if a notification needs to be sent.
      *
-     * @param report ReportMessage
+     * @param report CreateReportMessage
      */
     fun evaluateAllRules(
-        report: ReportMessage
+        report: CreateReportMessage
     ) {
         val subscriptions = getSubscriptions()
         subscriptions.forEach { evaluateSubscription(report, it) }
@@ -71,7 +71,7 @@ object RuleEngine: KoinComponent {
      * @param subscriptionEntry Entry<String, Subscription>
      */
     private fun evaluateSubscription(
-        report: ReportMessage,
+        report: CreateReportMessage,
         subscriptionEntry: Map.Entry<String, Subscription>
     ) {
         val subscriptionId = subscriptionEntry.key
@@ -81,7 +81,7 @@ object RuleEngine: KoinComponent {
         val facts = Facts()
         val map = ObjectMapper.anyToMap(report)
         map.forEach {
-            facts.put(it.key, it.value)
+            it.value?.run { facts.put(it.key, it.value) }
         }
 
         facts.put("ruleAction", ruleActionLambda())
@@ -138,7 +138,7 @@ object RuleEngine: KoinComponent {
 
         val subscriptions = getSubscriptions()
         val subscription = subscriptions.entries.firstOrNull { it.key == subscriptionId }?.value
-        val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), ReportMessage::class.java)
+        val report = gson.fromJson(reportJsonBase64Encoded.decodeBase64String(), CreateReportMessage::class.java)
         val notification = subscription?.notification
         notification?.let {
             subscription.doNotify(report)

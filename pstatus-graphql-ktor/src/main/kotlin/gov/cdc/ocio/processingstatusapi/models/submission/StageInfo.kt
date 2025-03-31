@@ -77,8 +77,8 @@ data class StageInfo(
             this.action = dao?.action
             this.version = dao?.version
             this.status = when (dao?.status) {
-                gov.cdc.ocio.database.models.Status.SUCCESS -> Status.SUCCESS
-                gov.cdc.ocio.database.models.Status.FAILURE -> Status.FAILURE
+                gov.cdc.ocio.types.model.Status.SUCCESS -> Status.SUCCESS
+                gov.cdc.ocio.types.model.Status.FAILURE -> Status.FAILURE
                 else -> null
             }
             this.issues = dao?.issues?.map { Issue.fromIssueDao(it) }

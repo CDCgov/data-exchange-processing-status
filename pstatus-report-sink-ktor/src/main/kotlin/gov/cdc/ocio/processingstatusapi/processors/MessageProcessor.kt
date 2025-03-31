@@ -6,7 +6,7 @@ import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.exceptions.BadRequestException
 import gov.cdc.ocio.messagesystem.exceptions.BadStateException
 import gov.cdc.ocio.messagesystem.models.Source
-import gov.cdc.ocio.processingstatusapi.models.CreateReportMessage
+import gov.cdc.ocio.messagesystem.models.CreateReportMessage
 import gov.cdc.ocio.processingstatusapi.models.ValidationComponents
 import gov.cdc.ocio.processingstatusapi.models.MessageProcessorConfig
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation

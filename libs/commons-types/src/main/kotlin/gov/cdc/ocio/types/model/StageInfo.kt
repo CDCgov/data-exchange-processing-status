@@ -1,4 +1,4 @@
-package gov.cdc.ocio.database.models
+package gov.cdc.ocio.types.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName

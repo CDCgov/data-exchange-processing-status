@@ -1,8 +1,6 @@
-package gov.cdc.ocio.processingstatusapi.models
+package gov.cdc.ocio.messagesystem.models
 
 import com.google.gson.annotations.SerializedName
-import gov.cdc.ocio.messagesystem.models.MessageBase
-import gov.cdc.ocio.messagesystem.models.Source
 import java.time.Instant
 
 
