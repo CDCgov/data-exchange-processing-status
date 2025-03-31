@@ -8,6 +8,17 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Instant
 
+/**
+ * Singleton class for a service layer between the middleware and repository layers.
+ *
+ * @property repository ProcessingStatusRepository
+ * @property cName String
+ * @property cVar String
+ * @property cPrefix String
+ * @property cElFunc String
+ * @property timeFunc Long -> String
+ * @property oneHourAgo Long
+ */
 class ReportService: KoinComponent {
     private val repository by inject<ProcessingStatusRepository>()
     private val cName = repository.reportsCollection.collectionNameForQuery
@@ -16,8 +27,14 @@ class ReportService: KoinComponent {
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
     private val timeFunc = repository.reportsCollection.timeConversionForQuery
     private val oneHourAgo = Instant.now().minusSeconds(3600).epochSecond
-    private val logger = KotlinLogging.logger {}
 
+    /**
+     * Query the reports collection for number of failed reports of a given action.
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param action String
+     * @param daysInterval Int?
+     */
     fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: String, daysInterval: Int?): Int {
         val query = "select value count(1) from $cName $cVar " +
                 "where ${cPrefix}stageInfo.${cElFunc("status")} = 'FAILURE' " +
@@ -28,6 +45,12 @@ class ReportService: KoinComponent {
         return repository.reportsCollection.queryItems(appendTimeRange(query, daysInterval), Int::class.java).firstOrNull() ?: 0
     }
 
+    /**
+     * Query the reports collection for in progress uploads that started at least an hour ago.
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param daysInterval Int?
+     */
     fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<String> {
         // first, get uploads that have upload-started reports older than 1 hour
         val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
@@ -53,6 +76,12 @@ class ReportService: KoinComponent {
         return (uploadsStarted - uploadsCompleted).toList()
     }
 
+    /**
+     * Query the reports collection for uploads that have completed but have not been delivered for at least an hour.
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param daysInterval Int?
+     */
     fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<String> {
         // first, get completed uploads older than 1 hour
         val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
@@ -78,6 +107,11 @@ class ReportService: KoinComponent {
         return (uploadsCompleted - uploadsDelivered).toList()
     }
 
+    /**
+     * Helper function for appending the time range to a sql++ query.
+     * @param query String
+     * @param daysInterval Int?
+     */
     private fun appendTimeRange(query: String, daysInterval: Int?): String {
         if (daysInterval != null) {
             return "$query and ${SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
