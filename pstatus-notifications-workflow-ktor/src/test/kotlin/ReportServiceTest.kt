@@ -18,18 +18,22 @@ import java.time.Instant
 import kotlin.test.assertEquals
 
 class ReportServiceTest : KoinTest {
-    val testModule = module {
+    private val testModule = module {
+        val dbUrl = System.getenv("COUCHBASE_CONNECTION_STRING") ?: "couchbase://localhost"
+        val dbUsername = System.getenv("COUCHBASE_USERNAME") ?: "admin"
+        val dbPassword = System.getenv("COUCHBASE_PASSWORD") ?: "password"
+
         single { ReportService() }
         single<ProcessingStatusRepository> { CouchbaseRepository(
-            "couchbase://localhost",
-            "admin",
-            "password",
+            dbUrl,
+            dbUsername,
+            dbPassword,
             reportsCollectionName = "TestReports"
         ) }
-        single { CouchbaseConfiguration("couchbase://localhost", "admin", "password") }
+        single { CouchbaseConfiguration(dbUrl, dbUsername, dbPassword) }
     }
-    val repository by inject<ProcessingStatusRepository>()
-    val service by inject<ReportService>()
+    private val repository by inject<ProcessingStatusRepository>()
+    private val service by inject<ReportService>()
 
     @get:Rule
     val koinTestRule = KoinTestRule.create {
