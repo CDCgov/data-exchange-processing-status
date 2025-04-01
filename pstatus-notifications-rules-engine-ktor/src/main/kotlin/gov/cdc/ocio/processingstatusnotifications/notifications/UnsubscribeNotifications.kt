@@ -24,7 +24,7 @@ class UnsubscribeNotifications {
      * @param subscriptionId String
      */
     fun run(subscriptionId: String): SubscriptionResult {
-        logger.debug { "SubscriptionId $subscriptionId" }
+        logger.debug { "Received request to unsubscribe from subscriptionId $subscriptionId" }
 
         val result = SubscriptionResult().apply {
             this.subscriptionId = subscriptionId
