@@ -67,14 +67,9 @@ dependencies {
     implementation ("com.cronutils:cron-utils:9.2.1")
     implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion")
 
-//    testImplementation(kotlin("test"))
     testImplementation("io.insert-koin:koin-test:3.5.6")
     testImplementation("io.insert-koin:koin-test-junit4:3.5.6")
 }
-
-//tasks.test {
-//    useJUnitPlatform()
-//}
 
 kotlin {
     jvmToolchain(17)

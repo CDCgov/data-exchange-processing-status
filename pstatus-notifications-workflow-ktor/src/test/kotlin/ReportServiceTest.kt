@@ -9,6 +9,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
@@ -17,6 +18,9 @@ import org.koin.test.inject
 import java.time.Instant
 import kotlin.test.assertEquals
 
+interface IntegrationTest
+
+@Category(IntegrationTest::class)
 class ReportServiceTest : KoinTest {
     private val ds = "dextesting"
     private val r = "testevent1"
