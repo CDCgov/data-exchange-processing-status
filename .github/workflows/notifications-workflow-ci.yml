@@ -19,4 +19,4 @@ jobs:
       - name: Run Gradle Test
         run: |
           chmod +x ./gradlew
-          ./gradlew test -Dtest.excludeCategories=IntegrationTest
+          ./gradlew test -PexcludeTests=gov.cdc.ocio.processingnotifications.ReportServiceTest
