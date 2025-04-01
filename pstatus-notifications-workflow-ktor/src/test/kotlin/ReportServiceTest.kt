@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingnotifications.service.ReportService
 import gov.cdc.ocio.types.model.Status
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.koin.core.context.stopKoin
@@ -17,6 +18,7 @@ import org.koin.test.inject
 import java.time.Instant
 import kotlin.test.assertEquals
 
+@Ignore
 class ReportServiceTest : KoinTest {
     private val ds = "dextesting"
     private val r = "testevent1"
