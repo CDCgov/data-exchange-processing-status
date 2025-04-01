@@ -18,6 +18,9 @@ import java.time.Instant
 import kotlin.test.assertEquals
 
 class ReportServiceTest : KoinTest {
+    private val ds = "dextesting"
+    private val r = "testevent1"
+    private val testCollection = "TestReports"
     private val testModule = module {
         val dbUrl = System.getenv("COUCHBASE_CONNECTION_STRING") ?: "couchbase://localhost"
         val dbUsername = System.getenv("COUCHBASE_USERNAME") ?: "admin"
@@ -28,12 +31,13 @@ class ReportServiceTest : KoinTest {
             dbUrl,
             dbUsername,
             dbPassword,
-            reportsCollectionName = "TestReports"
+            reportsCollectionName = testCollection
         ) }
         single { CouchbaseConfiguration(dbUrl, dbUsername, dbPassword) }
     }
     private val repository by inject<ProcessingStatusRepository>()
     private val service by inject<ReportService>()
+
 
     @get:Rule
     val koinTestRule = KoinTestRule.create {
@@ -43,21 +47,21 @@ class ReportServiceTest : KoinTest {
 
     @Before
     fun init() {
-        repository.createCollection("TestReports")
+        repository.createCollection(testCollection)
         Thread.sleep(500) // shouldn't have to do this, but seeing inconsistent behavior without it
     }
 
     @After
     fun cleanup() {
-        repository.deleteCollection("TestReports")
+        repository.deleteCollection(testCollection)
         stopKoin()
     }
 
     @Test
     fun `returns zero failures when database is empty`() {
-        val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify", null)
-        val delayedUploads = service.getDelayedUploads("dextesting", "testevent1", null)
-        val delayedDeliveries = service.getDelayedDeliveries("dextesting", "testevent1", null)
+        val failedMetadataVerifyCount = service.countFailedReports(ds, r, "metadata-verify", null)
+        val delayedUploads = service.getDelayedUploads(ds, r, null)
+        val delayedDeliveries = service.getDelayedDeliveries(ds, r, null)
 
         assertEquals(0, failedMetadataVerifyCount)
         assertEquals(0, delayedUploads.size)
@@ -70,8 +74,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -86,8 +90,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId2",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -102,7 +106,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify", null)
+        val failedMetadataVerifyCount = service.countFailedReports(ds, r, "metadata-verify", null)
         assertEquals(1, failedMetadataVerifyCount)
     }
 
@@ -113,8 +117,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = twoDaysAgo,
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -129,8 +133,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -146,7 +150,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val failedMetadataVerifyCount = service.countFailedReports("dextesting", "testevent1", "metadata-verify", 1)
+        val failedMetadataVerifyCount = service.countFailedReports(ds, r, "metadata-verify", 1)
         assertEquals(1, failedMetadataVerifyCount)
     }
 
@@ -156,8 +160,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -172,8 +176,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId2",
             uploadId = "uploadId2",
             reportId = "sampleId2",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -188,8 +192,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId3",
             uploadId = "uploadId3",
             reportId = "sampleId3",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -204,8 +208,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId4",
             uploadId = "uploadId3",
             reportId = "sampleId4",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -220,7 +224,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val delayedUploads = service.getDelayedUploads("dextesting", "testevent1", null)
+        val delayedUploads = service.getDelayedUploads(ds, r, null)
 
         assertEquals(1, delayedUploads.size)
         assertEquals(delayedUploads.first(), oldUploadStartedReport.uploadId)
@@ -233,8 +237,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -249,8 +253,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId2",
             uploadId = "uploadId2",
             reportId = "sampleId2",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(4000), // a little more than an hour old
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -265,8 +269,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId2",
             uploadId = "uploadId2",
             reportId = "sampleId2",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = twoDaysAgo,
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -282,7 +286,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val delayedUploads = service.getDelayedUploads("dextesting", "testevent1", 1)
+        val delayedUploads = service.getDelayedUploads(ds, r, 1)
 
         assertEquals(1, delayedUploads.size)
         assertEquals(delayedUploads.first(), oldUploadStartedReport.uploadId)
@@ -294,8 +298,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -310,8 +314,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -327,7 +331,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val failedDeliveryCount = service.countFailedReports("dextesting", "testevent1", "blob-file-copy", null)
+        val failedDeliveryCount = service.countFailedReports(ds, r, "blob-file-copy", null)
 
         assertEquals(1, failedDeliveryCount)
     }
@@ -338,8 +342,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -354,8 +358,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId2",
             uploadId = "uploadId2",
             reportId = "sampleId2",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -370,8 +374,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId3",
             uploadId = "uploadId3",
             reportId = "sampleId3",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(4000),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -387,7 +391,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val delayedUploads = service.getDelayedDeliveries("dextesting", "testevent1", null)
+        val delayedUploads = service.getDelayedDeliveries(ds, r, null)
 
         assertEquals(1, delayedUploads.size)
         assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first())
@@ -399,8 +403,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId1",
             uploadId = "uploadId1",
             reportId = "sampleId1",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -415,8 +419,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId2",
             uploadId = "uploadId2",
             reportId = "sampleId2",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now(),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -431,8 +435,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId3",
             uploadId = "uploadId3",
             reportId = "sampleId3",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(4000),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -447,8 +451,8 @@ class ReportServiceTest : KoinTest {
             id = "sampleId3",
             uploadId = "uploadId3",
             reportId = "sampleId3",
-            dataStreamId = "dextesting",
-            dataStreamRoute = "testevent1",
+            dataStreamId = ds,
+            dataStreamRoute = r,
             dexIngestDateTime = Instant.now().minusSeconds(172800),
             tags = mapOf("tag1" to "value1", "tag2" to "value2"),
             data = mapOf("dataKey1" to "dataValue1", "dataKey2" to "dataValue2"),
@@ -464,7 +468,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val delayedUploads = service.getDelayedDeliveries("dextesting", "testevent1", 1)
+        val delayedUploads = service.getDelayedDeliveries(ds, r, 1)
 
         assertEquals(1, delayedUploads.size)
         assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first())
