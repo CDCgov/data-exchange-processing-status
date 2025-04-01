@@ -26,18 +26,17 @@ class UnsubscribeNotifications {
     fun run(subscriptionId: String): SubscriptionResult {
         logger.debug { "SubscriptionId $subscriptionId" }
 
-        val result = SubscriptionResult()
-        val unsubscribeSuccessful = unsubscribeNotifications(subscriptionId)
-        if (subscriptionId.isNotBlank() && unsubscribeSuccessful) {
-            result.subscriptionId = subscriptionId
-            result.timestamp = Instant.now().epochSecond
-            result.status = false
-            result.message = "UnSubscription successful"
+        val result = SubscriptionResult().apply {
+            this.subscriptionId = subscriptionId
+            this.timestamp = Instant.now().epochSecond
+        }
+        if (subscriptionId.isNotBlank() && unsubscribeNotifications(subscriptionId)) {
+            result.status = true
+            result.message = "Successfully unsubscribed"
 
         } else {
             result.status = false
-            result.message = "UnSubscription unsuccessful"
-
+            result.message = "Failed to unsubscribe"
         }
         return result
     }
