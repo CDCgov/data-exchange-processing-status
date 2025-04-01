@@ -129,7 +129,6 @@ test.describe('GraphQL getReports', () => {
             action: "create",
             report: uploadWithMessageMetadata
         })
-        console.log(createReportResult)
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
         const reportResult = await gql.getReports({
@@ -181,7 +180,6 @@ test.describe('GraphQL getReports', () => {
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReportStart)
         });
-        console.log("Ascending report: ", reportResult.getReports)
 
         validateContentInfo(reportResult.getReports[0], uploadReportStart)
         validateContentInfo(reportResult.getReports[1], uploadReportStatus)
@@ -220,8 +218,6 @@ test.describe('GraphQL getReports', () => {
         await reportResult.getReports.forEach(report => {
             validateBasicFields(report, uploadReportStart)
         });
-
-        console.log("Descending report: ", reportResult.getReports)
 
         validateContentInfo(reportResult.getReports[0], uploadReportComplete)
         validateContentInfo(reportResult.getReports[2], uploadReportStart)
@@ -307,7 +303,6 @@ function validateContentInfo(report: any, uploadReport: any) {
 }
 
 function validateMessageMetadata(report: Report, uploadReport: any) {
-    console.log(report.messageMetadata)
     expect(report.messageMetadata?.aggregation).toEqual(uploadReport.message_metadata.aggregation)
     // These are currently not able to be set
     // expect(report.messageMetadata?.messageUUID).toEqual(uploadReport.message_metadata.message_uuid)
