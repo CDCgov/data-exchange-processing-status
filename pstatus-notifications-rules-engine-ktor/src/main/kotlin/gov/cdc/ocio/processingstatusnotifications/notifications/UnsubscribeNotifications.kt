@@ -16,7 +16,7 @@ class UnsubscribeNotifications {
 
     private val logger = KotlinLogging.logger {}
 
-    private val cacheService: SubscriptionManager = SubscriptionManager()
+    private val cacheService = SubscriptionManager()
 
     /**
      * The function which validates and Unsubscribes for webhook notifications.
