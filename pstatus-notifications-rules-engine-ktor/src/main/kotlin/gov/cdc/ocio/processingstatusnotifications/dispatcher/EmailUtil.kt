@@ -37,7 +37,7 @@ object EmailUtil {
             msg.setFrom(InternetAddress(replyToEmail, replyToName))
             msg.replyTo = InternetAddress.parse(replyToEmail, false)
             msg.setSubject(subject, "UTF-8")
-            msg.setText(body, "UTF-8")
+            msg.setText(body, "UTF-8", "html")
             msg.sentDate = Date()
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail, false))
             Transport.send(msg)
