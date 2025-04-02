@@ -4,7 +4,7 @@ import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.messagesystem.utils.createMessageSystemPlugin
-import gov.cdc.ocio.messagesystem.MessageProcessorConfig
+import gov.cdc.ocio.messagesystem.utils.MessageProcessorConfigKoinCreator
 import gov.cdc.ocio.processingstatusapi.processors.AWSSQSProcessor
 import gov.cdc.ocio.processingstatusapi.processors.RabbitMQProcessor
 import gov.cdc.ocio.processingstatusapi.processors.ServiceBusProcessor
@@ -12,31 +12,12 @@ import gov.cdc.ocio.processingstatusapi.processors.UnsupportedProcessor
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
-import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import org.koin.core.KoinApplication
-import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
-
-/**
- * Creates the message processor configuration from the provided application environment.
- *
- * @param environment ApplicationEnvironment
- * @return MessageProcessorConfig
- */
-private fun createMessageProcessorConfig(
-    environment: ApplicationEnvironment
-): MessageProcessorConfig {
-    val forwardValidatedReports = environment.config
-        .tryGetString("ktor.message_processor.forward_validated_reports")
-        ?.toBooleanStrictOrNull() ?: false
-    return MessageProcessorConfig(
-        forwardValidatedReports = forwardValidatedReports
-    )
-}
 
 /**
  * Load the environment configuration values
@@ -49,7 +30,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val schemaLoaderModule = SchemaLoaderKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
-    val messageProcessorConfigModule = module { single { createMessageProcessorConfig(environment) } }
+    val messageProcessorConfigModule = MessageProcessorConfigKoinCreator.moduleFromAppEnv(environment)
 
     return modules(
         listOf(
