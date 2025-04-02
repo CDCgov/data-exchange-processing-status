@@ -24,7 +24,6 @@ import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.MessageProcessorConfig
-import gov.cdc.ocio.messagesystem.models.ReportMessage
 import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
