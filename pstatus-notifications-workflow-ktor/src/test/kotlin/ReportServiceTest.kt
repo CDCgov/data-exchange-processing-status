@@ -5,20 +5,20 @@ import gov.cdc.ocio.database.models.dao.StageInfoDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import gov.cdc.ocio.types.model.Status
-import org.junit.After
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
-import org.koin.test.KoinTestRule
 import org.koin.test.inject
+import org.koin.test.junit5.KoinTestExtension
 import java.time.Instant
 import kotlin.test.assertEquals
 
-@Ignore
+@Tag("IntegrationTest")
 class ReportServiceTest : KoinTest {
     private val ds = "dextesting"
     private val r = "testevent1"
@@ -40,20 +40,20 @@ class ReportServiceTest : KoinTest {
     private val repository by inject<ProcessingStatusRepository>()
     private val service by inject<ReportService>()
 
-
-    @get:Rule
-    val koinTestRule = KoinTestRule.create {
+    @JvmField
+    @RegisterExtension
+    val koinTestExtension = KoinTestExtension.create {
         printLogger()
         modules(testModule)
     }
 
-    @Before
+    @BeforeEach
     fun init() {
         repository.createCollection(testCollection)
         Thread.sleep(500) // shouldn't have to do this, but seeing inconsistent behavior without it
     }
 
-    @After
+    @AfterEach
     fun cleanup() {
         repository.deleteCollection(testCollection)
         stopKoin()

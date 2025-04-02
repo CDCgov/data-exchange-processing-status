@@ -68,7 +68,19 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion")
 
     testImplementation("io.insert-koin:koin-test:3.5.6")
-    testImplementation("io.insert-koin:koin-test-junit4:3.5.6")
+    testImplementation("io.insert-koin:koin-test-junit5:4.0.4")
+}
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags("IntegrationTest")
+    }
+}
+
+tasks.register<Test>("integrationTest") {
+    useJUnitPlatform {
+        includeTags("IntegrationTest")
+    }
 }
 
 kotlin {
