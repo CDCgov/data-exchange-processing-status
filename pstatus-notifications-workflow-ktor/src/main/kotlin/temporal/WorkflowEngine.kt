@@ -9,7 +9,6 @@ import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.client.WorkflowClient
-import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
@@ -37,17 +36,17 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         .setTarget(temporalConfig.serviceTarget)
         .build()
 
-    private var service: WorkflowServiceStubs? = null
+    private lateinit var service: WorkflowServiceStubs
 
-    private var client: WorkflowClient? = null
+    private lateinit var client: WorkflowClient
 
-    private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
-
-    private var factory: WorkerFactory? = null
+    private lateinit var factory: WorkerFactory
 
     private val workers = mutableMapOf<String, Worker>()
 
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+    private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
 
     init {
         initializeTemporalClient()
@@ -87,10 +86,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
     ): T3 {
         CronUtils.checkValid(cronSchedule)
 
-        client ?: throw IllegalArgumentException("Workflow client is not established")
-        factory ?: throw IllegalArgumentException("Worker factory is not initialized")
-
-        val worker = factory?.newWorker(taskName)
+        val worker = factory.newWorker(taskName)
         if (worker != null) {
             worker.registerWorkflowImplementationTypes(workflowImpl)
             worker.registerActivitiesImplementations(activitiesImpl)
@@ -101,8 +97,8 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         }
 
         logger.info("Workflow and Activity successfully registered")
-        if (!factory!!.isStarted) {
-            factory!!.start()
+        if (!factory.isStarted) {
+            factory.start()
             logger.info("Worker factory started")
         }
 
@@ -112,7 +108,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             .setCronSchedule(cronSchedule) // Cron schedule: 15 5 * * 1-5 - Every week day at 5:15a
             .build()
 
-        val workflow = client!!.newWorkflowStub(
+        val workflow = client.newWorkflowStub(
             workflowImplInterface,
             workflowOptions
         )
@@ -128,7 +124,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
     fun cancelWorkflow(workflowId: String) {
         try {
             // Retrieve the workflow by its ID
-            val workflow = client?.newUntypedWorkflowStub(workflowId)
+            val workflow = client.newUntypedWorkflowStub(workflowId)
 
             // Cancel the workflow
             workflow?.cancel()
@@ -165,7 +161,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         scheduler.scheduleAtFixedRate({
             repeat(workers.keys.size) {
                 try {
-                    if (factory == null || !factory!!.isStarted) {
+                    if (!factory.isStarted) {
                         logger.warn("Worker factory is not running. Restarting workers...")
                         restartWorkers()
                     }
@@ -182,11 +178,11 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
     private fun restartWorkers() {
         initializeTemporalClient()
         workers.forEach { (taskName, _) ->
-            factory!!.newWorker(taskName)
+            factory.newWorker(taskName)
             logger.info("Restarting worker for task queue: $taskName")
         }
 
-        factory!!.start()
+        factory.start()
         logger.info("Worker factory restarted")
     }
 
@@ -195,8 +191,8 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
      */
     fun shutdown() {
         logger.info("Shutting down Temporal workers...")
-        factory?.shutdown()
-        service?.shutdown()
+        factory.shutdown()
+        service.shutdown()
         scheduler.shutdown()
     }
 
@@ -217,7 +213,7 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             .build()
 
         // Fetch workflows
-        val response = service?.blockingStub()?.listWorkflowExecutions(request)
+        val response = service.blockingStub()?.listWorkflowExecutions(request)
 
         val results = response?.executionsList?.map { executionInfo ->
             // Log workflow executions
@@ -265,11 +261,11 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
             return null
 
         val req = GetWorkflowExecutionHistoryRequest.newBuilder()
-            .setNamespace(client?.options?.namespace)
+            .setNamespace(client.options?.namespace)
             .setExecution(wfExecInfo.execution)
             .build()
 
-        val res = service?.blockingStub()?.getWorkflowExecutionHistory(req)
+        val res = service.blockingStub()?.getWorkflowExecutionHistory(req)
 
         val firstHistoryEvent = res?.history?.eventsList?.get(0)
 
