@@ -1,6 +1,8 @@
 package gov.cdc.ocio.processingstatusapi
 
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.messagesystem.utils.MessageProcessorConfigKoinCreator
+import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
@@ -15,11 +17,29 @@ import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
 
 
+/**
+ * Load the environment configuration values
+ *
+ * @receiver KoinApplication
+ * @param environment ApplicationEnvironment
+ * @return KoinApplication
+ */
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val schemaLoaderModule = SchemaLoaderKoinCreator.moduleFromAppEnv(environment)
     val schemaSecurityConfig = SchemaSecurityConfigKoinCreator.moduleFromAppEnv(environment)
-    return modules(listOf(databaseModule, schemaLoaderModule, schemaSecurityConfig))
+    val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
+    val messageProcessorConfigModule = MessageProcessorConfigKoinCreator.moduleFromAppEnv(environment)
+
+    return modules(
+        listOf(
+            databaseModule,
+            schemaLoaderModule,
+            schemaSecurityConfig,
+            messageSystemModule,
+            messageProcessorConfigModule
+        )
+    )
 }
 
 fun main(args: Array<String>) {

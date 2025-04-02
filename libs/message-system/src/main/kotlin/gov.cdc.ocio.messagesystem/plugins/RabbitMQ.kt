@@ -48,7 +48,11 @@ val RabbitMQPlugin = createApplicationPlugin(
 
                     val message = String(body, Charsets.UTF_8)
                     logger.info("Message received from RabbitMQ queue $queueName with routingKey $routingKey.")
-                    rabbitMQProcessor.processMessage(message)
+                    runCatching {
+                        rabbitMQProcessor.processMessage(message)
+                    }.onFailure {
+                        logger.error { "Failed to process the incoming message: ${it.localizedMessage}"}
+                    }
 
                     // Acknowledge the message
                     channel.basicAck(deliveryTag, false)
