@@ -87,14 +87,12 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
         CronUtils.checkValid(cronSchedule)
 
         val worker = factory.newWorker(taskName)
-        if (worker != null) {
-            worker.registerWorkflowImplementationTypes(workflowImpl)
-            worker.registerActivitiesImplementations(activitiesImpl)
-            workers[taskName] = worker
+        worker?.let {
+            it.registerWorkflowImplementationTypes(workflowImpl)
+            it.registerActivitiesImplementations(activitiesImpl)
+            workers[taskName] = it
             logger.info("Workflow and Activity registered for task queue: $taskName")
-        } else {
-            throw IllegalStateException("Failed to create a worker for task queue: $taskName")
-        }
+        } ?: error("Failed to create a worker for task queue: $taskName")
 
         logger.info("Workflow and Activity successfully registered")
         if (!factory.isStarted) {
