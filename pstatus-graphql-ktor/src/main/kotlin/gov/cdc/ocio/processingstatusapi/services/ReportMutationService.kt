@@ -22,6 +22,9 @@ import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
+import gov.cdc.ocio.messagesystem.MessageSystem
+import gov.cdc.ocio.messagesystem.MessageProcessorConfig
+import gov.cdc.ocio.messagesystem.models.ReportMessage
 import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
@@ -76,6 +79,10 @@ class ReportMutationService: KoinComponent {
 
     private val schemaLoader by inject<SchemaLoader>()
 
+    private val messageSystem by inject<MessageSystem>()
+
+    private val messageProcessorConfig by inject<MessageProcessorConfig>()
+
     /**
      * Upsert a report based on the provided input and action.
      *
@@ -83,17 +90,17 @@ class ReportMutationService: KoinComponent {
      * It validates the input and generates a new ID if the action is "create" and no ID is provided.
      * If the action is "replace", it ensures that the report ID is provided and that the report exists.
      *
-     * @param input The ReportInput containing details of the report to be created or replaced.
+     * @param report The ReportInput containing details of the report to be created or replaced.
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The updated or newly created Report, or null if the operation fails.
      * @throws BadRequestException If the action is invalid or if the ID is improperly provided.
      * @throws ContentException If there is an error with the content format.
      */
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(action: String, input: BasicHashMap<String, Any?>): UpsertReportResult {
+    fun upsertReport(action: String, report: BasicHashMap<String, Any?>): UpsertReportResult {
         val result = runCatching {
             // Convert to a standard hash map
-            val mapOfContent = input.toHashMap()
+            val mapOfContent = report.toHashMap()
 
             // Validate action
             val actionType = validateAction(action)
@@ -110,6 +117,13 @@ class ReportMutationService: KoinComponent {
             when (actionType) {
                 Action.CREATE -> reportManager.createReport(validatedReport)
                 Action.REPLACE -> reportManager.replaceReport(validatedReport)
+            }
+
+            // Forward the validated report if enabled
+            if (messageProcessorConfig.forwardValidatedReports) {
+                // The forwarded messages need to remain snake case for downstream processing.
+                val validatedSnakeCaseReportJson = gson.toJson(mapOfContent)
+                messageSystem.send(validatedSnakeCaseReportJson)
             }
 
             return UpsertReportResult(
