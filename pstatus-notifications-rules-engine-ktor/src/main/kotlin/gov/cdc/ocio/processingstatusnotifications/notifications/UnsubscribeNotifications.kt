@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusnotifications.notifications
 
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
-import java.time.Instant
 import mu.KotlinLogging
 
 
@@ -16,7 +15,7 @@ class UnsubscribeNotifications {
 
     private val logger = KotlinLogging.logger {}
 
-    private val cacheService: SubscriptionManager = SubscriptionManager()
+    private val cacheService = SubscriptionManager()
 
     /**
      * The function which validates and Unsubscribes for webhook notifications.
@@ -24,20 +23,17 @@ class UnsubscribeNotifications {
      * @param subscriptionId String
      */
     fun run(subscriptionId: String): SubscriptionResult {
-        logger.debug { "SubscriptionId $subscriptionId" }
+        logger.debug { "Received request to unsubscribe from subscriptionId $subscriptionId" }
 
-        val result = SubscriptionResult()
-        val unsubscribeSuccessful = unsubscribeNotifications(subscriptionId)
-        if (subscriptionId.isNotBlank() && unsubscribeSuccessful) {
-            result.subscriptionId = subscriptionId
-            result.timestamp = Instant.now().epochSecond
-            result.status = false
-            result.message = "UnSubscription successful"
-
+        val result = SubscriptionResult().apply {
+            this.subscriptionId = subscriptionId
+        }
+        if (subscriptionId.isNotBlank() && unsubscribeNotifications(subscriptionId)) {
+            result.status = true
+            result.message = "Successfully unsubscribed"
         } else {
             result.status = false
-            result.message = "UnSubscription unsuccessful"
-
+            result.message = "Failed to unsubscribe"
         }
         return result
     }

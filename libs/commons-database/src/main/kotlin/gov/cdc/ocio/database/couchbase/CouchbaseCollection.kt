@@ -138,8 +138,9 @@ class CouchbaseCollection(
      * @return Boolean
      */
     override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
-        val removeResult = couchbaseCollection.remove(itemId)
-        return removeResult != null
+        return runCatching {
+            couchbaseCollection.remove(itemId)
+        }.isSuccess
     }
 
     override val collectionVariable = "r"

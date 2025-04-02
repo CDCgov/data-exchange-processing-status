@@ -35,36 +35,19 @@ class SubscriptionManager : KoinComponent {
         mvelCondition: String,
         notification: Notification
     ): String {
-        try {
-            // Create the subscription rule
-            val subscriptionRule = SubscriptionRule(
-                dataStreamId,
-                dataStreamRoute,
-                jurisdiction,
-                ruleDescription,
-                mvelCondition
-            )
+        val subscriptionId = UUID.randomUUID().toString()
+        val subscription = Subscription(
+            subscriptionId,
+            SubscriptionRule(dataStreamId, dataStreamRoute, jurisdiction, ruleDescription, mvelCondition),
+            notification
+        )
 
-            val newSubscriptionId = UUID.randomUUID().toString()
-
-            // Create the subscription
-            val subscription = Subscription(
-                newSubscriptionId,
-                subscriptionRule,
-                notification
-            )
-
-            // Check if the subscription id already exists and if so, get the subscription id so we can replace it.
-            // Otherwise, generate a new subscription id.
-            val subscriptionId = cachedSubscriptionLoader.findSubscriptionId(subscription)
-                ?: newSubscriptionId
-
-            // Add/replace the subscription
+        val existingSubscriptionId = cachedSubscriptionLoader.findSubscriptionId(subscription)
+        return if (existingSubscriptionId != null)
+            existingSubscriptionId // return the existing matching subscription id
+        else {
             cachedSubscriptionLoader.upsertSubscription(subscriptionId, subscription)
-
-            return subscriptionId
-        } catch (e: BadStateException) {
-            throw e
+            subscriptionId
         }
     }
 

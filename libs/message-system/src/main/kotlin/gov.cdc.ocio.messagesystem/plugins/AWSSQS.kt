@@ -78,7 +78,7 @@ val AWSSQSPlugin = createApplicationPlugin(
     suspend fun validate(receivedMessages: ReceiveMessageResponse) {
         try {
             receivedMessages.messages?.forEach { message ->
-                logger.info("Received message from AWS SQS: ${message.body}")
+                logger.info("Received message from AWS SQS")
                 val awsSQSProcessor = pluginConfig.messageProcessor
                 message.body?.let {
                    awsSQSProcessor.processMessage(it)
