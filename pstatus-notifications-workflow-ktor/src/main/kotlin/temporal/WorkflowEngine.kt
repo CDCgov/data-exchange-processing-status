@@ -23,12 +23,25 @@ import java.util.concurrent.TimeUnit
 
 
 /**
- *  Workflow engine class which creates a grpC client instance of the temporal server
- *  using which it registers the workflow and the activity implementation
- *  Also,using the workflow options the client creates a new workflow stub
- *  Note : CRON expression is used to set the schedule
+ * Workflow engine class which creates a grpC client instance of the temporal server
+ * using which it registers the workflow and the activity implementation
+ * Also,using the workflow options the client creates a new workflow stub
+ * Note: CRON expression is used to set the schedule
+ *
+ * @property temporalConfig TemporalConfig
+ * @property logger KLogger
+ * @property serviceOptions (WorkflowServiceStubsOptions..WorkflowServiceStubsOptions?)
+ * @property service WorkflowServiceStubs
+ * @property client WorkflowClient
+ * @property factory WorkerFactory
+ * @property workers MutableMap<String, Worker>
+ * @property scheduler [@EnhancedForWarnings(ScheduledExecutorService)] (ScheduledExecutorService..ScheduledExecutorService?)
+ * @property healthCheckSystem HealthCheckTemporalServer
+ * @constructor
  */
-class WorkflowEngine(private val temporalConfig: TemporalConfig) {
+class WorkflowEngine(
+    private val temporalConfig: TemporalConfig
+) {
 
     private val logger = KotlinLogging.logger {}
 
@@ -73,9 +86,9 @@ class WorkflowEngine(private val temporalConfig: TemporalConfig) {
      * @param activitiesImpl T2
      * @param workflowImplInterface Class<T3>
      * @return T3?
-     * @throws IllegalArgumentException
+     * @throws IllegalStateException
      */
-    @Throws(IllegalArgumentException::class)
+    @Throws(IllegalStateException::class)
     fun <T1 : Any, T2 : Any, T3 : Any> setupWorkflow(
         description: String,
         taskName: String,
