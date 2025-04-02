@@ -15,6 +15,6 @@ interface NotificationWorkflow {
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     )
 }

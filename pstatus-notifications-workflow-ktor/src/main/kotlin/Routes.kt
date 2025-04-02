@@ -22,11 +22,10 @@ fun Route.subscribeDeadlineCheckRoute() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
         call.respond(result)
-
     }
 }
 
@@ -48,10 +47,12 @@ fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
         val subscription = call.receive<UploadDigestSubscription>()
         val uploadDigestCountsSubscription = UploadDigestSubscription(
-            subscription.jurisdictionIds,
+            subscription.numDaysAgoToRun,
             subscription.dataStreamIds,
+            subscription.dataStreamRoutes,
+            subscription.jurisdictions,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = UploadDigestCountsNotificationSubscriptionService()
             .run(uploadDigestCountsSubscription)
@@ -72,37 +73,6 @@ fun Route.unsubscribeUploadDigestCountsRoute() {
 }
 
 /**
- * Route to subscribe for upload errors notification subscription
- */
-fun Route.subscribeUploadErrorsNotification() {
-    post("/subscribe/uploadErrorsNotification") {
-        val subscription = call.receive<UploadErrorsNotificationSubscription>()
-        val uploadErrorsNotificationSubscription = UploadErrorsNotificationSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.cronSchedule,
-            subscription.deliveryReference
-        )
-        val result = UploadErrorsNotificationSubscriptionService()
-            .run(uploadErrorsNotificationSubscription)
-        call.respond(result)
-    }
-}
-
-/**
- * Route to unsubscribe for upload errors subscription notification
- */
-fun Route.unsubscribeUploadErrorsNotification() {
-    post("/unsubscribe/uploadErrorsNotification") {
-        val subscription = call.receive<UploadErrorsNotificationUnSubscription>()
-        val result = UploadErrorsNotificationUnSubscriptionService()
-            .run(subscription.subscriptionId)
-        call.respond(result)
-    }
-}
-
-/**
  * Route to subscribe for top data stream errors notification subscription
  */
 fun Route.subscribeDataStreamTopErrorsNotification() {
@@ -113,7 +83,7 @@ fun Route.subscribeDataStreamTopErrorsNotification() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.deliveryReference
+            subscription.emailAddresses
         )
         val result = DataStreamTopErrorsNotificationSubscriptionService()
             .run(dataStreamTopErrorsNotificationSubscription)

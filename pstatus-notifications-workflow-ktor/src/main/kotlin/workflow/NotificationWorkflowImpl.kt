@@ -50,20 +50,20 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
      * @param dataStreamId String
      * @param jurisdiction String
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     override fun checkUploadAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ) {
         try {
             // Logic to check if the upload occurred*/
             val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
             if (!uploadOccurred) {
-                activities.sendNotification(dataStreamId, jurisdiction, deliveryReference)
+                activities.sendNotification(dataStreamId, jurisdiction, emailAddresses)
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")

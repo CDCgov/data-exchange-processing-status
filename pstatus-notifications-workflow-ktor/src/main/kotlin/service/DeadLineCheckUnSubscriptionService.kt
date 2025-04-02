@@ -32,7 +32,7 @@ class DeadLineCheckUnSubscriptionService : KoinComponent {
             return WorkflowSubscriptionResult(
                 subscriptionId = subscriptionId,
                 message = "",
-                deliveryReference = ""
+                emailAddresses = listOf()
             )
         }
         catch (e:Exception){

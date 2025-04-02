@@ -26,7 +26,7 @@ object CronUtils {
             throw IllegalArgumentException("Cron expression may not be null or empty")
 
         val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
-        parser.parse(cronExpression) // throws IllegalArgumentException if invalid
+        parser.parse(cronExpression).validate() // throws IllegalArgumentException if invalid
     }
 
     /**

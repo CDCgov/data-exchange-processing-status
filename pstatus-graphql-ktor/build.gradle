@@ -7,7 +7,7 @@ buildscript {
     }
 }
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'io.ktor.plugin' version '2.3.11'
     id "org.jetbrains.kotlin.plugin.serialization" version "1.8.20"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
@@ -81,6 +81,7 @@ dependencies {
 
     implementation project(':libs:commons-database')
     implementation project(':libs:commons-types')
+    implementation project(':libs:message-system')
 
     //LOKI
     implementation ("net.logstash.logback:logstash-logback-encoder:7.4")

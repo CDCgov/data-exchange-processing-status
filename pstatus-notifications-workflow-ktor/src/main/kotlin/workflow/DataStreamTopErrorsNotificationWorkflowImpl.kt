@@ -16,7 +16,8 @@ import java.time.Duration
  * @property activities (NotificationActivities..NotificationActivities?)
  * @property errorList List<String>
  */
-class DataStreamTopErrorsNotificationWorkflowImpl : DataStreamTopErrorsNotificationWorkflow {
+class DataStreamTopErrorsNotificationWorkflowImpl
+    : DataStreamTopErrorsNotificationWorkflow {
 
     private val logger = KotlinLogging.logger {}
 
@@ -56,21 +57,21 @@ class DataStreamTopErrorsNotificationWorkflowImpl : DataStreamTopErrorsNotificat
      * @param dataStreamRoute String
      * @param jurisdiction String
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     override fun checkDataStreamTopErrorsAndNotify(
         dataStreamId: String,
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ) {
         try {
             // Logic to check if the upload occurred*/
             val (totalCount, topErrors)  = getTopErrors(errorList)
             val errors = topErrors.filter { it.description.isNotEmpty() }.joinToString()
             if (topErrors.isNotEmpty()) {
-                activities.sendDataStreamTopErrorsNotification("There are $totalCount errors \n These are the top errors : \n $errors \n",deliveryReference)
+                activities.sendDataStreamTopErrorsNotification("There are $totalCount errors \n These are the top errors : \n $errors \n", emailAddresses)
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")

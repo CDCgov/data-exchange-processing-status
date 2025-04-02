@@ -3,12 +3,13 @@ package gov.cdc.ocio.processingnotifications.model
 
 /**
  * The POJO class which is used for mapping results from the db
- * @property id String
- * @property jurisdiction String
  * @property dataStreamId String
+ * @property dataStreamRoute String
+ * @property jurisdiction String
+ * @constructor
  */
 data class UploadDigestResponse(
-    var id: String="",
+    var dataStreamId: String = "",
+    var dataStreamRoute: String = "",
     var jurisdiction: String = "",
-    var dataStreamId: String=""
 )

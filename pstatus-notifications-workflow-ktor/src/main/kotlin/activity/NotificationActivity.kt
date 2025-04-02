@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingnotifications.activity
 
-import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 
@@ -14,21 +13,16 @@ interface NotificationActivities {
     fun sendNotification(
         dataStreamId: String,
         jurisdiction: String,
-        deliveryReference: String
-    )
-    @ActivityMethod
-    fun sendUploadErrorsNotification(
-        error: List<CheckUploadResponse>,
-        deliveryReference: String
+        emailAddresses: List<String>
     )
     @ActivityMethod
     fun sendDataStreamTopErrorsNotification(
-        error:String,
-        deliveryReference: String
+        emailBody: String,
+        emailAddresses: List<String>
     )
 
     @ActivityMethod
     fun sendDigestEmail(
         emailBody: String,
-        deliveryReference: String)
+        emailAddresses: List<String>)
 }

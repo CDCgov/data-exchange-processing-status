@@ -1,0 +1,62 @@
+[
+    {
+        "environment": "local",
+        "name": "report-sink",
+        "url": "http://localhost:8080"
+    },
+    {
+        "environment": "local",
+        "name": "graphql",
+        "url": "http://localhost:8090"
+    },
+    {
+        "environment": "dev",
+        "name": "graphql",
+        "url": "https://pstatusgraphql.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "dev",
+        "name": "report-sink",
+        "url": "https://pstatusreport.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "dev",
+        "name": "notifications-rules-engine",
+        "url": "https://pstatusnotification.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "dev",
+        "name": "notifications-workflow",
+        "url": "https://notifications-workflow-service.ocio-eks-dev-ede.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "graphql",
+        "url": "https://pstatusgraphql.phdo-eks-test.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "report-sink",
+        "url": "https://pstatusreport.phdo-eks-test.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "notifications-rules-engine",
+        "url": "https://pstatusnotification.phdo-eks-test.cdc.gov"
+    },
+    {
+        "environment": "test",
+        "name": "notifications-workflow",
+        "url": "https://notifications-workflow-service.phdo-eks-test.cdc.gov"
+    },
+    {
+        "environment": "stage",
+        "name": "graphql",
+        "url": "https://pstatusgraphql.phdo-eks-stg.cdc.gov"
+    },
+    {
+        "environment": "stage",
+        "name": "report-sink",
+        "url": "https://pstatusreport.phdo-eks-stg.cdc.gov"
+    }
+]

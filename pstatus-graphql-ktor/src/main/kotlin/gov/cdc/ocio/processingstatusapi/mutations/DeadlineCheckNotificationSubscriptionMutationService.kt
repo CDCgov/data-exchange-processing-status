@@ -13,13 +13,13 @@ import kotlinx.serialization.Serializable
 
 
 /**
- * Deadline Check Subscription data class.
+ * Deadline Check Subscription data class for digest counts and the frequency with which each of the top 5 errors occur.
  *
  * @param dataStreamId String
  * @param dataStreamRoute String
  * @param jurisdiction String
- * @param for digest counts and the frequency with which each of the top 5 errors occur String
- * @param deliveryReference String
+ * @param cronSchedule String
+ * @param emailAddresses List<String>
  */
 @Serializable
 data class DeadlineCheckSubscription(
@@ -27,7 +27,7 @@ data class DeadlineCheckSubscription(
     val dataStreamRoute: String,
     val jurisdiction: String,
     val cronSchedule: String,
-    val deliveryReference: String
+    val emailAddresses: List<String>
 )
 
 /**
@@ -56,7 +56,7 @@ class DeadlineCheckSubscriptionMutationService(
      * @param dataStreamRoute String
      * @param jurisdiction String
      * @param cronSchedule String
-     * @param deliveryReference String
+     * @param emailAddresses List<String>
      */
     @GraphQLDescription("Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm")
     @Suppress("unused")
@@ -65,9 +65,9 @@ class DeadlineCheckSubscriptionMutationService(
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        deliveryReference: String
+        emailAddresses: List<String>
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/subscribe/deadlineCheck")
+        val url = workflowServiceConnection.buildUrl("/subscribe/deadlineCheck")
 
         return runBlocking {
             val result = runCatching {
@@ -79,7 +79,7 @@ class DeadlineCheckSubscriptionMutationService(
                             dataStreamRoute,
                             jurisdiction,
                             cronSchedule,
-                            deliveryReference
+                            emailAddresses
                         )
                     )
                 }
@@ -105,7 +105,7 @@ class DeadlineCheckSubscriptionMutationService(
     fun unsubscribeDeadlineCheck(
         subscriptionId: String
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.getUrl("/unsubscribe/deadlineCheck")
+        val url = workflowServiceConnection.buildUrl("/unsubscribe/deadlineCheck")
 
         return runBlocking {
             try {

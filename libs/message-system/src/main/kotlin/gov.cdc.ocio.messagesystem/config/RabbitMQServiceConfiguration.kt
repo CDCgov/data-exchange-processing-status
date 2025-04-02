@@ -1,7 +1,9 @@
 package gov.cdc.ocio.messagesystem.config
 
 import com.rabbitmq.client.*
+import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import io.ktor.server.config.*
+
 
 /**
  * The `RabbitMQServiceConfiguration` class configures and initializes `RabbitMQ` connection factory based on settings
@@ -22,9 +24,12 @@ class RabbitMQServiceConfiguration(
         const val DEFAULT_PASSWORD = "guest"
     }
 
-    private val connectionFactory: ConnectionFactory = ConnectionFactory()
-    private val configPath= if (configurationPath != null) "$configurationPath." else ""
-    val queue = config.tryGetString("${configPath}queue_name") ?: ""
+    lateinit var messageProcessor: MessageProcessorInterface
+
+    private val connectionFactory = ConnectionFactory()
+    private val configPath = if (configurationPath != null) "$configurationPath." else ""
+    val listenQueueName = config.tryGetString("${configPath}listen_queue_name") ?: ""
+    val sendQueueName = config.tryGetString("${configPath}send_queue_name") ?: ""
 
     init {
         connectionFactory.host = config.tryGetString("${configPath}host") ?: DEFAULT_HOST
