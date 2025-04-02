@@ -8,7 +8,7 @@ import gov.cdc.ocio.messagesystem.exceptions.BadStateException
 import gov.cdc.ocio.messagesystem.models.Source
 import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.processingstatusapi.models.ValidationComponents
-import gov.cdc.ocio.processingstatusapi.models.MessageProcessorConfig
+import gov.cdc.ocio.messagesystem.MessageProcessorConfig
 import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService

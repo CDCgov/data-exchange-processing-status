@@ -4,7 +4,7 @@ import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.messagesystem.utils.createMessageSystemPlugin
-import gov.cdc.ocio.processingstatusapi.models.MessageProcessorConfig
+import gov.cdc.ocio.messagesystem.MessageProcessorConfig
 import gov.cdc.ocio.processingstatusapi.processors.AWSSQSProcessor
 import gov.cdc.ocio.processingstatusapi.processors.RabbitMQProcessor
 import gov.cdc.ocio.processingstatusapi.processors.ServiceBusProcessor
