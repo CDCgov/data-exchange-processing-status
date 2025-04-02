@@ -4,7 +4,6 @@ import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManag
 import gov.cdc.ocio.processingstatusnotifications.model.*
 import gov.cdc.ocio.types.model.WebhookNotification
 import mu.KotlinLogging
-import java.time.Instant
 
 
 /**
@@ -59,7 +58,6 @@ class SubscribeWebhookNotifications {
                 mvelCondition,
                 WebhookNotification(webhookUrl)
             ),
-            timestamp = Instant.now().epochSecond,
             message = "Subscription for webhook setup"
         )
 

@@ -70,16 +70,14 @@ data class UnsubscribeRequest(val subscriptionId: String)
  * response which contains the subscriberId, message and the status of subscribe/unsubscribe operations.
  *
  * @param subscriptionId
- * @param timestamp
  * @param status
  * @param message
  */
 @Serializable
 data class SubscriptionResult(
     var subscriptionId: String? = null,
-    var timestamp: Long? = null,
     var status: Boolean? = false,
-    var message: String? = ""
+    var message: String? = null
 )
 
 /**

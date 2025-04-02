@@ -4,7 +4,6 @@ import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.types.model.EmailNotification
-import java.time.Instant
 
 
 /**
@@ -61,7 +60,6 @@ class SubscribeEmailNotifications {
                 mvelCondition,
                 EmailNotification(emailAddresses)
             ),
-            timestamp = Instant.now().epochSecond,
             message = "Subscription for email setup"
         )
 

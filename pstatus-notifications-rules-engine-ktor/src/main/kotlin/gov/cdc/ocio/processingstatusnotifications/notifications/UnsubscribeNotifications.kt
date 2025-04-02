@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusnotifications.notifications
 
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
-import java.time.Instant
 import mu.KotlinLogging
 
 
@@ -28,12 +27,10 @@ class UnsubscribeNotifications {
 
         val result = SubscriptionResult().apply {
             this.subscriptionId = subscriptionId
-            this.timestamp = Instant.now().epochSecond
         }
         if (subscriptionId.isNotBlank() && unsubscribeNotifications(subscriptionId)) {
             result.status = true
             result.message = "Successfully unsubscribed"
-
         } else {
             result.status = false
             result.message = "Failed to unsubscribe"
