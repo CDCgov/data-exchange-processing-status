@@ -10,7 +10,7 @@ services:
     networks:
       - temporal-network
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - /var/lib/postgresql/data
 
@@ -29,7 +29,7 @@ services:
     networks:
       - temporal-network
     ports:
-      - 7233:7233
+      - "7233:7233"
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
@@ -57,7 +57,7 @@ services:
     networks:
       - temporal-network
     ports:
-      - 80:8080
+      - "80:8080"
 
   notifications-workflow:
     container_name: notifications-workflow
@@ -66,7 +66,7 @@ services:
       - temporal-network
       - core-services
     ports:
-      - 8000:8080
+      - "8100:8080"
     environment: 
       COUCHBASE_CONNECTION_STRING: couchbase://couchbase
       COUCHBASE_PASSWORD: password
@@ -80,31 +80,23 @@ services:
 
   notifications-rules-engine:
     container_name: notifications-rules-engine
-    image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine
+    image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine:experimental
     networks:
-      - temporal-network
       - core-services
     ports:
-      - 8001:8080
+      - "8110:8110"
     environment:
-      COUCHBASE_CONNECTION_STRING: couchbase://localhost
+      COUCHBASE_CONNECTION_STRING: couchbase://couchbase
       COUCHBASE_PASSWORD: password
       COUCHBASE_USERNAME: admin
       DATABASE: couchbase
       MSG_SYSTEM: rabbitmq
-      RABBITMQ_HOST: localhost
+      RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
       RABBITMQ_PORT: 5672
-      RABBITMQ_VALIDATION_QUEUE_NAME: PSAPIValidation
+      RABBITMQ_VALIDATION_QUEUE_NAME: ValidatedReportQueue
       RABBITMQ_VIRTUAL_HOST: /
-      REPORT_SCHEMA_LOADER_SYSTEM: file_system
-      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: ./reports
-    volumes:
-      - ./reports:/reports # Bind mount the report schemas folder
-    depends_on:
-      - postgresql
-      - temporal
 
 networks:
   temporal-network:
