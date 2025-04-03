@@ -9,6 +9,14 @@ services:
       - "127.0.0.1:8090:8080" # GraphQL listener port
     environment:
       SECURITY_ENABLED: false
+      MSG_SYSTEM: "rabbitmq"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VALIDATED_REPORT_QUEUE_NAME: "ValidatedReportQueue"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_VIRTUAL_HOST: "/"
+      FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
       DATABASE: "couchbase"
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
       COUCHBASE_USERNAME: "admin"
@@ -38,10 +46,12 @@ services:
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: 5672
       RABBITMQ_REPORT_QUEUE_NAME: "PSAPIQueue"
+      RABBITMQ_VALIDATED_REPORT_QUEUE_NAME: "ValidatedReportQueue"
       RABBITMQ_ROUTING_KEY: "psapi1234"
       RABBITMQ_USERNAME: "guest"
       RABBITMQ_PASSWORD: "guest"
       RABBITMQ_VIRTUAL_HOST: "/"
+      FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
       REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
     depends_on:
