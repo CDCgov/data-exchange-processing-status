@@ -15,6 +15,9 @@ test.describe("listReportSchemas query", async () => {
   expectedSchemas.forEach(expectedSchema => {
     test(`matches snapshot for schema ${expectedSchema.schemaName}/${expectedSchema.version} in ${process.env.ENV}`, async ({ gql }, testInfo) => {
       const response = await gql.listReportSchemas();
+      
+      expect(response.listReportSchemas.length).toBeGreaterThan(0);
+
       const schema = response.listReportSchemas.find(
         schema => schema.schemaName === expectedSchema.schemaName && 
         schema.schemaVersion === expectedSchema.version
@@ -27,19 +30,18 @@ test.describe("listReportSchemas query", async () => {
     const response = await gql.listReportSchemas();
     
     expect(Array.isArray(response.listReportSchemas)).toBe(true);
+
+    expect(response.listReportSchemas.length).toBeGreaterThan(0);
     
-    if (response.listReportSchemas.length > 0) {
-      const schema = response.listReportSchemas[0];
-      
-      expect(schema).toHaveProperty('description');
-      expect(schema).toHaveProperty('filename');
-      expect(schema).toHaveProperty('schemaName');
-      expect(schema).toHaveProperty('schemaVersion');
-      
-      expect(typeof schema.description).toBe('string');
-      expect(typeof schema.filename).toBe('string');
-      expect(typeof schema.schemaName).toBe('string');
-      expect(typeof schema.schemaVersion).toBe('string');
-    }
+    const schema = response.listReportSchemas[0];
+    expect(schema).toHaveProperty('description');
+    expect(schema).toHaveProperty('filename');
+    expect(schema).toHaveProperty('schemaName');
+    expect(schema).toHaveProperty('schemaVersion');
+    
+    expect(typeof schema.description).toBe('string');
+    expect(typeof schema.filename).toBe('string');
+    expect(typeof schema.schemaName).toBe('string');
+    expect(typeof schema.schemaVersion).toBe('string');
   });
 });
