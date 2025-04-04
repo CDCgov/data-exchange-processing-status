@@ -9,6 +9,7 @@ import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.client.WorkflowClient
+import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
@@ -49,6 +50,10 @@ class WorkflowEngine(
         .setTarget(temporalConfig.serviceTarget)
         .build()
 
+    private val clientOptions = WorkflowClientOptions.newBuilder()
+        .setNamespace(temporalConfig.namespace)
+        .build()
+
     private lateinit var service: WorkflowServiceStubs
 
     private lateinit var client: WorkflowClient
@@ -69,7 +74,7 @@ class WorkflowEngine(
     private fun initializeTemporalClient() {
         runCatching {
             service = WorkflowServiceStubs.newServiceStubs(serviceOptions)
-            client = WorkflowClient.newInstance(service)
+            client = WorkflowClient.newInstance(service, clientOptions)
             factory = WorkerFactory.newInstance(client)
         }.onFailure { ex ->
             logger.error("Failed to initialize Temporal client: ${ex.message}")
