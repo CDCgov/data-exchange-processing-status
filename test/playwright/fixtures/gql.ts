@@ -12,8 +12,13 @@ type WorkerFixtures = {
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
     gql: [
-        async ({}, use) => { // NOSONAR
-            const apiContext = await request.newContext({ });
+        async ({ }, use) => { // NOSONAR
+            const options = {
+                extraHTTPHeaders: {
+                    'Authorization': `Bearer ${process.env.GRAPHQL_AUTH_TOKEN || ''}`
+                }
+            };
+            const apiContext = await request.newContext(options);
             await use(getClient(apiContext));
         }, { auto: false, scope: 'worker' }
     ]
