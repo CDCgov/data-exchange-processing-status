@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
+import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
@@ -8,19 +9,23 @@ import io.temporal.api.enums.v1.WorkflowExecutionStatus
 import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
+import io.temporal.api.workflowservice.v1.DescribeTaskQueueRequest
+import io.temporal.api.taskqueue.v1.TaskQueue
+import io.temporal.api.enums.v1.TaskQueueType
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
-import io.temporal.worker.Worker
 import io.temporal.worker.WorkerFactory
 import mu.KotlinLogging
+import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 
 /**
@@ -60,8 +65,6 @@ class WorkflowEngine(
 
     private lateinit var factory: WorkerFactory
 
-    private val workers = mutableMapOf<String, Worker>()
-
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
@@ -85,7 +88,7 @@ class WorkflowEngine(
      * Sets up a temporal workflow.
      *
      * @param description String
-     * @param taskName String
+     * @param taskQueue String
      * @param cronSchedule String
      * @param workflowImpl Class<T1>
      * @param activitiesImpl T2
@@ -96,7 +99,7 @@ class WorkflowEngine(
     @Throws(IllegalStateException::class)
     fun <T1 : Any, T2 : Any, T3 : Any> setupWorkflow(
         description: String,
-        taskName: String,
+        taskQueue: String,
         cronSchedule: String,
         workflowImpl: Class<T1>,
         activitiesImpl: T2,
@@ -104,13 +107,12 @@ class WorkflowEngine(
     ): T3 {
         CronUtils.checkValid(cronSchedule)
 
-        val worker = factory.newWorker(taskName)
+        val worker = factory.newWorker(taskQueue)
         worker?.let {
             it.registerWorkflowImplementationTypes(workflowImpl)
             it.registerActivitiesImplementations(activitiesImpl)
-            workers[taskName] = it
-            logger.info("Workflow and Activity registered for task queue: $taskName")
-        } ?: error("Failed to create a worker for task queue: $taskName")
+            logger.info("Workflow and Activity registered for task queue: $taskQueue")
+        } ?: error("Failed to create a worker for task queue: $taskQueue")
 
         logger.info("Workflow and Activity successfully registered")
         if (!factory.isStarted) {
@@ -119,8 +121,13 @@ class WorkflowEngine(
         }
 
         val workflowOptions = WorkflowOptions.newBuilder()
-            .setTaskQueue(taskName)
-            .setMemo(mapOf("description" to description))
+            .setTaskQueue(taskQueue)
+            .setMemo(
+                mapOf(
+                    "description" to description,
+                    "workflowImplClassName" to workflowImpl.name
+                )
+            )
             .setCronSchedule(cronSchedule) // Cron schedule: 15 5 * * 1-5 - Every week day at 5:15a
             .build()
 
@@ -175,15 +182,14 @@ class WorkflowEngine(
      */
     private fun startWorkerMonitor() {
         scheduler.scheduleAtFixedRate({
-            repeat(workers.keys.size) {
-                try {
-                    if (!factory.isStarted) {
-                        logger.warn("Worker factory is not running. Restarting workers...")
-                        restartWorkers()
-                    }
-                } catch (e: Exception) {
-                    logger.error("Error in worker monitoring: ${e.message}")
-                }
+            try {
+//                if (!factory.isStarted) {
+//                    logger.info("Worker factory is not running. Restarting...")
+//                    factory.start()
+//                }
+                checkWorkersAttached()
+            } catch (e: Exception) {
+                logger.error("Error in worker monitoring: ${e.message}")
             }
         }, 10, 30, TimeUnit.SECONDS)
     }
@@ -191,15 +197,18 @@ class WorkflowEngine(
     /**
      * Restart all registered workers.
      */
-    private fun restartWorkers() {
-        initializeTemporalClient()
-        workers.forEach { (taskName, _) ->
-            factory.newWorker(taskName)
-            logger.info("Restarting worker for task queue: $taskName")
+    private fun checkWorkersAttached() {
+        val runningWorkflows = getRunningWorkflows()
+        runningWorkflows.forEach { workflow ->
+            if (!workflow.workerAttached) {
+                val taskQueue = workflow.taskQueue
+                logger.warn("Restarting worker for task queue: $taskQueue")
+                val workflowImplClassName = workflow.workflowImplClassName
+                workflowImplClassName ?: error("Unknown workflow implementation, can't restart worker")
+                val workflowImpl = Class.forName(workflowImplClassName)
+                restartWorker(taskQueue, workflowImpl)
+            }
         }
-
-        factory.start()
-        logger.info("Worker factory restarted")
     }
 
     /**
@@ -220,7 +229,7 @@ class WorkflowEngine(
      */
     private fun getWorkflows(filterOnlyRunning: Boolean): List<WorkflowStatus> {
         val query = when (filterOnlyRunning) {
-            true -> "ExecutionStatus='RUNNING'" // Filter for running workflows
+            true -> "ExecutionStatus = 'Running'" // Filter for running workflows
             false -> ""
         }
         val request = ListWorkflowExecutionsRequest.newBuilder()
@@ -241,10 +250,14 @@ class WorkflowEngine(
             }
             val nextExecution = runCatching { CronUtils.nextExecution(cronScheduleRaw) }.getOrNull()
             val taskName = executionInfo.type.name
+            val taskQueue = executionInfo.taskQueue
             val ts = executionInfo.executionTime
             val lastRun = OffsetDateTime.ofInstant(Instant.ofEpochSecond(ts.seconds, ts.nanos.toLong()), ZoneOffset.UTC)
             val descPayload = runCatching { executionInfo.memo.getFieldsOrThrow("description") }
             val description = descPayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "") ?: "unknown"
+            val workflowImplClassNamePayload = runCatching { executionInfo.memo.getFieldsOrThrow("workflowImplClassName") }
+            val workflowImplClassName = workflowImplClassNamePayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "")
+            val workerAttached = workerHasPoller(executionInfo.taskQueue)
 
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,
@@ -257,13 +270,54 @@ class WorkflowEngine(
             WorkflowStatus(
                 executionInfo.execution.workflowId,
                 taskName,
+                taskQueue,
                 description,
+                workerAttached,
                 executionInfo.status.name,
-                cronSchedule
+                cronSchedule,
+                workflowImplClassName
             )
         }
 
         return results ?: listOf()
+    }
+
+    private fun workerHasPoller(taskQueue: String): Boolean {
+        val describeTaskQueueResponse = service.blockingStub()
+            .describeTaskQueue(
+                DescribeTaskQueueRequest.newBuilder()
+                    .setNamespace(temporalConfig.namespace)
+                    .setTaskQueue(
+                        TaskQueue.newBuilder().setName(taskQueue).build()
+                    )
+                    .setTaskQueueType(TaskQueueType.TASK_QUEUE_TYPE_WORKFLOW)
+                    .build()
+            )
+
+        val pollers = describeTaskQueueResponse.pollersList
+        logger.info("Number of active workers: ${pollers.size}")
+
+        if (pollers.isEmpty()) {
+            logger.info("No workers are currently polling this task queue!")
+        }
+        return pollers.isNotEmpty()
+    }
+
+    private fun restartWorker(taskQueue: String, workflowImpl: Class<*>) {
+        // Create a Worker Factory
+        val factory = WorkerFactory.newInstance(client)
+
+        // Register a worker on the same task queue
+        val worker = factory.newWorker(taskQueue)
+
+        // Register workflow and activities
+        worker.registerWorkflowImplementationTypes(workflowImpl)
+        worker.registerActivitiesImplementations(NotificationActivitiesImpl())
+
+        // Start the worker
+        factory.start()
+
+        logger.info("Worker started and polling for tasks...")
     }
 
     /**
