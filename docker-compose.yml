@@ -21,9 +21,11 @@ services:
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
       COUCHBASE_USERNAME: "admin"
       COUCHBASE_PASSWORD: "password"
-      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
       REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+      PSTATUS_RULES_ENGINE_NOTIFICATIONS_BASE_URL: "http://localhost:8110"
+      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: "http://localhost:8100"
+      SCHEMA_ADMIN_SECRET_TOKEN: "${SCHEMA_ADMIN_SECRET_TOKEN:-LET_ME_IN_PLS_THANKS}"
     depends_on:
       - couchbase
     restart: "always"
