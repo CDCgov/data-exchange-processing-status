@@ -276,6 +276,13 @@ class WorkflowEngine(
         return results ?: listOf()
     }
 
+    /**
+     * Determines if the task queue provided has an active poller.  If it doesn't, it means there is no worker
+     * attached.
+     *
+     * @param taskQueue String
+     * @return Boolean - Returns true if a worker is attached to this queue, false otherwise.
+     */
     private fun workerHasPoller(taskQueue: String): Boolean {
         val describeTaskQueueResponse = service.blockingStub()
             .describeTaskQueue(
@@ -297,6 +304,12 @@ class WorkflowEngine(
         return pollers.isNotEmpty()
     }
 
+    /**
+     * Restart a worker with the provided task queue and workflow implementation class.
+     *
+     * @param taskQueue String
+     * @param workflowImpl Class<*>
+     */
     private fun restartWorker(taskQueue: String, workflowImpl: Class<*>) {
         // Create a Worker Factory
         val factory = WorkerFactory.newInstance(client)
