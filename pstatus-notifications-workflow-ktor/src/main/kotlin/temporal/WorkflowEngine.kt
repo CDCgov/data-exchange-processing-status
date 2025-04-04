@@ -276,11 +276,13 @@ class WorkflowEngine(
             .setExecution(wfExecInfo.execution)
             .build()
 
-        val res = service.blockingStub()?.getWorkflowExecutionHistory(req)
-
-        val firstHistoryEvent = res?.history?.eventsList?.get(0)
-
-        return firstHistoryEvent?.workflowExecutionStartedEventAttributes?.cronSchedule
+        runCatching {
+            service.blockingStub()?.getWorkflowExecutionHistory(req)
+        }.onSuccess {
+            val firstHistoryEvent = it?.history?.eventsList?.get(0)
+            return firstHistoryEvent?.workflowExecutionStartedEventAttributes?.cronSchedule
+        }
+        return null
     }
 
     fun doHealthCheck() = healthCheckSystem.doHealthCheck()
