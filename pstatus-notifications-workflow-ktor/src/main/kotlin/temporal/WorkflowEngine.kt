@@ -19,13 +19,11 @@ import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
 import io.temporal.worker.WorkerFactory
 import mu.KotlinLogging
-import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KClass
 
 
 /**
@@ -183,10 +181,6 @@ class WorkflowEngine(
     private fun startWorkerMonitor() {
         scheduler.scheduleAtFixedRate({
             try {
-//                if (!factory.isStarted) {
-//                    logger.info("Worker factory is not running. Restarting...")
-//                    factory.start()
-//                }
                 checkWorkersAttached()
             } catch (e: Exception) {
                 logger.error("Error in worker monitoring: ${e.message}")
