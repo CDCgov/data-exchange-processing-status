@@ -55,13 +55,13 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         emailAddresses: List<String>,
         daysInterval: Int?
     ) {
-        val di = daysInterval ?: 5 // TODO make this default value configurable
+        val dayInterval = daysInterval ?: 5 // TODO make this default value configurable
         try {
             // Logic to check if the upload occurred*/
-            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", di)
-            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", di)
-            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, di)
-            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, di)
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", dayInterval)
+            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
+            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
             val body = formatEmailBody(
                 dataStreamId,
                 dataStreamRoute,
@@ -69,7 +69,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                 failedDeliveryCount,
                 delayedUploads,
                 delayedDeliveries,
-                di
+                dayInterval
             )
             activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
         } catch (e: Exception) {
@@ -77,6 +77,17 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         }
     }
 
+    /**
+     * Builds the HTML string of the email body
+     *
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param failedMetadataValidationCount Int
+     * @param failedDeliveryCount Int
+     * @param delayedUploads List<String>
+     * @param delayedDeliveries List<String>
+     * @param daysInterval Int
+     */
     private fun formatEmailBody(
         dataStreamId: String,
         dataStreamRoute: String,

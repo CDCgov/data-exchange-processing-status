@@ -47,6 +47,21 @@ abstract class ProcessingStatusRepository {
         return jsonMap
     }
 
-    open fun createCollection(name: String) {}
-    open fun deleteCollection(name: String) {}
+    /**
+     * Interface function for creating a collection from a NoSQL database.
+     *
+     * @param name String
+     */
+    open fun createCollection(name: String) {
+        throw NotImplementedError()
+    }
+
+    /**
+     * Interface function for deleting a collection from a NoSQL database.
+     *
+     * @param name String
+     */
+    open fun deleteCollection(name: String) {
+        throw NotImplementedError()
+    }
 }

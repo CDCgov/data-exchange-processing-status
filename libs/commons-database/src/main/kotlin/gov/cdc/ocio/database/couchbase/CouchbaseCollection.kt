@@ -157,6 +157,7 @@ class CouchbaseCollection(
 
     override val collectionElementForQuery = { name: String -> name }
 
+    // converting seconds to millis as couchbase stores epochs in millis.
     override val timeConversionForQuery: (Long) -> String
         get() = { timeEpoch: Long -> (timeEpoch * 1000).toString() }
 }
