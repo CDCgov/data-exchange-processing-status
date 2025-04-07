@@ -180,10 +180,10 @@ class WorkflowEngine(
      */
     private fun startWorkerMonitor() {
         scheduler.scheduleAtFixedRate({
-            try {
+            runCatching {
                 checkWorkersAttached()
-            } catch (e: Exception) {
-                logger.error("Error in worker monitoring: ${e.message}")
+            }.onFailure {
+                logger.error("Error in worker monitoring: ${it.message}")
             }
         }, 10, 30, TimeUnit.SECONDS)
     }
