@@ -83,7 +83,8 @@ fun Route.subscribeDataStreamTopErrorsNotification() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.emailAddresses
+            subscription.emailAddresses,
+            subscription.daysInterval
         )
         val result = DataStreamTopErrorsNotificationSubscriptionService()
             .run(dataStreamTopErrorsNotificationSubscription)

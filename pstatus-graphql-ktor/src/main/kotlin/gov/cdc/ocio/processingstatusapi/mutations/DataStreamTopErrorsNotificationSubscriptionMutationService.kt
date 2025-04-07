@@ -67,7 +67,7 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
         cronSchedule: String,
         emailAddresses: List<String>
     ): NotificationSubscriptionResult {
-        val url = workflowServiceConnection.buildUrl("/subscribe/dataStreamTopErrorsNotification")
+        val url = workflowServiceConnection.buildUrl("subscribe/dataStreamTopErrorsNotification")
 
         return runBlocking {
             val result = runCatching {

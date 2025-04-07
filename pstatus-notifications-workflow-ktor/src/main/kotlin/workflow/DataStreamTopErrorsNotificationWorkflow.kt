@@ -16,6 +16,7 @@ interface DataStreamTopErrorsNotificationWorkflow {
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>
+        emailAddresses: List<String>,
+        daysInterval: Int?,
     )
 }

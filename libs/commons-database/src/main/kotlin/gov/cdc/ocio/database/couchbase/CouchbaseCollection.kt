@@ -3,6 +3,9 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
+import com.couchbase.client.java.kv.UpsertOptions
+import com.couchbase.client.java.query.QueryOptions
+import com.couchbase.client.java.query.QueryScanConsistency
 import com.google.gson.*
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
@@ -74,7 +77,7 @@ class CouchbaseCollection(
      * @return List<T>
      */
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
-        val queryResult = couchbaseScope.query(query)
+        val queryResult = couchbaseScope.query(query, QueryOptions.queryOptions().scanConsistency(QueryScanConsistency.REQUEST_PLUS))
         val results = mutableListOf<T>()
         when (classType) {
             // Handle primitive types
@@ -154,4 +157,8 @@ class CouchbaseCollection(
     override val collectionNameForQuery = "${couchbaseScope.bucketName()}.${couchbaseScope.name()}.`$collectionName`"
 
     override val collectionElementForQuery = { name: String -> name }
+
+    // converting seconds to millis as couchbase stores epochs in millis.
+    override val timeConversionForQuery: (Long) -> String
+        get() = { timeEpoch: Long -> (timeEpoch * 1000).toString() }
 }

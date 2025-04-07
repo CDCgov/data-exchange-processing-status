@@ -2,9 +2,12 @@ package gov.cdc.ocio.processingnotifications.workflow
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
+import gov.cdc.ocio.processingnotifications.service.ReportService
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
+import kotlinx.html.*
+import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
 import java.time.Duration
 
@@ -20,6 +23,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     : DataStreamTopErrorsNotificationWorkflow {
 
     private val logger = KotlinLogging.logger {}
+    private val reportService = ReportService()
 
     private val activities = Workflow.newActivityStub(
         NotificationActivities::class.java,
@@ -32,22 +36,6 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                     .build()
             )
             .build()
-    )
-
-    //TODO : This should come  from db in real application
-    val errorList = listOf(
-        "DataStreamId missing",
-        "DataStreamRoute missing",
-        "Jurisdiction missing",
-        "DataStreamId missing",
-        "Jurisdiction missing",
-        "DataStreamRoute missing",
-        "DataStreamRoute missing",
-        "DataStreamId missing",
-        "DataStreamId missing",
-        "DataStreamRoute missing",
-        "DataStreamId missing",
-        "DataStreamId missing",
     )
 
     /**
@@ -64,17 +52,75 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>
+        emailAddresses: List<String>,
+        daysInterval: Int?
     ) {
+        val dayInterval = daysInterval ?: 5 // TODO make this default value configurable
         try {
             // Logic to check if the upload occurred*/
-            val (totalCount, topErrors)  = getTopErrors(errorList)
-            val errors = topErrors.filter { it.description.isNotEmpty() }.joinToString()
-            if (topErrors.isNotEmpty()) {
-                activities.sendDataStreamTopErrorsNotification("There are $totalCount errors \n These are the top errors : \n $errors \n", emailAddresses)
-            }
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", dayInterval)
+            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
+            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
+            val body = formatEmailBody(
+                dataStreamId,
+                dataStreamRoute,
+                failedMetadataVerifyCount,
+                failedDeliveryCount,
+                delayedUploads,
+                delayedDeliveries,
+                dayInterval
+            )
+            activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
+        }
+    }
+
+    /**
+     * Builds the HTML string of the email body
+     *
+     * @param dataStreamId String
+     * @param dataStreamRoute String
+     * @param failedMetadataValidationCount Int
+     * @param failedDeliveryCount Int
+     * @param delayedUploads List<String>
+     * @param delayedDeliveries List<String>
+     * @param daysInterval Int
+     */
+    private fun formatEmailBody(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        failedMetadataValidationCount: Int,
+        failedDeliveryCount: Int,
+        delayedUploads: List<String>,
+        delayedDeliveries: List<String>,
+        daysInterval: Int
+    ): String {
+        return buildString {
+            appendHTML().html {
+                body {
+                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues in the last $daysInterval days" }
+                    br {  }
+                    h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size }" }
+                    ul {
+                        li { +"Failed Metadata Validation: $failedMetadataValidationCount" }
+                        li { +"Failed Deliveries: $failedDeliveryCount" }
+                        li { +"Delayed Uploads: ${delayedUploads.size}" }
+                        li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
+                    }
+                    br {  }
+                    h3 { +"Delayed Uploads" }
+                    ul {
+                        delayedUploads.map { li { +it } }
+                    }
+                    br {  }
+                    h3 { +"Delayed Deliveries" }
+                    ul {
+                        delayedDeliveries.map{ li { +it }}
+                    }
+                }
+            }
         }
     }
 

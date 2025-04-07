@@ -46,4 +46,22 @@ abstract class ProcessingStatusRepository {
             gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
         return jsonMap
     }
+
+    /**
+     * Interface function for creating a collection from a NoSQL database.
+     *
+     * @param name String
+     */
+    open fun createCollection(name: String) {
+        throw NotImplementedError()
+    }
+
+    /**
+     * Interface function for deleting a collection from a NoSQL database.
+     *
+     * @param name String
+     */
+    open fun deleteCollection(name: String) {
+        throw NotImplementedError()
+    }
 }
