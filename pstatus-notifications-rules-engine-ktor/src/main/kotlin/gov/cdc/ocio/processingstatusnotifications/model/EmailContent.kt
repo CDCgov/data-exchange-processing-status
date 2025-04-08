@@ -5,12 +5,14 @@ import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.email.EmailBuilder
 import gov.cdc.ocio.types.model.SubscriptionRule
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
+
 
 /**
  * Defines the content of email calls.
@@ -40,44 +42,8 @@ data class EmailContent(
 
         val reportJson = gson.toJson(report)
 
-        return buildString {
+        val content = buildString {
             appendHTML().html {
-                head {
-                    style {
-                        +"""
-                            body {
-                                font-family: Arial, sans-serif;
-                                margin: 20px;
-                            }
-                            table {
-                                border-collapse: collapse;
-                            }
-                            td {
-                                padding: 4px 0;
-                            }
-                            td:first-child {
-                                padding-right: 20px;
-                            }
-                            .json-container {
-                                background: #ededed;
-                                color: #000000;
-                                padding: 15px;
-                                border-radius: 8px;
-                                overflow-x: auto;
-                                font-family: 'Courier New', monospace;
-                                white-space: pre-wrap;
-                                word-wrap: break-word;
-                            }
-                            .bold-uppercase {
-                                font-weight: bold;
-                                text-transform: uppercase;
-                            }
-                            .uppercase {
-                                text-transform: uppercase;
-                            }
-                        """.trimIndent()
-                    }
-                }
                 body {
                     div {
                         span(classes = "bold-uppercase") { +"\u271A Public Health" }
@@ -138,5 +104,10 @@ data class EmailContent(
                 }
             }
         }
+
+        return EmailBuilder()
+            .commonHeader(true)
+            .htmlBody(content)
+            .build()
     }
 }
