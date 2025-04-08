@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
+import gov.cdc.ocio.types.email.EmailBuilder
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 
@@ -13,13 +14,14 @@ import kotlinx.html.stream.appendHTML
  */
 class UploadDigestCountsEmailBuilder(
     private val runDateUtc: String,
-    private val digestCounts: UploadDigestCounts
+    private val digestCounts: UploadDigestCounts,
+    private val timingMetrics: TimingMetrics
 ) {
 
     fun build(): String {
         val uploadCounts = digestCounts.digest
 
-        return buildString {
+        val content = buildString {
             appendHTML().html {
                 body {
                     h2 { +"Daily Upload Digest for Data Streams" }
@@ -93,5 +95,10 @@ class UploadDigestCountsEmailBuilder(
                 }
             }
         }
+
+        return EmailBuilder()
+            .commonHeader(true)
+            .htmlBody(content)
+            .build()
     }
 }

@@ -8,10 +8,10 @@ typealias CountsByDataStreamRoute = Map<String, CountsByJurisdiction>
 typealias CountsByDataStreamId = Map<String, CountsByDataStreamRoute>
 
 data class TimingMetrics(
-    val min: Float,
-    val max: Float,
-    val mean: Float,
-    val median: Float
+    val minDelta: Float,
+    val maxDelta: Float,
+    val meanDelta: Float,
+    val medianDelta: Float
 )
 
 data class UploadDigestCounts(

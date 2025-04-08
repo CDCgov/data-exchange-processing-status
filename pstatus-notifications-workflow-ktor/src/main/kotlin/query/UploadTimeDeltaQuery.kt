@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications.query
 import gov.cdc.ocio.database.QueryBuilder
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.TimingMetrics
 import gov.cdc.ocio.types.InstantRange
 import java.time.LocalDate
 
@@ -30,16 +31,16 @@ class UploadTimeDeltaQuery(
         querySB.append("""
             SELECT 
                 -- Minimum delta
-                MIN(delta) AS min_delta,
+                MIN(delta) AS minDelta,
                 
                 -- Maximum delta
-                MAX(delta) AS max_delta,
+                MAX(delta) AS maxDelta,
                 
                 -- Average (mean) delta
-                AVG(delta) AS mean_delta,
+                AVG(delta) AS meanDelta,
                 
                 -- Median delta
-                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS median_delta
+                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS medianDelta
             
             FROM (
                 -- Subquery to calculate deltas for each uploadId
@@ -98,7 +99,7 @@ class UploadTimeDeltaQuery(
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
-    ): List<UploadDigestResponse> {
+    ): TimingMetrics {
         return runCatching {
             val query = build(
                 utcDateToRun,
@@ -107,7 +108,8 @@ class UploadTimeDeltaQuery(
                 jurisdictions
             )
             logger.info("Upload time delta metrics query:\n$query")
-            return@runCatching collection.queryItems(query, UploadDigestResponse::class.java)
+            val results = collection.queryItems(query, TimingMetrics::class.java).first()
+            return@runCatching results
         }.getOrElse {
             logger.error("Error occurred while executing query: ${it.localizedMessage}")
             throw it

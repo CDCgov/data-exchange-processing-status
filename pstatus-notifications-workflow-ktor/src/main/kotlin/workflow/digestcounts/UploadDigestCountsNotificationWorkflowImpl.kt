@@ -4,6 +4,7 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
 import gov.cdc.ocio.processingnotifications.query.UploadDigestCountsQuery
+import gov.cdc.ocio.processingnotifications.query.UploadTimeDeltaQuery
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -68,9 +69,13 @@ class UploadDigestCountsNotificationWorkflowImpl :
             // Aggregate the upload counts
             val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
 
+            // Get the upload timing metrics
+            val timingMetrics = UploadTimeDeltaQuery(repository)
+                .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
+
             // Format the email body
             val dateRun = utcDateToRun.format(formatter)
-            val emailBody = UploadDigestCountsEmailBuilder(dateRun, aggregatedCounts)
+            val emailBody = UploadDigestCountsEmailBuilder(dateRun, aggregatedCounts, timingMetrics)
                 .build()
             activities.sendDigestEmail(emailBody, emailAddresses)
         } catch (e: Exception) {
