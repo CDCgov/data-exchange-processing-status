@@ -26,7 +26,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
         val serviceTarget = environment.config.tryGetString("temporal.service_target") ?: "localhost:7233"
         val namespace = environment.config.tryGetString("temporal.namespace") ?: "default"
         val temporalConfig = TemporalConfig(serviceTarget, namespace)
-        single {
+        single(createdAtStart = true) {
             WorkflowEngine(temporalConfig)
         }
     }
