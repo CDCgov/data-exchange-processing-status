@@ -44,50 +44,50 @@ class EmailBuilder {
      */
     private fun header(): String {
         return buildString {
-            appendHTML().html {
-                head {
-                    style {
-                        +"""
-                            body {
-                                font-family: Arial, sans-serif;
-                                margin: 20px;
-                            }
-                            table {
-                                border-collapse: collapse;
-                            }
-                            td {
-                                padding: 4px 0;
-                            }
-                            td:first-child {
-                                padding-right: 20px;
-                            }
-                            .json-container {
-                                background: #ededed;
-                                color: #000000;
-                                padding: 15px;
-                                border-radius: 8px;
-                                overflow-x: auto;
-                                font-family: 'Courier New', monospace;
-                                white-space: pre-wrap;
-                                word-wrap: break-word;
-                            }
-                            .bold-uppercase {
-                                font-weight: bold;
-                                text-transform: uppercase;
-                            }
-                            .uppercase {
-                                text-transform: uppercase;
-                            }
-                        """.trimIndent()
-                    }
+            appendHTML().head {
+                style {
+                    +"""
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                        }
+                        table {
+                            border-collapse: collapse;
+                        }
+                        td {
+                            padding: 4px 0;
+                        }
+                        td:first-child {
+                            padding-right: 20px;
+                        }
+                        .json-container {
+                            background: #ededed;
+                            color: #000000;
+                            padding: 15px;
+                            border-radius: 8px;
+                            overflow-x: auto;
+                            font-family: 'Courier New', monospace;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                        }
+                        .bold-uppercase {
+                            font-weight: bold;
+                            text-transform: uppercase;
+                        }
+                        .uppercase {
+                            text-transform: uppercase;
+                        }
+                    """.trimIndent()
                 }
             }
         }
     }
 
     fun build(): String = buildString {
-        if (includeCommonHeader) append(header())
-        append(htmlBody)
+        appendHTML().html {
+            if (includeCommonHeader) unsafe { +header() }
+            unsafe { +htmlBody }
+        }
     }
 
 }
