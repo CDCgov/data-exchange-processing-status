@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications.workflow
+package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
@@ -16,8 +16,8 @@ import java.time.Duration
  * The implementation class which determines the digest counts and top errors during an upload and its frequency.
  *
  * @property logger KLogger
+ * @property reportService ReportService
  * @property activities (NotificationActivities..NotificationActivities?)
- * @property errorList List<String>
  */
 class DataStreamTopErrorsNotificationWorkflowImpl
     : DataStreamTopErrorsNotificationWorkflow {

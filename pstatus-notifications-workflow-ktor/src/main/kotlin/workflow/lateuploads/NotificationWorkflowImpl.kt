@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications.workflow
+package gov.cdc.ocio.processingnotifications.workflow.lateuploads
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
