@@ -122,7 +122,7 @@ test.describe("upsertSchema mutation", async () => {
         })).rejects.toThrow(/Unauthorized: Missing or invalid bearer token/)
     })
 
-    test.describe.skip("validation failures", async () => {
+    test.describe("validation failures", async () => {
 
         const validationTests = [
             // Schema Name Tests
@@ -251,6 +251,5 @@ test.describe("upsertSchema mutation", async () => {
                 expect(getSchemaResponse.schemaContent).toBeDefined()
             })
         })
-
     })
 })
