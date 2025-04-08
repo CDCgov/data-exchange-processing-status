@@ -60,6 +60,31 @@ class EmailBuilder {
                         td:first-child {
                             padding-right: 20px;
                         }
+                        stylish-table {
+                            width: 80%;
+                            border-collapse: collapse;
+                            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+                            background: white;
+                            border-radius: 8px;
+                            overflow: hidden;
+                        }
+                        .stylish-table th {
+                            background-color: #81C784;
+                            color: white;
+                            font-weight: bold;
+                            padding: 12px;
+                            text-align: left;
+                        }
+                        .stylish-table td {
+                            padding: 10px;
+                            border-bottom: 1px solid #ddd;
+                        }
+                        .stylish-table tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                        .stylish-table tr:hover {
+                            background-color: #f1f1f1;
+                        }
                         .json-container {
                             background: #ededed;
                             color: #000000;

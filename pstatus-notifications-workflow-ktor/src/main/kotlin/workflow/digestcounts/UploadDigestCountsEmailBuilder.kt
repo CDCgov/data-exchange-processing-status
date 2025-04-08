@@ -22,76 +22,98 @@ class UploadDigestCountsEmailBuilder(
         val uploadCounts = digestCounts.digest
 
         val content = buildString {
-            appendHTML().html {
-                body {
-                    h2 { +"Daily Upload Digest for Data Streams" }
-                    div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
-                    br
-                    h3 { +"Summary" }
-                    table {
-                        if (uploadCounts.isEmpty()) {
-                            +"No uploads found."
-                        } else {
-                            thead {
-                                tr {
-                                    th { +"Data Stream ID" }
-                                    th { +"Data Stream Route" }
-                                    th { +"Jurisdictions" }
-                                    th { +"Upload Counts" }
+            appendHTML().body {
+                div {
+                    span(classes = "bold-uppercase") { +"\u271A Public Health" }
+                    span(classes = "uppercase") { +" Data Observability" }
+                }
+                hr {  }
+                h2 { +"Daily Upload Digest for Data Streams" }
+                div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
+                br
+                h3 { +"Summary" }
+                table {
+                    tr {
+                        td { +"Fastest upload" }
+                        td { strong { +"${timingMetrics.minDelta} s" } }
+                    }
+                    tr {
+                        td { +"Slowest upload" }
+                        td { strong { +"${timingMetrics.maxDelta} s" } }
+                    }
+                    tr {
+                        td { +"Mean upload" }
+                        td { strong { +"${timingMetrics.meanDelta} s" } }
+                    }
+                    tr {
+                        td { +"Median upload" }
+                        td { strong { +"${timingMetrics.medianDelta} s" } }
+                    }
+                }
+                br
+                table(classes = "stylish-table") {
+                    if (uploadCounts.isEmpty()) {
+                        +"No uploads found."
+                    } else {
+                        thead {
+                            tr {
+                                th { +"Data Stream ID" }
+                                th { +"Data Stream Route" }
+                                th { +"Jurisdictions" }
+                                th { +"Upload Counts" }
+                            }
+                        }
+                        tbody {
+                            uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+                                dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                    tr {
+                                        td { +dataStreamId }
+                                        td { +dataStreamRoute }
+                                        td { +jurisdictions.size.toString() }
+                                        td { +jurisdictions.values.sum().toString() }
+                                    }
                                 }
                             }
-                            tbody {
-                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
-                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                        }
+                    }
+                }
+                if (uploadCounts.isNotEmpty()) {
+                    br
+                    h3 { +"Details" }
+                    table(classes = "stylish-table") {
+                        thead {
+                            tr {
+                                th { +"Data Stream ID" }
+                                th { +"Data Stream Route" }
+                                th { +"Jurisdiction" }
+                                th { +"Upload Counts" }
+                            }
+                        }
+                        tbody {
+                            uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+                                dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                    jurisdictions.forEach { (jurisdiction, count) ->
                                         tr {
                                             td { +dataStreamId }
                                             td { +dataStreamRoute }
-                                            td { +jurisdictions.size.toString() }
-                                            td { +jurisdictions.values.sum().toString() }
+                                            td { +jurisdiction }
+                                            td { +count.toString() }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                    if (uploadCounts.isNotEmpty()) {
-                        br
-                        h3 { +"Details" }
-                        table {
-                            thead {
-                                tr {
-                                    th { +"Data Stream ID" }
-                                    th { +"Data Stream Route" }
-                                    th { +"Jurisdiction" }
-                                    th { +"Upload Counts" }
-                                }
-                            }
-                            tbody {
-                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
-                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
-                                        jurisdictions.forEach { (jurisdiction, count) ->
-                                            tr {
-                                                td { +dataStreamId }
-                                                td { +dataStreamRoute }
-                                                td { +jurisdiction }
-                                                td { +count.toString() }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                }
 
-                    p {
-                        +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
-                                + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe."
-                                )
-                    }
-                    p {
-                        a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
-                        +" for more information."
-                    }
+                p {
+                    +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
+                            + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe."
+                            )
+                }
+                p {
+                    a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
+                    +" for more information."
                 }
             }
         }
