@@ -60,7 +60,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
         jurisdictions: List<String>,
         emailAddresses: List<String>
     ) {
-        try {
+        runCatching {
             val utcDateToRun = LocalDate.now().minusDays(numDaysAgoToRun)
             val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
             val uploadDigestResults = UploadDigestCountsQuery(repository)
@@ -74,13 +74,14 @@ class UploadDigestCountsNotificationWorkflowImpl :
                 .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
             // Format the email body
+            val workflowId = Workflow.getInfo().workflowId
             val dateRun = utcDateToRun.format(formatter)
-            val emailBody = UploadDigestCountsEmailBuilder(dateRun, aggregatedCounts, timingMetrics)
+            val emailBody = UploadDigestCountsEmailBuilder(workflowId, dateRun, aggregatedCounts, timingMetrics)
                 .build()
             activities.sendDigestEmail(emailBody, emailAddresses)
-        } catch (e: Exception) {
-            logger.error("Error occurred while processing daily upload digest: ${e.message}")
-            throw e
+        }.onFailure {
+            logger.error("Error occurred while processing daily upload digest: ${it.localizedMessage}")
+            throw it
         }
     }
 

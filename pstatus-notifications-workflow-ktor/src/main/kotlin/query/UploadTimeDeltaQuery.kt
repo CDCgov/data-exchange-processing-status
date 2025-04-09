@@ -2,12 +2,16 @@ package gov.cdc.ocio.processingnotifications.query
 
 import gov.cdc.ocio.database.QueryBuilder
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.TimingMetrics
 import gov.cdc.ocio.types.InstantRange
 import java.time.LocalDate
 
 
+/**
+ * Calculates the time for uploads and various metrics like mean, max, median, etc.
+ *
+ * @constructor
+ */
 class UploadTimeDeltaQuery(
     repository: ProcessingStatusRepository
 ): QueryBuilder(repository.reportsCollection) {

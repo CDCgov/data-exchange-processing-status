@@ -8,11 +8,14 @@ import kotlinx.html.stream.appendHTML
 /**
  * Convenience class for building an upload digest of counts email.
  *
+ * @property workflowId String
  * @property runDateUtc String
  * @property digestCounts UploadDigestCounts
+ * @property timingMetrics TimingMetrics
  * @constructor
  */
 class UploadDigestCountsEmailBuilder(
+    private val workflowId: String,
     private val runDateUtc: String,
     private val digestCounts: UploadDigestCounts,
     private val timingMetrics: TimingMetrics
@@ -30,27 +33,33 @@ class UploadDigestCountsEmailBuilder(
                 hr {  }
                 h2 { +"Daily Upload Digest for Data Streams" }
                 div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
-                br
-                h3 { +"Summary" }
+                h3 { +"Overview" }
                 table {
                     tr {
-                        td { +"Fastest upload" }
+                        td { +"Workflow ID" }
+                        td { strong { +workflowId } }
+                    }
+                }
+                h3 { +"Upload Metrics" }
+                table {
+                    tr {
+                        td { +"Fastest" }
                         td { strong { +"${timingMetrics.minDelta} s" } }
                     }
                     tr {
-                        td { +"Slowest upload" }
+                        td { +"Slowest" }
                         td { strong { +"${timingMetrics.maxDelta} s" } }
                     }
                     tr {
-                        td { +"Mean upload" }
+                        td { +"Mean (Average)" }
                         td { strong { +"${timingMetrics.meanDelta} s" } }
                     }
                     tr {
-                        td { +"Median upload" }
+                        td { +"Median" }
                         td { strong { +"${timingMetrics.medianDelta} s" } }
                     }
                 }
-                br
+                h3 { +"Summary" }
                 table(classes = "stylish-table") {
                     if (uploadCounts.isEmpty()) {
                         +"No uploads found."
@@ -78,7 +87,6 @@ class UploadDigestCountsEmailBuilder(
                     }
                 }
                 if (uploadCounts.isNotEmpty()) {
-                    br
                     h3 { +"Details" }
                     table(classes = "stylish-table") {
                         thead {
@@ -105,15 +113,16 @@ class UploadDigestCountsEmailBuilder(
                         }
                     }
                 }
-
-                p {
-                    +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
-                            + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe."
-                            )
-                }
-                p {
-                    a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
-                    +" for more information."
+                br {  }
+                br {  }
+                div {
+                    small {
+                        +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
+                                + "Processing Status (PS) API. Use the PS API GraphQL interface to unsubscribe "
+                                + "with the workflow ID provided above. ")
+                        a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
+                        + " for more information."
+                    }
                 }
             }
         }
