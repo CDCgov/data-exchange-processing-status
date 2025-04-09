@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
-
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
   // Look for test files in the "tests" directory, relative to this configuration file.
