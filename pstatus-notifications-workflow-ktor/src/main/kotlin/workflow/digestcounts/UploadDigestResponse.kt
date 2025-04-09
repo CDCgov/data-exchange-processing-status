@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications.model
+package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 
 /**

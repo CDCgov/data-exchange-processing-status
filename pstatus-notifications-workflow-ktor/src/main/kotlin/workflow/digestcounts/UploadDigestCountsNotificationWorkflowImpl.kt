@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
-import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
 import gov.cdc.ocio.processingnotifications.query.UploadDigestCountsQuery
 import gov.cdc.ocio.processingnotifications.query.UploadMetricsQuery
 import io.temporal.activity.ActivityOptions

@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingnotifications.query
 
 import gov.cdc.ocio.database.QueryBuilder
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestResponse
 import gov.cdc.ocio.types.InstantRange
 import java.time.LocalDate
 
