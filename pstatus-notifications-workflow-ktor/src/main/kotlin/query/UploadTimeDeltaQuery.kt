@@ -61,26 +61,26 @@ class UploadTimeDeltaQuery(
             FROM (
                 -- Subquery to calculate metrics for each uploadId
                 SELECT 
-                    r.uploadId,
+                    ${cPrefix}uploadId,
                     
                     -- Start time from 'upload-started'
-                    MIN(CASE WHEN r.stageInfo.action = 'upload-started' THEN r.stageInfo.start_processing_time END) AS start_time,
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.start_processing_time END) AS start_time,
                     
                     -- End time from 'upload-completed'
-                    MAX(CASE WHEN r.stageInfo.action = 'upload-completed' THEN r.stageInfo.end_processing_time END) AS end_time,
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) AS end_time,
                     
                     -- Delta (Processing time difference)
-                    MAX(CASE WHEN r.stageInfo.action = 'upload-completed' THEN r.stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN r.stageInfo.action = 'upload-started' THEN r.stageInfo.start_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS delta,
                     
                     -- File size
-                    MAX(CASE WHEN r.stageInfo.action = 'upload-status' THEN r.content.size END) AS file_size
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-status' THEN ${cPrefix}content.size END) AS file_size
             
-                FROM ProcessingStatus.data.`Reports` r
-                WHERE r.stageInfo.action IN ['upload-started', 'upload-completed', 'upload-status']
-                    AND r.stageInfo.status = 'SUCCESS'
+                FROM $collectionName $cVar
+                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'upload-status'${closeBkt}
+                    AND ${cPrefix}stageInfo.status = 'SUCCESS'
             """)
 
         if (dataStreamIds.isNotEmpty())
@@ -104,9 +104,7 @@ class UploadTimeDeltaQuery(
         """)
 
         querySB.append("""
-                    AND r.dexIngestDateTime >= 0
-                    AND r.dexIngestDateTime < 2044070400000
-                GROUP BY r.uploadId
+                GROUP BY ${cPrefix}uploadId
             ) AS upload_metrics;
         """)
 
