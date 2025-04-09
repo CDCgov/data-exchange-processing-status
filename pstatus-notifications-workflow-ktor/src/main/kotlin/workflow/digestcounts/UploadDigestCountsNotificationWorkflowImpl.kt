@@ -70,14 +70,17 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
 
             // Get the upload timing metrics
-            val timingMetrics = UploadTimeDeltaQuery(repository)
+            val uploadMetrics = UploadTimeDeltaQuery(repository)
                 .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
             // Format the email body
             val workflowId = Workflow.getInfo().workflowId
+            val cronSchedule = Workflow.getInfo().cronSchedule
             val dateRun = utcDateToRun.format(formatter)
-            val emailBody = UploadDigestCountsEmailBuilder(workflowId, dateRun, aggregatedCounts, timingMetrics)
-                .build()
+            val emailBody = UploadDigestCountsEmailBuilder(
+                workflowId, cronSchedule, dataStreamIds, dataStreamRoutes, jurisdictions,
+                dateRun, aggregatedCounts, uploadMetrics
+            ).build()
             activities.sendDigestEmail(emailBody, emailAddresses)
         }.onFailure {
             logger.error("Error occurred while processing daily upload digest: ${it.localizedMessage}")

@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingnotifications.query
 
 import gov.cdc.ocio.database.QueryBuilder
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingnotifications.workflow.digestcounts.TimingMetrics
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadMetrics
 import gov.cdc.ocio.types.InstantRange
 import java.time.LocalDate
 
@@ -44,10 +44,22 @@ class UploadTimeDeltaQuery(
                 AVG(delta) AS meanDelta,
                 
                 -- Median delta
-                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS medianDelta
-            
+                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS medianDelta,
+                
+                -- Minimum file size
+                MIN(file_size) AS minFileSize,
+                
+                -- Maximum file size
+                MAX(file_size) AS maxFileSize,
+                
+                -- Average (mean) file size
+                AVG(file_size) AS meanFileSize,
+                
+                -- Median file size
+                ARRAY_SORT(ARRAY_AGG(file_size))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(file_size)) / 2)] AS medianFileSize
+        
             FROM (
-                -- Subquery to calculate deltas for each uploadId
+                -- Subquery to calculate metrics for each uploadId
                 SELECT 
                     r.uploadId,
                     
@@ -61,10 +73,13 @@ class UploadTimeDeltaQuery(
                     MAX(CASE WHEN r.stageInfo.action = 'upload-completed' THEN r.stageInfo.end_processing_time END) 
                     - 
                     MIN(CASE WHEN r.stageInfo.action = 'upload-started' THEN r.stageInfo.start_processing_time END) 
-                    AS delta
+                    AS delta,
+                    
+                    -- File size
+                    MAX(CASE WHEN r.stageInfo.action = 'upload-status' THEN r.content.size END) AS file_size
             
                 FROM ProcessingStatus.data.`Reports` r
-                WHERE r.stageInfo.action IN ['upload-started', 'upload-completed']
+                WHERE r.stageInfo.action IN ['upload-started', 'upload-completed', 'upload-status']
                     AND r.stageInfo.status = 'SUCCESS'
             """)
 
@@ -92,7 +107,7 @@ class UploadTimeDeltaQuery(
                     AND r.dexIngestDateTime >= 0
                     AND r.dexIngestDateTime < 2044070400000
                 GROUP BY r.uploadId
-            ) AS upload_deltas;
+            ) AS upload_metrics;
         """)
 
         return querySB.toString().trimIndent()
@@ -103,7 +118,7 @@ class UploadTimeDeltaQuery(
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
-    ): TimingMetrics {
+    ): UploadMetrics {
         return runCatching {
             val query = build(
                 utcDateToRun,
@@ -112,7 +127,7 @@ class UploadTimeDeltaQuery(
                 jurisdictions
             )
             logger.info("Upload time delta metrics query:\n$query")
-            val results = collection.queryItems(query, TimingMetrics::class.java).first()
+            val results = collection.queryItems(query, UploadMetrics::class.java).first()
             return@runCatching results
         }.getOrElse {
             logger.error("Error occurred while executing query: ${it.localizedMessage}")
