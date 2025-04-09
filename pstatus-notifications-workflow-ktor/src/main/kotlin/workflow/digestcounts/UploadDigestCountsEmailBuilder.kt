@@ -119,17 +119,18 @@ class UploadDigestCountsEmailBuilder(
                                 th { +"Data Stream ID" }
                                 th { +"Data Stream Route" }
                                 th { +"Jurisdictions" }
-                                th { +"Upload Counts" }
+                                th { +"Uploads Completed" }
                             }
                         }
                         tbody {
                             uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
                                 dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+                                    val uploadsCompleted = jurisdictions.values.sumOf { it.started }
                                     tr {
                                         td { +dataStreamId }
                                         td { +dataStreamRoute }
                                         td { +jurisdictions.size.toString() }
-                                        td { +jurisdictions.values.sum().toString() }
+                                        td { +uploadsCompleted.toString() }
                                     }
                                 }
                             }
@@ -144,18 +145,24 @@ class UploadDigestCountsEmailBuilder(
                                 th { +"Data Stream ID" }
                                 th { +"Data Stream Route" }
                                 th { +"Jurisdiction" }
-                                th { +"Upload Counts" }
+                                th { +"Completed" }
+                                th { +"In-Progress"}
+                                th { +"Delivered" }
                             }
                         }
                         tbody {
                             uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
                                 dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
                                     jurisdictions.forEach { (jurisdiction, count) ->
+                                        val inProgress = count.completed - count.started
+                                        val delivered = count.delivered - count.failedDelivery
                                         tr {
                                             td { +dataStreamId }
                                             td { +dataStreamRoute }
                                             td { +jurisdiction }
-                                            td { +count.toString() }
+                                            td { +count.completed.toString() }
+                                            td { +inProgress.toString()}
+                                            td { +delivered.toString() }
                                         }
                                     }
                                 }

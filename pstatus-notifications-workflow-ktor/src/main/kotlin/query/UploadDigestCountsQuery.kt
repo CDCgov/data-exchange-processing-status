@@ -28,10 +28,18 @@ class UploadDigestCountsQuery(
         val querySB = StringBuilder()
 
         querySB.append("""
-            SELECT ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
+            SELECT
+                ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction,
+            
+                SUM(CASE WHEN r.stageInfo.action = 'upload-started' AND r.stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS started,
+                SUM(CASE WHEN r.stageInfo.action = 'upload-completed' AND r.stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN r.stageInfo.action = 'blob-file-copy' AND r.stageInfo.status != 'SUCCESS' THEN 1 ELSE 0 END) AS failedDelivery,
+                SUM(CASE WHEN r.stageInfo.action = 'blob-file-copy' AND r.stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS delivered
+            
             FROM $collectionName $cVar
-            WHERE ${cPrefix}stageInfo.action = 'upload-completed' AND ${cPrefix}stageInfo.status = 'SUCCESS'
-            """)
+            WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'blob-file-copy'${closeBkt}
+                AND ${cPrefix}stageInfo.status = 'SUCCESS'
+                """)
 
         if (dataStreamIds.isNotEmpty())
             querySB.append("""
@@ -49,9 +57,10 @@ class UploadDigestCountsQuery(
                 """)
 
         querySB.append("""
-            AND ${cPrefix}dexIngestDateTime >= $startTime
-            AND ${cPrefix}dexIngestDateTime < $endTime
-            """)
+                AND ${cPrefix}dexIngestDateTime >= $startTime
+                AND ${cPrefix}dexIngestDateTime < $endTime
+                GROUP BY r.dataStreamId, r.dataStreamRoute, r.jurisdiction
+                """)
 
         return querySB.toString().trimIndent()
     }

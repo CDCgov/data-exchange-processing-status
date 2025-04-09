@@ -1,7 +1,14 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 
-typealias CountsByJurisdiction = Map<String, Int>
+data class Counts(
+    val started: Int,
+    val completed: Int,
+    val failedDelivery: Int,
+    val delivered: Int
+)
+
+typealias CountsByJurisdiction = Map<String, Counts>
 
 typealias CountsByDataStreamRoute = Map<String, CountsByJurisdiction>
 

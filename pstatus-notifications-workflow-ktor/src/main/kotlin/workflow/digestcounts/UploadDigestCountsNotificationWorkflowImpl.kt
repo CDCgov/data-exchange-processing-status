@@ -100,11 +100,18 @@ class UploadDigestCountsNotificationWorkflowImpl :
     ): UploadDigestCounts {
 
         val digest = uploadCounts.groupBy { it.dataStreamId }
-            .mapValues { (_, counts) ->
-                counts.groupBy { it.dataStreamRoute }
+            .mapValues { (_, dataStreamCounts) ->
+                dataStreamCounts.groupBy { it.dataStreamRoute }
                     .mapValues { (_, routeCounts) ->
                         routeCounts.groupBy { it.jurisdiction }
-                            .mapValues { (_, jurisdictionCounts) -> jurisdictionCounts.count() }
+                            .mapValues { (_, jurisdictionCounts) ->
+                                Counts(
+                                    jurisdictionCounts.sumOf { it.started },
+                                    jurisdictionCounts.sumOf { it.completed },
+                                    jurisdictionCounts.sumOf { it.failedDelivery },
+                                    jurisdictionCounts.sumOf { it. delivered }
+                                )
+                            }
                     }
             }
         return UploadDigestCounts(digest)
