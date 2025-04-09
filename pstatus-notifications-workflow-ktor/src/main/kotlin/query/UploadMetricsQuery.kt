@@ -8,11 +8,11 @@ import java.time.LocalDate
 
 
 /**
- * Calculates the time for uploads and various metrics like mean, max, median, etc.
+ * Calculates the time for uploads and various metrics like mean, max, median, etc. as well as file size metrics.
  *
  * @constructor
  */
-class UploadTimeDeltaQuery(
+class UploadMetricsQuery(
     repository: ProcessingStatusRepository
 ): QueryBuilder(repository.reportsCollection) {
 
