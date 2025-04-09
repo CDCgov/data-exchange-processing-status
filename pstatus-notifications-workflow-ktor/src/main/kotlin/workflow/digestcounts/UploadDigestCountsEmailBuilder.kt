@@ -125,7 +125,7 @@ class UploadDigestCountsEmailBuilder(
                         tbody {
                             uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
                                 dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
-                                    val uploadsCompleted = jurisdictions.values.sumOf { it.started }
+                                    val uploadsCompleted = jurisdictions.values.sumOf { it.uploadCompleted }
                                     tr {
                                         td { +dataStreamId }
                                         td { +dataStreamRoute }
@@ -154,13 +154,13 @@ class UploadDigestCountsEmailBuilder(
                             uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
                                 dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
                                     jurisdictions.forEach { (jurisdiction, count) ->
-                                        val inProgress = count.completed - count.started
-                                        val delivered = count.delivered - count.failedDelivery
+                                        val inProgress = count.uploadCompleted - count.uploadStarted
+                                        val delivered = count.deliverySucceeded - count.deliveryFailed
                                         tr {
                                             td { +dataStreamId }
                                             td { +dataStreamRoute }
                                             td { +jurisdiction }
-                                            td { +count.completed.toString() }
+                                            td { +count.uploadCompleted.toString() }
                                             td { +inProgress.toString()}
                                             td { +delivered.toString() }
                                         }
