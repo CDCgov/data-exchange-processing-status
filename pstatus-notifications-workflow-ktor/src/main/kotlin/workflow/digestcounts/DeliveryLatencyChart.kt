@@ -33,7 +33,9 @@ class DeliveryLatencyChart(
         .build()
 
     init {
-        // Compute IQR
+        // Compute Inter-quartile Range (IQR). IQR in a histogram is a measure of statistical dispersion, representing
+        // the range within which the middle 50% of data points fall. A narrow IQR suggests that most data points are
+        // closely packed. A wide IQR indicates greater variability in the data.
         val sortedValues = deliveryLatenciesInSeconds.sorted()
         val q1 = sortedValues[deliveryLatenciesInSeconds.size / 4]
         val q3 = sortedValues[3 * deliveryLatenciesInSeconds.size / 4]
@@ -41,7 +43,9 @@ class DeliveryLatencyChart(
 
         // Freedman-Diaconis Rule
         val binWidth = 2 * iqr / deliveryLatenciesInSeconds.size.toDouble().pow(1.0 / 3.0)
-        val numBins = ((deliveryLatenciesInSeconds.maxOrNull()!! - deliveryLatenciesInSeconds.minOrNull()!!) / binWidth).toInt()
+        val numBins = ((deliveryLatenciesInSeconds.maxOrNull()!! - deliveryLatenciesInSeconds.minOrNull()!!) / binWidth)
+            .toInt()
+            .coerceAtLeast(1)
 
         // Create the histogram data series
         val histogramData = Histogram(deliveryLatenciesInSeconds, numBins)
