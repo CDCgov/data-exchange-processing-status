@@ -56,7 +56,7 @@ class UploadDigestCountsEmailBuilder(
 
         // Generate the delivery latency chart and convert it to a base64 encoded PNG.
         val imageBase64String = runCatching {
-            val chartInBytes = DeliveryLatencyChart(deliveryLatenciesInMillis, 800, 400)
+            val chartInBytes = DurationDistributionChart(deliveryLatenciesInMillis, 800, 400)
                 .toPngAsByteArray()
             // Convert the byte array to a Base64 string
             return@runCatching Base64.getEncoder().encodeToString(chartInBytes)

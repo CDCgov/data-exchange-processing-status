@@ -10,14 +10,14 @@ import kotlin.math.pow
 
 
 /**
- * Delivery latency histogram chart.
+ * Duration distribution histogram chart.
  *
  * @property logger KLogger
  * @property chart [CategoryChart]
  * @constructor
  */
-class DeliveryLatencyChart(
-    deliveryLatenciesInMillis: List<Long>,
+class DurationDistributionChart(
+    durationsInMillis: List<Long>,
     width: Int,
     height: Int
 ) {
@@ -35,7 +35,7 @@ class DeliveryLatencyChart(
         // Compute Inter-quartile Range (IQR). IQR in a histogram is a measure of statistical dispersion, representing
         // the range within which the middle 50% of data points fall. A narrow IQR suggests that most data points are
         // closely packed. A wide IQR indicates greater variability in the data.
-        val sortedValues = deliveryLatenciesInMillis.sorted()
+        val sortedValues = durationsInMillis.sorted()
         val durationValuesInSeconds = sortedValues.map { it / 1000.0 }
         val q1 = durationValuesInSeconds[durationValuesInSeconds.size / 4]
         val q3 = durationValuesInSeconds[3 * durationValuesInSeconds.size / 4]
