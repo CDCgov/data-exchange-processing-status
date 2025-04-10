@@ -10,14 +10,17 @@ import java.time.Duration
  * @return String
  */
 fun Duration.toHumanReadable(): String {
-    val seconds = this.seconds
+    val milliseconds = this.toMillis()
+    val seconds = milliseconds / 1000
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val remainingSeconds = seconds % 60
+    val remainingMilliseconds = milliseconds % 1000
 
     return buildString {
-        if (hours > 0) append("$hours hour${if (hours > 1) "s" else ""} ")
-        if (minutes > 0) append("$minutes minute${if (minutes > 1) "s" else ""} ")
-        if (remainingSeconds > 0 || (hours == 0L && minutes == 0L)) append("$remainingSeconds second${if (remainingSeconds > 1) "s" else ""}")
+        if (hours > 0) append("$hours hr ")
+        if (minutes > 0) append("$minutes min ")
+        if (remainingSeconds > 0) append("$remainingSeconds sec ")
+        if (remainingMilliseconds > 0 || (hours == 0L && minutes == 0L && remainingSeconds == 0L)) append("$remainingMilliseconds ms")
     }.trim()
 }
