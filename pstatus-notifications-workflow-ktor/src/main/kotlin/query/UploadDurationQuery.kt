@@ -25,18 +25,18 @@ class UploadDurationQuery(
             SELECT RAW ARRAY_AGG(duration) 
             FROM (
                 SELECT 
-                    MAX(CASE WHEN r.stageInfo.action = 'blob-file-copy' THEN r.stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN r.stageInfo.action = 'metadata-verify' THEN r.stageInfo.start_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'metadata-verify' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS duration
-                FROM ProcessingStatus.data.`Reports` r
-                WHERE r.stageInfo.action IN ['metadata-verify', 'blob-file-copy']
+                FROM $collectionName $cVar
+                WHERE ${cPrefix}stageInfo.action IN ['metadata-verify', 'blob-file-copy']
                 """)
 
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
 
         querySB.append("""
-                GROUP BY r.uploadId
+                GROUP BY ${cPrefix}uploadId
             ) subquery
             WHERE duration IS NOT NULL;
         """)

@@ -21,10 +21,10 @@ class UploadDigestCountsQuery(
             SELECT
                 ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction,
             
-                SUM(CASE WHEN r.stageInfo.action = 'upload-started' AND r.stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS started,
-                SUM(CASE WHEN r.stageInfo.action = 'upload-completed' AND r.stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS completed,
-                SUM(CASE WHEN r.stageInfo.action = 'blob-file-copy' AND r.stageInfo.status != 'SUCCESS' THEN 1 ELSE 0 END) AS failedDelivery,
-                SUM(CASE WHEN r.stageInfo.action = 'blob-file-copy' AND r.stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS delivered
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' AND ${cPrefix}stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS started,
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' AND ${cPrefix}stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' AND ${cPrefix}stageInfo.status != 'SUCCESS' THEN 1 ELSE 0 END) AS failedDelivery,
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' AND ${cPrefix}stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS delivered
             
             FROM $collectionName $cVar
             WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'blob-file-copy'${closeBkt}
@@ -33,7 +33,7 @@ class UploadDigestCountsQuery(
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
 
         querySB.append("""
-            GROUP BY r.dataStreamId, r.dataStreamRoute, r.jurisdiction
+            GROUP BY ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
             """)
 
         return querySB.toString().trimIndent()
