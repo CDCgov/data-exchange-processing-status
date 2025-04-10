@@ -22,7 +22,7 @@ import kotlin.math.roundToLong
  * @property runDateUtc String
  * @property digestCounts UploadDigestCounts
  * @property uploadMetrics UploadMetrics
- * @property deliveryLatenciesInSec List<Long>
+ * @property deliveryLatenciesInMillis List<Long>
  * @constructor
  */
 class UploadDigestCountsEmailBuilder(
@@ -34,7 +34,7 @@ class UploadDigestCountsEmailBuilder(
     private val runDateUtc: String,
     private val digestCounts: UploadDigestCounts,
     private val uploadMetrics: UploadMetrics,
-    private val deliveryLatenciesInSec: List<Long>
+    private val deliveryLatenciesInMillis: List<Long>
 ) {
 
     fun build(): String {
@@ -45,18 +45,18 @@ class UploadDigestCountsEmailBuilder(
         val dataStreamRoutesDesc = dataStreamRoutes.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "All"
         val jurisdictionsDesc = jurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "All"
 
-        val minUploadTimeDurationDesc = Duration.ofSeconds(
-            uploadMetrics.minDelta).toHumanReadable()
-        val maxUploadTimeDurationDesc = Duration.ofSeconds(
-            uploadMetrics.maxDelta).toHumanReadable()
+        val minUploadTimeDurationDesc = Duration.ofMillis(
+            uploadMetrics.minDeltaInMillis).toHumanReadable()
+        val maxUploadTimeDurationDesc = Duration.ofMillis(
+            uploadMetrics.maxDeltaInMillis).toHumanReadable()
         val meanUploadTimeDurationDesc = Duration.ofMillis(
-            (uploadMetrics.meanDelta * 1000).roundToLong()).toHumanReadable()
+            (uploadMetrics.meanDeltaInMillis).roundToLong()).toHumanReadable()
         val medianUploadTimeDurationDesc = Duration.ofMillis(
-            (uploadMetrics.medianDelta * 1000).roundToLong()).toHumanReadable()
+            (uploadMetrics.medianDeltaInMillis).roundToLong()).toHumanReadable()
 
         // Generate the delivery latency chart and convert it to a base64 encoded PNG.
         val imageBase64String = runCatching {
-            val chartInBytes = DeliveryLatencyChart(deliveryLatenciesInSec, 800, 400)
+            val chartInBytes = DeliveryLatencyChart(deliveryLatenciesInMillis, 800, 400)
                 .toPngAsByteArray()
             // Convert the byte array to a Base64 string
             return@runCatching Base64.getEncoder().encodeToString(chartInBytes)

@@ -4,10 +4,10 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 /**
  * Metrics for an upload.
  *
- * @property minDelta Long
- * @property maxDelta Long
- * @property meanDelta Float
- * @property medianDelta Float
+ * @property minDeltaInMillis Long
+ * @property maxDeltaInMillis Long
+ * @property meanDeltaInMillis Float
+ * @property medianDeltaInMillis Float
  * @property minFileSize Long
  * @property maxFileSize Long
  * @property meanFileSize Float
@@ -15,10 +15,10 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
  * @constructor
  */
 data class UploadMetrics(
-    val minDelta: Long,
-    val maxDelta: Long,
-    val meanDelta: Float,
-    val medianDelta: Float,
+    val minDeltaInMillis: Long,
+    val maxDeltaInMillis: Long,
+    val meanDeltaInMillis: Float,
+    val medianDeltaInMillis: Float,
     val minFileSize: Long,
     val maxFileSize: Long,
     val meanFileSize: Float,
