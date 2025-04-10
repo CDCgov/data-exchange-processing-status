@@ -120,14 +120,17 @@ class UploadDigestCountsEmailBuilder(
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.medianFileSize) }
                     }
                 }
-                h3 { +"Delivery Latencies"}
+                h3 { +"Upload and Delivery Duration"}
                 p {
-                    +"The delivery latency is the time from when the an upload starts to when uploaded file is finished being delivered. "
-                    +"The chart below shows a histogram of the delivery times, categorized by latency buckets. The frequency is the count "
-                    +"of delivery times that fall in that delivery time range."
+                    +"The "
+                    b { +"Upload and Delivery Duration" }
+                    +" is the time from when an upload starts to when the uploaded file has been delivered. "
+                    +"The chart below shows a histogram of the durations, categorized by time buckets. The "
+                    b { +"Number of Uploads" }
+                    +" is the count of durations that fall within the duration bucket time range."
                 }
                 if (imageBase64String != null) {
-                    img(src = "data:image/png;base64,$imageBase64String", alt = "Latency Distribution Chart")
+                    img(src = "data:image/png;base64,$imageBase64String", alt = "Upload and Delivery Duration Distribution Chart")
                 } else {
                     p { +"No data." }
                 }

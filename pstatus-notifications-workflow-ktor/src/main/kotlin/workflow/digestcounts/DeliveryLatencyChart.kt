@@ -1,13 +1,12 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import mu.KotlinLogging
+import org.knowm.xchart.*
 import java.awt.Color
 import java.awt.Font
 import java.io.ByteArrayOutputStream
-import kotlin.math.pow
 import javax.imageio.ImageIO
-import org.knowm.xchart.*
-import org.knowm.xchart.CategoryChartBuilder
+import kotlin.math.pow
 
 
 /**
@@ -27,8 +26,8 @@ class DeliveryLatencyChart(
     private val chart = CategoryChartBuilder()
         .width(width)  // Set chart width
         .height(height) // Set chart height
-        .title("Delivery Latency Distribution")
-        .xAxisTitle("Time Bins (seconds)")
+        .title("Duration Distribution")
+        .xAxisTitle("Duration Bins (seconds)")
         .yAxisTitle("Number of Uploads")
         .build()
 
@@ -37,18 +36,19 @@ class DeliveryLatencyChart(
         // the range within which the middle 50% of data points fall. A narrow IQR suggests that most data points are
         // closely packed. A wide IQR indicates greater variability in the data.
         val sortedValues = deliveryLatenciesInMillis.sorted()
-        val q1 = sortedValues[deliveryLatenciesInMillis.size / 4]
-        val q3 = sortedValues[3 * deliveryLatenciesInMillis.size / 4]
+        val durationValuesInSeconds = sortedValues.map { it / 1000.0 }
+        val q1 = durationValuesInSeconds[durationValuesInSeconds.size / 4]
+        val q3 = durationValuesInSeconds[3 * durationValuesInSeconds.size / 4]
         val iqr = q3 - q1
 
         // Freedman-Diaconis Rule
-        val binWidth = 2 * iqr / deliveryLatenciesInMillis.size.toDouble().pow(1.0 / 3.0)
-        val numBins = ((deliveryLatenciesInMillis.maxOrNull()!! - deliveryLatenciesInMillis.minOrNull()!!) / binWidth)
+        val binWidth = 2 * iqr / durationValuesInSeconds.size.toDouble().pow(1.0 / 3.0)
+        val numBins = ((durationValuesInSeconds.maxOrNull()!! - durationValuesInSeconds.minOrNull()!!) / binWidth)
             .toInt()
             .coerceAtLeast(1)
 
         // Create the histogram data series
-        val histogramData = Histogram(deliveryLatenciesInMillis, numBins)
+        val histogramData = Histogram(durationValuesInSeconds, numBins)
         val series = chart.addSeries("Latency", histogramData.getxAxisData(), histogramData.getyAxisData())
         series.setFillColor(Color(40, 100, 160)) // Red bars
 
