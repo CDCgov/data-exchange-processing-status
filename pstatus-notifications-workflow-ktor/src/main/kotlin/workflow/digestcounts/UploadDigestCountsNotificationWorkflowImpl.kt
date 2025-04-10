@@ -2,8 +2,7 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
-import gov.cdc.ocio.processingnotifications.query.UploadDigestCountsQuery
-import gov.cdc.ocio.processingnotifications.query.UploadMetricsQuery
+import gov.cdc.ocio.processingnotifications.query.*
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -62,6 +61,8 @@ class UploadDigestCountsNotificationWorkflowImpl :
         runCatching {
             val utcDateToRun = LocalDate.now().minusDays(numDaysAgoToRun)
             val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
+
+            // Upload digest query to get all the counts by data stream id, data stream route, and jurisdiction
             val uploadDigestResults = UploadDigestCountsQuery(repository)
                 .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
@@ -72,13 +73,17 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val uploadMetrics = UploadMetricsQuery(repository)
                 .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
+            // Get the upload delivery latencies
+            val deliveryLatencies = UploadLatencyQuery(repository)
+                .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
+
             // Format the email body
             val workflowId = Workflow.getInfo().workflowId
             val cronSchedule = Workflow.getInfo().cronSchedule
             val dateRun = utcDateToRun.format(formatter)
             val emailBody = UploadDigestCountsEmailBuilder(
                 workflowId, cronSchedule, dataStreamIds, dataStreamRoutes, jurisdictions,
-                dateRun, aggregatedCounts, uploadMetrics
+                dateRun, aggregatedCounts, uploadMetrics, deliveryLatencies
             ).build()
             activities.sendDigestEmail(emailBody, emailAddresses)
         }.onFailure {

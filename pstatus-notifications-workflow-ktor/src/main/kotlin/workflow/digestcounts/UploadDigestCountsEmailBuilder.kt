@@ -22,6 +22,7 @@ import kotlin.math.roundToLong
  * @property runDateUtc String
  * @property digestCounts UploadDigestCounts
  * @property uploadMetrics UploadMetrics
+ * @property deliveryLatenciesInSec List<Long>
  * @constructor
  */
 class UploadDigestCountsEmailBuilder(
@@ -32,7 +33,8 @@ class UploadDigestCountsEmailBuilder(
     private val jurisdictions: List<String>,
     private val runDateUtc: String,
     private val digestCounts: UploadDigestCounts,
-    private val uploadMetrics: UploadMetrics
+    private val uploadMetrics: UploadMetrics,
+    private val deliveryLatenciesInSec: List<Long>
 ) {
 
     fun build(): String {
@@ -52,13 +54,13 @@ class UploadDigestCountsEmailBuilder(
         val medianUploadTimeDurationDesc = Duration.ofMillis(
             (uploadMetrics.medianDelta * 1000).roundToLong()).toHumanReadable()
 
-        // Generate the delivery latency chart from the end-to-end total times
-        val latencyValues = List(1000) { (Math.random() * 200) } // Simulated latency data
-
-        val chartInBytes = DeliveryLatencyChart(latencyValues, 800, 400)
-            .toPngAsByteArray()
-        // Convert the byte array to a Base64 string
-        val imageBase64String = Base64.getEncoder().encodeToString(chartInBytes)
+        // Generate the delivery latency chart and convert it to a base64 encoded PNG.
+        val imageBase64String = runCatching {
+            val chartInBytes = DeliveryLatencyChart(deliveryLatenciesInSec, 800, 400)
+                .toPngAsByteArray()
+            // Convert the byte array to a Base64 string
+            return@runCatching Base64.getEncoder().encodeToString(chartInBytes)
+        }.getOrNull()
 
         val content = buildString {
             appendHTML().body {
@@ -124,7 +126,11 @@ class UploadDigestCountsEmailBuilder(
                     +"The chart below shows a histogram of the delivery times, categorized by latency buckets. The frequency is the count "
                     +"of delivery times that fall in that delivery time range."
                 }
-                img(src = "data:image/png;base64,$imageBase64String", alt = "Latency Distribution Chart")
+                if (imageBase64String != null) {
+                    img(src = "data:image/png;base64,$imageBase64String", alt = "Latency Distribution Chart")
+                } else {
+                    p { +"No data." }
+                }
                 h3 { +"Summary" }
                 table(classes = "stylish-table") {
                     if (uploadCounts.isEmpty()) {

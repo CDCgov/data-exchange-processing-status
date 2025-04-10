@@ -14,11 +14,11 @@ import org.knowm.xchart.CategoryChartBuilder
  * Delivery latency histogram chart.
  *
  * @property logger KLogger
- * @property chart (CategoryChart..CategoryChart?)
+ * @property chart [CategoryChart]
  * @constructor
  */
 class DeliveryLatencyChart(
-    deliveryLatenciesInSeconds: List<Double>,
+    deliveryLatenciesInSeconds: List<Long>,
     width: Int,
     height: Int
 ) {
@@ -27,9 +27,9 @@ class DeliveryLatencyChart(
     private val chart = CategoryChartBuilder()
         .width(width)  // Set chart width
         .height(height) // Set chart height
-        .title("Latency Distribution")
-        .xAxisTitle("Latency (ms)")
-        .yAxisTitle("Frequency")
+        .title("Delivery Latency Distribution")
+        .xAxisTitle("Time Bins (seconds)")
+        .yAxisTitle("Number of Uploads")
         .build()
 
     init {
