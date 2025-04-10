@@ -35,16 +35,16 @@ class UploadMetricsQuery(
         querySB.append("""
             SELECT 
                 -- Minimum delta
-                MIN(delta) AS minDelta,
+                MIN(delta) AS minDeltaInMillis,
                 
                 -- Maximum delta
-                MAX(delta) AS maxDelta,
+                MAX(delta) AS maxDeltaInMillis,
                 
                 -- Average (mean) delta
-                AVG(delta) AS meanDelta,
+                AVG(delta) AS meanDeltaInMillis,
                 
                 -- Median delta
-                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS medianDelta,
+                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS medianDeltaInMillis,
                 
                 -- Minimum file size
                 MIN(file_size) AS minFileSize,
