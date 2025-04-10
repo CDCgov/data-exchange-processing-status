@@ -7,6 +7,7 @@ import kotlinx.html.stream.appendHTML
 import org.apache.commons.io.FileUtils
 import gov.cdc.ocio.types.extensions.toHumanReadable
 import java.time.Duration
+import java.util.*
 import kotlin.math.roundToLong
 
 
@@ -50,6 +51,14 @@ class UploadDigestCountsEmailBuilder(
             (uploadMetrics.meanDelta * 1000).roundToLong()).toHumanReadable()
         val medianUploadTimeDurationDesc = Duration.ofMillis(
             (uploadMetrics.medianDelta * 1000).roundToLong()).toHumanReadable()
+
+        // Generate the delivery latency chart from the end-to-end total times
+        val latencyValues = List(1000) { (Math.random() * 200) } // Simulated latency data
+
+        val chartInBytes = DeliveryLatencyChart(latencyValues, 800, 400)
+            .toPngAsByteArray()
+        // Convert the byte array to a Base64 string
+        val imageBase64String = Base64.getEncoder().encodeToString(chartInBytes)
 
         val content = buildString {
             appendHTML().body {
@@ -109,6 +118,9 @@ class UploadDigestCountsEmailBuilder(
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.medianFileSize) }
                     }
                 }
+                h3 { +"Delivery Latencies"}
+                p { +"The delivery latency is the time from when the an upload starts to when uploaded file is finished being delivered." }
+                img(src = "data:image/png;base64,$imageBase64String", alt = "Latency Distribution Chart")
                 h3 { +"Summary" }
                 table(classes = "stylish-table") {
                     if (uploadCounts.isEmpty()) {

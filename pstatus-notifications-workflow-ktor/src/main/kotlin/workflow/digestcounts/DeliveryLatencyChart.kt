@@ -1,0 +1,73 @@
+package gov.cdc.ocio.processingnotifications.workflow.digestcounts
+
+import mu.KotlinLogging
+import java.awt.Color
+import java.awt.Font
+import java.io.ByteArrayOutputStream
+import kotlin.math.pow
+import javax.imageio.ImageIO
+import org.knowm.xchart.*
+import org.knowm.xchart.CategoryChartBuilder
+
+
+class DeliveryLatencyChart(
+    deliveryLatenciesInSeconds: List<Double>,
+    width: Int,
+    height: Int
+) {
+    private val logger = KotlinLogging.logger {}
+
+    private val chart = CategoryChartBuilder()
+        .width(width)  // Set chart width
+        .height(height) // Set chart height
+        .title("Latency Distribution")
+        .xAxisTitle("Latency (ms)")
+        .yAxisTitle("Frequency")
+        .build()
+
+    init {
+        // Compute IQR
+        val sortedValues = deliveryLatenciesInSeconds.sorted()
+        val q1 = sortedValues[deliveryLatenciesInSeconds.size / 4]
+        val q3 = sortedValues[3 * deliveryLatenciesInSeconds.size / 4]
+        val iqr = q3 - q1
+
+        // Freedman-Diaconis Rule
+        val binWidth = 2 * iqr / deliveryLatenciesInSeconds.size.toDouble().pow(1.0 / 3.0)
+        val numBins = ((deliveryLatenciesInSeconds.maxOrNull()!! - deliveryLatenciesInSeconds.minOrNull()!!) / binWidth).toInt()
+
+        // Create the histogram data series
+        val histogramData = Histogram(deliveryLatenciesInSeconds, numBins)
+        val series = chart.addSeries("Latency", histogramData.getxAxisData(), histogramData.getyAxisData())
+        series.setFillColor(Color(40, 100, 160)) // Red bars
+
+        // Customize the chart's styling for a modern look
+        chart.styler.apply {
+            isLegendVisible = false
+            // Set the chart background color
+            chartBackgroundColor = Color(255, 255, 255) // White background
+            plotBackgroundColor = Color(255, 255, 255) // White plot area
+            plotGridLinesColor = Color(220, 220, 220) // Light grey grid lines
+
+            // Style axis labels
+            axisTickMarksColor = Color(150, 150, 150) // Subtle axis tick marks
+            axisTitleFont = Font("Arial", Font.PLAIN, 14) // Clean, modern font for axis titles
+            axisTickLabelsFont = Font("Arial", Font.PLAIN, 12) // Modern font for axis labels
+
+            // Style chart title
+            chartTitleFont = Font("Arial", Font.BOLD, 18) // Bold, larger font for title
+
+            xAxisDecimalPattern = "#.0" // Limit x-axis labels to 1 decimal place
+        }
+    }
+
+    fun toPngAsByteArray(): ByteArray {
+        // Save chart to PNG in memory (ByteArrayOutputStream)
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        BitmapEncoder.getBufferedImage(chart).also {
+            ImageIO.write(it, "PNG", byteArrayOutputStream)
+        }
+        val chartInBytes = byteArrayOutputStream.toByteArray()
+        return chartInBytes
+    }
+}
