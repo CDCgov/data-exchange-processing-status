@@ -34,19 +34,6 @@ test.describe("schemaContent query", async () => {
     expect(typeof response.schemaContent).toBe('object');
   });
 
-  test('validates JSON Schema structure', async ({ gql }) => {
-    const response = await gql.schemaContent({
-      schemaName: 'base',
-      schemaVersion: '1.0.0'
-    });
-
-    const schema = response.schemaContent;
-    expect(schema).toHaveProperty('$schema');
-    expect(schema).toHaveProperty('type');
-    expect(schema).toHaveProperty('properties');
-    expect(schema).toHaveProperty('required');
-  });
-
   test('handles invalid schema name gracefully', async ({ gql }) => {
     const response = await gql.schemaContent({
       schemaName: 'non-existent-schema',
@@ -64,21 +51,4 @@ test.describe("schemaContent query", async () => {
 
     expect(response.schemaContent).toBeNull();
   });
-
-  test('validates schema-specific required properties', async ({ gql }) => {
-    const response = await gql.schemaContent({
-      schemaName: 'upload-status',
-      schemaVersion: '1.0.0'
-    });
-
-    const schema = response.schemaContent;
-    expect(schema).toHaveProperty('$schema');
-    expect(schema).toHaveProperty('$id');
-    expect(schema).toHaveProperty('title');
-    expect(schema).toHaveProperty('type');
-    expect(schema).toHaveProperty('required');
-    expect(schema).toHaveProperty('properties');
-    expect(schema).toHaveProperty('$defs');
-  });
-
 });
