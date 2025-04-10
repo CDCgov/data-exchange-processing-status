@@ -34,6 +34,9 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
 }
 
 fun main(args: Array<String>) {
+    // Set the JVM to headless mode (prevents any GUI from opening)
+    System.setProperty("java.awt.headless", "true")
+
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
 }
 
