@@ -22,7 +22,7 @@ import kotlin.math.roundToLong
  * @property runDateUtc String
  * @property digestCounts UploadDigestCounts
  * @property uploadMetrics UploadMetrics
- * @property deliveryLatenciesInMillis List<Long>
+ * @property durationsInMillis List<Long>
  * @constructor
  */
 class UploadDigestCountsEmailBuilder(
@@ -34,7 +34,7 @@ class UploadDigestCountsEmailBuilder(
     private val runDateUtc: String,
     private val digestCounts: UploadDigestCounts,
     private val uploadMetrics: UploadMetrics,
-    private val deliveryLatenciesInMillis: List<Long>
+    private val durationsInMillis: List<Long>
 ) {
 
     fun build(): String {
@@ -56,7 +56,7 @@ class UploadDigestCountsEmailBuilder(
 
         // Generate the delivery latency chart and convert it to a base64 encoded PNG.
         val imageBase64String = runCatching {
-            val chartInBytes = DurationDistributionChart(deliveryLatenciesInMillis, 800, 400)
+            val chartInBytes = DurationDistributionChart(durationsInMillis, 800, 400)
                 .toPngAsByteArray()
             // Convert the byte array to a Base64 string
             return@runCatching Base64.getEncoder().encodeToString(chartInBytes)

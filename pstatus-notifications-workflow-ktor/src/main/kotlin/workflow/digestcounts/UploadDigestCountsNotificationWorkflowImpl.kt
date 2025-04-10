@@ -73,8 +73,8 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val uploadMetrics = UploadMetricsQuery(repository)
                 .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
-            // Get the upload delivery latencies
-            val deliveryLatencies = UploadLatencyQuery(repository)
+            // Get the upload and delivery durations
+            val uploadDurations = UploadDurationQuery(repository)
                 .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
 
             // Format the email body
@@ -83,7 +83,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val dateRun = utcDateToRun.format(formatter)
             val emailBody = UploadDigestCountsEmailBuilder(
                 workflowId, cronSchedule, dataStreamIds, dataStreamRoutes, jurisdictions,
-                dateRun, aggregatedCounts, uploadMetrics, deliveryLatencies
+                dateRun, aggregatedCounts, uploadMetrics, uploadDurations
             ).build()
             activities.sendDigestEmail(emailBody, emailAddresses)
         }.onFailure {

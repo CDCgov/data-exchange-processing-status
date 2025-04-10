@@ -7,11 +7,11 @@ import java.time.LocalDate
 
 
 /**
- * Gather the upload latencies.
+ * Gather the upload durations.
  *
  * @constructor
  */
-class UploadLatencyQuery(
+class UploadDurationQuery(
     repository: ProcessingStatusRepository
 ): QueryBuilder(repository.reportsCollection) {
 
@@ -32,13 +32,13 @@ class UploadLatencyQuery(
         val querySB = StringBuilder()
 
         querySB.append("""
-            SELECT RAW ARRAY_AGG(latency) 
+            SELECT RAW ARRAY_AGG(duration) 
             FROM (
                 SELECT 
                     MAX(CASE WHEN r.stageInfo.action = 'blob-file-copy' THEN r.stageInfo.end_processing_time END) 
                     - 
                     MIN(CASE WHEN r.stageInfo.action = 'metadata-verify' THEN r.stageInfo.start_processing_time END) 
-                    AS latency
+                    AS duration
                 FROM ProcessingStatus.data.`Reports` r
                 WHERE r.stageInfo.action IN ['metadata-verify', 'blob-file-copy']
                 """)
@@ -66,14 +66,14 @@ class UploadLatencyQuery(
         querySB.append("""
                 GROUP BY r.uploadId
             ) subquery
-            WHERE latency IS NOT NULL;
+            WHERE duration IS NOT NULL;
         """)
 
         return querySB.toString().trimIndent()
     }
 
     /**
-     * Will return a list of integers, where each long is an end-to-end delivery latency time in seconds.
+     * Will return a list of longs, where each long is a duration in seconds.
      *
      * @param utcDateToRun LocalDate
      * @param dataStreamIds List<String>
@@ -94,7 +94,7 @@ class UploadLatencyQuery(
                 dataStreamRoutes,
                 jurisdictions
             )
-            logger.info("Upload latencies query:\n$query")
+            logger.info("Upload duration query:\n$query")
             val results = collection.queryItems(query, Array<Long>::class.java).first()
             return@runCatching results.toList()
         }.getOrElse {
