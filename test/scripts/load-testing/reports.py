@@ -1,6 +1,14 @@
 from datetime import datetime
 
-def create_report_msg_from_content(upload_id, service, action, dex_ingest_datetime, replace, with_issues, content):
+def create_report_msg_from_content(upload_id,
+                                   service,
+                                   action,
+                                   dex_ingest_datetime,
+                                   start_processing_time,
+                                   end_processing_time,
+                                   replace,
+                                   with_issues,
+                                   content):
     disposition_type = "ADD"
     if replace:
         disposition_type = "REPLACE"
@@ -9,6 +17,8 @@ def create_report_msg_from_content(upload_id, service, action, dex_ingest_dateti
     if with_issues:
         status = "FAILURE"
         issues = '[{"level":"ERROR","message":"First issue"}, {"level":"ERROR","message":"Second issue"}]'
+    start_processing_time = start_processing_time.isoformat(timespec='milliseconds')
+    end_processing_time = end_processing_time.isoformat(timespec='milliseconds')
     message = """
 {
     "report_schema_version": "1.0.0",
@@ -34,8 +44,8 @@ def create_report_msg_from_content(upload_id, service, action, dex_ingest_dateti
        "version": "0.0.49-SNAPSHOT",
        "status": "%s",
        "issues": %s,
-       "start_processing_time": "2024-07-10T15:40:10.162+00:00",
-       "end_processing_time": "2024-07-10T15:40:10.228+00:00"
+       "start_processing_time": "%s",
+       "end_processing_time": "%s"
     },
     "tags": {
        "tag_field1": "value1"
@@ -46,10 +56,10 @@ def create_report_msg_from_content(upload_id, service, action, dex_ingest_dateti
     "content_type": "application/json",
     "content": %s
 }
-""" % (upload_id, dex_ingest_datetime, disposition_type, service, action, status, issues, content)
+""" % (upload_id, dex_ingest_datetime, disposition_type, service, action, status, issues, start_processing_time, end_processing_time, content)
     return message
 
-def create_metadata_verify(upload_id, dex_ingest_datetime):
+def create_metadata_verify(upload_id, dex_ingest_datetime, start_processing_time, end_processing_time):
     content = """
 {
     "content_schema_name": "metadata-verify",
@@ -79,9 +89,18 @@ def create_metadata_verify(upload_id, dex_ingest_datetime):
 }
 """ % (upload_id)
 
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "metadata-verify", dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(
+        upload_id,
+        "UPLOAD API",
+        "metadata-verify",
+        dex_ingest_datetime,
+        start_processing_time,
+        end_processing_time,
+        False,
+        False,
+        content)
 
-def create_upload_started(upload_id, dex_ingest_datetime):
+def create_upload_started(upload_id, dex_ingest_datetime, start_processing_time, end_processing_time):
     content = """
 {
     "content_schema_name": "upload-started",
@@ -89,9 +108,18 @@ def create_upload_started(upload_id, dex_ingest_datetime):
     "status": "SUCCESS"
 }
 """
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "upload-started", dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(
+        upload_id,
+        "UPLOAD API",
+        "upload-started",
+        dex_ingest_datetime,
+        start_processing_time,
+        end_processing_time,
+        False,
+        False,
+        content)
 
-def create_upload_completed(upload_id, dex_ingest_datetime):
+def create_upload_completed(upload_id, dex_ingest_datetime, start_processing_time, end_processing_time):
     content = """
 {
     "content_schema_name": "upload-completed",
@@ -99,9 +127,18 @@ def create_upload_completed(upload_id, dex_ingest_datetime):
     "status": "SUCCESS"
 }
 """
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "upload-completed", dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(
+        upload_id,
+        "UPLOAD API",
+        "upload-completed",
+        dex_ingest_datetime,
+        start_processing_time,
+        end_processing_time,
+        False,
+        False,
+        content)
 
-def create_upload_status(upload_id, dex_ingest_datetime, offset, size):
+def create_upload_status(upload_id, dex_ingest_datetime, start_processing_time, end_processing_time, offset, size):
     content = """
 {
     "content_schema_name":"upload-status",
@@ -130,9 +167,18 @@ def create_upload_status(upload_id, dex_ingest_datetime, offset, size):
 }
 """ % (upload_id, offset, size)
 
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "upload-status", dex_ingest_datetime, True, False, content)
+    return create_report_msg_from_content(
+        upload_id,
+        "UPLOAD API",
+        "upload-status",
+        dex_ingest_datetime,
+        start_processing_time,
+        end_processing_time,
+        True,
+        False,
+        content)
 
-def create_routing(upload_id, dex_ingest_datetime):
+def create_routing(upload_id, dex_ingest_datetime, start_processing_time, end_processing_time):
     content = """
 {
     "content_schema_name": "blob-file-copy",
@@ -142,4 +188,13 @@ def create_routing(upload_id, dex_ingest_datetime):
 }
 """
 
-    return create_report_msg_from_content(upload_id, "UPLOAD API", "blob-file-copy", dex_ingest_datetime, False, False, content)
+    return create_report_msg_from_content(
+        upload_id,
+        "UPLOAD API",
+        "blob-file-copy",
+        dex_ingest_datetime,
+        start_processing_time,
+        end_processing_time,
+        False,
+        False,
+        content)
