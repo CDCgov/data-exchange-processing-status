@@ -1,8 +1,6 @@
 package gov.cdc.ocio.processingnotifications.query
 
-import gov.cdc.ocio.database.QueryBuilder
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.types.InstantRange
 import java.time.LocalDate
 
 
@@ -13,7 +11,7 @@ import java.time.LocalDate
  */
 class UploadDurationQuery(
     repository: ProcessingStatusRepository
-): QueryBuilder(repository.reportsCollection) {
+): CommonQuery(repository) {
 
     private fun build(
         utcDateToRun: LocalDate,
@@ -21,14 +19,6 @@ class UploadDurationQuery(
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>
     ): String {
-        val instantRange = InstantRange.fromLocalDate(utcDateToRun)
-        val startTime = timeFunc(instantRange.start.epochSecond)
-        val endTime = timeFunc(instantRange.endInclusive.epochSecond)
-
-        val jurisdictionIdsList = listForQuery(jurisdictions)
-        val dataStreamIdsList = listForQuery(dataStreamIds)
-        val dataStreamRoutesList = listForQuery(dataStreamRoutes)
-
         val querySB = StringBuilder()
 
         querySB.append("""
@@ -43,25 +33,7 @@ class UploadDurationQuery(
                 WHERE r.stageInfo.action IN ['metadata-verify', 'blob-file-copy']
                 """)
 
-        if (dataStreamIds.isNotEmpty())
-            querySB.append("""
-                    AND ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
-            """)
-
-        if (dataStreamRoutesList.isNotEmpty())
-            querySB.append("""
-                    AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
-            """)
-
-        if (jurisdictionIdsList.isNotEmpty())
-            querySB.append("""
-                    AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
-            """)
-
-        querySB.append("""
-                    AND ${cPrefix}dexIngestDateTime >= $startTime
-                    AND ${cPrefix}dexIngestDateTime < $endTime
-        """)
+        querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
 
         querySB.append("""
                 GROUP BY r.uploadId
