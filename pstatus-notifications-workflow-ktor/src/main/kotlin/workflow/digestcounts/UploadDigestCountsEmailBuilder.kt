@@ -119,7 +119,11 @@ class UploadDigestCountsEmailBuilder(
                     }
                 }
                 h3 { +"Delivery Latencies"}
-                p { +"The delivery latency is the time from when the an upload starts to when uploaded file is finished being delivered." }
+                p {
+                    +"The delivery latency is the time from when the an upload starts to when uploaded file is finished being delivered. "
+                    +"The chart below shows a histogram of the delivery times, categorized by latency buckets. The frequency is the count "
+                    +"of delivery times that fall in that delivery time range."
+                }
                 img(src = "data:image/png;base64,$imageBase64String", alt = "Latency Distribution Chart")
                 h3 { +"Summary" }
                 table(classes = "stylish-table") {

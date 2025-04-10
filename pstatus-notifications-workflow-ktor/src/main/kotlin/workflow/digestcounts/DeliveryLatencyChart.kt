@@ -10,6 +10,13 @@ import org.knowm.xchart.*
 import org.knowm.xchart.CategoryChartBuilder
 
 
+/**
+ * Delivery latency histogram chart.
+ *
+ * @property logger KLogger
+ * @property chart (CategoryChart..CategoryChart?)
+ * @constructor
+ */
 class DeliveryLatencyChart(
     deliveryLatenciesInSeconds: List<Double>,
     width: Int,
@@ -61,6 +68,11 @@ class DeliveryLatencyChart(
         }
     }
 
+    /**
+     * Convert this chart into a PNG image byte array.
+     *
+     * @return ByteArray
+     */
     fun toPngAsByteArray(): ByteArray {
         // Save chart to PNG in memory (ByteArrayOutputStream)
         val byteArrayOutputStream = ByteArrayOutputStream()
