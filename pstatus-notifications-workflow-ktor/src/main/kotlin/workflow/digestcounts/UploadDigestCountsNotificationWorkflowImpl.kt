@@ -113,7 +113,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
                                     jurisdictionCounts.sumOf { it.started },
                                     jurisdictionCounts.sumOf { it.completed },
                                     jurisdictionCounts.sumOf { it.failedDelivery },
-                                    jurisdictionCounts.sumOf { it. delivered }
+                                    jurisdictionCounts.sumOf { it.delivered }
                                 )
                             }
                     }
