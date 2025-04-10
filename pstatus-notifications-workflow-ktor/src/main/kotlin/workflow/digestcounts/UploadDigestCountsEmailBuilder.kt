@@ -69,7 +69,7 @@ class UploadDigestCountsEmailBuilder(
                     span(classes = "uppercase") { +" Data Observability" }
                 }
                 hr {  }
-                h2 { +"Daily Upload Digest for Data Streams" }
+                h2 { +"Upload Digest for Data Streams" }
                 div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
                 h3 { +"Overview" }
                 table {
