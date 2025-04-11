@@ -31,6 +31,10 @@ class DurationDistributionChart(
         .yAxisTitle("Number of Uploads")
         .build()
 
+    private val _binSize: Double
+    val binSize: Double
+        get() = _binSize
+
     init {
         // Compute Inter-quartile Range (IQR). IQR in a histogram is a measure of statistical dispersion, representing
         // the range within which the middle 50% of data points fall. A narrow IQR suggests that most data points are
@@ -46,6 +50,11 @@ class DurationDistributionChart(
         val numBins = ((durationValuesInSeconds.maxOrNull()!! - durationValuesInSeconds.minOrNull()!!) / binWidth)
             .toInt()
             .coerceAtLeast(1)
+
+        // Calculate bin size
+        val minValue = durationValuesInSeconds.minOrNull() ?: 0.0
+        val maxValue = durationValuesInSeconds.maxOrNull() ?: 0.0
+        _binSize = (maxValue - minValue) / numBins
 
         // Create the histogram data series
         val histogramData = Histogram(durationValuesInSeconds, numBins)

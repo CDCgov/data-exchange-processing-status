@@ -76,12 +76,17 @@ class UploadDigestCountsEmailBuilder(
             (uploadMetrics.medianTotalDeltaInMillis).roundToLong()).toHumanReadable()
 
         // Generate the delivery latency chart and convert it to a base64 encoded PNG.
-        val imageBase64String = runCatching {
-            val chartInBytes = DurationDistributionChart(durationsInMillis, 800, 400)
-                .toPngAsByteArray()
+        var imageBase64String: String? = null
+        var binSize: Double = 0.0
+        runCatching {
+            val chart = DurationDistributionChart(durationsInMillis, 800, 400)
+            val chartInBytes = chart.toPngAsByteArray()
             // Convert the byte array to a Base64 string
-            return@runCatching Base64.getEncoder().encodeToString(chartInBytes)
-        }.getOrNull()
+            return@runCatching Pair(Base64.getEncoder().encodeToString(chartInBytes), chart.binSize)
+        }.onSuccess { (image, size) ->
+            imageBase64String = image
+            binSize = size
+        }
 
         val content = buildString {
             appendHTML().body {
@@ -176,6 +181,7 @@ class UploadDigestCountsEmailBuilder(
                 }
                 if (imageBase64String != null) {
                     img(src = "data:image/png;base64,$imageBase64String", alt = "Total Duration Distribution Chart")
+                    p { small { +"The duration bin size is ${String.format("%.2f", binSize)} seconds." } }
                 } else {
                     p { +"No data." }
                 }
