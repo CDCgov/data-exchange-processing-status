@@ -230,7 +230,7 @@ class UploadDigestCountsEmailBuilder(
                             uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
                                 dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
                                     jurisdictions.forEach { (jurisdiction, count) ->
-                                        val inProgress = count.uploadCompleted - count.uploadStarted
+                                        val inProgress = count.uploadStarted - count.uploadCompleted
                                         val delivered = count.deliverySucceeded - count.deliveryFailed
                                         tr {
                                             td { +dataStreamId }
