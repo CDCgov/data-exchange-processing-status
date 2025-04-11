@@ -116,6 +116,16 @@ class UploadDigestCountsEmailBuilder(
                     }
                 }
                 h3 { +"Upload Metrics" }
+                p {
+                    +"The "
+                    b { +"Upload Duration"}
+                    +" is the time from when the upload is initiated, including the metadata verification step to when"
+                    +" the upload completes."
+                    +" The "
+                    b { +"Delivery Duration" }
+                    +" includes the latency that may occur between the completion of the upload and the completion of"
+                    +" the delivery."
+                }
                 table(classes = "stylish-table") {
                     thead {
                         tr {

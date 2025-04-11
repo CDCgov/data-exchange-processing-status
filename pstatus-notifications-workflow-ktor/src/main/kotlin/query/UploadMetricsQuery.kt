@@ -77,19 +77,13 @@ class UploadMetricsQuery(
                 SELECT 
                     ${cPrefix}uploadId,
                     
-                    -- Start time from 'upload-started'
-                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.start_processing_time END) AS start_time,
-                    
-                    -- End time from 'upload-completed'
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) AS end_time,
-                    
                     -- Upload time delta
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.start_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'metadata-verify' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS upload_delta,
                     
-                    -- Delivery time delta (end of the copy minus the end of the upload completion times)
+                    -- Delivery time including latency delta (end of the copy minus the end of the upload completion times)
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
@@ -98,14 +92,14 @@ class UploadMetricsQuery(
                     -- Total time delta (end to end duration)
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'metadata-verify' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS total_delta,
                     
                     -- File size
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-status' THEN ${cPrefix}content.size END) AS file_size
             
                 FROM $collectionName $cVar
-                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'upload-status', 'blob-file-copy'${closeBkt}
+                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'metadata-verify', 'upload-completed', 'upload-status', 'blob-file-copy'${closeBkt}
             """)
 
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
