@@ -34,7 +34,10 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
 }
 
 fun main(args: Array<String>) {
-    // Set the JVM to headless mode (prevents any GUI from opening)
+    // Set the JVM to headless mode. The primary purpose of this is to prevent XChart from spinning up a Java GUI app
+    // during any line of code that instantiates a chart. A chart never actually shows anything in the GUI app, but
+    // one is spun up. Nothing will happen server-side, but when running locally, such as on a Mac this line prevents
+    // the app from appearing. Note: XChart is what is used to display charts in the HTML based notification emails.
     System.setProperty("java.awt.headless", "true")
 
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
