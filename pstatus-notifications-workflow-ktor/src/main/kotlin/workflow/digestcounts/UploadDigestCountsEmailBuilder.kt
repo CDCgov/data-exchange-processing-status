@@ -65,6 +65,16 @@ class UploadDigestCountsEmailBuilder(
         val medianDeliveryTimeDurationDesc = Duration.ofMillis(
             (uploadMetrics.medianDeliveryDeltaInMillis).roundToLong()).toHumanReadable()
 
+        // Total durations
+        val minTotalTimeDurationDesc = Duration.ofMillis(
+            uploadMetrics.minTotalDeltaInMillis).toHumanReadable()
+        val maxTotalTimeDurationDesc = Duration.ofMillis(
+            uploadMetrics.maxTotalDeltaInMillis).toHumanReadable()
+        val meanTotalTimeDurationDesc = Duration.ofMillis(
+            (uploadMetrics.meanTotalDeltaInMillis).roundToLong()).toHumanReadable()
+        val medianTotalTimeDurationDesc = Duration.ofMillis(
+            (uploadMetrics.medianTotalDeltaInMillis).roundToLong()).toHumanReadable()
+
         // Generate the delivery latency chart and convert it to a base64 encoded PNG.
         val imageBase64String = runCatching {
             val chartInBytes = DurationDistributionChart(durationsInMillis, 800, 400)
@@ -131,6 +141,13 @@ class UploadDigestCountsEmailBuilder(
                         td { +medianDeliveryTimeDurationDesc }
                     }
                     tr {
+                        td { strong { +"Total Duration" } }
+                        td { +minTotalTimeDurationDesc }
+                        td { +maxTotalTimeDurationDesc }
+                        td { +meanTotalTimeDurationDesc }
+                        td { +medianTotalTimeDurationDesc }
+                    }
+                    tr {
                         td { strong { +"Upload File Size" } }
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.minFileSize) }
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.maxFileSize) }
@@ -138,17 +155,17 @@ class UploadDigestCountsEmailBuilder(
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.medianFileSize) }
                     }
                 }
-                h3 { +"Upload and Delivery Duration"}
+                h3 { +"Total Duration"}
                 p {
                     +"The "
-                    b { +"Upload and Delivery Duration" }
+                    b { +"Total Duration" }
                     +" is the time from when an upload starts to when the uploaded file has been delivered. "
                     +"The chart below shows a histogram of the durations, categorized by time buckets. The "
                     b { +"Number of Uploads" }
-                    +" is the count of durations that fall within the duration bucket time range."
+                    +" is the count of durations that fall within the duration bucket time range (duration bins)."
                 }
                 if (imageBase64String != null) {
-                    img(src = "data:image/png;base64,$imageBase64String", alt = "Upload and Delivery Duration Distribution Chart")
+                    img(src = "data:image/png;base64,$imageBase64String", alt = "Total Duration Distribution Chart")
                 } else {
                     p { +"No data." }
                 }

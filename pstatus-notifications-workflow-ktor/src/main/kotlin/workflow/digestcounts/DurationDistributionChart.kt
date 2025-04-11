@@ -26,7 +26,7 @@ class DurationDistributionChart(
     private val chart = CategoryChartBuilder()
         .width(width)  // Set chart width
         .height(height) // Set chart height
-        .title("Duration Distribution")
+        .title("Total Duration Distribution")
         .xAxisTitle("Duration Bins (seconds)")
         .yAxisTitle("Number of Uploads")
         .build()

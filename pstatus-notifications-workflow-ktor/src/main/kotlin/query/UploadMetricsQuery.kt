@@ -48,6 +48,18 @@ class UploadMetricsQuery(
                 -- Median delta
                 ARRAY_SORT(ARRAY_AGG(delivery_delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delivery_delta)) / 2)] AS medianDeliveryDeltaInMillis,
                 
+                -- Total duration minimum delta
+                MIN(total_delta) AS minTotalDeltaInMillis,
+                
+                -- Total duration maximum delta
+                MAX(total_delta) AS maxTotalDeltaInMillis,
+                
+                -- Total duration average (mean) delta
+                AVG(total_delta) AS meanTotalDeltaInMillis,
+                
+                -- Total duration median delta
+                ARRAY_SORT(ARRAY_AGG(total_delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(total_delta)) / 2)] AS medianTotalDeltaInMillis,
+                
                 -- Minimum file size
                 MIN(file_size) AS minFileSize,
                 
@@ -82,6 +94,12 @@ class UploadMetricsQuery(
                     - 
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     AS delivery_delta,
+                    
+                    -- Total time delta (end to end duration)
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    - 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    AS total_delta,
                     
                     -- File size
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-status' THEN ${cPrefix}content.size END) AS file_size
