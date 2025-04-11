@@ -45,14 +45,25 @@ class UploadDigestCountsEmailBuilder(
         val dataStreamRoutesDesc = dataStreamRoutes.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "All"
         val jurisdictionsDesc = jurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "All"
 
+        // Upload durations
         val minUploadTimeDurationDesc = Duration.ofMillis(
-            uploadMetrics.minDeltaInMillis).toHumanReadable()
+            uploadMetrics.minUploadDeltaInMillis).toHumanReadable()
         val maxUploadTimeDurationDesc = Duration.ofMillis(
-            uploadMetrics.maxDeltaInMillis).toHumanReadable()
+            uploadMetrics.maxUploadDeltaInMillis).toHumanReadable()
         val meanUploadTimeDurationDesc = Duration.ofMillis(
-            (uploadMetrics.meanDeltaInMillis).roundToLong()).toHumanReadable()
+            (uploadMetrics.meanUploadDeltaInMillis).roundToLong()).toHumanReadable()
         val medianUploadTimeDurationDesc = Duration.ofMillis(
-            (uploadMetrics.medianDeltaInMillis).roundToLong()).toHumanReadable()
+            (uploadMetrics.medianUploadDeltaInMillis).roundToLong()).toHumanReadable()
+
+        // Delivery durations
+        val minDeliveryTimeDurationDesc = Duration.ofMillis(
+            uploadMetrics.minDeliveryDeltaInMillis).toHumanReadable()
+        val maxDeliveryTimeDurationDesc = Duration.ofMillis(
+            uploadMetrics.maxDeliveryDeltaInMillis).toHumanReadable()
+        val meanDeliveryTimeDurationDesc = Duration.ofMillis(
+            (uploadMetrics.meanDeliveryDeltaInMillis).roundToLong()).toHumanReadable()
+        val medianDeliveryTimeDurationDesc = Duration.ofMillis(
+            (uploadMetrics.medianDeliveryDeltaInMillis).roundToLong()).toHumanReadable()
 
         // Generate the delivery latency chart and convert it to a base64 encoded PNG.
         val imageBase64String = runCatching {
@@ -106,14 +117,21 @@ class UploadDigestCountsEmailBuilder(
                         }
                     }
                     tr {
-                        td { +"Upload Duration" }
+                        td { strong { +"Upload Duration" } }
                         td { +minUploadTimeDurationDesc }
                         td { +maxUploadTimeDurationDesc }
                         td { +meanUploadTimeDurationDesc }
                         td { +medianUploadTimeDurationDesc }
                     }
                     tr {
-                        td { +"Upload File Size" }
+                        td { strong { +"Delivery Duration" } }
+                        td { +minDeliveryTimeDurationDesc }
+                        td { +maxDeliveryTimeDurationDesc }
+                        td { +meanDeliveryTimeDurationDesc }
+                        td { +medianDeliveryTimeDurationDesc }
+                    }
+                    tr {
+                        td { strong { +"Upload File Size" } }
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.minFileSize) }
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.maxFileSize) }
                         td { +FileUtils.byteCountToDisplaySize(uploadMetrics.meanFileSize) }

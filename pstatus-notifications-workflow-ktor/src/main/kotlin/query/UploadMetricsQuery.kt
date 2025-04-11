@@ -24,17 +24,29 @@ class UploadMetricsQuery(
 
         querySB.append("""
             SELECT 
-                -- Minimum delta
-                MIN(delta) AS minDeltaInMillis,
+                -- Upload minimum delta
+                MIN(upload_delta) AS minUploadDeltaInMillis,
                 
-                -- Maximum delta
-                MAX(delta) AS maxDeltaInMillis,
+                -- Upload maximum delta
+                MAX(upload_delta) AS maxUploadDeltaInMillis,
                 
-                -- Average (mean) delta
-                AVG(delta) AS meanDeltaInMillis,
+                -- Upload average (mean) delta
+                AVG(upload_delta) AS meanUploadDeltaInMillis,
+                
+                -- Upload median delta
+                ARRAY_SORT(ARRAY_AGG(upload_delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(upload_delta)) / 2)] AS medianUploadDeltaInMillis,
+                
+                -- Delivery minimum delta
+                MIN(delivery_delta) AS minDeliveryDeltaInMillis,
+                
+                -- Delivery maximum delta
+                MAX(delivery_delta) AS maxDeliveryDeltaInMillis,
+                
+                -- Delivery average (mean) delta
+                AVG(delivery_delta) AS meanDeliveryDeltaInMillis,
                 
                 -- Median delta
-                ARRAY_SORT(ARRAY_AGG(delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delta)) / 2)] AS medianDeltaInMillis,
+                ARRAY_SORT(ARRAY_AGG(delivery_delta))[FLOOR(ARRAY_LENGTH(ARRAY_AGG(delivery_delta)) / 2)] AS medianDeliveryDeltaInMillis,
                 
                 -- Minimum file size
                 MIN(file_size) AS minFileSize,
@@ -59,17 +71,23 @@ class UploadMetricsQuery(
                     -- End time from 'upload-completed'
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) AS end_time,
                     
-                    -- Delta (Processing time difference)
+                    -- Upload time delta
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
                     MIN(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' THEN ${cPrefix}stageInfo.start_processing_time END) 
-                    AS delta,
+                    AS upload_delta,
+                    
+                    -- Delivery time delta (end of the copy minus the end of the upload completion times)
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    - 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    AS delivery_delta,
                     
                     -- File size
                     MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-status' THEN ${cPrefix}content.size END) AS file_size
             
                 FROM $collectionName $cVar
-                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'upload-status'${closeBkt}
+                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'upload-status', 'blob-file-copy'${closeBkt}
             """)
 
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))

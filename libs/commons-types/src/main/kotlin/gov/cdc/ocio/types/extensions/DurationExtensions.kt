@@ -16,11 +16,11 @@ fun Duration.toHumanReadable(): String {
     val minutes = (seconds % 3600) / 60
     val remainingSeconds = seconds % 60
     val remainingMilliseconds = milliseconds % 1000
+    val roundedMillis = Math.round(remainingMilliseconds / 100.0) / 10 // Round to tenths place
 
     return buildString {
         if (hours > 0) append("$hours hr ")
         if (minutes > 0) append("$minutes min ")
-        if (remainingSeconds > 0) append("$remainingSeconds sec ")
-        if (remainingMilliseconds > 0 || (hours == 0L && minutes == 0L && remainingSeconds == 0L)) append("$remainingMilliseconds ms")
+        append("$remainingSeconds${if (roundedMillis > 0) ".${(roundedMillis * 10).toInt()}" else ""} sec")
     }.trim()
 }
