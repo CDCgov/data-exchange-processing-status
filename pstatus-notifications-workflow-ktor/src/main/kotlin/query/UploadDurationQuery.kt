@@ -67,8 +67,8 @@ class UploadDurationQuery(
                 jurisdictions
             )
             logger.info("Upload duration query:\n$query")
-            val results = collection.queryItems(query, Array<Long>::class.java).first()
-            return@runCatching results.toList()
+            val results = collection.queryItems(query, Array<Long>::class.java).firstOrNull()
+            return@runCatching results?.toList().orEmpty()
         }.getOrElse {
             logger.error("Error occurred while executing query: ${it.localizedMessage}")
             throw it
