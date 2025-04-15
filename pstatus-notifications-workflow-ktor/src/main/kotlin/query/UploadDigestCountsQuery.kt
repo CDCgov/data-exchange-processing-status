@@ -60,7 +60,7 @@ class UploadDigestCountsQuery(
                 dataStreamRoutes,
                 jurisdictions
             )
-            logger.info("Upload digest counts query:\n$query")
+            logger.info("Executing upload digest counts query")
             return@runCatching collection.queryItems(query, UploadDigestResponse::class.java)
         }.getOrElse {
             logger.error("Error occurred while getting a digest of upload counts: ${it.localizedMessage}")

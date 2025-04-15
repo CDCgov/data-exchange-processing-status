@@ -66,7 +66,7 @@ class UploadDurationQuery(
                 dataStreamRoutes,
                 jurisdictions
             )
-            logger.info("Upload duration query:\n$query")
+            logger.info("Executing upload duration query")
             val results = collection.queryItems(query, Array<Long>::class.java).firstOrNull()
             return@runCatching results?.toList().orEmpty()
         }.getOrElse {

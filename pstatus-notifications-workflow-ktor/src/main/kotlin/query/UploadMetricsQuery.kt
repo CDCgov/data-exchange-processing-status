@@ -125,7 +125,7 @@ class UploadMetricsQuery(
                 dataStreamRoutes,
                 jurisdictions
             )
-            logger.info("Upload time delta metrics query:\n$query")
+            logger.info("Executing upload time delta metrics query")
             val results = collection.queryItems(query, UploadMetrics::class.java).first()
             return@runCatching results
         }.getOrElse {
