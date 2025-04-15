@@ -3,10 +3,9 @@ package email
 import gov.cdc.ocio.types.email.EmailBuilder
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.testng.annotations.Test
 import org.jsoup.Jsoup
-import org.testng.Assert.assertEquals
-import org.testng.Assert.assertNotNull
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 
 class EmailBuilderTest {
