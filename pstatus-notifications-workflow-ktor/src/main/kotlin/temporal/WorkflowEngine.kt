@@ -6,6 +6,9 @@ import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
+import io.grpc.Status
+import io.grpc.StatusRuntimeException
+import io.temporal.api.enums.v1.TaskQueueKind
 import io.temporal.api.enums.v1.WorkflowExecutionStatus
 import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
@@ -13,6 +16,7 @@ import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.api.workflowservice.v1.DescribeTaskQueueRequest
 import io.temporal.api.taskqueue.v1.TaskQueue
 import io.temporal.api.enums.v1.TaskQueueType
+import io.temporal.api.workflowservice.v1.DescribeTaskQueueResponse
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
@@ -25,6 +29,8 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 
 /**
@@ -286,17 +292,7 @@ class WorkflowEngine(
      * @return Boolean - Returns true if a worker is attached to this queue, false otherwise.
      */
     private fun workerHasPoller(taskQueue: String): Boolean {
-        val describeTaskQueueResponse = service.blockingStub()
-            .describeTaskQueue(
-                DescribeTaskQueueRequest.newBuilder()
-                    .setNamespace(temporalConfig.namespace)
-                    .setTaskQueue(
-                        TaskQueue.newBuilder().setName(taskQueue).build()
-                    )
-                    .setTaskQueueType(TaskQueueType.TASK_QUEUE_TYPE_WORKFLOW)
-                    .build()
-            )
-
+        val describeTaskQueueResponse = runBlocking { describeTaskQueueWithRetry(taskQueue) }
         val pollers = describeTaskQueueResponse.pollersList
         logger.info("Number of active workers: ${pollers.size}")
 
@@ -304,6 +300,46 @@ class WorkflowEngine(
             logger.info("No workers are currently polling this task queue!")
         }
         return pollers.isNotEmpty()
+    }
+
+    /**
+     * Describe the task queue with retries since rapid calls to this can trigger a Temporal retry limit.
+     * The "suspend" in the function signature is needed for the coroutine delay call if backoff is needed.
+     *
+     * @param taskQueue String
+     * @return DescribeTaskQueueResponse
+     */
+    private suspend fun describeTaskQueueWithRetry(taskQueue: String): DescribeTaskQueueResponse {
+        val maxRetries = 5
+        var attempt = 0
+        var backoffMillis = 500L
+
+        while (attempt < maxRetries) {
+            try {
+                val request = DescribeTaskQueueRequest.newBuilder()
+                    .setNamespace(temporalConfig.namespace)
+                    .setTaskQueue(
+                        TaskQueue.newBuilder()
+                            .setName(taskQueue)
+                            .setKind(TaskQueueKind.TASK_QUEUE_KIND_NORMAL)
+                    )
+                    .setTaskQueueType(TaskQueueType.TASK_QUEUE_TYPE_WORKFLOW)
+                    .build()
+
+                return service.blockingStub().describeTaskQueue(request)
+            } catch (e: StatusRuntimeException) {
+                if (e.status.code == Status.Code.RESOURCE_EXHAUSTED) {
+                    logger.warn("Temporal rate limited. Retrying in ${backoffMillis}ms...")
+                    delay(backoffMillis)
+                    backoffMillis *= 2 // exponential backoff
+                    attempt++
+                } else {
+                    throw e // rethrow if it's not a rate limit issue
+                }
+            }
+        }
+
+        throw RuntimeException("Exceeded retry attempts due to rate limiting.")
     }
 
     /**
