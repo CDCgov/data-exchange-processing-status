@@ -5,6 +5,7 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.query.*
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
+import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -85,9 +86,12 @@ class UploadDigestCountsNotificationWorkflowImpl :
                 workflowId, cronSchedule, dataStreamIds, dataStreamRoutes, jurisdictions,
                 dateRun, aggregatedCounts, uploadMetrics, uploadDurations
             ).build()
+            logger.info("Sending upload digest counts email")
             activities.sendDigestEmail(emailBody, emailAddresses)
+        } catch (ex: ActivityFailure) {
+            logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
         } catch (ex: Exception) {
-            logger.error("Error occurred while processing daily upload digest: ${ex.localizedMessage}")
+            logger.error("Error while processing daily upload digest: ${ex.localizedMessage}")
             throw ex
         }
     }
