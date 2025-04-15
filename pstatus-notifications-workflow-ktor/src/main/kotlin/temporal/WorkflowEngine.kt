@@ -35,10 +35,10 @@ import java.util.concurrent.TimeUnit
  * @property temporalConfig TemporalConfig
  * @property logger KLogger
  * @property serviceOptions (WorkflowServiceStubsOptions..WorkflowServiceStubsOptions?)
+ * @property clientOptions (WorkflowClientOptions..WorkflowClientOptions?)
  * @property service WorkflowServiceStubs
  * @property client WorkflowClient
  * @property factory WorkerFactory
- * @property workers MutableMap<String, Worker>
  * @property scheduler [@EnhancedForWarnings(ScheduledExecutorService)] (ScheduledExecutorService..ScheduledExecutorService?)
  * @property healthCheckSystem HealthCheckTemporalServer
  * @constructor
@@ -61,8 +61,6 @@ class WorkflowEngine(
 
     private lateinit var client: WorkflowClient
 
-    private lateinit var factory: WorkerFactory
-
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
@@ -76,7 +74,6 @@ class WorkflowEngine(
         runCatching {
             service = WorkflowServiceStubs.newServiceStubs(serviceOptions)
             client = WorkflowClient.newInstance(service, clientOptions)
-            factory = WorkerFactory.newInstance(client)
         }.onFailure { ex ->
             logger.error("Failed to initialize Temporal client: ${ex.message}")
         }
@@ -105,6 +102,7 @@ class WorkflowEngine(
     ): T3 {
         CronUtils.checkValid(cronSchedule)
 
+        val factory = WorkerFactory.newInstance(client)
         val worker = factory.newWorker(taskQueue)
         worker?.let {
             it.registerWorkflowImplementationTypes(workflowImpl)
@@ -113,10 +111,10 @@ class WorkflowEngine(
         } ?: error("Failed to create a worker for task queue: $taskQueue")
 
         logger.info("Workflow and Activity successfully registered")
-        if (!factory.isStarted) {
-            factory.start()
-            logger.info("Worker factory started")
-        }
+
+        // Start the factory after registering the worker
+        factory.start()
+        logger.info("Worker factory started")
 
         val workflowOptions = WorkflowOptions.newBuilder()
             .setTaskQueue(taskQueue)
@@ -203,16 +201,6 @@ class WorkflowEngine(
                 restartWorker(taskQueue, workflowImpl)
             }
         }
-    }
-
-    /**
-     * Shutdown workers gracefully.
-     */
-    fun shutdown() {
-        logger.info("Shutting down Temporal workers...")
-        factory.shutdown()
-        service.shutdown()
-        scheduler.shutdown()
     }
 
     /**
