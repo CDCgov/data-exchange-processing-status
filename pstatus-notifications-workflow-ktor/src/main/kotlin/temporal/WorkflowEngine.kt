@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
+import com.google.protobuf.ByteString
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
@@ -214,15 +215,28 @@ class WorkflowEngine(
             true -> "ExecutionStatus = 'Running'" // Filter for running workflows
             false -> ""
         }
-        val request = ListWorkflowExecutionsRequest.newBuilder()
-            .setNamespace(temporalConfig.namespace)
-            .setQuery(query)
-            .build()
+        val pageSize = 50
+        var nextPageToken: ByteString? = null
+        val workflows = mutableListOf<WorkflowExecutionInfo>()
+        do {
+            val requestBuilder = ListWorkflowExecutionsRequest.newBuilder()
+                .setNamespace(temporalConfig.namespace)
+                .setPageSize(pageSize)
+                .setQuery(query)
 
-        // Fetch workflows
-        val response = service.blockingStub()?.listWorkflowExecutions(request)
+            nextPageToken?.let {
+                requestBuilder.setNextPageToken(it)
+            }
 
-        val results = response?.executionsList?.map { executionInfo ->
+            // Fetch workflows
+            val response = service.blockingStub()?.listWorkflowExecutions(requestBuilder.build())
+            response?.executionsList?.let { workflows.addAll(it) }
+
+            nextPageToken = response?.takeIf { !it.nextPageToken.isEmpty }?.nextPageToken
+
+        } while (nextPageToken != null)
+
+        val results = workflows.map { executionInfo ->
             // Log workflow executions
             logger.info("WorkflowId: ${executionInfo.execution.workflowId}, Type: ${executionInfo.type.name}, Status: ${executionInfo.status}")
 
@@ -261,7 +275,7 @@ class WorkflowEngine(
             )
         }
 
-        return results ?: listOf()
+        return results
     }
 
     /**
