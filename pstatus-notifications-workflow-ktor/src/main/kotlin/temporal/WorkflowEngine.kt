@@ -167,8 +167,8 @@ class WorkflowEngine(
      *
      * @return List<WorkflowStatus>
      */
-    fun getRunningWorkflows(): List<WorkflowStatus> {
-        return getWorkflows(filterOnlyRunning = true)
+    private fun getRunningWorkflows(): List<WorkflowStatus> {
+        return getWorkflows(filterOnlyRunning = true, includeWorkerCheck = true)
     }
 
     /**
@@ -177,7 +177,7 @@ class WorkflowEngine(
      * @return List<WorkflowStatus>
      */
     fun getAllWorkflows(): List<WorkflowStatus> {
-        return getWorkflows(filterOnlyRunning = false)
+        return getWorkflows(filterOnlyRunning = false, includeWorkerCheck = false)
     }
 
     /**
@@ -199,7 +199,7 @@ class WorkflowEngine(
     private fun checkWorkersAttached() {
         val runningWorkflows = getRunningWorkflows()
         runningWorkflows.forEach { workflow ->
-            if (!workflow.workerAttached) {
+            if (workflow.workerAttached == false) {
                 val taskQueue = workflow.taskQueue
                 logger.warn("Restarting worker for task queue: $taskQueue")
                 val workflowImplClassName = workflow.workflowImplClassName
@@ -216,7 +216,10 @@ class WorkflowEngine(
      * @param filterOnlyRunning Boolean
      * @return List<WorkflowStatus>
      */
-    private fun getWorkflows(filterOnlyRunning: Boolean): List<WorkflowStatus> {
+    private fun getWorkflows(
+        filterOnlyRunning: Boolean,
+        includeWorkerCheck: Boolean = false
+    ): List<WorkflowStatus> {
         val query = when (filterOnlyRunning) {
             true -> "ExecutionStatus = 'Running'" // Filter for running workflows
             false -> ""
@@ -259,7 +262,7 @@ class WorkflowEngine(
             val description = descPayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "") ?: "unknown"
             val workflowImplClassNamePayload = runCatching { executionInfo.memo.getFieldsOrThrow("workflowImplClassName") }
             val workflowImplClassName = workflowImplClassNamePayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "")
-            val workerAttached = workerHasPoller(executionInfo.taskQueue)
+            val workerAttached = if (includeWorkerCheck) workerHasPoller(executionInfo.taskQueue) else null
 
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,

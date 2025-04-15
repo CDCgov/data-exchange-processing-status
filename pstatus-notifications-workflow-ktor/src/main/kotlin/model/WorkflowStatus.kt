@@ -11,7 +11,7 @@ import java.time.OffsetDateTime
  * @property taskQueue String
  * @property description String
  * @property status String
- * @property workerAttached Boolean
+ * @property workerAttached Boolean?
  * @property schedule CronSchedule
  * @property workflowImplClassName String?
  * @constructor
@@ -21,7 +21,7 @@ data class WorkflowStatus(
     val taskName: String,
     val taskQueue: String,
     val description: String,
-    val workerAttached: Boolean,
+    val workerAttached: Boolean?,
     val status: String,
     val schedule: CronSchedule,
     val workflowImplClassName: String?
