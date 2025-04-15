@@ -3,7 +3,6 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
-import com.couchbase.client.java.kv.UpsertOptions
 import com.couchbase.client.java.query.QueryOptions
 import com.couchbase.client.java.query.QueryScanConsistency
 import com.google.gson.*
