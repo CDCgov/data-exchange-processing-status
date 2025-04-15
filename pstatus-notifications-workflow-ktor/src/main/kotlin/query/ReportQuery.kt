@@ -11,7 +11,7 @@ import java.time.LocalDate
  *
  * @constructor
  */
-abstract class CommonQuery(
+abstract class ReportQuery(
     repository: ProcessingStatusRepository
 ): QueryBuilder(repository.reportsCollection) {
 

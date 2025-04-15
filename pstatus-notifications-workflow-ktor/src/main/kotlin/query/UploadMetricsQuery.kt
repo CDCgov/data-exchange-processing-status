@@ -12,7 +12,7 @@ import java.time.LocalDate
  */
 class UploadMetricsQuery(
     repository: ProcessingStatusRepository
-): CommonQuery(repository) {
+): ReportQuery(repository) {
 
     private fun build(
         utcDateToRun: LocalDate,

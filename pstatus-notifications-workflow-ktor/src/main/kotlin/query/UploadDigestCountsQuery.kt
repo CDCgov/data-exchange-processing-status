@@ -7,7 +7,7 @@ import java.time.LocalDate
 
 class UploadDigestCountsQuery(
     repository: ProcessingStatusRepository
-): CommonQuery(repository) {
+): ReportQuery(repository) {
 
     private fun build(
         utcDateToRun: LocalDate,

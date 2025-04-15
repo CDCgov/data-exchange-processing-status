@@ -11,7 +11,7 @@ import java.time.LocalDate
  */
 class UploadDurationQuery(
     repository: ProcessingStatusRepository
-): CommonQuery(repository) {
+): ReportQuery(repository) {
 
     private fun build(
         utcDateToRun: LocalDate,
