@@ -12,7 +12,7 @@ class DurationTest {
         val duration = Duration.ofMillis(2400)
 
         // Validate content
-        assertEquals(duration.toHumanReadable(), "2.400 sec")
+        assertEquals("2.400 sec", duration.toHumanReadable(), )
     }
 
     @Test
@@ -23,7 +23,7 @@ class DurationTest {
             .plusMillis(5)
 
         // Validate content
-        assertEquals(duration.toHumanReadable(), "2 hr 32 min 26.005 sec")
+        assertEquals("2 hr 32 min 26.005 sec", duration.toHumanReadable())
     }
 
     @Test
@@ -31,7 +31,7 @@ class DurationTest {
         val duration = Duration.ofHours(5)
 
         // Validate content
-        assertEquals(duration.toHumanReadable(), "5 hr")
+        assertEquals("5 hr", duration.toHumanReadable())
     }
 
     @Test
@@ -40,6 +40,14 @@ class DurationTest {
             .plusMinutes(2)
 
         // Validate content
-        assertEquals(duration.toHumanReadable(), "3 hr 2 min")
+        assertEquals("3 hr 2 min", duration.toHumanReadable())
+    }
+
+    @Test
+    fun `duration is zero`() {
+        val duration = Duration.ofHours(0)
+
+        // Validate content
+        assertEquals("0.000 sec", duration.toHumanReadable())
     }
 }
