@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingnotifications.dispatch
 
 import gov.cdc.ocio.processingnotifications.model.Subscription
-import gov.cdc.ocio.types.notification.Notifiable
+import gov.cdc.ocio.types.model.Notifiable
 import mu.KotlinLogging
 
 abstract class Dispatcher {

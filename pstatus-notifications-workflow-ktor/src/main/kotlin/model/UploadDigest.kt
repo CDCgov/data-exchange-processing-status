@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingnotifications.model
 
-import gov.cdc.ocio.types.notification.Notifiable
+import gov.cdc.ocio.types.model.Notifiable
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 

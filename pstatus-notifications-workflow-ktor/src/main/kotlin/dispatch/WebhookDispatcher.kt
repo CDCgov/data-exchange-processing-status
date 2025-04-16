@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingnotifications.dispatch
 
-import gov.cdc.ocio.types.notification.Notifiable
+import gov.cdc.ocio.types.model.Notifiable
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*

@@ -1,4 +1,4 @@
-package gov.cdc.ocio.types.notification
+package gov.cdc.ocio.types.model
 
 interface Notifiable {
     fun subject(): String // probably a better way to get the subject

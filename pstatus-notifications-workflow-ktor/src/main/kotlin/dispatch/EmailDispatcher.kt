@@ -1,13 +1,10 @@
 package gov.cdc.ocio.processingnotifications.dispatch
 
-import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
-import gov.cdc.ocio.processingnotifications.model.Email
 import gov.cdc.ocio.processingnotifications.model.UploadDigest
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
-import gov.cdc.ocio.types.notification.Notifiable
+import gov.cdc.ocio.types.model.Notifiable
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
-import mu.KotlinLogging
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Socket

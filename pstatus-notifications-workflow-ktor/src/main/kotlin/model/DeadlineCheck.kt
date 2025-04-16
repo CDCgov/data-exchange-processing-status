@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingnotifications.model
 
-import gov.cdc.ocio.types.notification.Notifiable
+import gov.cdc.ocio.types.model.Notifiable
 
 data class DeadlineCheck(val dataStreamId: String, val jurisdiction: String, val timestamp: String) : Notifiable {
     override fun subject(): String {

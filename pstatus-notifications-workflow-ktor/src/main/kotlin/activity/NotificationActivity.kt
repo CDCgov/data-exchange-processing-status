@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingnotifications.activity
 
 import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
-import gov.cdc.ocio.types.notification.Notifiable
+import gov.cdc.ocio.types.model.Notifiable
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 
