@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.query
 
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadMetrics
 import java.time.LocalDate
@@ -78,28 +79,28 @@ class UploadMetricsQuery(
                     ${cPrefix}uploadId,
                     
                     -- Upload time delta
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_COMPLETED}' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'metadata-verify' THEN ${cPrefix}stageInfo.start_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.METADATA_VERIFY}' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS upload_delta,
                     
                     -- Delivery time including latency delta (end of the copy minus the end of the upload completion times)
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_COMPLETED}' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     AS delivery_delta,
                     
                     -- Total time delta (end to end duration)
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'metadata-verify' THEN ${cPrefix}stageInfo.start_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.METADATA_VERIFY}' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS total_delta,
                     
                     -- File size
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'upload-status' THEN ${cPrefix}content.size END) AS file_size
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_STATUS}' THEN ${cPrefix}content.size END) AS file_size
             
                 FROM $collectionName $cVar
-                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'metadata-verify', 'upload-completed', 'upload-status', 'blob-file-copy'${closeBkt}
+                WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.METADATA_VERIFY}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.UPLOAD_STATUS}', '${StageAction.FILE_DELIVERY}'${closeBkt}
             """)
 
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))

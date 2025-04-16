@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingnotifications.query
 
+import gov.cdc.ocio.database.models.StageAction
+import gov.cdc.ocio.database.models.StageStatus
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestResponse
 import java.time.LocalDate
@@ -21,13 +23,13 @@ class UploadDigestCountsQuery(
             SELECT
                 ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction,
             
-                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'upload-started' AND ${cPrefix}stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS started,
-                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'upload-completed' AND ${cPrefix}stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS completed,
-                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' AND ${cPrefix}stageInfo.status != 'SUCCESS' THEN 1 ELSE 0 END) AS failedDelivery,
-                SUM(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' AND ${cPrefix}stageInfo.status = 'SUCCESS' THEN 1 ELSE 0 END) AS delivered
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_STARTED}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS started,
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_COMPLETED}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' AND ${cPrefix}stageInfo.status != '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS failedDelivery,
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS delivered
             
             FROM $collectionName $cVar
-            WHERE ${cPrefix}stageInfo.action IN ${openBkt}'upload-started', 'upload-completed', 'blob-file-copy'${closeBkt}
+            WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.FILE_DELIVERY}'${closeBkt}
             """)
 
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))

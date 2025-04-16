@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.query
 
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import java.time.LocalDate
 
@@ -25,12 +26,12 @@ class UploadDurationQuery(
             SELECT RAW ARRAY_AGG(duration) 
             FROM (
                 SELECT 
-                    MAX(CASE WHEN ${cPrefix}stageInfo.action = 'blob-file-copy' THEN ${cPrefix}stageInfo.end_processing_time END) 
+                    MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' THEN ${cPrefix}stageInfo.end_processing_time END) 
                     - 
-                    MIN(CASE WHEN ${cPrefix}stageInfo.action = 'metadata-verify' THEN ${cPrefix}stageInfo.start_processing_time END) 
+                    MIN(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.METADATA_VERIFY}' THEN ${cPrefix}stageInfo.start_processing_time END) 
                     AS duration
                 FROM $collectionName $cVar
-                WHERE ${cPrefix}stageInfo.action IN ['metadata-verify', 'blob-file-copy']
+                WHERE ${cPrefix}stageInfo.action IN ['${StageAction.METADATA_VERIFY}', '${StageAction.FILE_DELIVERY}']
                 """)
 
         querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
