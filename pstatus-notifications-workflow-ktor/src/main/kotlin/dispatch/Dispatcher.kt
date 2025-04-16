@@ -1,8 +1,12 @@
 package gov.cdc.ocio.processingnotifications.dispatch
 
 import gov.cdc.ocio.processingnotifications.model.Subscription
+import gov.cdc.ocio.types.notification.Notifiable
+import mu.KotlinLogging
 
 abstract class Dispatcher {
+    protected val logger = KotlinLogging.logger {}
+
     companion object {
         fun fromSubscription(subscription: Subscription): Dispatcher {
             if (!subscription.emailAddresses.isNullOrEmpty()) {
@@ -15,5 +19,7 @@ abstract class Dispatcher {
             return LogDispatcher()
         }
     }
-    abstract fun dispatch(data: Any)
+    open fun dispatch(payload: Notifiable) {
+        logger.info("dispatched notification $payload")
+    }
 }

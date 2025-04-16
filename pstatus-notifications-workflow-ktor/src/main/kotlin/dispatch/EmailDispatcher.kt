@@ -4,6 +4,7 @@ import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.Email
 import gov.cdc.ocio.processingnotifications.model.UploadDigest
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
+import gov.cdc.ocio.types.notification.Notifiable
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
@@ -24,7 +25,6 @@ import javax.mail.internet.InternetAddress
 class EmailDispatcher(
     private val emailAddresses: List<String>
 ) : Dispatcher() {
-    private val logger = KotlinLogging.logger {}
     private val session: Session
 
     init {
@@ -35,16 +35,8 @@ class EmailDispatcher(
         session = Session.getInstance(props, null)
     }
 
-    override fun dispatch(data: Any) {
-        val email = when (data) {
-            is UploadErrorSummary -> buildUploadErrorSummaryEmail(data)
-            is DeadlineCheck -> buildUploadDeadlineEmail(data)
-            else -> buildDefaultEmail(data)
-        }
-        sendEmail(email)
-    }
-
-    private fun sendEmail(email: Email) {
+    override fun dispatch(payload: Notifiable) {
+        super.dispatch(payload)
         try {
             if (!checkSMTPStatusWithoutCredentials()) return
 
@@ -61,8 +53,8 @@ class EmailDispatcher(
             // Get the email addresses from the property
             msg.setFrom(InternetAddress(replyToEmail, replyToName))
             msg.replyTo = InternetAddress.parse(replyToEmail, false)
-            msg.setSubject(email.subject, "UTF-8")
-            msg.setText(email.body, "UTF-8", "html")
+            msg.setSubject(payload.subject(), "UTF-8")
+            msg.setText(payload.buildEmailBody(), "UTF-8", "html")
             msg.sentDate = Date()
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail, false))
             Transport.send(msg)
@@ -71,30 +63,57 @@ class EmailDispatcher(
         }
     }
 
-    // default to emailing the data as a raw string
-    private fun buildDefaultEmail(
-        data: Any
-    ): Email {
-        return Email("PHDO NOTIFICATION", data.toString())
-    }
-
-    private fun buildUploadErrorSummaryEmail(
-        summary: UploadErrorSummary,
-    ): Email {
-        return Email("PHDO UPLOAD ERROR SUMMARY NOTIFICATION", buildUploadErrorSummaryEmailBody(summary))
-    }
-
-    private fun buildUploadDeadlineEmail(data: DeadlineCheck): Email {
-        val body = "Upload deadline over.  Failed to get upload for dataStreamId: ${data.dataStreamId}, jurisdiction: ${data.jurisdiction}, at ${data.timestamp}"
-        return Email(
-            "PHDO UPLOAD DEADLINE CHECK EXPIRED for ${data.jurisdiction} on ${data.timestamp}",
-                body
-            )
-    }
-
-    private fun buildUploadDigestEmail(data: UploadDigest): Email {
-        return Email("PHDO DAILY UPLOAD DIGEST COUNTS NOTIFICATION", buildUploadDigestEmailBody(data))
-    }
+//    private fun sendEmail(email: Email) {
+//        try {
+//            if (!checkSMTPStatusWithoutCredentials()) return
+//
+//            val toEmail = emailAddresses.joinToString(",")
+//            val msg = MimeMessage(session)
+//            val replyToEmail = "donotreply@cdc.gov"
+//            val replyToName = "DoNotReply (PHDO Team)"
+//            //set message headers
+//            msg.addHeader("Content-type", "text/HTML; charset=UTF-8")
+//            msg.addHeader("format", "flowed")
+//            msg.addHeader("Content-Transfer-Encoding", "8bit")
+//
+//            //TODO - Change the from and replyTo address after the new licensed account is created
+//            // Get the email addresses from the property
+//            msg.setFrom(InternetAddress(replyToEmail, replyToName))
+//            msg.replyTo = InternetAddress.parse(replyToEmail, false)
+//            msg.setSubject(email.subject, "UTF-8")
+//            msg.setText(email.body, "UTF-8", "html")
+//            msg.sentDate = Date()
+//            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail, false))
+//            Transport.send(msg)
+//        } catch (e: Exception) {
+//            logger.error("Unable to send email ${e.message}")
+//        }
+//    }
+//
+//    // default to emailing the data as a raw string
+//    private fun buildDefaultEmail(
+//        data: Any
+//    ): Email {
+//        return Email("PHDO NOTIFICATION", data.toString())
+//    }
+//
+//    private fun buildUploadErrorSummaryEmail(
+//        summary: UploadErrorSummary,
+//    ): Email {
+//        return Email("PHDO UPLOAD ERROR SUMMARY NOTIFICATION", buildUploadErrorSummaryEmailBody(summary))
+//    }
+//
+//    private fun buildUploadDeadlineEmail(data: DeadlineCheck): Email {
+//        val body = "Upload deadline over.  Failed to get upload for dataStreamId: ${data.dataStreamId}, jurisdiction: ${data.jurisdiction}, at ${data.timestamp}"
+//        return Email(
+//            "PHDO UPLOAD DEADLINE CHECK EXPIRED for ${data.jurisdiction} on ${data.timestamp}",
+//                body
+//            )
+//    }
+//
+//    private fun buildUploadDigestEmail(data: UploadDigest): Email {
+//        return Email("PHDO DAILY UPLOAD DIGEST COUNTS NOTIFICATION", buildUploadDigestEmailBody(data))
+//    }
 
     private fun buildUploadErrorSummaryEmailBody(summary: UploadErrorSummary): String {
         return buildString {

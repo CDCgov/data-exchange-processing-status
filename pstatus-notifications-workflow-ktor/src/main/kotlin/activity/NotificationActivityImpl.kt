@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingnotifications.activity
 
 import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
+import gov.cdc.ocio.types.notification.Notifiable
 import mu.KotlinLogging
 
 
@@ -69,7 +70,7 @@ class NotificationActivitiesImpl : NotificationActivities {
 //            emailAddresses)
 //    }
 
-    override fun dispatchNotification(data: Any, dispatcher: Dispatcher) {
-        dispatcher.dispatch(data)
+    override fun dispatchNotification(payload: Notifiable, dispatcher: Dispatcher) {
+        dispatcher.dispatch(payload)
     }
 }

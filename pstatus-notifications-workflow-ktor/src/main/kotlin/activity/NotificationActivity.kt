@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingnotifications.activity
 
 import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
+import gov.cdc.ocio.types.notification.Notifiable
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 
@@ -28,5 +29,5 @@ interface NotificationActivities {
 //        emailAddresses: List<String>)
 
     @ActivityMethod
-    fun dispatchNotification(data: Any, dispatcher: Dispatcher)
+    fun dispatchNotification(payload: Notifiable, dispatcher: Dispatcher)
 }

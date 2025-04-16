@@ -61,6 +61,7 @@ dependencies {
     implementation ("io.ktor:ktor-client-content-negotiation:2.1.0")
     implementation ("io.ktor:ktor-server-netty:2.1.0")
     implementation ("io.ktor:ktor-client-content-negotiation:2.1.0")
+    implementation("io.ktor:ktor-client-cio:2.1.0")
     implementation ("io.netty:netty-all:4.1.68.Final")
     implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
     implementation ("software.amazon.awssdk:sts:2.29.34")

@@ -75,17 +75,6 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                 sinceDays,
             )
 
-//            dispatcher.dispatch(data)
-//
-//            val body = formatEmailBody(
-//                dataStreamId,
-//                dataStreamRoute,
-//                failedMetadataVerifyCount,
-//                failedDeliveryCount,
-//                delayedUploads,
-//                delayedDeliveries,
-//                dayInterval
-//            )
             activities.dispatchNotification(data, dispatcher)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
