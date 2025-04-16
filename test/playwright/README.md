@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is part of the CDC's Public Health Data Observability (PHDO) Processing Status (PS) API initiative. It includes automated tests using Playwright to validate GraphQL endpoints. The tests ensure reliable data processing and integration for various data exchange workflows, focusing on both functional and integration-level validations. Key features include schema generation and code generation and customized playwright utilities for GQL query execution.
+This project is part of the CDC's Public Health Data Operations (PHDO) Processing Status (PS) API initiative. It includes automated tests using Playwright to validate GraphQL endpoints. The tests ensure reliable data processing and integration for various data exchange workflows, focusing on both functional and integration-level validations. Key features include schema generation and code generation and customized playwright utilities for GQL query execution.
 
 This project is designed to be run against the GraphQL endpoint of PS API and by default points to a locally running version based on the instruction on setting up PS API from its [README](../../README.md).
 

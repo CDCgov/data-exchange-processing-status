@@ -92,7 +92,7 @@ class UploadDigestCountsEmailBuilder(
             appendHTML().body {
                 div {
                     span(classes = "bold-uppercase") { +"\u271A Public Health" }
-                    span(classes = "uppercase") { +" Data Observability" }
+                    span(classes = "uppercase") { +" Data Operations" }
                 }
                 hr {  }
                 h2 { +"Upload Digest for Data Streams" }
@@ -250,7 +250,7 @@ class UploadDigestCountsEmailBuilder(
                 br {  }
                 div {
                     small {
-                        +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
+                        +("Subscriptions to this email are managed by the Public Health Data Operations (PHDO) "
                                 + "Processing Status (PS) API. Use the PS API GraphQL interface to unsubscribe "
                                 + "with the workflow ID provided above. ")
                         a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
