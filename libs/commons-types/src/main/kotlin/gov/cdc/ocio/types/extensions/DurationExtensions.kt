@@ -20,7 +20,7 @@ fun Duration.toHumanReadable(): String {
     return buildString {
         if (hours > 0) append("$hours hr ")
         if (minutes > 0) append("$minutes min ")
-        if (remainingSeconds > 0 || remainingMilliseconds > 0)
+        if (remainingSeconds > 0 || remainingMilliseconds > 0 || (hours == 0L && minutes == 0L))
             append("%d.%03d sec".format(remainingSeconds, remainingMilliseconds))
     }.trim()
 }
