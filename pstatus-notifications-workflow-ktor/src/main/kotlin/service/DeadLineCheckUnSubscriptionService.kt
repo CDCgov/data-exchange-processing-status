@@ -25,15 +25,9 @@ class DeadLineCheckUnSubscriptionService : KoinComponent {
      * @param subscriptionId String
      */
 
-    fun run(subscriptionId: String):
-            WorkflowSubscriptionResult {
+    fun run(subscriptionId: String) {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return WorkflowSubscriptionResult(
-                subscriptionId = subscriptionId,
-                message = "",
-                emailAddresses = listOf()
-            )
         }
         catch (e:Exception){
             logger.error("Error occurred while unsubscribing and canceling the workflow for upload deadline with workflowId $subscriptionId: ${e.message}")

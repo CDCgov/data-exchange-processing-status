@@ -99,7 +99,7 @@ class WorkflowEngine(
         description: String,
         taskQueue: String,
         cronSchedule: String,
-        workflowImpl: Class<T1>,
+        workflowImpl: Class<T1>, // TODO move this param next to the interface param
         activitiesImpl: T2,
         workflowImplInterface: Class<T3>
     ): T3 {

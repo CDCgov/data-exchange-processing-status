@@ -5,7 +5,7 @@ package gov.cdc.ocio.processingnotifications.model
  * @param subscription BaseSubscription
  */
 
-class NotificationSubscriptionResponse(val subscriptionId: String,
-                               val  subscription: BaseSubscription)
+//class NotificationSubscriptionResponse(val subscriptionId: String,
+//                               val  subscription: BaseSubscription)
 
 

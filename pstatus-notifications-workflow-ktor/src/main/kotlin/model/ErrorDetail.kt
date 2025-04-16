@@ -1,5 +1,5 @@
 package gov.cdc.ocio.processingnotifications.model
-
+// TODO remove, not used
 /**
  * Error Detail class
  * @property description String

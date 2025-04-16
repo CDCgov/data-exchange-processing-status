@@ -1,9 +1,7 @@
 package gov.cdc.ocio.processingnotifications.activity
 
-import gov.cdc.ocio.processingnotifications.email.EmailDispatcher
-import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
 import mu.KotlinLogging
-import java.time.LocalDate
 
 
 /**
@@ -13,7 +11,7 @@ class NotificationActivitiesImpl : NotificationActivities {
 
     private val logger = KotlinLogging.logger {}
 
-    private val emailService = EmailDispatcher()
+//    private val emailService = EmailDispatcher()
 
     /**
      * Send notification method which uses the email service to send email when an upload fails
@@ -21,21 +19,21 @@ class NotificationActivitiesImpl : NotificationActivities {
      * @param jurisdiction String
      * @param emailAddresses List<String>
      */
-    override fun sendNotification(
-        dataStreamId: String,
-        jurisdiction: String,
-        emailAddresses: List<String>
-    ) {
-        val msg = ("Upload deadline over. Failed to get the upload for dataStreamId: $dataStreamId, "
-                + "jurisdiction: $jurisdiction on " + LocalDate.now() + ".")
-
-        logger.info(msg)
-        emailService.sendEmail(
-            "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
-            msg,
-            emailAddresses
-        )
-    }
+//    override fun sendNotification(
+//        dataStreamId: String,
+//        jurisdiction: String,
+//        emailAddresses: List<String>
+//    ) {
+//        val msg = ("Upload deadline over. Failed to get the upload for dataStreamId: $dataStreamId, "
+//                + "jurisdiction: $jurisdiction on " + LocalDate.now() + ".")
+//
+//        logger.info(msg)
+//        emailService.sendEmail(
+//            "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
+//            msg,
+//            emailAddresses
+//        )
+//    }
 
     /**
      * Send notification method which uses the email service to send email with the digest counts of the top errors in
@@ -44,16 +42,16 @@ class NotificationActivitiesImpl : NotificationActivities {
      * @param emailBody String
      * @param emailAddresses List<String>
      */
-    override fun sendDataStreamTopErrorsNotification(
-        emailBody: String,
-        emailAddresses: List<String>
-    ) {
-        logger.info(emailBody)
-        emailService.sendEmail(
-            "DATA STREAM TOP ERRORS NOTIFICATION",
-            emailBody,
-            emailAddresses)
-    }
+//    override fun sendDataStreamTopErrorsNotification(
+//        emailBody: String,
+//        emailAddresses: List<String>
+//    ) {
+//        logger.info(emailBody)
+//        emailService.sendEmail(
+//            "DATA STREAM TOP ERRORS NOTIFICATION",
+//            emailBody,
+//            emailAddresses)
+//    }
 
     /**
      * Sends an email with the daily upload digest counts.
@@ -61,13 +59,17 @@ class NotificationActivitiesImpl : NotificationActivities {
      * @param emailBody String
      * @param emailAddresses List<String>
      */
-    override fun sendDigestEmail(
-        emailBody: String,
-        emailAddresses: List<String>
-    ) {
-        emailService.sendEmail(
-            "DAILY UPLOAD DIGEST COUNTS NOTIFICATION",
-            emailBody,
-            emailAddresses)
+//    override fun sendDigestEmail(
+//        emailBody: String,
+//        emailAddresses: List<String>
+//    ) {
+//        emailService.sendEmail(
+//            "DAILY UPLOAD DIGEST COUNTS NOTIFICATION",
+//            emailBody,
+//            emailAddresses)
+//    }
+
+    override fun dispatchNotification(data: Any, dispatcher: Dispatcher) {
+        dispatcher.dispatch(data)
     }
 }

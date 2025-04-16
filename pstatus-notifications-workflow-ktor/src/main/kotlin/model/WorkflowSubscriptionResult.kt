@@ -11,5 +11,6 @@ package gov.cdc.ocio.processingnotifications.model
 data class WorkflowSubscriptionResult(
     var subscriptionId: String? = null,
     var message: String? = "",
-    var emailAddresses: List<String>
+    var emailAddresses: List<String>?,
+    var webhookUrl: String?
 )

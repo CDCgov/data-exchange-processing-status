@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow
 
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 
@@ -16,7 +17,7 @@ interface DataStreamTopErrorsNotificationWorkflow {
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>,
-        daysInterval: Int?,
+        sinceDays: Int,
+        dispatcher: Dispatcher,
     )
 }

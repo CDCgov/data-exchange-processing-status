@@ -11,13 +11,13 @@ package gov.cdc.ocio.processingnotifications.model
  * @param cronSchedule String
  * @param emailAddresses List<String>
  */
-data class DeadlineCheckSubscription(
-    override val dataStreamId: String,
-    override val dataStreamRoute: String,
-    override val jurisdiction: String,
-    override val cronSchedule: String,
-    override val emailAddresses: List<String>
-) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses)
+//data class DeadlineCheckSubscription(
+//    override val dataStreamId: String,
+//    override val dataStreamRoute: String,
+//    override val jurisdiction: String,
+//    override val cronSchedule: String,
+//    override val emailAddresses: List<String>
+//) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses)
 
 /**
  * DeadlineCheckUnSubscription data class which is serialized back and forth when we need to unsubscribe the workflow

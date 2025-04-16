@@ -1,7 +1,8 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
+import gov.cdc.ocio.processingnotifications.model.Subscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotificationWorkflowImpl
@@ -22,13 +23,10 @@ import org.koin.core.component.inject
  * @property description String
  */
 class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
-
     private val logger = KotlinLogging.logger {}
-
     private val workflowEngine by inject<WorkflowEngine>()
-
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
-
+    private val taskQueue = "dataStreamTopErrorsNotificationTaskQueue" // TODO make const strings for task queue names
     private val description =
         """
         Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.
@@ -41,41 +39,35 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
      * @param subscription DataStreamTopErrorsNotificationSubscription
      */
     fun run(
-        subscription: DataStreamTopErrorsNotificationSubscription
+        subscription: Subscription
     ): WorkflowSubscriptionResult {
-
-        val dataStreamId = subscription.dataStreamId
-        val dataStreamRoute = subscription.dataStreamRoute
-        val jurisdiction = subscription.jurisdiction
-        val cronSchedule = subscription.cronSchedule
-        val emailAddresses = subscription.emailAddresses
-        val daysInterval = subscription.daysInterval
-        val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
-
         val workflow = workflowEngine.setupWorkflow(
             description,
             taskQueue,
-            cronSchedule,
+            subscription.cronSchedule,
             DataStreamTopErrorsNotificationWorkflowImpl::class.java,
             notificationActivitiesImpl,
             DataStreamTopErrorsNotificationWorkflow::class.java
         )
 
+        val dispatcher = Dispatcher.fromSubscription(subscription)
+
         val execution = WorkflowClient.start(
             workflow::checkDataStreamTopErrorsAndNotify,
-            dataStreamId,
-            dataStreamRoute,
-            jurisdiction,
-            cronSchedule,
-            emailAddresses,
-            daysInterval
+            subscription.dataStreamIds.first(),
+            subscription.dataStreamRoutes.first(),
+            subscription.jurisdictions.first(),
+            subscription.cronSchedule,
+            subscription.sinceDays,
+            dispatcher,
         )
 
         val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = execution.workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = subscription.emailAddresses
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }

@@ -2,7 +2,9 @@ package gov.cdc.ocio.processingnotifications.workflow
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
 import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
+import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
@@ -57,13 +59,14 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>
+        dispatcher: Dispatcher
     ) {
         try {
             // Logic to check if the upload occurred*/
             val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
             if (!uploadOccurred) {
-                activities.sendNotification(dataStreamId, jurisdiction, emailAddresses)
+                activities.dispatchNotification(DeadlineCheck(dataStreamId, jurisdiction, LocalDate.now().toString()), dispatcher)
+//                activities.sendNotification(dataStreamId, jurisdiction, emailAddresses)
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")

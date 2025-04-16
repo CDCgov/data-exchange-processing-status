@@ -1,7 +1,10 @@
 package gov.cdc.ocio.processingnotifications.workflow
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
+import gov.cdc.ocio.processingnotifications.model.MetadataGroup
+import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
@@ -52,26 +55,38 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>,
-        daysInterval: Int?
+        sinceDays: Int,
+        dispatcher: Dispatcher,
     ) {
-        val dayInterval = daysInterval ?: 5 // TODO make this default value configurable
+//        val dayInterval = daysInterval ?: 5 // TODO make this default value configurable
         try {
             // Logic to check if the upload occurred*/
-            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)
-            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", dayInterval)
-            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
-            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
-            val body = formatEmailBody(
-                dataStreamId,
-                dataStreamRoute,
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", sinceDays)
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", sinceDays)
+            val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, sinceDays)
+            val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, sinceDays)
+
+            val data = UploadErrorSummary(
+                MetadataGroup(dataStreamId, dataStreamRoute, jurisdiction),
                 failedMetadataVerifyCount,
                 failedDeliveryCount,
                 delayedUploads,
                 delayedDeliveries,
-                dayInterval
+                sinceDays,
             )
-            activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
+
+//            dispatcher.dispatch(data)
+//
+//            val body = formatEmailBody(
+//                dataStreamId,
+//                dataStreamRoute,
+//                failedMetadataVerifyCount,
+//                failedDeliveryCount,
+//                delayedUploads,
+//                delayedDeliveries,
+//                dayInterval
+//            )
+            activities.dispatchNotification(data, dispatcher)
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
         }
@@ -88,41 +103,41 @@ class DataStreamTopErrorsNotificationWorkflowImpl
      * @param delayedDeliveries List<String>
      * @param daysInterval Int
      */
-    private fun formatEmailBody(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        failedMetadataValidationCount: Int,
-        failedDeliveryCount: Int,
-        delayedUploads: List<String>,
-        delayedDeliveries: List<String>,
-        daysInterval: Int
-    ): String {
-        return buildString {
-            appendHTML().html {
-                body {
-                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues in the last $daysInterval days" }
-                    br {  }
-                    h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size }" }
-                    ul {
-                        li { +"Failed Metadata Validation: $failedMetadataValidationCount" }
-                        li { +"Failed Deliveries: $failedDeliveryCount" }
-                        li { +"Delayed Uploads: ${delayedUploads.size}" }
-                        li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
-                    }
-                    br {  }
-                    h3 { +"Delayed Uploads" }
-                    ul {
-                        delayedUploads.map { li { +it } }
-                    }
-                    br {  }
-                    h3 { +"Delayed Deliveries" }
-                    ul {
-                        delayedDeliveries.map{ li { +it }}
-                    }
-                }
-            }
-        }
-    }
+//    private fun formatEmailBody(
+//        dataStreamId: String,
+//        dataStreamRoute: String,
+//        failedMetadataValidationCount: Int,
+//        failedDeliveryCount: Int,
+//        delayedUploads: List<String>,
+//        delayedDeliveries: List<String>,
+//        daysInterval: Int
+//    ): String {
+//        return buildString {
+//            appendHTML().html {
+//                body {
+//                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues in the last $daysInterval days" }
+//                    br {  }
+//                    h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size }" }
+//                    ul {
+//                        li { +"Failed Metadata Validation: $failedMetadataValidationCount" }
+//                        li { +"Failed Deliveries: $failedDeliveryCount" }
+//                        li { +"Delayed Uploads: ${delayedUploads.size}" }
+//                        li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
+//                    }
+//                    br {  }
+//                    h3 { +"Delayed Uploads" }
+//                    ul {
+//                        delayedUploads.map { li { +it } }
+//                    }
+//                    br {  }
+//                    h3 { +"Delayed Deliveries" }
+//                    ul {
+//                        delayedDeliveries.map{ li { +it }}
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     /**
      * Function which actually does find the counts and the erroneous fields and its frequency.
@@ -130,19 +145,19 @@ class DataStreamTopErrorsNotificationWorkflowImpl
      * @param errors List<String>
      * @return Pair<int, List<ErrorDetail>
      */
-    private fun getTopErrors(errors: List<String>): Pair<Int, List<ErrorDetail>> {
-        // Group the errors by description and count their occurrences
-        val errorCounts = errors.groupingBy { it }.eachCount()
-
-        // Convert the grouped data into a list of ErrorDetail objects
-        val errorDetails = errorCounts.map { (description, count) ->
-            ErrorDetail(description, count)
-        }
-        // Sort the errors by their count in descending order and take the top 5
-        val topErrors = errorDetails.sortedByDescending { it.count }.take(5)
-
-        // Return the total count of errors and the top 5 errors
-        return Pair(errors.size, topErrors)
-    }
+//    private fun getTopErrors(errors: List<String>): Pair<Int, List<ErrorDetail>> {
+//        // Group the errors by description and count their occurrences
+//        val errorCounts = errors.groupingBy { it }.eachCount()
+//
+//        // Convert the grouped data into a list of ErrorDetail objects
+//        val errorDetails = errorCounts.map { (description, count) ->
+//            ErrorDetail(description, count)
+//        }
+//        // Sort the errors by their count in descending order and take the top 5
+//        val topErrors = errorDetails.sortedByDescending { it.count }.take(5)
+//
+//        // Return the total count of errors and the top 5 errors
+//        return Pair(errors.size, topErrors)
+//    }
 
 }

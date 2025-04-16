@@ -16,19 +16,21 @@ import java.util.*
  */
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
-        val subscription = call.receive<DeadlineCheckSubscription>()
-        val deadlineCheckSubscription = DeadlineCheckSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.cronSchedule,
-            subscription.emailAddresses
-        )
-        val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
+        val subscription = call.receive<Subscription>()
+        // TODO remove unnecessary temp var
+//        val deadlineCheckSubscription = DeadlineCheckSubscription(
+//            subscription.dataStreamId,
+//            subscription.dataStreamRoute,
+//            subscription.jurisdiction,
+//            subscription.cronSchedule,
+//            subscription.emailAddresses
+//        )
+        val result = DeadLineCheckSubscriptionService().run(subscription)
         call.respond(result)
     }
 }
 
+// TODO consolidate unsubscribe into a single route
 /**
  * Route to unsubscribe for DeadlineCheck subscription
  */
@@ -45,17 +47,18 @@ fun Route.unsubscribeDeadlineCheck() {
  */
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
-        val subscription = call.receive<UploadDigestSubscription>()
-        val uploadDigestCountsSubscription = UploadDigestSubscription(
-            subscription.numDaysAgoToRun,
-            subscription.dataStreamIds,
-            subscription.dataStreamRoutes,
-            subscription.jurisdictions,
-            subscription.cronSchedule,
-            subscription.emailAddresses
-        )
+        val subscription = call.receive<Subscription>()
+        // TODO remove unnecessary temp var
+//        val uploadDigestCountsSubscription = UploadDigestSubscription(
+//            subscription.numDaysAgoToRun,
+//            subscription.dataStreamIds,
+//            subscription.dataStreamRoutes,
+//            subscription.jurisdictions,
+//            subscription.cronSchedule,
+//            subscription.emailAddresses
+//        )
         val result = UploadDigestCountsNotificationSubscriptionService()
-            .run(uploadDigestCountsSubscription)
+            .run(subscription)
         call.respond(result)
     }
 }
@@ -77,17 +80,18 @@ fun Route.unsubscribeUploadDigestCountsRoute() {
  */
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
-        val subscription = call.receive<DataStreamTopErrorsNotificationSubscription>()
-        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.cronSchedule,
-            subscription.emailAddresses,
-            subscription.daysInterval
-        )
+        val subscription = call.receive<Subscription>()
+        // TODO remove unnecessary temp var
+//        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(
+//            subscription.dataStreamId,
+//            subscription.dataStreamRoute,
+//            subscription.jurisdiction,
+//            subscription.cronSchedule,
+//            subscription.emailAddresses,
+//            subscription.daysInterval
+//        )
         val result = DataStreamTopErrorsNotificationSubscriptionService()
-            .run(dataStreamTopErrorsNotificationSubscription)
+            .run(subscription)
         call.respond(result)
     }
 }

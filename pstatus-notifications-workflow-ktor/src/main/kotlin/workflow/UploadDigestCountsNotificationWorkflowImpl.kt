@@ -2,6 +2,8 @@ package gov.cdc.ocio.processingnotifications.workflow
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
+import gov.cdc.ocio.processingnotifications.model.UploadDigest
 import gov.cdc.ocio.processingnotifications.model.UploadDigestResponse
 import gov.cdc.ocio.types.InstantRange
 import io.temporal.activity.ActivityOptions
@@ -55,14 +57,14 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * @param emailAddresses List<String>
      */
     override fun processDailyUploadDigest(
-        numDaysAgoToRun: Long,
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
         jurisdictions: List<String>,
-        emailAddresses: List<String>
+        sinceDays: Int,
+        dispatcher: Dispatcher,
     ) {
         try {
-            val utcDateToRun = LocalDate.now().minusDays(numDaysAgoToRun)
+            val utcDateToRun = LocalDate.now().minusDays(sinceDays.toLong())
             val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
             val dateToRun = utcDateToRun.format(formatter)
             val uploadDigestResults = getUploadDigest(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
@@ -70,9 +72,11 @@ class UploadDigestCountsNotificationWorkflowImpl :
             // Aggregate the upload counts
             val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
 
+            activities.dispatchNotification(UploadDigest(aggregatedCounts, dateToRun), dispatcher)
+
             // Format the email body
-            val emailBody = formatEmailBody(dateToRun, aggregatedCounts)
-            activities.sendDigestEmail(emailBody, emailAddresses)
+//            val emailBody = formatEmailBody(dateToRun, aggregatedCounts)
+//            activities.sendDigestEmail(emailBody, emailAddresses)
         } catch (e: Exception) {
             logger.error("Error occurred while processing daily upload digest: ${e.message}")
             throw e
@@ -192,83 +196,83 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * @param uploadCounts Map<String, Map<String, Map<String, Int>>>
      * @return String HTML formatted email
      */
-    private fun formatEmailBody(
-        runDateUtc: String,
-        uploadCounts: Map<String, Map<String, Map<String, Int>>>
-    ): String {
-        return buildString {
-            appendHTML().html {
-                body {
-                    h2 { +"Daily Upload Digest for Data Streams" }
-                    div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
-                    br
-                    h3 { +"Summary" }
-                    table {
-                        if (uploadCounts.isEmpty()) {
-                            +"No uploads found."
-                        } else {
-                            thead {
-                                tr {
-                                    th { +"Data Stream ID" }
-                                    th { +"Data Stream Route" }
-                                    th { +"Jurisdictions" }
-                                    th { +"Upload Counts" }
-                                }
-                            }
-                            tbody {
-                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
-                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
-                                        tr {
-                                            td { +dataStreamId }
-                                            td { +dataStreamRoute }
-                                            td { +jurisdictions.size.toString() }
-                                            td { +jurisdictions.values.sum().toString() }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (uploadCounts.isNotEmpty()) {
-                        br
-                        h3 { +"Details" }
-                        table {
-                            thead {
-                                tr {
-                                    th { +"Data Stream ID" }
-                                    th { +"Data Stream Route" }
-                                    th { +"Jurisdiction" }
-                                    th { +"Upload Counts" }
-                                }
-                            }
-                            tbody {
-                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
-                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
-                                        jurisdictions.forEach { (jurisdiction, count) ->
-                                            tr {
-                                                td { +dataStreamId }
-                                                td { +dataStreamRoute }
-                                                td { +jurisdiction }
-                                                td { +count.toString() }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    p {
-                        +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
-                                + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe."
-                                )
-                    }
-                    p {
-                        a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
-                        +" for more information."
-                    }
-                }
-            }
-        }
-    }
+//    private fun formatEmailBody(
+//        runDateUtc: String,
+//        uploadCounts: Map<String, Map<String, Map<String, Int>>>
+//    ): String {
+//        return buildString {
+//            appendHTML().html {
+//                body {
+//                    h2 { +"Daily Upload Digest for Data Streams" }
+//                    div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
+//                    br
+//                    h3 { +"Summary" }
+//                    table {
+//                        if (uploadCounts.isEmpty()) {
+//                            +"No uploads found."
+//                        } else {
+//                            thead {
+//                                tr {
+//                                    th { +"Data Stream ID" }
+//                                    th { +"Data Stream Route" }
+//                                    th { +"Jurisdictions" }
+//                                    th { +"Upload Counts" }
+//                                }
+//                            }
+//                            tbody {
+//                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+//                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+//                                        tr {
+//                                            td { +dataStreamId }
+//                                            td { +dataStreamRoute }
+//                                            td { +jurisdictions.size.toString() }
+//                                            td { +jurisdictions.values.sum().toString() }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    if (uploadCounts.isNotEmpty()) {
+//                        br
+//                        h3 { +"Details" }
+//                        table {
+//                            thead {
+//                                tr {
+//                                    th { +"Data Stream ID" }
+//                                    th { +"Data Stream Route" }
+//                                    th { +"Jurisdiction" }
+//                                    th { +"Upload Counts" }
+//                                }
+//                            }
+//                            tbody {
+//                                uploadCounts.forEach { (dataStreamId, dataStreamRoutes) ->
+//                                    dataStreamRoutes.forEach { (dataStreamRoute, jurisdictions) ->
+//                                        jurisdictions.forEach { (jurisdiction, count) ->
+//                                            tr {
+//                                                td { +dataStreamId }
+//                                                td { +dataStreamRoute }
+//                                                td { +jurisdiction }
+//                                                td { +count.toString() }
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                    p {
+//                        +("Subscriptions to this email are managed by the Public Health Data Observability (PHDO) "
+//                                + "Processing Status (PS) API.  Use the PS API GraphQL interface to unsubscribe."
+//                                )
+//                    }
+//                    p {
+//                        a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
+//                        +" for more information."
+//                    }
+//                }
+//            }
+//        }
+//    }
 }

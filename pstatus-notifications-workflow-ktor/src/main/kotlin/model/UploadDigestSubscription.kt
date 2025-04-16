@@ -12,14 +12,14 @@ package gov.cdc.ocio.processingnotifications.model
  * @property emailAddresses List<String>
  * @constructor
  */
-class UploadDigestSubscription(
-    val numDaysAgoToRun: Long,
-    val dataStreamIds: List<String>,
-    val dataStreamRoutes: List<String>,
-    val jurisdictions: List<String>,
-    val cronSchedule: String,
-    val emailAddresses: List<String>
-)
+//class UploadDigestSubscription(
+//    val numDaysAgoToRun: Long,
+//    val dataStreamIds: List<String>,
+//    val dataStreamRoutes: List<String>,
+//    val jurisdictions: List<String>,
+//    val cronSchedule: String,
+//    val emailAddresses: List<String>
+//)
 
 /**
  * UploadDigestUnSubscription data class which is serialized back and forth when we need to unsubscribe the workflow by

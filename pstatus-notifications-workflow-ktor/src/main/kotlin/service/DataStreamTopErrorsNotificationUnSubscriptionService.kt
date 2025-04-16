@@ -6,7 +6,7 @@ import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-
+// TODO consolidate unsubscribe into a single service
 /**
  * The main class which subscribes the workflow execution for digest counts and top errors and its frequency for
  * each upload.
@@ -26,15 +26,9 @@ class DataStreamTopErrorsNotificationUnSubscriptionService : KoinComponent {
      * @param subscriptionId String
      * @return WorkflowSubscriptionResult
      */
-    fun run(subscriptionId: String):
-            WorkflowSubscriptionResult {
+    fun run(subscriptionId: String) {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return WorkflowSubscriptionResult(
-                subscriptionId = subscriptionId,
-                message = "",
-                emailAddresses = listOf()
-            )
         }
         catch (e:Exception){
             logger.error("Error occurred while unsubscribing and canceling the workflow for digest counts and top errors with workflowId $subscriptionId: ${e.message}")

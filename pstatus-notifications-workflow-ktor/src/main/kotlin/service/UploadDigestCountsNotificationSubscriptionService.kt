@@ -1,7 +1,8 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.model.UploadDigestSubscription
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
+import gov.cdc.ocio.processingnotifications.model.Subscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.UploadDigestCountsNotificationWorkflow
@@ -20,13 +21,10 @@ import org.koin.core.component.inject
  * @property notificationActivitiesImpl  NotificationActivitiesImpl
  */
 class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
-
     private val logger = KotlinLogging.logger {}
-
     private val workflowEngine by inject<WorkflowEngine>()
-
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
-
+    private val taskQueue = "uploadDigestCountsTaskQueue"
     private val description =
         """
         Provides a digest of the upload counts for the data streams and day provided.
@@ -39,40 +37,43 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
      * @return WorkflowSubscriptionResult
      */
     fun run(
-        subscription: UploadDigestSubscription
+        subscription: Subscription
     ): WorkflowSubscriptionResult {
 
-        val numDaysAgoToRun = subscription.numDaysAgoToRun
-        val dataStreamIds = subscription.dataStreamIds
-        val dataStreamRoutes = subscription.dataStreamRoutes
-        val jurisdictions = subscription.jurisdictions
-        val cronSchedule = subscription.cronSchedule
-        val emailAddresses = subscription.emailAddresses
-        val taskQueue = "uploadDigestCountsTaskQueue"
+//        val numDaysAgoToRun = subscription.numDaysAgoToRun
+//        val dataStreamIds = subscription.dataStreamIds
+//        val dataStreamRoutes = subscription.dataStreamRoutes
+//        val jurisdictions = subscription.jurisdictions
+//        val cronSchedule = subscription.cronSchedule
+//        val emailAddresses = subscription.emailAddresses
+//        val taskQueue = "uploadDigestCountsTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
             description,
             taskQueue,
-            cronSchedule,
+            subscription.cronSchedule,
             UploadDigestCountsNotificationWorkflowImpl::class.java,
             notificationActivitiesImpl,
             UploadDigestCountsNotificationWorkflow::class.java
         )
 
+        val dispatcher = Dispatcher.fromSubscription(subscription)
+
         val execution = WorkflowClient.start(
             workflow::processDailyUploadDigest,
-            numDaysAgoToRun,
-            dataStreamIds,
-            dataStreamRoutes,
-            jurisdictions,
-            emailAddresses
+            subscription.dataStreamIds,
+            subscription.dataStreamRoutes,
+            subscription.jurisdictions,
+            subscription.sinceDays,
+            dispatcher
         )
 
         val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = emailAddresses
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }

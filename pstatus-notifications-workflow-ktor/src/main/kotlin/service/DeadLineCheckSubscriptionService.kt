@@ -1,7 +1,8 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
+import gov.cdc.ocio.processingnotifications.dispatch.Dispatcher
+import gov.cdc.ocio.processingnotifications.model.Subscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflow
@@ -20,13 +21,10 @@ import org.koin.core.component.inject
  * @property notificationActivitiesImpl NotificationActivitiesImpl
  */
 class DeadLineCheckSubscriptionService: KoinComponent {
-
     private val logger = KotlinLogging.logger {}
-
     private val workflowEngine by inject<WorkflowEngine>()
-
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
-
+    private val taskQueue = "notificationTaskQueue"
     private val description =
         """
         Checks to see if all the expected uploads have occurred by the deadline provided.
@@ -39,39 +37,41 @@ class DeadLineCheckSubscriptionService: KoinComponent {
      *  @return WorkflowSubscriptionResult
      */
     fun run(
-        subscription: DeadlineCheckSubscription
+        subscription: Subscription
     ): WorkflowSubscriptionResult {
 
-        val dataStreamId = subscription.dataStreamId
-        val jurisdiction = subscription.jurisdiction
-        val dataStreamRoute = subscription.dataStreamRoute
-        val cronSchedule = subscription.cronSchedule
-        val emailAddresses = subscription.emailAddresses
-        val taskQueue = "notificationTaskQueue"
+//        val dataStreamId = subscription.dataStreamId
+//        val jurisdiction = subscription.jurisdiction
+//        val dataStreamRoute = subscription.dataStreamRoute
+//        val cronSchedule = subscription.cronSchedule
+//        val emailAddresses = subscription.emailAddresses
 
         val workflow = workflowEngine.setupWorkflow(
             description,
             taskQueue,
-            cronSchedule,
+            subscription.cronSchedule,
             NotificationWorkflowImpl::class.java,
             notificationActivitiesImpl,
             NotificationWorkflow::class.java
         )
 
+        val dispatcher = Dispatcher.fromSubscription(subscription)
+
         val execution = WorkflowClient.start(
             workflow::checkUploadAndNotify,
-            dataStreamId,
-            dataStreamRoute,
-            jurisdiction,
-            cronSchedule,
-            emailAddresses
+            subscription.dataStreamIds.first(),
+            subscription.dataStreamRoutes.first(),
+            subscription.jurisdictions.first(),
+            subscription.cronSchedule,
+            dispatcher
         )
 
         val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = subscription.emailAddresses
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }
