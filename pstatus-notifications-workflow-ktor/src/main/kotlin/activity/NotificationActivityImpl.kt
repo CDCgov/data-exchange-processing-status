@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingnotifications.activity
 
 import gov.cdc.ocio.processingnotifications.email.EmailDispatcher
-import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import mu.KotlinLogging
 import java.time.LocalDate
 
@@ -66,7 +65,7 @@ class NotificationActivitiesImpl : NotificationActivities {
         emailAddresses: List<String>
     ) {
         emailService.sendEmail(
-            "DAILY UPLOAD DIGEST COUNTS NOTIFICATION",
+            "PHDO UPLOAD DIGEST NOTIFICATION",
             emailBody,
             emailAddresses)
     }

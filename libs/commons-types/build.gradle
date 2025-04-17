@@ -31,8 +31,12 @@ dependencies {
     // Needed for DynamoDB enhanced annotations
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
 
+    implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinx_html_version")
+
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
-    testImplementation "org.testng:testng:7.4.0"
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testImplementation("org.jsoup:jsoup:1.17.2")
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     testImplementation "org.mockito:mockito-inline:3.11.2"
     testImplementation "io.mockk:mockk:1.13.9"
@@ -45,6 +49,7 @@ jar {
 test {
     useJUnitPlatform()
 }
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)

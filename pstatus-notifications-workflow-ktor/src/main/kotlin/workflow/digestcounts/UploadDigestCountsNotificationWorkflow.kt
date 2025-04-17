@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications.workflow
+package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod

@@ -1,4 +1,4 @@
-# Public Health Data Observability (PHDO) Processing Status (PS) API
+# Public Health Data Operations (PHDO) Processing Status (PS) API
 
 **General disclaimer** This repository was created for use by CDC programs to collaborate on public health related
 projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by
@@ -19,7 +19,7 @@ of any one particular service, product, or enterprise.
 * [Code of Conduct](code-of-conduct.md)
 
 ## Overview
-The Public Health Data Observability (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
+The Public Health Data Operations (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
 It was developed to support public health Data Senders in their effort to share critical public health data with
 internal CDC Programs. Data Senders are CDC partners across the country, including:
 

@@ -4,8 +4,8 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.DataStreamTopErrorsNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent

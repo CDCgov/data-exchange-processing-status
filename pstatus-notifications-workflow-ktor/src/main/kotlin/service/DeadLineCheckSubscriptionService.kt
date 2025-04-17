@@ -4,8 +4,8 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflowImpl
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent

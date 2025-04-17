@@ -4,8 +4,8 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.UploadDigestSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import gov.cdc.ocio.processingnotifications.workflow.UploadDigestCountsNotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.UploadDigestCountsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent

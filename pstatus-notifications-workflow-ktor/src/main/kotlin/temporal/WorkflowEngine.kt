@@ -1,10 +1,14 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
+import com.google.protobuf.ByteString
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
+import io.grpc.Status
+import io.grpc.StatusRuntimeException
+import io.temporal.api.enums.v1.TaskQueueKind
 import io.temporal.api.enums.v1.WorkflowExecutionStatus
 import io.temporal.api.workflow.v1.WorkflowExecutionInfo
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
@@ -12,6 +16,7 @@ import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
 import io.temporal.api.workflowservice.v1.DescribeTaskQueueRequest
 import io.temporal.api.taskqueue.v1.TaskQueue
 import io.temporal.api.enums.v1.TaskQueueType
+import io.temporal.api.workflowservice.v1.DescribeTaskQueueResponse
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
@@ -24,6 +29,8 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 
 /**
@@ -35,10 +42,10 @@ import java.util.concurrent.TimeUnit
  * @property temporalConfig TemporalConfig
  * @property logger KLogger
  * @property serviceOptions (WorkflowServiceStubsOptions..WorkflowServiceStubsOptions?)
+ * @property clientOptions (WorkflowClientOptions..WorkflowClientOptions?)
  * @property service WorkflowServiceStubs
  * @property client WorkflowClient
  * @property factory WorkerFactory
- * @property workers MutableMap<String, Worker>
  * @property scheduler [@EnhancedForWarnings(ScheduledExecutorService)] (ScheduledExecutorService..ScheduledExecutorService?)
  * @property healthCheckSystem HealthCheckTemporalServer
  * @constructor
@@ -61,8 +68,6 @@ class WorkflowEngine(
 
     private lateinit var client: WorkflowClient
 
-    private lateinit var factory: WorkerFactory
-
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
@@ -76,7 +81,6 @@ class WorkflowEngine(
         runCatching {
             service = WorkflowServiceStubs.newServiceStubs(serviceOptions)
             client = WorkflowClient.newInstance(service, clientOptions)
-            factory = WorkerFactory.newInstance(client)
         }.onFailure { ex ->
             logger.error("Failed to initialize Temporal client: ${ex.message}")
         }
@@ -105,6 +109,7 @@ class WorkflowEngine(
     ): T3 {
         CronUtils.checkValid(cronSchedule)
 
+        val factory = WorkerFactory.newInstance(client)
         val worker = factory.newWorker(taskQueue)
         worker?.let {
             it.registerWorkflowImplementationTypes(workflowImpl)
@@ -113,10 +118,10 @@ class WorkflowEngine(
         } ?: error("Failed to create a worker for task queue: $taskQueue")
 
         logger.info("Workflow and Activity successfully registered")
-        if (!factory.isStarted) {
-            factory.start()
-            logger.info("Worker factory started")
-        }
+
+        // Start the factory after registering the worker
+        factory.start()
+        logger.info("Worker factory started")
 
         val workflowOptions = WorkflowOptions.newBuilder()
             .setTaskQueue(taskQueue)
@@ -162,8 +167,8 @@ class WorkflowEngine(
      *
      * @return List<WorkflowStatus>
      */
-    fun getRunningWorkflows(): List<WorkflowStatus> {
-        return getWorkflows(filterOnlyRunning = true)
+    private fun getRunningWorkflows(): List<WorkflowStatus> {
+        return getWorkflows(filterOnlyRunning = true, includeWorkerCheck = true)
     }
 
     /**
@@ -172,7 +177,7 @@ class WorkflowEngine(
      * @return List<WorkflowStatus>
      */
     fun getAllWorkflows(): List<WorkflowStatus> {
-        return getWorkflows(filterOnlyRunning = false)
+        return getWorkflows(filterOnlyRunning = false, includeWorkerCheck = false)
     }
 
     /**
@@ -194,7 +199,7 @@ class WorkflowEngine(
     private fun checkWorkersAttached() {
         val runningWorkflows = getRunningWorkflows()
         runningWorkflows.forEach { workflow ->
-            if (!workflow.workerAttached) {
+            if (workflow.workerAttached == false) {
                 val taskQueue = workflow.taskQueue
                 logger.warn("Restarting worker for task queue: $taskQueue")
                 val workflowImplClassName = workflow.workflowImplClassName
@@ -206,35 +211,41 @@ class WorkflowEngine(
     }
 
     /**
-     * Shutdown workers gracefully.
-     */
-    fun shutdown() {
-        logger.info("Shutting down Temporal workers...")
-        factory.shutdown()
-        service.shutdown()
-        scheduler.shutdown()
-    }
-
-    /**
      * Retrieve the workflows, either all or just the ones running.
      *
      * @param filterOnlyRunning Boolean
      * @return List<WorkflowStatus>
      */
-    private fun getWorkflows(filterOnlyRunning: Boolean): List<WorkflowStatus> {
+    private fun getWorkflows(
+        filterOnlyRunning: Boolean,
+        includeWorkerCheck: Boolean = false
+    ): List<WorkflowStatus> {
         val query = when (filterOnlyRunning) {
             true -> "ExecutionStatus = 'Running'" // Filter for running workflows
             false -> ""
         }
-        val request = ListWorkflowExecutionsRequest.newBuilder()
-            .setNamespace(temporalConfig.namespace)
-            .setQuery(query)
-            .build()
+        val pageSize = 50
+        var nextPageToken: ByteString? = null
+        val workflows = mutableListOf<WorkflowExecutionInfo>()
+        do {
+            val requestBuilder = ListWorkflowExecutionsRequest.newBuilder()
+                .setNamespace(temporalConfig.namespace)
+                .setPageSize(pageSize)
+                .setQuery(query)
 
-        // Fetch workflows
-        val response = service.blockingStub()?.listWorkflowExecutions(request)
+            nextPageToken?.let {
+                requestBuilder.setNextPageToken(it)
+            }
 
-        val results = response?.executionsList?.map { executionInfo ->
+            // Fetch workflows
+            val response = service.blockingStub()?.listWorkflowExecutions(requestBuilder.build())
+            response?.executionsList?.let { workflows.addAll(it) }
+
+            nextPageToken = response?.takeIf { !it.nextPageToken.isEmpty }?.nextPageToken
+
+        } while (nextPageToken != null)
+
+        val results = workflows.map { executionInfo ->
             // Log workflow executions
             logger.info("WorkflowId: ${executionInfo.execution.workflowId}, Type: ${executionInfo.type.name}, Status: ${executionInfo.status}")
 
@@ -251,7 +262,7 @@ class WorkflowEngine(
             val description = descPayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "") ?: "unknown"
             val workflowImplClassNamePayload = runCatching { executionInfo.memo.getFieldsOrThrow("workflowImplClassName") }
             val workflowImplClassName = workflowImplClassNamePayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "")
-            val workerAttached = workerHasPoller(executionInfo.taskQueue)
+            val workerAttached = if (includeWorkerCheck) workerHasPoller(executionInfo.taskQueue) else null
 
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,
@@ -273,7 +284,7 @@ class WorkflowEngine(
             )
         }
 
-        return results ?: listOf()
+        return results
     }
 
     /**
@@ -284,17 +295,7 @@ class WorkflowEngine(
      * @return Boolean - Returns true if a worker is attached to this queue, false otherwise.
      */
     private fun workerHasPoller(taskQueue: String): Boolean {
-        val describeTaskQueueResponse = service.blockingStub()
-            .describeTaskQueue(
-                DescribeTaskQueueRequest.newBuilder()
-                    .setNamespace(temporalConfig.namespace)
-                    .setTaskQueue(
-                        TaskQueue.newBuilder().setName(taskQueue).build()
-                    )
-                    .setTaskQueueType(TaskQueueType.TASK_QUEUE_TYPE_WORKFLOW)
-                    .build()
-            )
-
+        val describeTaskQueueResponse = runBlocking { describeTaskQueueWithRetry(taskQueue) }
         val pollers = describeTaskQueueResponse.pollersList
         logger.info("Number of active workers: ${pollers.size}")
 
@@ -302,6 +303,46 @@ class WorkflowEngine(
             logger.info("No workers are currently polling this task queue!")
         }
         return pollers.isNotEmpty()
+    }
+
+    /**
+     * Describe the task queue with retries since rapid calls to this can trigger a Temporal retry limit.
+     * The "suspend" in the function signature is needed for the coroutine delay call if backoff is needed.
+     *
+     * @param taskQueue String
+     * @return DescribeTaskQueueResponse
+     */
+    private suspend fun describeTaskQueueWithRetry(taskQueue: String): DescribeTaskQueueResponse {
+        val maxRetries = 5
+        var attempt = 0
+        var backoffMillis = 500L
+
+        while (attempt < maxRetries) {
+            try {
+                val request = DescribeTaskQueueRequest.newBuilder()
+                    .setNamespace(temporalConfig.namespace)
+                    .setTaskQueue(
+                        TaskQueue.newBuilder()
+                            .setName(taskQueue)
+                            .setKind(TaskQueueKind.TASK_QUEUE_KIND_NORMAL)
+                    )
+                    .setTaskQueueType(TaskQueueType.TASK_QUEUE_TYPE_WORKFLOW)
+                    .build()
+
+                return service.blockingStub().describeTaskQueue(request)
+            } catch (e: StatusRuntimeException) {
+                if (e.status.code == Status.Code.RESOURCE_EXHAUSTED) {
+                    logger.warn("Temporal rate limited. Retrying in ${backoffMillis}ms...")
+                    delay(backoffMillis)
+                    backoffMillis *= 2 // exponential backoff
+                    attempt++
+                } else {
+                    throw e // rethrow if it's not a rate limit issue
+                }
+            }
+        }
+
+        throw RuntimeException("Exceeded retry attempts due to rate limiting.")
     }
 
     /**
