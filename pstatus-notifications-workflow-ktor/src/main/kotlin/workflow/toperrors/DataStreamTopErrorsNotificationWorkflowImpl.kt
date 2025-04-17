@@ -51,9 +51,9 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     override fun checkDataStreamTopErrorsAndNotify(
         workflowSubscription: WorkflowSubscription
     ) {
-        val dayInterval = workflowSubscription.daysInterval ?: 5 // TODO make this default value configurable
-        val dataStreamId = workflowSubscription.dataStreamId
-        val dataStreamRoute = workflowSubscription.dataStreamRoute
+        val dayInterval = workflowSubscription.sinceDays // TODO make this default value configurable
+        val dataStreamId = workflowSubscription.dataStreamIds.first()
+        val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
         try {
             // Logic to check if the upload occurred*/
             val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)

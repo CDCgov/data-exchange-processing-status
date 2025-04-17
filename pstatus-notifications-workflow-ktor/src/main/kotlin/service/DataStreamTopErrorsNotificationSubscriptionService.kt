@@ -1,7 +1,6 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
@@ -42,15 +41,15 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
      * @param subscription DataStreamTopErrorsNotificationSubscription
      */
     fun run(
-        subscription: DataStreamTopErrorsNotificationSubscription
+        subscription: WorkflowSubscription
     ): WorkflowSubscriptionResult {
 
-        val dataStreamId = subscription.dataStreamId
-        val dataStreamRoute = subscription.dataStreamRoute
-        val jurisdiction = subscription.jurisdiction
+//        val dataStreamId = subscription.dataStreamId
+//        val dataStreamRoute = subscription.dataStreamRoute
+//        val jurisdiction = subscription.jurisdiction
         val cronSchedule = subscription.cronSchedule
-        val emailAddresses = subscription.emailAddresses
-        val daysInterval = subscription.daysInterval
+//        val emailAddresses = subscription.emailAddresses
+//        val daysInterval = subscription.daysInterval
         val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
@@ -64,14 +63,7 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
 
         val execution = WorkflowClient.start(
             workflow::checkDataStreamTopErrorsAndNotify,
-            WorkflowSubscription(
-                dataStreamId,
-                dataStreamRoute,
-                jurisdiction,
-                cronSchedule,
-                daysInterval,
-                emailAddresses,
-                subscription.webhookUrl)
+            subscription
         )
 
         val workflowId = execution.workflowId

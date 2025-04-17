@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.models.NotificationSubscriptionResult
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
+import gov.cdc.ocio.types.model.NotificationType
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
@@ -27,7 +28,9 @@ data class DataStreamTopErrorsNotificationSubscription(
     val dataStreamRoute: String,
     val jurisdiction: String,
     val cronSchedule: String,
-    val emailAddresses: List<String>
+    val notificationType: NotificationType,
+    val emailAddresses: List<String>?,
+    val webhookUrl: String?
 )
 
 /**
@@ -65,7 +68,9 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
         dataStreamRoute: String,
         jurisdiction: String,
         cronSchedule: String,
-        emailAddresses: List<String>
+        notificationType: NotificationType,
+        emailAddresses: List<String>?,
+        webhookUrl: String?
     ): NotificationSubscriptionResult {
         val url = workflowServiceConnection.buildUrl("subscribe/dataStreamTopErrorsNotification")
 
@@ -79,7 +84,9 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
                             dataStreamRoute,
                             jurisdiction,
                             cronSchedule,
-                            emailAddresses
+                            notificationType,
+                            emailAddresses,
+                            webhookUrl
                         )
                     )
                 }

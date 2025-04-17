@@ -56,8 +56,8 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
     override fun checkUploadAndNotify(
         workflowSubscription: WorkflowSubscription
     ) {
-        val dataStreamId = workflowSubscription.dataStreamId
-        val jurisdiction = workflowSubscription.jurisdiction
+        val dataStreamId = workflowSubscription.dataStreamIds.first()
+        val jurisdiction = workflowSubscription.jurisdictions.first()
         val emailAddresses = workflowSubscription.emailAddresses
 
         try {

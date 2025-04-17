@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.UploadDigestSubscription
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
@@ -39,13 +40,13 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
      * @return WorkflowSubscriptionResult
      */
     fun run(
-        subscription: UploadDigestSubscription
+        subscription: WorkflowSubscription
     ): WorkflowSubscriptionResult {
 
-        val numDaysAgoToRun = subscription.numDaysAgoToRun
-        val dataStreamIds = subscription.dataStreamIds
-        val dataStreamRoutes = subscription.dataStreamRoutes
-        val jurisdictions = subscription.jurisdictions
+//        val numDaysAgoToRun = subscription.numDaysAgoToRun
+//        val dataStreamIds = subscription.dataStreamIds
+//        val dataStreamRoutes = subscription.dataStreamRoutes
+//        val jurisdictions = subscription.jurisdictions
         val cronSchedule = subscription.cronSchedule
         val emailAddresses = subscription.emailAddresses
         val taskQueue = "uploadDigestCountsTaskQueue"
@@ -61,11 +62,7 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
 
         val execution = WorkflowClient.start(
             workflow::processDailyUploadDigest,
-            numDaysAgoToRun,
-            dataStreamIds,
-            dataStreamRoutes,
-            jurisdictions,
-            emailAddresses
+            subscription
         )
 
         val workflowId = execution.workflowId

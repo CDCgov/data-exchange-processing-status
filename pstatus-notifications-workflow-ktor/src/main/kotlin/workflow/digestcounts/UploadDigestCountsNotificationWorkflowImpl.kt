@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.query.*
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
@@ -53,21 +54,17 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * @param emailAddresses List<String>
      */
     override fun processDailyUploadDigest(
-        numDaysAgoToRun: Long,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
-        emailAddresses: List<String>
+        subscription: WorkflowSubscription
     ) {
         try {
-            val utcDateToRun = LocalDate.now().minusDays(numDaysAgoToRun)
+            val utcDateToRun = LocalDate.now().minusDays(subscription.sinceDays.toLong())
             val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
 
             // Upload digest query to get all the counts by data stream id, data stream route, and jurisdiction
             val uploadDigestQuery = UploadDigestCountsQuery.Builder(repository)
-                .withDataStreamIds(dataStreamIds)
-                .withDataStreamRoutes(dataStreamRoutes)
-                .withJurisdictions(jurisdictions)
+                .withDataStreamIds(subscription.dataStreamIds)
+                .withDataStreamRoutes(subscription.dataStreamRoutes)
+                .withJurisdictions(subscription.jurisdictions)
                 .withUtcToRun(utcDateToRun)
                 .build()
             val uploadDigestResults = uploadDigestQuery.run()
@@ -77,18 +74,18 @@ class UploadDigestCountsNotificationWorkflowImpl :
 
             // Get the upload metrics
             val uploadMetricsQuery = UploadMetricsQuery.Builder(repository)
-                .withDataStreamIds(dataStreamIds)
-                .withDataStreamRoutes(dataStreamRoutes)
-                .withJurisdictions(jurisdictions)
+                .withDataStreamIds(subscription.dataStreamIds)
+                .withDataStreamRoutes(subscription.dataStreamRoutes)
+                .withJurisdictions(subscription.jurisdictions)
                 .withUtcToRun(utcDateToRun)
                 .build()
             val uploadMetrics = uploadMetricsQuery.run()
 
             // Get the upload and delivery durations
             val uploadDurationsQuery = UploadDurationQuery.Builder(repository)
-                .withDataStreamIds(dataStreamIds)
-                .withDataStreamRoutes(dataStreamRoutes)
-                .withJurisdictions(jurisdictions)
+                .withDataStreamIds(subscription.dataStreamIds)
+                .withDataStreamRoutes(subscription.dataStreamRoutes)
+                .withJurisdictions(subscription.jurisdictions)
                 .withUtcToRun(utcDateToRun)
                 .build()
             val uploadDurations = uploadDurationsQuery.run()
@@ -98,11 +95,11 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val cronSchedule = Workflow.getInfo().cronSchedule
             val dateRun = utcDateToRun.format(formatter)
             val emailBody = UploadDigestCountsEmailBuilder(
-                workflowId, cronSchedule, dataStreamIds, dataStreamRoutes, jurisdictions,
+                workflowId, cronSchedule, subscription.dataStreamIds, subscription.dataStreamRoutes, subscription.jurisdictions,
                 dateRun, aggregatedCounts, uploadMetrics, uploadDurations
             ).build()
             logger.info("Sending upload digest counts email")
-            activities.sendDigestEmail(emailBody, emailAddresses)
+            subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, subscription.emailAddresses) }
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
         } catch (ex: Exception) {
