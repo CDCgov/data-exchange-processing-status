@@ -19,6 +19,30 @@ abstract class ReportQuery(
     private val jurisdictions: List<String>
 ): QueryBuilder(repository.reportsCollection), ReportQuerySqlBuilder {
 
+    /**
+     * The [ReportQuery.Builder] can be extended to include additional properties.  Use the following a template for a
+     * nested [Builder] class inside your query that needs additional properties in addition to what is in the
+     * [ReportQuery] abstract base class.
+     *
+     * ```
+     * class Builder(repository: ProcessingStatusRepository): ReportQuery.Builder<Builder>(repository) {
+     *     private var myNewProperty: String = ""
+     *
+     *     fun withMyNewProperty(myNewProperty: String): Builder {
+     *         this.myNewProperty = myNewProperty
+     *         return this
+     *     }
+     *
+     *     override fun build() = YourNewQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions, myNewProperty)
+     * }
+     * ```
+     * @param T: Builder<T>
+     * @property repository ProcessingStatusRepository
+     * @property dataStreamIds List<String>
+     * @property dataStreamRoutes List<String>
+     * @property jurisdictions List<String>
+     * @constructor
+     */
     open class Builder<T: Builder<T>>(
         protected val repository: ProcessingStatusRepository
     ): ReportQueryBuilder {
