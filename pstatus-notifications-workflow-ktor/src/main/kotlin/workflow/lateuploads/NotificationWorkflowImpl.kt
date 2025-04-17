@@ -3,8 +3,10 @@ package gov.cdc.ocio.processingnotifications.workflow.lateuploads
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
+import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
+import gov.cdc.ocio.types.model.NotificationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -64,7 +66,10 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             // Logic to check if the upload occurred*/
             val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
             if (!uploadOccurred) {
-                emailAddresses?.let { activities.sendNotification(dataStreamId, jurisdiction, emailAddresses) }
+                when (workflowSubscription.notificationType) {
+                    NotificationType.EMAIL -> emailAddresses?.let { activities.sendNotification(dataStreamId, jurisdiction, emailAddresses) }
+                    NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let { activities.sendWebhook(it, DeadlineCheck(dataStreamId, jurisdiction, LocalDate.now().toString())) }
+                }
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")

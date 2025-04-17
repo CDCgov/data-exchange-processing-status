@@ -2,8 +2,10 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.model.UploadDigest
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.query.*
+import gov.cdc.ocio.types.model.NotificationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.failure.ActivityFailure
@@ -99,7 +101,11 @@ class UploadDigestCountsNotificationWorkflowImpl :
                 dateRun, aggregatedCounts, uploadMetrics, uploadDurations
             ).build()
             logger.info("Sending upload digest counts email")
-            subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, subscription.emailAddresses) }
+
+            when (subscription.notificationType) {
+                NotificationType.EMAIL -> subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, subscription.emailAddresses) }
+                NotificationType.WEBHOOK -> subscription.webhookUrl?.let { activities.sendWebhook(it, UploadDigest(aggregatedCounts, uploadMetrics, uploadDurations)) }
+            }
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
         } catch (ex: Exception) {
