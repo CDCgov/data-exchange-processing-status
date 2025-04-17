@@ -33,7 +33,8 @@ class DataStreamTopErrorsNotificationUnSubscriptionService : KoinComponent {
             return WorkflowSubscriptionResult(
                 subscriptionId = subscriptionId,
                 message = "",
-                emailAddresses = listOf()
+                emailAddresses = listOf(),
+                webhookUrl = ""
             )
         }
         catch (e:Exception){

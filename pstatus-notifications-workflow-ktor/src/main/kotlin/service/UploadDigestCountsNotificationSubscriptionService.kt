@@ -72,7 +72,8 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
         return WorkflowSubscriptionResult(
             subscriptionId = workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = emailAddresses
+            emailAddresses = emailAddresses,
+            webhookUrl = ""
         )
     }
 }

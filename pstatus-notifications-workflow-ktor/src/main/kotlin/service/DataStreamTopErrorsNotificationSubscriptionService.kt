@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
@@ -63,19 +64,22 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
 
         val execution = WorkflowClient.start(
             workflow::checkDataStreamTopErrorsAndNotify,
-            dataStreamId,
-            dataStreamRoute,
-            jurisdiction,
-            cronSchedule,
-            emailAddresses,
-            daysInterval
+            WorkflowSubscription(
+                dataStreamId,
+                dataStreamRoute,
+                jurisdiction,
+                cronSchedule,
+                daysInterval,
+                emailAddresses,
+                subscription.webhookUrl)
         )
 
         val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = execution.workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = subscription.emailAddresses
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }

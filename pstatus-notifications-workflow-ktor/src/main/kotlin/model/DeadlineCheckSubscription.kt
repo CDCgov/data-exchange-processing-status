@@ -16,8 +16,9 @@ data class DeadlineCheckSubscription(
     override val dataStreamRoute: String,
     override val jurisdiction: String,
     override val cronSchedule: String,
-    override val emailAddresses: List<String>
-) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses)
+    override val emailAddresses: List<String>?,
+    override val webhookUrl: String?
+) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses, webhookUrl)
 
 /**
  * DeadlineCheckUnSubscription data class which is serialized back and forth when we need to unsubscribe the workflow

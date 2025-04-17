@@ -14,5 +14,6 @@ open class BaseSubscription(
     open val dataStreamRoute: String,
     open val jurisdiction: String,
     open val cronSchedule: String,
-    open val emailAddresses: List<String>,
+    open val emailAddresses: List<String>?,
+    open val webhookUrl: String?,
 )

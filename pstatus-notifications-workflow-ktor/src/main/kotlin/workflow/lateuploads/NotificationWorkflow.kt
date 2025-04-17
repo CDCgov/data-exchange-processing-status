@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.lateuploads
 
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 
@@ -11,10 +12,6 @@ interface NotificationWorkflow {
 
     @WorkflowMethod
     fun checkUploadAndNotify(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        jurisdiction: String,
-        cronSchedule: String,
-        emailAddresses: List<String>
+        workflowSubscription: WorkflowSubscription
     )
 }

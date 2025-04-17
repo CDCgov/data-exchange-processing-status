@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheckSubscription
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflow
@@ -60,18 +61,22 @@ class DeadLineCheckSubscriptionService: KoinComponent {
 
         val execution = WorkflowClient.start(
             workflow::checkUploadAndNotify,
-            dataStreamId,
-            dataStreamRoute,
-            jurisdiction,
-            cronSchedule,
-            emailAddresses
+            WorkflowSubscription(
+                dataStreamId,
+                dataStreamRoute,
+                jurisdiction,
+                cronSchedule,
+                emailAddresses,
+                subscription.webhookUrl
+            )
         )
 
         val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = subscription.emailAddresses
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }

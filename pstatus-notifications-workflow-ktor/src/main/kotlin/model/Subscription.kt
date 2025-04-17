@@ -5,9 +5,10 @@ open class IntervalSubscription(
     override val dataStreamRoute: String,
     override val jurisdiction: String,
     override val cronSchedule: String,
-    override val emailAddresses: List<String>,
+    override val emailAddresses: List<String>?,
+    override val webhookUrl: String?,
     open val daysInterval: Int?
-) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses)
+) : BaseSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses, webhookUrl)
 
 /**
  * Data stream top errors notification subscription class  which is serialized back and forth from graphQL to this
@@ -24,9 +25,10 @@ data class DataStreamTopErrorsNotificationSubscription(
     override val dataStreamRoute: String,
     override val jurisdiction: String,
     override val cronSchedule: String,
-    override val emailAddresses: List<String>,
+    override val emailAddresses: List<String>?,
+    override val webhookUrl: String?,
     override val daysInterval: Int?
-) : IntervalSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses, daysInterval)
+) : IntervalSubscription(dataStreamId, dataStreamRoute, jurisdiction, cronSchedule, emailAddresses, webhookUrl, daysInterval)
 
 /**
  * Data stream errors notification unSubscription data class which is serialized back and forth  from graphQL to this

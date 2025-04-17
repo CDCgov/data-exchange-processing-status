@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
+import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
@@ -48,14 +49,11 @@ class DataStreamTopErrorsNotificationWorkflowImpl
      * @param emailAddresses List<String>
      */
     override fun checkDataStreamTopErrorsAndNotify(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        jurisdiction: String,
-        cronSchedule: String,
-        emailAddresses: List<String>,
-        daysInterval: Int?
+        workflowSubscription: WorkflowSubscription
     ) {
-        val dayInterval = daysInterval ?: 5 // TODO make this default value configurable
+        val dayInterval = workflowSubscription.daysInterval ?: 5 // TODO make this default value configurable
+        val dataStreamId = workflowSubscription.dataStreamId
+        val dataStreamRoute = workflowSubscription.dataStreamRoute
         try {
             // Logic to check if the upload occurred*/
             val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)
@@ -71,7 +69,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                 delayedDeliveries,
                 dayInterval
             )
-            activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
+            workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, workflowSubscription.emailAddresses) }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
         }

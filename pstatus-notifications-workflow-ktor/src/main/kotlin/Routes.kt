@@ -22,7 +22,8 @@ fun Route.subscribeDeadlineCheckRoute() {
             subscription.dataStreamRoute,
             subscription.jurisdiction,
             subscription.cronSchedule,
-            subscription.emailAddresses
+            subscription.emailAddresses,
+            subscription.webhookUrl,
         )
         val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
         call.respond(result)
@@ -84,7 +85,8 @@ fun Route.subscribeDataStreamTopErrorsNotification() {
             subscription.jurisdiction,
             subscription.cronSchedule,
             subscription.emailAddresses,
-            subscription.daysInterval
+            subscription.webhookUrl,
+            subscription.daysInterval,
         )
         val result = DataStreamTopErrorsNotificationSubscriptionService()
             .run(dataStreamTopErrorsNotificationSubscription)
