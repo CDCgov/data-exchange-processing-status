@@ -11,16 +11,23 @@ import java.time.LocalDate
  *
  * @constructor
  */
-class UploadMetricsQuery(
-    repository: ProcessingStatusRepository
-): ReportQuery(repository) {
+class UploadMetricsQuery private constructor(
+    repository: ProcessingStatusRepository,
+    dataStreamIds: List<String>,
+    dataStreamRoutes: List<String>,
+    jurisdictions: List<String>,
+    private val utcDateToRun: LocalDate
+): ReportQuery("upload time delta metrics", repository, dataStreamIds, dataStreamRoutes, jurisdictions) {
 
-    private fun build(
-        utcDateToRun: LocalDate,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>
-    ): String {
+    class Builder(
+        repository: ProcessingStatusRepository
+    ): UtcTimeToRunReportQuery.Builder<Builder>(repository) {
+        override fun build() = UploadMetricsQuery(
+            repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun
+        )
+    }
+
+    override fun buildSql(): String {
         val querySB = StringBuilder()
 
         querySB.append("""
@@ -103,7 +110,7 @@ class UploadMetricsQuery(
                 WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.METADATA_VERIFY}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.UPLOAD_STATUS}', '${StageAction.FILE_DELIVERY}'${closeBkt}
             """)
 
-        querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
+        querySB.append(whereClause(utcDateToRun))
 
         querySB.append("""
                 GROUP BY ${cPrefix}uploadId
@@ -113,25 +120,5 @@ class UploadMetricsQuery(
         return querySB.toString().trimIndent()
     }
 
-    fun run(
-        utcDateToRun: LocalDate,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
-    ): UploadMetrics {
-        return runCatching {
-            val query = build(
-                utcDateToRun,
-                dataStreamIds,
-                dataStreamRoutes,
-                jurisdictions
-            )
-            logger.info("Executing upload time delta metrics query")
-            val results = collection.queryItems(query, UploadMetrics::class.java).first()
-            return@runCatching results
-        }.getOrElse {
-            logger.error("Error occurred while executing query: ${it.localizedMessage}")
-            throw it
-        }
-    }
+    fun run() = runQuery(UploadMetrics::class.java).first()
 }

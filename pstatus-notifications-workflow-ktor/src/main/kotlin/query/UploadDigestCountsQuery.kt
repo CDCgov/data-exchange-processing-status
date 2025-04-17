@@ -7,16 +7,28 @@ import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestRe
 import java.time.LocalDate
 
 
-class UploadDigestCountsQuery(
-    repository: ProcessingStatusRepository
-): ReportQuery(repository) {
+/**
+ * Upload counts query.
+ *
+ * @constructor
+ */
+class UploadDigestCountsQuery private constructor(
+    repository: ProcessingStatusRepository,
+    dataStreamIds: List<String>,
+    dataStreamRoutes: List<String>,
+    jurisdictions: List<String>,
+    utcDateToRun: LocalDate
+): UtcTimeToRunReportQuery("upload digest counts", repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
 
-    private fun build(
-        utcDateToRun: LocalDate,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>
-    ): String {
+    class Builder(
+        repository: ProcessingStatusRepository
+    ): UtcTimeToRunReportQuery.Builder<Builder>(repository) {
+        override fun build() = UploadDigestCountsQuery(
+            repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun
+        )
+    }
+
+    override fun buildSql(): String {
         val querySB = StringBuilder()
 
         querySB.append("""
@@ -32,7 +44,7 @@ class UploadDigestCountsQuery(
             WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.FILE_DELIVERY}'${closeBkt}
             """)
 
-        querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
+        querySB.append(whereClause(utcDateToRun))
 
         querySB.append("""
             GROUP BY ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
@@ -44,29 +56,7 @@ class UploadDigestCountsQuery(
     /**
      * The function which gets the digest counts query and sends it to the corresponding db collection.
      *
-     * @param utcDateToRun LocalDate
-     * @param dataStreamIds List<String>
-     * @param dataStreamRoutes List<String>
-     * @param jurisdictions List<String>
+     * @return List<UploadDigestResponse>
      */
-    fun run(
-        utcDateToRun: LocalDate,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
-    ): List<UploadDigestResponse> {
-        return runCatching {
-            val query = build(
-                utcDateToRun,
-                dataStreamIds,
-                dataStreamRoutes,
-                jurisdictions
-            )
-            logger.info("Executing upload digest counts query")
-            return@runCatching collection.queryItems(query, UploadDigestResponse::class.java)
-        }.getOrElse {
-            logger.error("Error occurred while getting a digest of upload counts: ${it.localizedMessage}")
-            throw it
-        }
-    }
+    fun run() = runQuery(UploadDigestResponse::class.java)
 }

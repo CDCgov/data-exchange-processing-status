@@ -64,19 +64,34 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
 
             // Upload digest query to get all the counts by data stream id, data stream route, and jurisdiction
-            val uploadDigestResults = UploadDigestCountsQuery(repository)
-                .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
+            val uploadDigestQuery = UploadDigestCountsQuery.Builder(repository)
+                .withDataStreamIds(dataStreamIds)
+                .withDataStreamRoutes(dataStreamRoutes)
+                .withJurisdictions(jurisdictions)
+                .withUtcToRun(utcDateToRun)
+                .build()
+            val uploadDigestResults = uploadDigestQuery.run()
 
             // Aggregate the upload counts
             val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
 
             // Get the upload metrics
-            val uploadMetrics = UploadMetricsQuery(repository)
-                .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
+            val uploadMetricsQuery = UploadMetricsQuery.Builder(repository)
+                .withDataStreamIds(dataStreamIds)
+                .withDataStreamRoutes(dataStreamRoutes)
+                .withJurisdictions(jurisdictions)
+                .withUtcToRun(utcDateToRun)
+                .build()
+            val uploadMetrics = uploadMetricsQuery.run()
 
             // Get the upload and delivery durations
-            val uploadDurations = UploadDurationQuery(repository)
-                .run(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions)
+            val uploadDurationsQuery = UploadDurationQuery.Builder(repository)
+                .withDataStreamIds(dataStreamIds)
+                .withDataStreamRoutes(dataStreamRoutes)
+                .withJurisdictions(jurisdictions)
+                .withUtcToRun(utcDateToRun)
+                .build()
+            val uploadDurations = uploadDurationsQuery.run()
 
             // Format the email body
             val workflowId = Workflow.getInfo().workflowId

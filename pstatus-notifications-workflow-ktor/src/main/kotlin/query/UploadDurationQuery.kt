@@ -10,16 +10,23 @@ import java.time.LocalDate
  *
  * @constructor
  */
-class UploadDurationQuery(
-    repository: ProcessingStatusRepository
-): ReportQuery(repository) {
+class UploadDurationQuery private constructor(
+    repository: ProcessingStatusRepository,
+    dataStreamIds: List<String>,
+    dataStreamRoutes: List<String>,
+    jurisdictions: List<String>,
+    utcDateToRun: LocalDate
+): UtcTimeToRunReportQuery("upload duration", repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
 
-    private fun build(
-        utcDateToRun: LocalDate,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>
-    ): String {
+    class Builder(
+        repository: ProcessingStatusRepository
+    ): UtcTimeToRunReportQuery.Builder<Builder>(repository) {
+        override fun build() = UploadDurationQuery(
+            repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun
+        )
+    }
+
+    override fun buildSql(): String {
         val querySB = StringBuilder()
 
         querySB.append("""
@@ -34,7 +41,7 @@ class UploadDurationQuery(
                 WHERE ${cPrefix}stageInfo.action IN ['${StageAction.METADATA_VERIFY}', '${StageAction.FILE_DELIVERY}']
                 """)
 
-        querySB.append(whereClause(utcDateToRun, dataStreamIds, dataStreamRoutes, jurisdictions))
+        querySB.append(whereClause(utcDateToRun))
 
         querySB.append("""
                 GROUP BY ${cPrefix}uploadId
@@ -48,31 +55,10 @@ class UploadDurationQuery(
     /**
      * Will return a list of longs, where each long is a duration in seconds.
      *
-     * @param utcDateToRun LocalDate
-     * @param dataStreamIds List<String>
-     * @param dataStreamRoutes List<String>
-     * @param jurisdictions List<String>
      * @return List<Long>
      */
-    fun run(
-        utcDateToRun: LocalDate,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
-    ): List<Long> {
-        return runCatching {
-            val query = build(
-                utcDateToRun,
-                dataStreamIds,
-                dataStreamRoutes,
-                jurisdictions
-            )
-            logger.info("Executing upload duration query")
-            val results = collection.queryItems(query, Array<Long>::class.java).firstOrNull()
-            return@runCatching results?.toList().orEmpty()
-        }.getOrElse {
-            logger.error("Error occurred while executing query: ${it.localizedMessage}")
-            throw it
-        }
+    fun run(): List<Long> {
+        val results = runQuery(Array<Long>::class.java).firstOrNull()
+        return results?.toList().orEmpty()
     }
 }
