@@ -51,7 +51,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     override fun checkDataStreamTopErrorsAndNotify(
         workflowSubscription: WorkflowSubscription
     ) {
-        val dayInterval = workflowSubscription.sinceDays // TODO make this default value configurable
+        val dayInterval = workflowSubscription.sinceDays
         val dataStreamId = workflowSubscription.dataStreamIds.first()
         val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
         try {

@@ -17,14 +17,6 @@ import java.util.*
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
         val subscription = call.receive<WorkflowSubscription>()
-//        val deadlineCheckSubscription = DeadlineCheckSubscription(
-//            subscription.dataStreamId,
-//            subscription.dataStreamRoute,
-//            subscription.jurisdiction,
-//            subscription.cronSchedule,
-//            subscription.emailAddresses,
-//            subscription.webhookUrl,
-//        )
         val result = DeadLineCheckSubscriptionService().run(subscription)
         call.respond(result)
     }
@@ -47,14 +39,6 @@ fun Route.unsubscribeDeadlineCheck() {
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
         val subscription = call.receive<WorkflowSubscription>()
-//        val uploadDigestCountsSubscription = UploadDigestSubscription(
-//            subscription.numDaysAgoToRun,
-//            subscription.dataStreamIds,
-//            subscription.dataStreamRoutes,
-//            subscription.jurisdictions,
-//            subscription.cronSchedule,
-//            subscription.emailAddresses
-//        )
         val result = UploadDigestCountsNotificationSubscriptionService()
             .run(subscription)
         call.respond(result)
@@ -79,15 +63,6 @@ fun Route.unsubscribeUploadDigestCountsRoute() {
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
         val subscription = call.receive<WorkflowSubscription>()
-//        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(
-//            subscription.dataStreamId,
-//            subscription.dataStreamRoute,
-//            subscription.jurisdiction,
-//            subscription.cronSchedule,
-//            subscription.emailAddresses,
-//            subscription.webhookUrl,
-//            subscription.daysInterval,
-//        )
         val result = DataStreamTopErrorsNotificationSubscriptionService()
             .run(subscription)
         call.respond(result)

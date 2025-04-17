@@ -44,12 +44,7 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
         subscription: WorkflowSubscription
     ): WorkflowSubscriptionResult {
 
-//        val dataStreamId = subscription.dataStreamId
-//        val dataStreamRoute = subscription.dataStreamRoute
-//        val jurisdiction = subscription.jurisdiction
         val cronSchedule = subscription.cronSchedule
-//        val emailAddresses = subscription.emailAddresses
-//        val daysInterval = subscription.daysInterval
         val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
