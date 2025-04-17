@@ -25,4 +25,10 @@ interface NotificationActivities {
     fun sendDigestEmail(
         emailBody: String,
         emailAddresses: List<String>)
+
+    @ActivityMethod
+    fun sendEmail(emailAddresses: List<String>, subject: String, body: String)
+
+    @ActivityMethod
+    fun sendWebhook(url: String, body: Any)
 }

@@ -21,4 +21,6 @@ data class WorkflowSubscription(
         emailAddresses: List<String>?,
         webhookUrl: String?
     ) : this(dataStreamIds, dataStreamRoutes, jurisdictions, cronSchedule, notificationType, 0, emailAddresses, webhookUrl)
+
+    constructor() : this(listOf(), listOf(), listOf(), "", NotificationType.EMAIL, 0, listOf(), "")
 }

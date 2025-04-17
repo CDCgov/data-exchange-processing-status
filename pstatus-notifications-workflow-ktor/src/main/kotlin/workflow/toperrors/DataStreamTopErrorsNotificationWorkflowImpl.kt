@@ -2,8 +2,10 @@ package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
+import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
 import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.service.ReportService
+import gov.cdc.ocio.types.model.NotificationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -60,16 +62,22 @@ class DataStreamTopErrorsNotificationWorkflowImpl
             val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", dayInterval)
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
-            val body = formatEmailBody(
-                dataStreamId,
-                dataStreamRoute,
-                failedMetadataVerifyCount,
-                failedDeliveryCount,
-                delayedUploads,
-                delayedDeliveries,
-                dayInterval
-            )
-            workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, workflowSubscription.emailAddresses) }
+
+            when (workflowSubscription.notificationType) {
+                NotificationType.EMAIL -> {
+                    val body = formatEmailBody(
+                        dataStreamId,
+                        dataStreamRoute,
+                        failedMetadataVerifyCount,
+                        failedDeliveryCount,
+                        delayedUploads,
+                        delayedDeliveries,
+                        dayInterval
+                    )
+                    workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, workflowSubscription.emailAddresses) }
+                }
+                NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let { activities.sendWebhook(it, UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)) }
+            }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
         }
