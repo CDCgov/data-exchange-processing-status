@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
+import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import gov.cdc.ocio.types.email.EmailBuilder
 import kotlinx.html.*
@@ -246,17 +247,7 @@ class UploadDigestCountsEmailBuilder(
                         }
                     }
                 }
-                br {  }
-                br {  }
-                div {
-                    small {
-                        +("Subscriptions to this email are managed by the Public Health Data Operations (PHDO) "
-                                + "Processing Status (PS) API. Use the PS API GraphQL interface to unsubscribe "
-                                + "with the workflow ID provided above. ")
-                        a(href = "https://cdcgov.github.io/data-exchange/") { +"Click here" }
-                        + " for more information."
-                    }
-                }
+                workflowFooter()
             }
         }
 
