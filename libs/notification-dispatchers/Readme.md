@@ -15,7 +15,7 @@ In the `application.conf` you will need to specify the email dispatcher type. Us
 `EMAIL_DISPATCHER` to indicate which type to use. The supported types are:
 - `SMTP` - Uses Standard Mail Transfer Protocol to send emails.
 - `LOGGER` - Will only log that an email dispatch was attempted, but nothing is actually sent.
-When adding support for the notifications dispatcher to your ktor application, you will need to specify the email dispatcher in the `ktor` section of `appplicatio.conf`.
+When adding support for the notifications dispatcher to your ktor application, you will need to specify the email dispatcher in the `ktor` section of `appplication.conf`.
 ```
 ktor {
     emailDispatcher = "SMTP" # default to SMTP if EMAIL_DISPATCHER missing
