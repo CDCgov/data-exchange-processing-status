@@ -1,5 +1,8 @@
-package gov.cdc.ocio.notificationdispatchers.email
+package gov.cdc.ocio.notificationdispatchers.utils
 
+import gov.cdc.ocio.notificationdispatchers.email.EmailDispatcher
+import gov.cdc.ocio.notificationdispatchers.email.LoggingEmailDispatcher
+import gov.cdc.ocio.notificationdispatchers.email.SmtpEmailDispatcher
 import gov.cdc.ocio.notificationdispatchers.model.EmailDispatcherType
 import gov.cdc.ocio.notificationdispatchers.model.SmtpConfig
 import io.ktor.server.application.*
@@ -9,7 +12,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 
-object EmailSenderKoinCreator {
+object EmailDispatcherKoinCreator {
 
     /**
      * Creates a koin module and injects a singleton for the email sender from the [ApplicationEnvironment]
