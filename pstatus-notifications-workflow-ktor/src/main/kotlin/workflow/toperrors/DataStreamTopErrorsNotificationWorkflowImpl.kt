@@ -4,6 +4,8 @@ import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
+import gov.cdc.ocio.processingnotifications.model.WebhookContent
+import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscription
@@ -14,6 +16,8 @@ import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
 import java.time.Duration
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -77,7 +81,18 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                     )
                     workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, it) }
                 }
-                NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let { activities.sendWebhook(it, UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)) }
+                NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
+                    val subId = Workflow.getInfo().workflowId
+                    val triggered = Workflow.getInfo().runStartedTimestampMillis
+                    val payload = WebhookContent(
+                        subId,
+                        WorkflowType.UPLOAD_ERROR_SUMMARY,
+                        workflowSubscription,
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                        UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)
+                    )
+                    activities.sendWebhook(it, payload)
+                }
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")

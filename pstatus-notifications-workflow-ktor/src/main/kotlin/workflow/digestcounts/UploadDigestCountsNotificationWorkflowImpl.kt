@@ -3,6 +3,8 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.UploadDigest
+import gov.cdc.ocio.processingnotifications.model.WebhookContent
+import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.*
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscription
@@ -11,9 +13,11 @@ import io.temporal.common.RetryOptions
 import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
+import org.joda.time.DateTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -106,7 +110,18 @@ class UploadDigestCountsNotificationWorkflowImpl :
                     logger.info("Sending upload digest counts email")
                     subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, it) }
                 }
-                NotificationType.WEBHOOK -> subscription.webhookUrl?.let { activities.sendWebhook(it, UploadDigest(aggregatedCounts, uploadMetrics, uploadDurations)) }
+                NotificationType.WEBHOOK -> subscription.webhookUrl?.let {
+                    val subId = Workflow.getInfo().workflowId
+                    val triggered = Workflow.getInfo().runStartedTimestampMillis
+                    val payload = WebhookContent(
+                        subId,
+                        WorkflowType.UPLOAD_DIGEST,
+                        subscription,
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                        UploadDigest(aggregatedCounts, uploadMetrics, uploadDurations)
+                    )
+                    activities.sendWebhook(it, payload)
+                }
             }
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")

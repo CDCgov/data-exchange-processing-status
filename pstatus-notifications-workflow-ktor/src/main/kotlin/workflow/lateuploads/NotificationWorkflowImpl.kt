@@ -4,6 +4,8 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
+import gov.cdc.ocio.processingnotifications.model.WebhookContent
+import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscription
@@ -13,10 +15,7 @@ import io.temporal.workflow.Workflow
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.Duration
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.*
 import java.time.format.DateTimeFormatter
 
 
@@ -68,7 +67,18 @@ class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
             if (!uploadOccurred) {
                 when (workflowSubscription.notificationType) {
                     NotificationType.EMAIL -> emailAddresses?.let { activities.sendNotification(dataStreamId, jurisdiction, emailAddresses) }
-                    NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let { activities.sendWebhook(it, DeadlineCheck(dataStreamId, jurisdiction, LocalDate.now().toString())) }
+                    NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
+                        val subId = Workflow.getInfo().workflowId
+                        val triggered = Workflow.getInfo().runStartedTimestampMillis
+                        val payload = WebhookContent(
+                            subId,
+                            WorkflowType.UPLOAD_DEADLINE_CHECK,
+                            workflowSubscription,
+                            DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                            DeadlineCheck(dataStreamId, jurisdiction, LocalDate.now().toString())
+                        )
+                        activities.sendWebhook(it, payload)
+                    }
                 }
             }
         } catch (e: Exception) {
