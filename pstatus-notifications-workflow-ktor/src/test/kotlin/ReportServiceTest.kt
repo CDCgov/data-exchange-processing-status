@@ -1,5 +1,6 @@
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
 import gov.cdc.ocio.database.couchbase.CouchbaseRepository
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.database.models.dao.StageInfoDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
@@ -61,7 +62,7 @@ class ReportServiceTest : KoinTest {
 
     @Test
     fun `returns zero failures when database is empty`() {
-        val failedMetadataVerifyCount = service.countFailedReports(ds, r, "metadata-verify", null)
+        val failedMetadataVerifyCount = service.countFailedReports(ds, r, StageAction.METADATA_VERIFY, null)
         val delayedUploads = service.getDelayedUploads(ds, r, null)
         val delayedDeliveries = service.getDelayedDeliveries(ds, r, null)
 
@@ -108,7 +109,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val failedMetadataVerifyCount = service.countFailedReports(ds, r, "metadata-verify", null)
+        val failedMetadataVerifyCount = service.countFailedReports(ds, r, StageAction.METADATA_VERIFY, null)
         assertEquals(1, failedMetadataVerifyCount)
     }
 
@@ -152,7 +153,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val failedMetadataVerifyCount = service.countFailedReports(ds, r, "metadata-verify", 1)
+        val failedMetadataVerifyCount = service.countFailedReports(ds, r, StageAction.METADATA_VERIFY, 1)
         assertEquals(1, failedMetadataVerifyCount)
     }
 
@@ -333,7 +334,7 @@ class ReportServiceTest : KoinTest {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
-        val failedDeliveryCount = service.countFailedReports(ds, r, "blob-file-copy", null)
+        val failedDeliveryCount = service.countFailedReports(ds, r, StageAction.FILE_DELIVERY, null)
 
         assertEquals(1, failedDeliveryCount)
     }
