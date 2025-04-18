@@ -4,6 +4,7 @@ import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.messagesystem.models.MessageSystemType
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.messagesystem.utils.createMessageSystemPlugin
+import gov.cdc.ocio.notificationdispatchers.utils.EmailDispatcherKoinCreator
 import gov.cdc.ocio.processingstatusnotifications.processors.*
 import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
 import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscriptionLoader
@@ -28,7 +29,8 @@ fun KoinApplication.loadKoinModules(
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
     val subscriptionLoaderModule = module { single { CachedSubscriptionLoader(DatabaseSubscriptionLoader()) } }
-    return modules(listOf(databaseModule, messageSystemModule, subscriptionLoaderModule))
+    val emailSenderModule = EmailDispatcherKoinCreator.moduleFromAppEnv(environment)
+    return modules(listOf(databaseModule, messageSystemModule, subscriptionLoaderModule, emailSenderModule))
 }
 
 fun main(args: Array<String>) {
