@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications
 
 import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*

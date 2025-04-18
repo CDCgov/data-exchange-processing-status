@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
@@ -58,8 +59,8 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
         try {
             // Logic to check if the upload occurred*/
-            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)
-            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", dayInterval)
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.METADATA_VERIFY, dayInterval)
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.FILE_DELIVERY, dayInterval)
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
 
