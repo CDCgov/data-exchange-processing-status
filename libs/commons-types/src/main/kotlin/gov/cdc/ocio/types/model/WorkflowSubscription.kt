@@ -13,6 +13,7 @@ data class WorkflowSubscription(
     val emailAddresses: List<String>?,
     val webhookUrl: String?,
 ) {
+    // secondary constructor for workflows that don't factor in a day interval, such as deadline check.
     constructor(
         dataStreamIds: List<String>,
         dataStreamRoutes: List<String>,
@@ -23,5 +24,6 @@ data class WorkflowSubscription(
         webhookUrl: String?
     ) : this(dataStreamIds, dataStreamRoutes, jurisdictions, cronSchedule, notificationType, 0, emailAddresses, webhookUrl)
 
+    // default constructor to make temporal serialization happy
     constructor() : this(listOf(), listOf(), listOf(), "", NotificationType.EMAIL, 0, listOf(), "")
 }
