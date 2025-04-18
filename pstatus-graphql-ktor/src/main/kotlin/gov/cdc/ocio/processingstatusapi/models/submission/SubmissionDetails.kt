@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models.submission
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.processingstatusapi.models.Report
 import java.time.OffsetDateTime
 
@@ -30,7 +31,7 @@ data class SubmissionDetails(
     var lastService: String? = null,
 
     @GraphQLDescription("Find report with most recent timestamp for the upload ID and report the action.")
-    var lastAction: String? = null,
+    var lastAction: StageAction? = null,
 
     @GraphQLDescription("Locate first found report with service, 'upload' and action 'upload-status' for the given upload ID and report the filename.")
     var filename: String? = null,
