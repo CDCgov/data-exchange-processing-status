@@ -2,4 +2,4 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.4.0'
 }
 rootProject.name = 'data-exchange-processing-status'
-include 'libs:commons-database','libs:schema-validation', 'libs:commons-types', 'libs:message-system', 'pstatus-report-sink-ktor', 'pstatus-graphql-ktor', 'pstatus-notifications-workflow-ktor','pstatus-notifications-rules-engine-ktor'
+include 'libs:commons-database','libs:schema-validation', 'libs:commons-types', 'libs:message-system', 'libs:notification-dispatchers', 'pstatus-report-sink-ktor', 'pstatus-graphql-ktor', 'pstatus-notifications-workflow-ktor','pstatus-notifications-rules-engine-ktor'

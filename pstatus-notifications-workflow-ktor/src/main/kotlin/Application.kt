@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.notificationdispatchers.email.EmailSenderKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import io.ktor.http.*
@@ -22,6 +23,7 @@ import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
+    val emailSenderModule = EmailSenderKoinCreator.moduleFromAppEnv(environment)
     val temporalModule = module {
         val serviceTarget = environment.config.tryGetString("temporal.service_target") ?: "localhost:7233"
         val namespace = environment.config.tryGetString("temporal.namespace") ?: "default"
@@ -30,7 +32,7 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             WorkflowEngine(temporalConfig)
         }
     }
-    return modules(listOf(databaseModule, temporalModule))
+    return modules(listOf(databaseModule, emailSenderModule, temporalModule))
 }
 
 fun main(args: Array<String>) {

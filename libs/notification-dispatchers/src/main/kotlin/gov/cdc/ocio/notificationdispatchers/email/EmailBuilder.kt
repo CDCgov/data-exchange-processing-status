@@ -1,4 +1,4 @@
-package gov.cdc.ocio.types.email
+package gov.cdc.ocio.notificationdispatchers.email
 
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML

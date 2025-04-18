@@ -2,7 +2,7 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
-import gov.cdc.ocio.types.email.EmailBuilder
+import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import org.apache.commons.io.FileUtils
