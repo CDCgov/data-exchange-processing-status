@@ -20,7 +20,18 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: [['list', { printSteps: true }],['html', {open: 'never'}]],
+  reporter: [
+    ['list', { printSteps: true }],
+    ['html', { open: 'never' }],
+    ['playwright-graphql/coverage-reporter', {
+      graphqlFilePath: './gql/graphql.ts', 
+      coverageFilePath: './coverage/gql-coverage.log',
+      htmlFilePath: './coverage/gql-coverage.html',
+      logUncoveredOperations: true,
+      saveGqlCoverageLog: true,
+      saveHtmlSummary: true
+  }]
+  ],
 
   snapshotPathTemplate: `{testDir}/__snapshot__/{testFileName}/{testName}-{arg}{ext}`,
   
