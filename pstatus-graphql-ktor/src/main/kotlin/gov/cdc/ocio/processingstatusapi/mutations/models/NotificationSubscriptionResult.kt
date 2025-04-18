@@ -16,5 +16,6 @@ import kotlinx.serialization.Serializable
 data class NotificationSubscriptionResult(
     var subscriptionId: String? = null,
     var message: String? = "",
-    var emailAddresses: List<String>
+    var emailAddresses: List<String>?,
+    var webhookUrl: String?
 )

@@ -4,9 +4,9 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.NotificationType
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow

@@ -3,9 +3,9 @@ package gov.cdc.ocio.processingnotifications.workflow.toperrors
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import gov.cdc.ocio.types.model.NotificationType
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -74,7 +74,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                         delayedDeliveries,
                         dayInterval
                     )
-                    workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, workflowSubscription.emailAddresses) }
+                    workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, it) }
                 }
                 NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let { activities.sendWebhook(it, UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)) }
             }

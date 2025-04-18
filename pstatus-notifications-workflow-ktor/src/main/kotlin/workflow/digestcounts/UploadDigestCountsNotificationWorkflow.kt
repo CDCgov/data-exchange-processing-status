@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 

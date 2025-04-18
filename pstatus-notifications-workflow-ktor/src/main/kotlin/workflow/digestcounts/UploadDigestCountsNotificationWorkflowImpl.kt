@@ -3,9 +3,9 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.UploadDigest
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
 import gov.cdc.ocio.processingnotifications.query.*
 import gov.cdc.ocio.types.model.NotificationType
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.failure.ActivityFailure
@@ -103,7 +103,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
             logger.info("Sending upload digest counts email")
 
             when (subscription.notificationType) {
-                NotificationType.EMAIL -> subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, subscription.emailAddresses) }
+                NotificationType.EMAIL -> subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, it) }
                 NotificationType.WEBHOOK -> subscription.webhookUrl?.let { activities.sendWebhook(it, UploadDigest(aggregatedCounts, uploadMetrics, uploadDurations)) }
             }
         } catch (ex: ActivityFailure) {

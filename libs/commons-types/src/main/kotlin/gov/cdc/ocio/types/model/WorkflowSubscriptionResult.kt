@@ -1,4 +1,6 @@
-package gov.cdc.ocio.processingnotifications.model
+package gov.cdc.ocio.types.model
+
+import kotlinx.serialization.Serializable
 
 
 /**
@@ -8,6 +10,7 @@ package gov.cdc.ocio.processingnotifications.model
  * @param message String
  * @param emailAddresses List<String>
  */
+@Serializable
 data class WorkflowSubscriptionResult(
     var subscriptionId: String? = null,
     var message: String? = "",

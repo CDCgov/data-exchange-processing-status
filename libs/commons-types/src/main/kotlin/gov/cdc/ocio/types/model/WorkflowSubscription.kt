@@ -1,7 +1,8 @@
-package gov.cdc.ocio.processingnotifications.model
+package gov.cdc.ocio.types.model
 
-import gov.cdc.ocio.types.model.NotificationType
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class WorkflowSubscription(
     val dataStreamIds: List<String>,
     val dataStreamRoutes: List<String>,

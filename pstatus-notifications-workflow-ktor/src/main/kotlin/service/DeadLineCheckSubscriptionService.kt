@@ -1,11 +1,11 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscription
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflowImpl
+import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
