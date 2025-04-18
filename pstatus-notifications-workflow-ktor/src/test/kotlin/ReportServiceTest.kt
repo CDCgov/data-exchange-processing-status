@@ -87,7 +87,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "metadata-verify", status = Status.FAILURE)
+            stageInfo = StageInfoDao(action = StageAction.METADATA_VERIFY, status = Status.FAILURE)
         )
         val successfulMetadataVerifyReport = ReportDao(
             id = "sampleId2",
@@ -103,7 +103,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "metadata-verify", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.METADATA_VERIFY, status = Status.SUCCESS)
         )
         listOf(failedMetadataVerifyReport, successfulMetadataVerifyReport).forEach {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
@@ -130,7 +130,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = twoDaysAgo,
-            stageInfo = StageInfoDao(action = "metadata-verify", status = Status.FAILURE)
+            stageInfo = StageInfoDao(action = StageAction.METADATA_VERIFY, status = Status.FAILURE)
         )
         val failedMetadataVerifyReportNew = ReportDao(
             id = "sampleId1",
@@ -146,7 +146,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "metadata-verify", status = Status.FAILURE)
+            stageInfo = StageInfoDao(action = StageAction.METADATA_VERIFY, status = Status.FAILURE)
         )
 
         listOf(failedMetadataVerifyReportOld, failedMetadataVerifyReportNew).forEach {
@@ -173,7 +173,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_STARTED, status = Status.SUCCESS)
         )
         val oldUploadStartedReport = ReportDao(
             id = "sampleId2",
@@ -189,7 +189,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_STARTED, status = Status.SUCCESS)
         )
         val oldUploadStartedCompleteReport = ReportDao(
             id = "sampleId3",
@@ -205,7 +205,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_STARTED, status = Status.SUCCESS)
         )
         val oldUploadCompletedReport = ReportDao(
             id = "sampleId4",
@@ -221,7 +221,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
         listOf(newUploadStartedReport, oldUploadStartedCompleteReport, oldUploadCompletedReport, oldUploadStartedReport).forEach {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
@@ -250,7 +250,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_STARTED, status = Status.SUCCESS)
         )
         val oldUploadStartedReport = ReportDao(
             id = "sampleId2",
@@ -266,7 +266,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_STARTED, status = Status.SUCCESS)
         )
         val reallyOldUploadStartedReport = ReportDao(
             id = "sampleId2",
@@ -282,7 +282,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = twoDaysAgo,
-            stageInfo = StageInfoDao(action = "upload-started", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_STARTED, status = Status.SUCCESS)
         )
 
         listOf(newUploadStartedReport, oldUploadStartedReport, reallyOldUploadStartedReport).forEach {
@@ -311,7 +311,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.FAILURE)
+            stageInfo = StageInfoDao(action = StageAction.FILE_DELIVERY, status = Status.FAILURE)
         )
         val successfulDeliveryReport = ReportDao(
             id = "sampleId1",
@@ -327,7 +327,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.FAILURE)
+            stageInfo = StageInfoDao(action = StageAction.FILE_DELIVERY, status = Status.FAILURE)
         )
 
         listOf(failedDeliveryReport, successfulDeliveryReport).forEach {
@@ -355,7 +355,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.FILE_DELIVERY, status = Status.SUCCESS)
         )
         val newUndeliveredReport = ReportDao(
             id = "sampleId2",
@@ -371,7 +371,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
         val oldUndeliveredReport = ReportDao(
             id = "sampleId3",
@@ -387,7 +387,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now().minusSeconds(4000),
-            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
 
         listOf(successfulDeliveryReport, newUndeliveredReport, oldUndeliveredReport).forEach {
@@ -416,7 +416,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "blob-file-copy", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.FILE_DELIVERY, status = Status.SUCCESS)
         )
         val newUndeliveredReport = ReportDao(
             id = "sampleId2",
@@ -432,7 +432,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now(),
-            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
         val oldUndeliveredReport = ReportDao(
             id = "sampleId3",
@@ -448,7 +448,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now().minusSeconds(4000),
-            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
         val reallyOldUndeliveredReport = ReportDao(
             id = "sampleId3",
@@ -464,7 +464,7 @@ class ReportServiceTest : KoinTest {
             senderId = "sender123",
             dataProducerId="dataProducer123",
             timestamp = Instant.now().minusSeconds(172800),
-            stageInfo = StageInfoDao(action = "upload-completed", status = Status.SUCCESS)
+            stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
 
         listOf(successfulDeliveryReport, newUndeliveredReport, oldUndeliveredReport).forEach {
