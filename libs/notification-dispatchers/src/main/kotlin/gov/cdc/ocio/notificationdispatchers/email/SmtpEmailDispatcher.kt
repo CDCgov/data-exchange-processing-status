@@ -7,6 +7,7 @@ import jakarta.mail.internet.MimeMessage
 import mu.KotlinLogging
 import java.util.*
 
+
 class SmtpEmailDispatcher(private val config: SmtpConfig): EmailDispatcher {
 
     private val logger = KotlinLogging.logger {}

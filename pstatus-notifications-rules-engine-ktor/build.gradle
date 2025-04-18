@@ -59,6 +59,7 @@ dependencies {
     implementation project(":libs:commons-types")
     implementation project(":libs:commons-database")
     implementation project(":libs:message-system")
+    implementation project(":libs:notification-dispatchers")
 
     // Google library used for caching
     implementation("com.google.guava:guava:33.4.0-jre")
