@@ -467,7 +467,7 @@ class ReportServiceTest : KoinTest {
             stageInfo = StageInfoDao(action = StageAction.UPLOAD_COMPLETED, status = Status.SUCCESS)
         )
 
-        listOf(successfulDeliveryReport, newUndeliveredReport, oldUndeliveredReport).forEach {
+        listOf(successfulDeliveryReport, newUndeliveredReport, oldUndeliveredReport, reallyOldUndeliveredReport).forEach {
             repository.reportsCollection.createItem(it.id!!, it, ReportDao::class.java, null)
         }
 
