@@ -14,3 +14,6 @@ The `message-system` library provides a system for sending and receiving message
 
 ## schema-validation 
 The `schema-validation` library is used for processing status report validations.  Each report has a schema associated with it that this library can be used to determine whether the report is valid or not and if not, the reasons why.
+
+## notifications-dispatcher
+The `notifications-dispatcher` library provides an interface for dispatching notifications for various systems, including emails and webhooks. 
