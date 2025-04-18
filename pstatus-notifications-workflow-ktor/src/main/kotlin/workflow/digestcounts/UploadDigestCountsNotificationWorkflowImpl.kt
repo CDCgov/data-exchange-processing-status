@@ -96,14 +96,16 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val workflowId = Workflow.getInfo().workflowId
             val cronSchedule = Workflow.getInfo().cronSchedule
             val dateRun = utcDateToRun.format(formatter)
-            val emailBody = UploadDigestCountsEmailBuilder(
-                workflowId, cronSchedule, subscription.dataStreamIds, subscription.dataStreamRoutes, subscription.jurisdictions,
-                dateRun, aggregatedCounts, uploadMetrics, uploadDurations
-            ).build()
-            logger.info("Sending upload digest counts email")
 
             when (subscription.notificationType) {
-                NotificationType.EMAIL -> subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, it) }
+                NotificationType.EMAIL -> {
+                    val emailBody = UploadDigestCountsEmailBuilder(
+                        workflowId, cronSchedule, subscription.dataStreamIds, subscription.dataStreamRoutes, subscription.jurisdictions,
+                        dateRun, aggregatedCounts, uploadMetrics, uploadDurations
+                    ).build()
+                    logger.info("Sending upload digest counts email")
+                    subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, it) }
+                }
                 NotificationType.WEBHOOK -> subscription.webhookUrl?.let { activities.sendWebhook(it, UploadDigest(aggregatedCounts, uploadMetrics, uploadDurations)) }
             }
         } catch (ex: ActivityFailure) {
