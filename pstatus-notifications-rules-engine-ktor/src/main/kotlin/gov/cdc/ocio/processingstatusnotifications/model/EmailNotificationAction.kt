@@ -11,7 +11,7 @@ class EmailNotificationAction(
     private val emailNotification: EmailNotification
 ) : NotificationAction, KoinComponent {
 
-    private val emailService by inject<EmailDispatcher>()
+    private val emailDispatcher by inject<EmailDispatcher>()
 
     private val fromEmail = "donotreply@cdc.gov"
     private val fromName = "Do not reply (PHDO team)"
@@ -24,7 +24,7 @@ class EmailNotificationAction(
     override fun doNotify(payload: Any) {
         if (payload !is EmailContent) throw BadRequestException("Email payload is not in the expected format")
 
-        emailService.send(
+        emailDispatcher.send(
             emailNotification.emailAddresses,
             fromEmail,
             fromName,

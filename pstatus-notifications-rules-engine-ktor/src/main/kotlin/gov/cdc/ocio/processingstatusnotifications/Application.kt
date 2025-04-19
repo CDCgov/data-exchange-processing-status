@@ -29,8 +29,8 @@ fun KoinApplication.loadKoinModules(
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
     val subscriptionLoaderModule = module { single { CachedSubscriptionLoader(DatabaseSubscriptionLoader()) } }
-    val emailSenderModule = EmailDispatcherKoinCreator.moduleFromAppEnv(environment)
-    return modules(listOf(databaseModule, messageSystemModule, subscriptionLoaderModule, emailSenderModule))
+    val emailDispatcherModule = EmailDispatcherKoinCreator.moduleFromAppEnv(environment)
+    return modules(listOf(databaseModule, messageSystemModule, subscriptionLoaderModule, emailDispatcherModule))
 }
 
 fun main(args: Array<String>) {
