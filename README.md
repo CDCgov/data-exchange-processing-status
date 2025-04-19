@@ -194,9 +194,19 @@ Run this query and you should see an output that looks like this:
 ### Notifications
 The PS API Notifications services can be deployed along with the core services using docker compose as well. In order to accomplish this you must have PS API already running which can be done by following the steps outlined in the [Docker Compose](#docker-compose) section. Once the core services are up and running successfully you can run the following to deploy the Notifications services:
 
-- Step 1: Run docker compose with the notifications file specified to launch
+#### Setup
+- Step 1: Configure Email (if needed)  
+    By default, the notifications will dispatch emails to the log only.  If you want to send emails via an SMTP, set the following environment variables.  
+  - `EMAIL_DISPATCHER`: SMTP
+  - `SMTP_HOST`: Hostname of the SMTP server
+  - `SMTP_PORT`: Port number to use, typically 25
+  - `SMTP_AUTH`: If true, then the `username` and `password` is used to authenticate with the SMTP server
+  - `SMTP_USERNAME`: Username used for SMTP server auth
+  - `SMTP_PASSWORD`: Password used for SMTP server auth
+
+- Step 2: Run docker compose with the notifications file specified to launch
   ```shell
-    docker compose -f docker-compose.notifications.yml up –d
+  docker compose -f docker-compose.notifications.yml up –d
   ```
     You should see the following:
     ```
@@ -205,10 +215,10 @@ The PS API Notifications services can be deployed along with the core services u
     ✔ Container temporal                                                Started                                                                                                                1.0s 
     ✔ Container temporal-admin-tools                                    Started                                                                                                                1.5s 
     ✔ Container temporal-ui                                             Started                                                                                                                1.7s 
-    ✔ Container pstatus-api-notifications-notifications-rules-engine-1 Started                                                                                                                2.2s 
+    ✔ Container pstatus-api-notifications-notifications-rules-engine-1  Started                                                                                                                2.2s 
     ✔ Container notifications-workflow                                  Started
   ```
-- Step 2: Verify that all services are running in Docker Desktop or by running `docker ps`.
+- Step 3: Verify that all services are running in Docker Desktop or by running `docker ps`.
 
  
 ### Next Steps
