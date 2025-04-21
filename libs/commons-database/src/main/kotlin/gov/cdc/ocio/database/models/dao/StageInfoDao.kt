@@ -9,6 +9,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import gov.cdc.ocio.database.models.StageAction
 
 
 /**
@@ -30,7 +31,7 @@ data class StageInfoDao(
     @JsonProperty("service")
     var service : String? = null,
     @JsonProperty("action")
-    var action: String? = null,
+    var action: StageAction? = null,
     @JsonProperty("version")
     var version: String? = null,
     @JsonProperty("status")

@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 
@@ -12,11 +13,7 @@ interface UploadDigestCountsNotificationWorkflow {
 
     @WorkflowMethod
     fun processDailyUploadDigest(
-        numDaysAgoToRun: Long,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
-        emailAddresses: List<String>
+        subscription: WorkflowSubscription
     )
 
 }

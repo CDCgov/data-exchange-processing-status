@@ -40,6 +40,8 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:2.3.2")
     implementation("io.ktor:ktor-server-status-pages:2.3.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.2")
+    implementation("io.ktor:ktor-client-cio:2.3.2")
+    implementation("io.ktor:ktor-client-content-negotiation:2.1.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0") // Java time module
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.2")
