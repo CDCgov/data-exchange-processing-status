@@ -107,8 +107,6 @@ class WorkflowEngine(
         activitiesImpl: T2,
         workflowImplInterface: Class<T3>
     ): T3 {
-        CronUtils.checkValid(cronSchedule)
-
         val factory = WorkerFactory.newInstance(client)
         val worker = factory.newWorker(taskQueue)
         worker?.let {
