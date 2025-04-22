@@ -5,19 +5,15 @@ import gov.cdc.ocio.notificationdispatchers.model.DispatchWorker
 import gov.cdc.ocio.notificationdispatchers.model.SmtpConfig
 import io.ktor.server.application.*
 import io.ktor.server.config.*
-import mu.KLogger
 import mu.KotlinLogging
 
 
 /**
  * Dispatch worker for emails.
- * @property environment ApplicationEnvironment
- * @property logger KLogger
+ *
  * @constructor
  */
 class EmailDispatchWorker private constructor(
-    private val environment: ApplicationEnvironment,
-    private val logger: KLogger,
     delegate: DispatchWorker
 ) : DispatchWorker by delegate {
 
@@ -29,22 +25,19 @@ class EmailDispatchWorker private constructor(
          * @return EmailDispatchWorker
          */
         fun create(environment: ApplicationEnvironment): EmailDispatchWorker {
-            val logger = KotlinLogging.logger {}
-            val delegate = createDispatcher(environment, logger)
-            return EmailDispatchWorker(environment, logger, delegate)
+            val delegate = createDispatcher(environment)
+            return EmailDispatchWorker(delegate)
         }
 
         /**
          * Creates the email dispatch worker from the [ApplicationEnvironment].
          *
          * @param environment ApplicationEnvironment
-         * @param logger KLogger
          * @return DispatchWorker
          */
-        private fun createDispatcher(
-            environment: ApplicationEnvironment,
-            logger: KLogger
-        ): DispatchWorker {
+        private fun createDispatcher(environment: ApplicationEnvironment): DispatchWorker {
+            val logger = KotlinLogging.logger {}
+
             val protocol = environment.config.tryGetString("ktor.emailProtocol")?.lowercase().orEmpty()
 
             return if (protocol == EmailProtocol.SMTP.value) {
