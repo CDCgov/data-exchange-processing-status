@@ -10,16 +10,15 @@ dependencies {
 ```
 This will allow the `notifications-dispatcher` to be compiled if necessary and linked with your project.  You can set breakpoints in the library the same as you would your main project for debugging.
 
-### Email Dispatcher Usage
+### Email Notification Setup
 In the `application.conf` you will need to specify the email dispatcher type. Use environment variable
-`EMAIL_DISPATCHER` to indicate which type to use. The supported types are:
+`EMAIL_PROTOCOL` to indicate which type to use. The supported types are:
 - `SMTP` - Uses Standard Mail Transfer Protocol to send emails.
-- `LOGGER` - Will only log that an email dispatch was attempted, but nothing is actually sent.
 When adding support for the notifications dispatcher to your ktor application, you will need to specify the email dispatcher in the `ktor` section of `application.conf`.
 ```
 ktor {
-    emailDispatcher = "SMTP" # default to SMTP if EMAIL_DISPATCHER missing
-    emailDispatcher = ${?EMAIL_DISPATCHER}
+    emailProtocol = "SMTP" # default to SMTP if EMAIL_PROTOCOL is missing
+    emailProtocol = ${?EMAIL_PROTOCOL}
 }
 ```
 
@@ -42,21 +41,45 @@ Set your environment variables as follows.
 - `SMTP_PASSWORD` - password used for SMTP server auth
 > NOTE: If you do not specify the SMTP configuration, it will default to the CDC SMTP gateway email server configuration. 
 
-#### Logger Email Dispatcher Setup
-No additional settings are needed when using the logger email dispatcher.  Simply set the `EMAIL_DISPATCHER` to `LOGGER` and that's it.
+### Logger Notification Setup
+No additional settings are needed when using the logger dispatcher.
+
+### Webhook Notification Setup
+No additional settings are needed when using the webhook dispatcher.
 
 ## Use in ktor applications with Koin
 For your convenience, a koin creator for the email dispatcher is available.  To utilize it:
 
 ```kotlin
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
-    val emailDispatcherModule = EmailDispatcherKoinCreator.moduleFromAppEnv(environment)
-    return modules(listOf(emailDispatcherModule))
+    val notificationDispatcherModule = NotificationDispatcherKoinCreator.moduleFromAppEnv(environment)
+    return modules(listOf(notificationDispatcherModule))
 }
 ```
-The above call to code will create a singleton of the email dispatcher, which can then be easily used anywhere in your code as follow.
+The above call to code will create a singleton of the email dispatcher, which can then be easily used anywhere in your code as follows.
 ```kotlin
 class SomeClass : KoinComponent {
-    private val emailDispatcher by inject<EmailDispatcher>()
+    private val notifications by inject<NotificationDispatcher>()
+    
+    fun notifyViaEmail() {
+        notifications.send(
+            EmailNotificationContent(
+                "to@email.com",
+                "from@email.com",
+                "Some System",
+                "My First Notification",
+                "Hello world"
+            )
+        )
+    }
+    
+    fun notifyViaWebhook() {
+        notifications.send(
+            WebhookNotificationContent(
+                "https://webhook.site/{{uuid}}",
+                "Hello world"
+            )
+        )
+    }
 }
 ```
