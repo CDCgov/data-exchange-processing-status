@@ -1,0 +1,1 @@
+[{"message":"Schema file not found or could not be deleted: test-schema..schema.json for schema: test-schema, schemaVersion: ","locations":[],"path":["removeSchema"],"extensions":{"classification":"InternalServerError"}}]

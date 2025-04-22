@@ -1,0 +1,1 @@
+[{"message":"Unauthorized: Missing or invalid bearer token","locations":[],"path":["removeSchema"],"extensions":{"classification":"InvalidTokenException"}}]

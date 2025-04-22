@@ -24,10 +24,10 @@ export default defineConfig({
     ['list', { printSteps: true }],
     ['html', { open: 'never' }],
     ['playwright-graphql/coverage-reporter', {
-      graphqlFilePath: './gql/graphql.ts', 
-      coverageFilePath: './coverage/gql-coverage.log',
-      htmlFilePath: './coverage/gql-coverage.html',
-      logUncoveredOperations: true,
+      graphqlFilePath: path.resolve(__dirname, 'gql/graphql.ts'), 
+      coverageFilePath: path.resolve(__dirname, 'coverage/gql-coverage.log'),
+      htmlFilePath: path.resolve(__dirname, 'coverage/gql-coverage.html'),
+      logUncoveredOperations: false,
       saveGqlCoverageLog: true,
       saveHtmlSummary: true
   }]

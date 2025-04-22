@@ -9,4 +9,4 @@ gql/**/*.js
 schema.gql
 .gql-coverage/
 coverage/
-!./codegen.ts
+codegen.ts

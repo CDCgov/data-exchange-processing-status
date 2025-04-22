@@ -1,8 +1,9 @@
 import { test as baseTest, expect, request, APIRequestContext } from '@playwright/test';
 import { getClient, RequesterOptions} from '@gql';
+import dotenv from 'dotenv';
 
 export { expect };
-
+dotenv.config({ path: '../.env' });
 const options: RequesterOptions = {
     gqlEndpoint: '/graphql', 
 };

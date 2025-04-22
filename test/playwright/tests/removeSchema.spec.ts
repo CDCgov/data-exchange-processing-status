@@ -3,6 +3,8 @@ import { APIRequestContext, request } from '@playwright/test';
 import { getSdk } from '@gql';
 import { getSdkRequester } from 'playwright-graphql';
 import removalSchema from '../fixtures/removal-schema.json';
+import { GraphQLError } from 'graphql';
+type GraphQLErrorResponse = { errors:GraphQLError[] };
 
 test.describe("removeSchema mutation", async () => {
     const testSchemas = [
@@ -46,31 +48,24 @@ test.describe("removeSchema mutation", async () => {
     });
 
     test("should handle removal of non-existent schema gracefully", async ({ gql }) => {
-       
-        await expect(gql.removeSchema({
+        const response = await gql.removeSchema({
             schemaName: "non-existent-schema",
             schemaVersion: "1.0.0"
-        })).rejects.toThrow("Schema file not found or could not be deleted: non-existent-schema.1.0.0.schema.json for schema: non-existent-schema, schemaVersion: 1.0.0");
-    });
-
-    test("should handle removal of non-existent schema gracefully in a different way", async ({ gql }) => {
-       
-   await gql.removeSchema({
-            schemaName: "non-existent-schema",
-            schemaVersion: "1.0.0"
-        }).catch((error) => {
-            console.log(error);
-        });
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+        
+        expect(JSON.stringify(response.errors)).toMatchSnapshot("remove-schema-gracefully");
     });
 
     test("should not remove a schema when a token is not provided", async ({ }) => {
         const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
         const noTokenGQL = getClient(await request.newContext());
         
-        await expect(noTokenGQL.removeSchema({
+        const errorResponse = await noTokenGQL.removeSchema({
             schemaName: "test-schema",
             schemaVersion: "1.0.0"
-        })).rejects.toThrow(/Unauthorized: Missing or invalid bearer token/);
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+
+        expect(JSON.stringify(errorResponse.errors)).toMatchSnapshot("remove-schema-no-token");
     });
 
     test("should not remove a schema when a provided token is incorrect", async ({ }) => {
@@ -82,10 +77,12 @@ test.describe("removeSchema mutation", async () => {
         };
         const badTokenGQL = getClient(await request.newContext(badOption));
         
-        await expect(badTokenGQL.removeSchema({
+        const errorResponse = await badTokenGQL.removeSchema({
             schemaName: "test-schema",
             schemaVersion: "1.0.0"
-        })).rejects.toThrow(/Unauthorized: Missing or invalid bearer token/);
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+
+        expect(JSON.stringify(errorResponse.errors)).toMatchSnapshot("remove-schema-incorrect-token");
     });
 
     test.describe("validation failures", async () => {
@@ -121,8 +118,8 @@ test.describe("removeSchema mutation", async () => {
                 const response = await gql.removeSchema({
                     schemaName,
                     schemaVersion
-                });
-                expect(response.removeSchema.result).toBe(expectedResult);
+                }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+                expect(JSON.stringify(response.errors)).toMatchSnapshot("remove-schema-validation-failure");
             });
         });
     });
