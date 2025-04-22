@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications
 
 import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -16,15 +17,8 @@ import java.util.*
  */
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
-        val subscription = call.receive<DeadlineCheckSubscription>()
-        val deadlineCheckSubscription = DeadlineCheckSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.cronSchedule,
-            subscription.emailAddresses
-        )
-        val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
+        val subscription = call.receive<WorkflowSubscription>()
+        val result = DeadLineCheckSubscriptionService().run(subscription)
         call.respond(result)
     }
 }
@@ -45,17 +39,9 @@ fun Route.unsubscribeDeadlineCheck() {
  */
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
-        val subscription = call.receive<UploadDigestSubscription>()
-        val uploadDigestCountsSubscription = UploadDigestSubscription(
-            subscription.numDaysAgoToRun,
-            subscription.dataStreamIds,
-            subscription.dataStreamRoutes,
-            subscription.jurisdictions,
-            subscription.cronSchedule,
-            subscription.emailAddresses
-        )
+        val subscription = call.receive<WorkflowSubscription>()
         val result = UploadDigestCountsNotificationSubscriptionService()
-            .run(uploadDigestCountsSubscription)
+            .run(subscription)
         call.respond(result)
     }
 }
@@ -77,17 +63,9 @@ fun Route.unsubscribeUploadDigestCountsRoute() {
  */
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
-        val subscription = call.receive<DataStreamTopErrorsNotificationSubscription>()
-        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(
-            subscription.dataStreamId,
-            subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.cronSchedule,
-            subscription.emailAddresses,
-            subscription.daysInterval
-        )
+        val subscription = call.receive<WorkflowSubscription>()
         val result = DataStreamTopErrorsNotificationSubscriptionService()
-            .run(dataStreamTopErrorsNotificationSubscription)
+            .run(subscription)
         call.respond(result)
     }
 }

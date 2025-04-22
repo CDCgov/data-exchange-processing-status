@@ -1,11 +1,11 @@
 package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
-import gov.cdc.ocio.processingnotifications.model.DataStreamTopErrorsNotificationSubscription
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
+import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -41,15 +41,10 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
      * @param subscription DataStreamTopErrorsNotificationSubscription
      */
     fun run(
-        subscription: DataStreamTopErrorsNotificationSubscription
+        subscription: WorkflowSubscription
     ): WorkflowSubscriptionResult {
 
-        val dataStreamId = subscription.dataStreamId
-        val dataStreamRoute = subscription.dataStreamRoute
-        val jurisdiction = subscription.jurisdiction
         val cronSchedule = subscription.cronSchedule
-        val emailAddresses = subscription.emailAddresses
-        val daysInterval = subscription.daysInterval
         val taskQueue = "dataStreamTopErrorsNotificationTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
@@ -63,19 +58,15 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
 
         val execution = WorkflowClient.start(
             workflow::checkDataStreamTopErrorsAndNotify,
-            dataStreamId,
-            dataStreamRoute,
-            jurisdiction,
-            cronSchedule,
-            emailAddresses,
-            daysInterval
+            subscription
         )
 
         val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = execution.workflowId,
             message = "Successfully subscribed for $workflowId",
-            emailAddresses = subscription.emailAddresses
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }

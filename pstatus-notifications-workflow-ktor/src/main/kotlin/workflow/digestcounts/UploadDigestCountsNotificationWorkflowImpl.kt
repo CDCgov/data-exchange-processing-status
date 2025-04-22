@@ -2,15 +2,22 @@ package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
+import gov.cdc.ocio.processingnotifications.model.UploadDigest
+import gov.cdc.ocio.processingnotifications.model.WebhookContent
+import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.*
+import gov.cdc.ocio.types.model.NotificationType
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
+import org.joda.time.DateTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -53,21 +60,17 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * @param emailAddresses List<String>
      */
     override fun processDailyUploadDigest(
-        numDaysAgoToRun: Long,
-        dataStreamIds: List<String>,
-        dataStreamRoutes: List<String>,
-        jurisdictions: List<String>,
-        emailAddresses: List<String>
+        subscription: WorkflowSubscription
     ) {
         try {
-            val utcDateToRun = LocalDate.now().minusDays(numDaysAgoToRun)
+            val utcDateToRun = LocalDate.now().minusDays(subscription.sinceDays.toLong())
             val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
 
             // Upload digest query to get all the counts by data stream id, data stream route, and jurisdiction
             val uploadDigestQuery = UploadDigestCountsQuery.Builder(repository)
-                .withDataStreamIds(dataStreamIds)
-                .withDataStreamRoutes(dataStreamRoutes)
-                .withJurisdictions(jurisdictions)
+                .withDataStreamIds(subscription.dataStreamIds)
+                .withDataStreamRoutes(subscription.dataStreamRoutes)
+                .withJurisdictions(subscription.jurisdictions)
                 .withUtcToRun(utcDateToRun)
                 .build()
             val uploadDigestResults = uploadDigestQuery.run()
@@ -77,18 +80,18 @@ class UploadDigestCountsNotificationWorkflowImpl :
 
             // Get the upload metrics
             val uploadMetricsQuery = UploadMetricsQuery.Builder(repository)
-                .withDataStreamIds(dataStreamIds)
-                .withDataStreamRoutes(dataStreamRoutes)
-                .withJurisdictions(jurisdictions)
+                .withDataStreamIds(subscription.dataStreamIds)
+                .withDataStreamRoutes(subscription.dataStreamRoutes)
+                .withJurisdictions(subscription.jurisdictions)
                 .withUtcToRun(utcDateToRun)
                 .build()
             val uploadMetrics = uploadMetricsQuery.run()
 
             // Get the upload and delivery durations
             val uploadDurationsQuery = UploadDurationQuery.Builder(repository)
-                .withDataStreamIds(dataStreamIds)
-                .withDataStreamRoutes(dataStreamRoutes)
-                .withJurisdictions(jurisdictions)
+                .withDataStreamIds(subscription.dataStreamIds)
+                .withDataStreamRoutes(subscription.dataStreamRoutes)
+                .withJurisdictions(subscription.jurisdictions)
                 .withUtcToRun(utcDateToRun)
                 .build()
             val uploadDurations = uploadDurationsQuery.run()
@@ -97,12 +100,29 @@ class UploadDigestCountsNotificationWorkflowImpl :
             val workflowId = Workflow.getInfo().workflowId
             val cronSchedule = Workflow.getInfo().cronSchedule
             val dateRun = utcDateToRun.format(formatter)
-            val emailBody = UploadDigestCountsEmailBuilder(
-                workflowId, cronSchedule, dataStreamIds, dataStreamRoutes, jurisdictions,
-                dateRun, aggregatedCounts, uploadMetrics, uploadDurations
-            ).build()
-            logger.info("Sending upload digest counts email")
-            activities.sendDigestEmail(emailBody, emailAddresses)
+
+            when (subscription.notificationType) {
+                NotificationType.EMAIL -> {
+                    val emailBody = UploadDigestCountsEmailBuilder(
+                        workflowId, cronSchedule, subscription.dataStreamIds, subscription.dataStreamRoutes, subscription.jurisdictions,
+                        dateRun, aggregatedCounts, uploadMetrics, uploadDurations
+                    ).build()
+                    logger.info("Sending upload digest counts email")
+                    subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, it) }
+                }
+                NotificationType.WEBHOOK -> subscription.webhookUrl?.let {
+                    val subId = Workflow.getInfo().workflowId
+                    val triggered = Workflow.getInfo().runStartedTimestampMillis
+                    val payload = WebhookContent(
+                        subId,
+                        WorkflowType.UPLOAD_DIGEST,
+                        subscription,
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                        UploadDigest(aggregatedCounts, uploadMetrics, uploadDurations)
+                    )
+                    activities.sendWebhook(it, payload)
+                }
+            }
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
         } catch (ex: Exception) {

@@ -1,8 +1,14 @@
 package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
+import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
+import gov.cdc.ocio.processingnotifications.model.WebhookContent
+import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.service.ReportService
+import gov.cdc.ocio.types.model.NotificationType
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
@@ -10,6 +16,8 @@ import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
 import java.time.Duration
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -48,30 +56,44 @@ class DataStreamTopErrorsNotificationWorkflowImpl
      * @param emailAddresses List<String>
      */
     override fun checkDataStreamTopErrorsAndNotify(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        jurisdiction: String,
-        cronSchedule: String,
-        emailAddresses: List<String>,
-        daysInterval: Int?
+        workflowSubscription: WorkflowSubscription
     ) {
-        val dayInterval = daysInterval ?: 5 // TODO make this default value configurable
+        val dayInterval = workflowSubscription.sinceDays
+        val dataStreamId = workflowSubscription.dataStreamIds.first()
+        val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
         try {
             // Logic to check if the upload occurred*/
-            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "metadata-verify", dayInterval)
-            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, "blob-file-copy", dayInterval)
+            val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.METADATA_VERIFY, dayInterval)
+            val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.FILE_DELIVERY, dayInterval)
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
-            val body = formatEmailBody(
-                dataStreamId,
-                dataStreamRoute,
-                failedMetadataVerifyCount,
-                failedDeliveryCount,
-                delayedUploads,
-                delayedDeliveries,
-                dayInterval
-            )
-            activities.sendDataStreamTopErrorsNotification(body, emailAddresses)
+
+            when (workflowSubscription.notificationType) {
+                NotificationType.EMAIL -> {
+                    val body = formatEmailBody(
+                        dataStreamId,
+                        dataStreamRoute,
+                        failedMetadataVerifyCount,
+                        failedDeliveryCount,
+                        delayedUploads,
+                        delayedDeliveries,
+                        dayInterval
+                    )
+                    workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, it) }
+                }
+                NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
+                    val subId = Workflow.getInfo().workflowId
+                    val triggered = Workflow.getInfo().runStartedTimestampMillis
+                    val payload = WebhookContent(
+                        subId,
+                        WorkflowType.UPLOAD_ERROR_SUMMARY,
+                        workflowSubscription,
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                        UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)
+                    )
+                    activities.sendWebhook(it, payload)
+                }
+            }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
         }

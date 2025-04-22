@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.mutations.response
 
 import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.models.NotificationSubscriptionResult
+import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.ktor.client.call.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -21,7 +22,7 @@ object SubscriptionResponse{
      * @param response HttpResponse
      */
     @JvmStatic
-    suspend fun ProcessNotificationResponse(response: HttpResponse): NotificationSubscriptionResult {
+    suspend fun ProcessNotificationResponse(response: HttpResponse): WorkflowSubscriptionResult {
         if (response.status == HttpStatusCode.OK) {
             return response.body()
         } else {

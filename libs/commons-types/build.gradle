@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'java-library'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.20'
 }
 
 group = 'gov.cdc.ocio'
@@ -30,6 +31,9 @@ dependencies {
 
     // Needed for DynamoDB enhanced annotations
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'
+
+    implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinx_html_version")
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0'
 
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
