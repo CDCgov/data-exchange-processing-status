@@ -107,20 +107,6 @@ class WorkflowEngine(
         activitiesImpl: T2,
         workflowImplInterface: Class<T3>
     ): T3 {
-        val factory = WorkerFactory.newInstance(client)
-        val worker = factory.newWorker(taskQueue)
-        worker?.let {
-            it.registerWorkflowImplementationTypes(workflowImpl)
-            it.registerActivitiesImplementations(activitiesImpl)
-            logger.info("Workflow and Activity registered for task queue: $taskQueue")
-        } ?: error("Failed to create a worker for task queue: $taskQueue")
-
-        logger.info("Workflow and Activity successfully registered")
-
-        // Start the factory after registering the worker
-        factory.start()
-        logger.info("Worker factory started")
-
         val workflowOptions = WorkflowOptions.newBuilder()
             .setTaskQueue(taskQueue)
             .setMemo(
@@ -137,6 +123,21 @@ class WorkflowEngine(
             workflowOptions
         )
         logger.info("Workflow successfully started")
+
+        val factory = WorkerFactory.newInstance(client)
+        val worker = factory.newWorker(taskQueue)
+        worker?.let {
+            it.registerWorkflowImplementationTypes(workflowImpl)
+            it.registerActivitiesImplementations(activitiesImpl)
+            logger.info("Workflow and Activity registered for task queue: $taskQueue")
+        } ?: error("Failed to create a worker for task queue: $taskQueue")
+
+        logger.info("Workflow and Activity successfully registered")
+
+        // Start the factory after registering the worker
+        factory.start()
+        logger.info("Worker factory started")
+
         return workflow
     }
 
