@@ -29,6 +29,15 @@ test.describe("removeSchema mutation", async () => {
         }
     });
 
+    test.afterAll(async ({ gql }) => {
+        for (const schema of testSchemas) {
+            await gql.removeSchema({
+                schemaName: schema.schemaName,
+                schemaVersion: schema.version
+            }, { failOnEmptyData: false });
+        }
+    });
+    
     test("should successfully remove an existing schema", async ({ gql }) => {
         const schema = testSchemas[0];
         
