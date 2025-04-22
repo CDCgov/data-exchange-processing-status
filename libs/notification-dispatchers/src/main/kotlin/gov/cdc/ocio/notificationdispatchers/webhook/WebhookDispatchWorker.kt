@@ -28,7 +28,7 @@ class WebhookDispatchWorker: DispatchWorker {
 
             client.post(content.webhookUrl) {
                 contentType(ContentType.Application.Json)
-                setBody(content)
+                setBody(content.content)
             }
 
             client.close()

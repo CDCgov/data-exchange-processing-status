@@ -26,7 +26,7 @@ class WebhookNotificationAction(
         notifications.send(
             WebhookNotificationContent(
                 webhookNotification.webhookUrl,
-                payload
+                payload.toJson()
             )
         )
     }
