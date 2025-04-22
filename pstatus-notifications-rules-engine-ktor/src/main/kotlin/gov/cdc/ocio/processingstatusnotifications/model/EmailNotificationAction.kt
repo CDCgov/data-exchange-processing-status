@@ -18,20 +18,20 @@ class EmailNotificationAction(
     private val fromName = "Do not reply (PHDO team)"
 
     /**
-     * For emails, the payload should be [EmailContent].
+     * For emails, the content should be [EmailContent].
      *
-     * @param payload Any
+     * @param content Any
      */
-    override fun doNotify(payload: Any) {
-        if (payload !is EmailContent) throw BadRequestException("Email payload is not in the expected format")
+    override fun doNotify(content: Any) {
+        if (content !is EmailContent) throw BadRequestException("Email content is not in the expected format")
 
         notifications.send(
             EmailNotificationContent(
                 emailNotification.emailAddresses,
                 fromEmail,
                 fromName,
-                payload.emailSubject,
-                payload.toHtml()
+                content.emailSubject,
+                content.toHtml()
             )
         )
     }

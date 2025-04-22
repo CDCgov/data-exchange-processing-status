@@ -15,18 +15,18 @@ class WebhookNotificationAction(
     private val notifications by inject<NotificationDispatcher>()
 
     /**
-     * For webhooks, the payload should be [WebhookContent].
+     * For webhooks, the content should be [WebhookContent].
      *
-     * @param payload Any
+     * @param content Any
      */
-    override fun doNotify(payload: Any) {
-        if (payload !is WebhookContent)
-            throw BadRequestException("Webhook payload is not in the expected format")
+    override fun doNotify(content: Any) {
+        if (content !is WebhookContent)
+            throw BadRequestException("Webhook content is not in the expected format")
 
         notifications.send(
             WebhookNotificationContent(
                 webhookNotification.webhookUrl,
-                payload.toJson()
+                content.toPayload()
             )
         )
     }

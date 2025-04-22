@@ -5,6 +5,7 @@ plugins {
     id ("org.jetbrains.kotlin.jvm") version "2.1.10"
     id ("java-library")
     id ("io.ktor.plugin") version "2.3.11"
+    id ("org.jetbrains.kotlin.plugin.serialization") version "1.8.20"
 }
 
 group = "gov.cdc.ocio"
@@ -22,10 +23,13 @@ dependencies {
     implementation ("ch.qos.logback.contrib", "logback-json-classic", "0.1.5")
     implementation ("ch.qos.logback.contrib", "logback-jackson", "0.1.5")
     implementation("io.insert-koin:koin-ktor:3.5.6")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion") // for invoking webhooks
-
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion") // // for invoking webhooks
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion") // for building HTML content
     implementation("com.sun.mail:jakarta.mail:2.0.1") // for sending emails
+    implementation ("com.google.code.gson:gson:2.10.1")
 
     testImplementation(kotlin("test"))
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")

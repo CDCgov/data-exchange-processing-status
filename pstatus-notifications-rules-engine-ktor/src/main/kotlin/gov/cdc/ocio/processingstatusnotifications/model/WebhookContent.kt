@@ -25,24 +25,16 @@ data class WebhookContent(
     val report: ReportMessage
 ) {
     /**
-     * Converts this object into a JSON payload.
+     * Converts this object into a payload.
      *
      * @return String
      */
-    fun toJson(): String {
-        val gson =
-            GsonBuilder()
-                .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-                .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
-                .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-                .create()
-
-        val webhookContent = mapOf(
+    fun toPayload(): Map<String, Any> {
+        return mapOf(
             "subscriptionId" to subscriptionId,
             "subscriptionRule" to subscriptionRule,
             "triggered" to DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
             "report" to report,
         )
-        return gson.toJson(webhookContent)
     }
 }

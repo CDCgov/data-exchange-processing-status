@@ -1,7 +1,8 @@
 package gov.cdc.ocio.processingnotifications.activity
 
-import gov.cdc.ocio.processingnotifications.email.EmailDispatcher
-import gov.cdc.ocio.processingnotifications.webhook.WebhookDispatcher
+import gov.cdc.ocio.notificationdispatchers.NotificationDispatcher
+import gov.cdc.ocio.notificationdispatchers.model.EmailNotificationContent
+import gov.cdc.ocio.notificationdispatchers.model.WebhookNotificationContent
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -15,8 +16,7 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val emailService = EmailDispatcher()
-    private val webhookService = WebhookDispatcher()
+    private val notifications by inject<NotificationDispatcher>()
 
     private val fromEmail = "donotreply@cdc.gov"
     private val fromName = "Do not reply (PHDO team)"
@@ -92,10 +92,22 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
     }
 
     override fun sendEmail(emailAddresses: List<String>, subject: String, body: String) {
-        emailService.sendEmail(subject, body, emailAddresses)
+        notifications.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                subject,
+                body
+            )
+        )
     }
 
     override fun sendWebhook(url: String, body: Any) {
-        webhookService.sendPayload(url, body)
+        notifications.send(
+            WebhookNotificationContent(
+                url, body
+            )
+        )
     }
 }

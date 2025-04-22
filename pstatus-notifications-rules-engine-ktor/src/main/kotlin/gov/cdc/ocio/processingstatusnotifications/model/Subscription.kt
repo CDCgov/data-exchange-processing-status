@@ -34,11 +34,6 @@ data class Subscription(
                 val webhookContent = WebhookContent(subscriptionId, subscriptionRule, report)
                 notificationAction.doNotify(webhookContent)
             }
-
-            NotificationType.LOGGER -> {
-                val notificationAction = LoggerNotificationAction()
-                notificationAction.doNotify(report)
-            }
         }
     }
 
