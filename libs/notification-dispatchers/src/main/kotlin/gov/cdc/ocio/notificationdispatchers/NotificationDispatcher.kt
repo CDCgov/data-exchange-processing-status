@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class NotificationDispatcher(environment: ApplicationEnvironment): DispatchWorker {
 
-    private val emailDispatcher = EmailDispatchWorker(environment)
+    private val emailDispatcher = EmailDispatchWorker.create(environment)
     private val webhookDispatcher = WebhookDispatchWorker()
     private val loggingDispatcher = LoggerDispatchWorker()
 
