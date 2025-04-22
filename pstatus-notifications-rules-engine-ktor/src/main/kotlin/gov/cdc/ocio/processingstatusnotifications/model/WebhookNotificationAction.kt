@@ -1,17 +1,18 @@
 package gov.cdc.ocio.processingstatusnotifications.model
 
+import gov.cdc.ocio.notificationdispatchers.NotificationDispatcher
+import gov.cdc.ocio.notificationdispatchers.model.WebhookNotificationContent
 import gov.cdc.ocio.processingstatusnotifications.exception.BadRequestException
 import gov.cdc.ocio.types.model.WebhookNotification
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import kotlinx.coroutines.runBlocking
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
 class WebhookNotificationAction(
     private val webhookNotification: WebhookNotification
-) : NotificationAction {
+) : NotificationAction, KoinComponent {
+
+    private val dispatchWorker by inject<NotificationDispatcher>()
 
     /**
      * For webhooks, the payload should be [WebhookContent].
@@ -22,15 +23,11 @@ class WebhookNotificationAction(
         if (payload !is WebhookContent)
             throw BadRequestException("Webhook payload is not in the expected format")
 
-        runBlocking {
-            val client = HttpClient(CIO)
-
-            client.post(webhookNotification.webhookUrl) {
-                contentType(ContentType.Application.Json)
-                setBody(payload.toJson())
-            }
-
-            client.close()
-        }
+        dispatchWorker.send(
+            WebhookNotificationContent(
+                webhookNotification.webhookUrl,
+                payload
+            )
+        )
     }
 }

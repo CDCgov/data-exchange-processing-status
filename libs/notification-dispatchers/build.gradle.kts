@@ -1,3 +1,4 @@
+val ktorVersion: String by project
 val kotlinxHtmlVersion: String by project
 
 plugins {
@@ -21,6 +22,7 @@ dependencies {
     implementation ("ch.qos.logback.contrib", "logback-json-classic", "0.1.5")
     implementation ("ch.qos.logback.contrib", "logback-jackson", "0.1.5")
     implementation("io.insert-koin:koin-ktor:3.5.6")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion") // for invoking webhooks
 
     implementation ("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion") // for building HTML content
     implementation("com.sun.mail:jakarta.mail:2.0.1") // for sending emails

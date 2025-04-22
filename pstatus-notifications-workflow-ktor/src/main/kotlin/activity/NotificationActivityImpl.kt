@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingnotifications.activity
 
-import gov.cdc.ocio.notificationdispatchers.email.EmailDispatcher
+import gov.cdc.ocio.notificationdispatchers.NotificationDispatcher
+import gov.cdc.ocio.notificationdispatchers.model.EmailNotificationContent
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -14,7 +15,7 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val emailDispatcher by inject<EmailDispatcher>()
+    private val dispatchWorker by inject<NotificationDispatcher>()
 
     private val fromEmail = "donotreply@cdc.gov"
     private val fromName = "Do not reply (PHDO team)"
@@ -34,12 +35,14 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
                 + "jurisdiction: $jurisdiction on " + LocalDate.now() + ".")
 
         logger.info(msg)
-        emailDispatcher.send(
-            emailAddresses,
-            fromEmail,
-            fromName,
-            "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
-            msg
+        dispatchWorker.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
+                msg
+            )
         )
     }
 
@@ -55,12 +58,14 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
         emailAddresses: List<String>
     ) {
         logger.info(emailBody)
-        emailDispatcher.send(
-            emailAddresses,
-            fromEmail,
-            fromName,
-            "DATA STREAM TOP ERRORS NOTIFICATION",
-            emailBody
+        dispatchWorker.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                "DATA STREAM TOP ERRORS NOTIFICATION",
+                emailBody
+            )
         )
     }
 
@@ -74,12 +79,14 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
         emailBody: String,
         emailAddresses: List<String>
     ) {
-        emailDispatcher.send(
-            emailAddresses,
-            fromEmail,
-            fromName,
-            "PHDO UPLOAD DIGEST NOTIFICATION",
-            emailBody
+        dispatchWorker.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                "PHDO UPLOAD DIGEST NOTIFICATION",
+                emailBody
+            )
         )
     }
 }

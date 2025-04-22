@@ -1,5 +1,8 @@
 package gov.cdc.ocio.notificationdispatchers.email
 
+import gov.cdc.ocio.notificationdispatchers.model.DispatchWorker
+import gov.cdc.ocio.notificationdispatchers.model.EmailNotificationContent
+import gov.cdc.ocio.notificationdispatchers.model.NotificationContent
 import gov.cdc.ocio.notificationdispatchers.model.SmtpConfig
 import jakarta.mail.*
 import jakarta.mail.internet.InternetAddress
@@ -8,7 +11,7 @@ import mu.KotlinLogging
 import java.util.*
 
 
-class SmtpEmailDispatcher(private val config: SmtpConfig): EmailDispatcher {
+class SmtpEmailDispatchWorker(private val config: SmtpConfig): DispatchWorker {
 
     private val logger = KotlinLogging.logger {}
 
@@ -39,7 +42,7 @@ class SmtpEmailDispatcher(private val config: SmtpConfig): EmailDispatcher {
      * @param subject String
      * @param body String
      */
-    override fun send(to: List<String>, fromEmail: String, fromName: String, subject: String, body: String) {
+    private fun send(to: List<String>, fromEmail: String, fromName: String, subject: String, body: String) {
         try {
             val session = createSession()
             val toEmailAddresses = InternetAddress.parse(to.joinToString(","))
@@ -59,5 +62,11 @@ class SmtpEmailDispatcher(private val config: SmtpConfig): EmailDispatcher {
         } catch (e: Exception) {
             logger.error { "Failed to send email to, '$to' with exception: ${e.localizedMessage}" }
         }
+    }
+
+    override fun send(content: NotificationContent) {
+        if (content !is EmailNotificationContent) error("content must be EmailNotificationContent")
+
+        send(content.to, content.fromEmail, content.fromName, content.subject, content.body)
     }
 }

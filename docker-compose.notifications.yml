@@ -72,7 +72,7 @@ services:
       COUCHBASE_PASSWORD: password
       COUCHBASE_USERNAME: admin
       DATABASE: couchbase
-      EMAIL_DISPATCHER: ${EMAIL_DISPATCHER:-logger}
+      EMAIL_PROTOCOL: ${EMAIL_PROTOCOL:-smtp}
       SMTP_HOST: ${SMTP_HOST:-smtpgw.cdc.gov}
       SMTP_PORT: ${SMTP_PORT:-25}
       SMTP_AUTH: ${SMTP_AUTH:-false}
@@ -97,7 +97,7 @@ services:
       COUCHBASE_USERNAME: admin
       DATABASE: couchbase
       MSG_SYSTEM: rabbitmq
-      EMAIL_DISPATCHER: ${EMAIL_DISPATCHER:-logger}
+      EMAIL_DISPATCHER: ${EMAIL_PROTOCOL:-smtp}
       SMTP_HOST: ${SMTP_HOST:-smtpgw.cdc.gov}
       SMTP_PORT: ${SMTP_PORT:-25}
       SMTP_AUTH: ${SMTP_AUTH:-false}
