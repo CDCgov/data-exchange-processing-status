@@ -15,7 +15,7 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val dispatchWorker by inject<NotificationDispatcher>()
+    private val notifications by inject<NotificationDispatcher>()
 
     private val fromEmail = "donotreply@cdc.gov"
     private val fromName = "Do not reply (PHDO team)"
@@ -35,7 +35,7 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
                 + "jurisdiction: $jurisdiction on " + LocalDate.now() + ".")
 
         logger.info(msg)
-        dispatchWorker.send(
+        notifications.send(
             EmailNotificationContent(
                 emailAddresses,
                 fromEmail,
@@ -58,7 +58,7 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
         emailAddresses: List<String>
     ) {
         logger.info(emailBody)
-        dispatchWorker.send(
+        notifications.send(
             EmailNotificationContent(
                 emailAddresses,
                 fromEmail,
@@ -79,7 +79,7 @@ class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
         emailBody: String,
         emailAddresses: List<String>
     ) {
-        dispatchWorker.send(
+        notifications.send(
             EmailNotificationContent(
                 emailAddresses,
                 fromEmail,

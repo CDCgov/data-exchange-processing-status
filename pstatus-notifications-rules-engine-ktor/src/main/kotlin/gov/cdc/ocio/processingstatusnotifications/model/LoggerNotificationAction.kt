@@ -8,7 +8,7 @@ import org.koin.core.component.inject
 
 class LoggerNotificationAction : NotificationAction, KoinComponent {
 
-    private val dispatchWorker by inject<NotificationDispatcher>()
+    private val notifications by inject<NotificationDispatcher>()
 
     /**
      * For logging notifications the content can be [Any].
@@ -16,6 +16,6 @@ class LoggerNotificationAction : NotificationAction, KoinComponent {
      * @param payload Any
      */
     override fun doNotify(payload: Any) {
-        dispatchWorker.send(LoggerNotificationContent(content = payload))
+        notifications.send(LoggerNotificationContent(content = payload))
     }
 }

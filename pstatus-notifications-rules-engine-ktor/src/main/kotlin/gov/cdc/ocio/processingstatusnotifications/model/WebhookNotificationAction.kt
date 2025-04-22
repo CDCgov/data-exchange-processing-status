@@ -12,7 +12,7 @@ class WebhookNotificationAction(
     private val webhookNotification: WebhookNotification
 ) : NotificationAction, KoinComponent {
 
-    private val dispatchWorker by inject<NotificationDispatcher>()
+    private val notifications by inject<NotificationDispatcher>()
 
     /**
      * For webhooks, the payload should be [WebhookContent].
@@ -23,7 +23,7 @@ class WebhookNotificationAction(
         if (payload !is WebhookContent)
             throw BadRequestException("Webhook payload is not in the expected format")
 
-        dispatchWorker.send(
+        notifications.send(
             WebhookNotificationContent(
                 webhookNotification.webhookUrl,
                 payload
