@@ -19,6 +19,6 @@ class LoggerDispatchWorker: DispatchWorker {
      * @param content NotificationContent
      */
     override fun send(content: NotificationContent) {
-        logger.info { "Notification not sent!  Only logged." }
+        logger.info { "Notification content:\n$content" }
     }
 }
