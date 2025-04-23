@@ -61,10 +61,9 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
             subscription
         )
 
-        val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
             subscriptionId = execution.workflowId,
-            message = "Successfully subscribed for $workflowId",
+            message = "Successfully subscribed",
             emailAddresses = subscription.emailAddresses,
             webhookUrl = subscription.webhookUrl
         )

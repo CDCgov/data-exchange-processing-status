@@ -4,6 +4,7 @@ import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.types.model.EmailNotification
+import jdk.jshell.spi.ExecutionControl.InternalException
 
 
 /**
@@ -29,29 +30,19 @@ class SubscribeEmailNotifications {
         val emailAddresses = subscription.emailAddresses
 
         // Make sure required parameters are not empty or missing.
-        if (dataStreamId.isBlank()
-            || dataStreamRoute.isBlank()
-            || mvelCondition.isBlank()
-            || emailAddresses.isEmpty()) {
-            return SubscriptionResult(
-                status = false,
-                message = "Required fields not sent in request"
-            )
-        }
+        require(dataStreamId.isNotBlank()) { "Required field dataStreamId can not be blank" }
+        require(dataStreamRoute.isNotBlank()) { "Required field dataStreamRoute can not be blank" }
+        require(mvelCondition.isNotBlank()) { "Required field mvelCondition can not be blank" }
+        require(emailAddresses.isNotEmpty()) { "Required field emailAddresses can not be empty" }
 
         // Validate the email address.
         for (email in emailAddresses) {
-            if (!email.contains('@') || email.split(".").size > 2
-                || !email.matches(Regex("([a-zA-Z0-9_%-]+@[a-zA-Z0-9-]+\\.[a-zA-Z]{2,})\$"))) {
-                return SubscriptionResult(
-                    status = false,
-                    message = "'$email' is not a valid email address"
-                )
-            }
+            val isInvalidEmailAddress = !email.contains('@') || email.split(".").size > 2
+                    || !email.matches(Regex("([a-zA-Z0-9_%-]+@[a-zA-Z0-9-]+\\.[a-zA-Z]{2,})\$"))
+            require(!isInvalidEmailAddress) { "'$email' is not a valid email address" }
         }
 
         val subscriptionResult = SubscriptionResult(
-            status = true,
             subscriptionId = cacheService.upsertSubscription(
                 dataStreamId,
                 dataStreamRoute,
@@ -59,14 +50,11 @@ class SubscribeEmailNotifications {
                 ruleDescription,
                 mvelCondition,
                 EmailNotification(emailAddresses)
-            ),
-            message = "Subscription for email setup"
+            )
         )
 
-        if (subscriptionResult.subscriptionId == null) {
-            subscriptionResult.status = false
-            subscriptionResult.message = "Invalid Request"
-        }
+        if (subscriptionResult.subscriptionId == null)
+            throw InternalException("Unable to setup the subscription")
 
         return subscriptionResult
     }

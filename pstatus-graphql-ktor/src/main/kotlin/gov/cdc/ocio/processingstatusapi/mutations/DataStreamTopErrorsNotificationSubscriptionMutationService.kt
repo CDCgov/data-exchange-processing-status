@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
-import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
@@ -11,6 +10,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import java.net.ConnectException
+
 
 /**
  * DataStream UnSubscription data class used for unsubscribing from the db for digest counts and the top errors and
@@ -34,11 +35,8 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
     /**
      * The mutation function which invokes the data stream top errors and digest counts microservice route to subscribe.
      *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param jurisdiction String
-     * @param cronSchedule String
-     * @param emailAddresses List<String>
+     * @param subscription WorkflowSubscription
+     * @return WorkflowSubscriptionResult
      */
     @GraphQLDescription("Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload")
     @Suppress("unused")
@@ -48,20 +46,16 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
         val url = workflowServiceConnection.buildUrl("subscribe/dataStreamTopErrorsNotification")
 
         return runBlocking {
-            val result = runCatching {
-                val response = workflowServiceConnection.client.post(url) {
+            val response = runCatching {
+                workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(subscription)
                 }
-                return@runCatching SubscriptionResponse.ProcessNotificationResponse(response)
-            }
-            result.onFailure {
-                when (it) {
-                    is ResponseException -> throw it
-                    else -> throw Exception(workflowServiceConnection.serviceUnavailable)
-                }
-            }
-            return@runBlocking result.getOrThrow()
+            }.onFailure {
+                if (it is ConnectException)
+                    throw ConnectException(workflowServiceConnection.serviceUnavailable)
+            }.getOrThrow()
+            return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
         }
     }
 
@@ -79,20 +73,16 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
         val url = workflowServiceConnection.buildUrl("/unsubscribe/dataStreamTopErrorsNotification")
 
         return runBlocking {
-            try {
-                val response = workflowServiceConnection.client.post(url) {
+            val response = runCatching {
+                workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(
-                        DataStreamTopErrorsNotificationUnSubscription(subscriptionId)
-                    )
+                    setBody(DataStreamTopErrorsNotificationUnSubscription(subscriptionId))
                 }
-                return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
-                throw Exception(workflowServiceConnection.serviceUnavailable)
-            }
+            }.onFailure {
+                if (it is ConnectException)
+                    throw ConnectException(workflowServiceConnection.serviceUnavailable)
+            }.getOrThrow()
+            return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
         }
     }
 

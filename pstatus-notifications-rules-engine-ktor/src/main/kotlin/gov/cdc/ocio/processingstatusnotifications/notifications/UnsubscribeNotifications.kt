@@ -25,17 +25,12 @@ class UnsubscribeNotifications {
     fun run(subscriptionId: String): SubscriptionResult {
         logger.debug { "Received request to unsubscribe from subscriptionId $subscriptionId" }
 
-        val result = SubscriptionResult().apply {
-            this.subscriptionId = subscriptionId
-        }
-        if (subscriptionId.isNotBlank() && unsubscribeNotifications(subscriptionId)) {
-            result.status = true
-            result.message = "Successfully unsubscribed"
-        } else {
-            result.status = false
-            result.message = "Failed to unsubscribe"
-        }
-        return result
+        require(subscriptionId.isNotBlank()) { "Required field subscriptionId can not be blank" }
+
+        if (!unsubscribeNotifications(subscriptionId))
+            error("Failed to unsubscribe, check the subscriptionId is valid")
+
+        return SubscriptionResult(subscriptionId)
     }
 
     /**

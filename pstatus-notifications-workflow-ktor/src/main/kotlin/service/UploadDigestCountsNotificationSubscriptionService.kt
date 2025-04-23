@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCo
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
 import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
+import io.grpc.StatusRuntimeException
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -35,20 +36,21 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
     /**
      * The main method which executes workflow for orchestrating the daily digest counts.
      *
-     * @param subscription UploadDigestSubscription
+     * @param subscription WorkflowSubscription
      * @return WorkflowSubscriptionResult
+     * @throws IllegalStateException
+     * @throws StatusRuntimeException
      */
+    @Throws(IllegalStateException::class, StatusRuntimeException::class)
     fun run(
         subscription: WorkflowSubscription
     ): WorkflowSubscriptionResult {
-        val cronSchedule = subscription.cronSchedule
-        val emailAddresses = subscription.emailAddresses
         val taskQueue = "uploadDigestCountsTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
             description,
             taskQueue,
-            cronSchedule,
+            subscription.cronSchedule,
             UploadDigestCountsNotificationWorkflowImpl::class.java,
             notificationActivitiesImpl,
             UploadDigestCountsNotificationWorkflow::class.java
@@ -59,12 +61,11 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
             subscription
         )
 
-        val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
-            subscriptionId = workflowId,
-            message = "Successfully subscribed for $workflowId",
-            emailAddresses = emailAddresses,
-            webhookUrl = ""
+            subscriptionId = execution.workflowId,
+            message = "Successfully subscribed",
+            emailAddresses = subscription.emailAddresses,
+            webhookUrl = subscription.webhookUrl
         )
     }
 }

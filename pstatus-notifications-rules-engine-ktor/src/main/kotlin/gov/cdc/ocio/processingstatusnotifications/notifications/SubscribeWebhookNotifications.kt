@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingstatusnotifications.notifications
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.processingstatusnotifications.model.*
 import gov.cdc.ocio.types.model.WebhookNotification
+import jdk.jshell.spi.ExecutionControl.InternalException
 import mu.KotlinLogging
 
 
@@ -33,23 +34,17 @@ class SubscribeWebhookNotifications {
         val mvelCondition = subscription.mvelCondition
         val webhookUrl = subscription.webhookUrl
 
-        if (dataStreamId.isBlank() || dataStreamRoute.isBlank() || mvelCondition.isBlank() || webhookUrl.isBlank()) {
-            return SubscriptionResult(
-                status = false,
-                message = "Required fields not sent in request"
-            )
-        }
+        require(dataStreamId.isNotBlank()) { "Required field dataStreamId can not be blank" }
+        require(dataStreamRoute.isNotBlank()) { "Required field dataStreamRoute can not be blank" }
+        require(mvelCondition.isNotBlank()) { "Required field mvelCondition can not be blank" }
+        require(webhookUrl.isNotBlank()) { "Required field webhookUrl can not be blank" }
 
-        if (!webhookUrl.lowercase().startsWith("http://")
-            && !webhookUrl.lowercase().startsWith("https://")) {
-            return SubscriptionResult(
-                status = false,
-                message = "Not a valid url address, url must begin with http:// or https://"
-            )
+        require(webhookUrl.startsWith("http://", ignoreCase = true) ||
+                webhookUrl.startsWith("https://", ignoreCase = true)) {
+            "Invalid webhook URL: must begin with http:// or https://"
         }
 
         val subscriptionResult = SubscriptionResult(
-            status = true,
             subscriptionId = cacheService.upsertSubscription(
                 dataStreamId,
                 dataStreamRoute,
@@ -57,14 +52,11 @@ class SubscribeWebhookNotifications {
                 ruleDescription,
                 mvelCondition,
                 WebhookNotification(webhookUrl)
-            ),
-            message = "Subscription for webhook setup"
+            )
         )
 
-        if (subscriptionResult.subscriptionId == null) {
-            subscriptionResult.status = false
-            subscriptionResult.message = "Invalid Request"
-        }
+        if (subscriptionResult.subscriptionId == null)
+            throw InternalException("Unable to setup the subscription")
 
         return subscriptionResult
     }

@@ -6,6 +6,7 @@ import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.notificationdispatchers.NotificationDispatcherKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
+import io.grpc.StatusRuntimeException
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -16,6 +17,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.temporal.client.WorkflowServiceException
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -58,8 +60,22 @@ fun Application.module() {
         }
     }
     install(StatusPages) {
-        exception<IllegalArgumentException> { call, cause ->
-            call.respond(HttpStatusCode.BadRequest, mapOf("error" to cause.message))
+        // Map exceptions to HTTP status codes that will be returned
+        val exceptionToHttpStatusCode = mapOf<Class<out Throwable>, HttpStatusCode>(
+            IllegalArgumentException::class.java to HttpStatusCode.BadRequest,
+            StatusRuntimeException::class.java to HttpStatusCode.InternalServerError,
+            WorkflowServiceException::class.java to HttpStatusCode.BadRequest,
+            IllegalStateException::class.java to HttpStatusCode.InternalServerError,
+        )
+
+        // Intercept all exceptions that occur during routing and return them as bad request errors with the error
+        // message.
+        exception<Exception> { call, cause ->
+            // Check to see if there is an internal cause and provide that if so as those are typically more helpful
+            // than the outer cause.
+            val errorMessage = cause.cause?.message ?: cause.message
+            val httpStatusCode = exceptionToHttpStatusCode[cause.javaClass] ?: HttpStatusCode.InternalServerError
+            call.respond(httpStatusCode, mapOf("error" to errorMessage))
         }
     }
     routing {

@@ -5,14 +5,12 @@ package gov.cdc.ocio.processingstatusapi.mutations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
-import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
-import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import java.net.ConnectException
 
 
 /**
@@ -67,17 +65,13 @@ data class UnsubscribeRequest(val subscriptionId: String)
 
 /**
  * SubscriptionResult is the response class which is serialized back and forth which is in turn used for getting the
- * response which contains the subscriberId, message and the status of subscribe/unsubscribe operations.
+ * response.
  *
  * @param subscriptionId
- * @param status
- * @param message
  */
 @Serializable
 data class SubscriptionResult(
-    var subscriptionId: String? = null,
-    var status: Boolean? = false,
-    var message: String? = null
+    var subscriptionId: String? = null
 )
 
 /**
@@ -115,8 +109,8 @@ class NotificationsRulesEngineMutationService(
         val url = rulesEngineServiceConnection.buildUrl("/subscribe/email")
 
         return runBlocking {
-            val result = runCatching {
-                val response = rulesEngineServiceConnection.client.post(url) {
+            val response = runCatching {
+                rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(EmailSubscription(
                         dataStreamId,
@@ -127,15 +121,11 @@ class NotificationsRulesEngineMutationService(
                         emailAddresses)
                     )
                 }
-                return@runCatching processResponse(response)
-            }
-            result.onFailure {
-                when (it) {
-                    is ResponseException -> throw it
-                    else -> throw Exception(rulesEngineServiceConnection.serviceUnavailable)
-                }
-            }
-            return@runBlocking result.getOrThrow()
+            }.onFailure {
+                if (it is ConnectException)
+                    throw ConnectException(rulesEngineServiceConnection.serviceUnavailable)
+            }.getOrThrow()
+            return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
         }
     }
 
@@ -164,8 +154,8 @@ class NotificationsRulesEngineMutationService(
         val url = rulesEngineServiceConnection.buildUrl("/subscribe/webhook")
 
         return runBlocking {
-            try {
-                val response = rulesEngineServiceConnection.client.post(url) {
+            val response = runCatching {
+                rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(WebhookSubscription(
                         dataStreamId,
@@ -176,13 +166,11 @@ class NotificationsRulesEngineMutationService(
                         webhookUrl)
                     )
                 }
-                return@runBlocking processResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, null)
-                }
-                throw Exception(rulesEngineServiceConnection.serviceUnavailable)
-            }
+            }.onFailure {
+                if (it is ConnectException)
+                    throw ConnectException(rulesEngineServiceConnection.serviceUnavailable)
+            }.getOrThrow()
+            return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
         }
     }
 
@@ -198,33 +186,16 @@ class NotificationsRulesEngineMutationService(
         val url = rulesEngineServiceConnection.buildUrl("/unsubscribe")
 
         return runBlocking {
-            try {
-                val response = rulesEngineServiceConnection.client.post(url) {
+            val response = runCatching {
+                rulesEngineServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(UnsubscribeRequest(subscriptionId))
                 }
-                return@runBlocking processResponse(response)
-            } catch (e: Exception) {
-                if (e.message!!.contains("Status:")) {
-                    SubscriptionResponse.ProcessErrorCodes(url, e, subscriptionId)
-                }
-                throw Exception(rulesEngineServiceConnection.serviceUnavailable)
-            }
-        }
-    }
-
-    companion object {
-
-        /**
-         * Function to process the http response coming from notifications service
-         * @param response HttpResponse
-         */
-        private suspend fun processResponse(response: HttpResponse): SubscriptionResult {
-            if (response.status == HttpStatusCode.OK) {
-                return response.body()
-            } else {
-                throw Exception("Notification rules engine service is unavailable. Status: ${response.status}")
-            }
+            }.onFailure {
+                if (it is ConnectException)
+                    throw ConnectException(rulesEngineServiceConnection.serviceUnavailable)
+            }.getOrThrow()
+            return@runBlocking SubscriptionResponse.ProcessNotificationResponse(response)
         }
     }
 
