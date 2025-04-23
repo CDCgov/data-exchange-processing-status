@@ -1,9 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
-import gov.cdc.ocio.processingstatusapi.exceptions.InsufficientScopesException
-import gov.cdc.ocio.processingstatusapi.exceptions.InvalidTokenException
-import gov.cdc.ocio.processingstatusapi.exceptions.PublicKeyNotFoundException
 import graphql.GraphqlErrorBuilder
 import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.DataFetcherExceptionHandlerParameters
@@ -29,21 +25,12 @@ class CustomGraphQLExceptionHandler : DataFetcherExceptionHandler {
         val exception = params.exception
         logger.error("GraphQL Error: ${exception.message}", exception)
 
-        val classification = when (exception) {
-            is UnsupportedOperationException -> "UnsupportedOperationException"
-            is ForbiddenException -> "ForbiddenException"
-            is InvalidTokenException -> "InvalidTokenException"
-            is InsufficientScopesException -> "InsufficientScopesException"
-            is PublicKeyNotFoundException -> "PublicKeyNotFoundException"
-            else -> "InternalServerError"
-        }
-
         return CompletableFuture.supplyAsync {
             DataFetcherExceptionHandlerResult.newResult()
                 .error(
                     GraphqlErrorBuilder.newError()
                         .message(exception.message ?: "An error occurred")
-                        .extensions(mapOf("classification" to classification))
+                        .extensions(mapOf("classification" to exception::class.simpleName))
                         .path(params.path)
                         .build()
                 )

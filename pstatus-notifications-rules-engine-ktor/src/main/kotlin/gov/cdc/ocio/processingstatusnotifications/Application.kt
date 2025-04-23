@@ -8,15 +8,19 @@ import gov.cdc.ocio.notificationdispatchers.NotificationDispatcherKoinCreator
 import gov.cdc.ocio.processingstatusnotifications.processors.*
 import gov.cdc.ocio.processingstatusnotifications.subscription.CachedSubscriptionLoader
 import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscriptionLoader
+import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
 import org.koin.dsl.module
+
 
 /**
  * Load the environment configuration values
@@ -57,5 +61,23 @@ fun Application.module() {
 
     install(ContentNegotiation) {
         jackson()
+    }
+
+    install(StatusPages) {
+        // Map exceptions to HTTP status codes that will be returned
+        val exceptionToHttpStatusCode = mapOf<Class<out Throwable>, HttpStatusCode>(
+            IllegalArgumentException::class.java to HttpStatusCode.BadRequest,
+            IllegalStateException::class.java to HttpStatusCode.InternalServerError,
+        )
+
+        // Intercept all exceptions that occur during routing and return them as bad request errors with the error
+        // message.
+        exception<Exception> { call, cause ->
+            // Check to see if there is an internal cause and provide that if so as those are typically more helpful
+            // than the outer cause.
+            val errorMessage = cause.cause?.message ?: cause.message
+            val httpStatusCode = exceptionToHttpStatusCode[cause.javaClass] ?: HttpStatusCode.InternalServerError
+            call.respond(httpStatusCode, mapOf("error" to errorMessage))
+        }
     }
 }

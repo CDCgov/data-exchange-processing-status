@@ -29,7 +29,7 @@ class UploadDigestCountsNotificationUnSubscriptionService : KoinComponent {
             workflowEngine.cancelWorkflow(subscriptionId)
             return WorkflowSubscriptionResult(
                 subscriptionId = subscriptionId,
-                message = "Successfully unsubscribed from $subscriptionId",
+                message = "Successfully unsubscribed",
                 emailAddresses = listOf(),
                 webhookUrl = ""
             )

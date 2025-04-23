@@ -59,10 +59,9 @@ class DeadLineCheckSubscriptionService: KoinComponent {
             subscription
         )
 
-        val workflowId = execution.workflowId
         return WorkflowSubscriptionResult(
-            subscriptionId = workflowId,
-            message = "Successfully subscribed for $workflowId",
+            subscriptionId = execution.workflowId,
+            message = "Successfully subscribed",
             emailAddresses = subscription.emailAddresses,
             webhookUrl = subscription.webhookUrl
         )
