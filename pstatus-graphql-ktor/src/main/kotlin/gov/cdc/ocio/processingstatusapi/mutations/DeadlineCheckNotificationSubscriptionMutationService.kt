@@ -1,34 +1,16 @@
 package gov.cdc.ocio.processingstatusapi.mutations
 
-import gov.cdc.ocio.processingstatusapi.mutations.models.NotificationSubscriptionResult
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
+import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-
-
-/**
- * Deadline Check Subscription data class for digest counts and the frequency with which each of the top 5 errors occur.
- *
- * @param dataStreamId String
- * @param dataStreamRoute String
- * @param jurisdiction String
- * @param cronSchedule String
- * @param emailAddresses List<String>
- */
-@Serializable
-data class DeadlineCheckSubscription(
-    val dataStreamId: String,
-    val dataStreamRoute: String,
-    val jurisdiction: String,
-    val cronSchedule: String,
-    val emailAddresses: List<String>
-)
 
 /**
  * Deadline check unSubscription data class which is serialized back and forth which is in turn used for unsubscribing
@@ -61,27 +43,15 @@ class DeadlineCheckSubscriptionMutationService(
     @GraphQLDescription("Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm")
     @Suppress("unused")
     fun subscribeDeadlineCheck(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        jurisdiction: String,
-        cronSchedule: String,
-        emailAddresses: List<String>
-    ): NotificationSubscriptionResult {
+        subscription: WorkflowSubscription
+    ): WorkflowSubscriptionResult {
         val url = workflowServiceConnection.buildUrl("/subscribe/deadlineCheck")
 
         return runBlocking {
             val result = runCatching {
                 val response = workflowServiceConnection.client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(
-                        DeadlineCheckSubscription(
-                            dataStreamId,
-                            dataStreamRoute,
-                            jurisdiction,
-                            cronSchedule,
-                            emailAddresses
-                        )
-                    )
+                    setBody(subscription)
                 }
                 return@runCatching SubscriptionResponse.ProcessNotificationResponse(response)
             }
@@ -104,7 +74,7 @@ class DeadlineCheckSubscriptionMutationService(
     @Suppress("unused")
     fun unsubscribeDeadlineCheck(
         subscriptionId: String
-    ): NotificationSubscriptionResult {
+    ): WorkflowSubscriptionResult {
         val url = workflowServiceConnection.buildUrl("/unsubscribe/deadlineCheck")
 
         return runBlocking {

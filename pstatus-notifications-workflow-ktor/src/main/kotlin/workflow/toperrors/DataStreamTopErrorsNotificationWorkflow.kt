@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
+import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 
@@ -12,11 +13,6 @@ interface DataStreamTopErrorsNotificationWorkflow {
 
     @WorkflowMethod
     fun checkDataStreamTopErrorsAndNotify(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        jurisdiction: String,
-        cronSchedule: String,
-        emailAddresses: List<String>,
-        daysInterval: Int?,
+        workflowSubscription: WorkflowSubscription
     )
 }

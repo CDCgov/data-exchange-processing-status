@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.service
 
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
@@ -35,7 +36,7 @@ class ReportService: KoinComponent {
      * @param action String
      * @param daysInterval Int?
      */
-    fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: String, daysInterval: Int?): Int {
+    fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: StageAction, daysInterval: Int?): Int {
         val query = "select value count(1) from $cName $cVar " +
                 "where ${cPrefix}stageInfo.${cElFunc("status")} = 'FAILURE' " +
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '$action' " +

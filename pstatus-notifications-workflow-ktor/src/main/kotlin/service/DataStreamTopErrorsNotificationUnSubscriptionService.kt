@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
+import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -33,7 +33,8 @@ class DataStreamTopErrorsNotificationUnSubscriptionService : KoinComponent {
             return WorkflowSubscriptionResult(
                 subscriptionId = subscriptionId,
                 message = "",
-                emailAddresses = listOf()
+                emailAddresses = listOf(),
+                webhookUrl = ""
             )
         }
         catch (e:Exception){

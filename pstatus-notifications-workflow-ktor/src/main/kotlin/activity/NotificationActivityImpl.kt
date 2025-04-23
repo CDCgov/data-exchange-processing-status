@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingnotifications.activity
 
 import gov.cdc.ocio.processingnotifications.email.EmailDispatcher
+import gov.cdc.ocio.processingnotifications.webhook.WebhookDispatcher
 import mu.KotlinLogging
 import java.time.LocalDate
 
@@ -13,6 +14,7 @@ class NotificationActivitiesImpl : NotificationActivities {
     private val logger = KotlinLogging.logger {}
 
     private val emailService = EmailDispatcher()
+    private val webhookService = WebhookDispatcher()
 
     /**
      * Send notification method which uses the email service to send email when an upload fails
@@ -68,5 +70,13 @@ class NotificationActivitiesImpl : NotificationActivities {
             "PHDO UPLOAD DIGEST NOTIFICATION",
             emailBody,
             emailAddresses)
+    }
+
+    override fun sendEmail(emailAddresses: List<String>, subject: String, body: String) {
+        emailService.sendEmail(subject, body, emailAddresses)
+    }
+
+    override fun sendWebhook(url: String, body: Any) {
+        webhookService.sendPayload(url, body)
     }
 }
