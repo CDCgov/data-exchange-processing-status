@@ -29,13 +29,15 @@ class WebhookDispatchWorker: DispatchWorker {
             .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .create()
+
     /**
      * Sends a notification with the content provided.
      *
      * @param content NotificationContent
      */
     override fun send(content: NotificationContent) {
-        if (content !is WebhookNotificationContent) error("content must be WebhookNotificationContent")
+        if (content !is WebhookNotificationContent)
+            throw IllegalArgumentException("content must be WebhookNotificationContent")
 
         runBlocking {
             val client = HttpClient(CIO) {

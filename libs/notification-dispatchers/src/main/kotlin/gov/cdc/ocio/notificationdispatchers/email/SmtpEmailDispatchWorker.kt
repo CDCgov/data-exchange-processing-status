@@ -33,6 +33,13 @@ class SmtpEmailDispatchWorker(private val config: SmtpConfig): DispatchWorker {
         )
     }
 
+    override fun send(content: NotificationContent) {
+        if (content !is EmailNotificationContent)
+            throw IllegalArgumentException("content must be EmailNotificationContent")
+
+        send(content.to, content.fromEmail, content.fromName, content.subject, content.body)
+    }
+
     /**
      * Sends an email with the SMTP configuration provided.
      *
@@ -62,11 +69,5 @@ class SmtpEmailDispatchWorker(private val config: SmtpConfig): DispatchWorker {
         } catch (e: Exception) {
             logger.error { "Failed to send email to, '$to' with exception: ${e.localizedMessage}" }
         }
-    }
-
-    override fun send(content: NotificationContent) {
-        if (content !is EmailNotificationContent) error("content must be EmailNotificationContent")
-
-        send(content.to, content.fromEmail, content.fromName, content.subject, content.body)
     }
 }
