@@ -1,25 +1,32 @@
 import { test as baseTest, expect, request, APIRequestContext } from '@playwright/test';
-import { getSdkRequester } from 'playwright-graphql';
-import { getSdk } from '@gql';
+import { getClient, RequesterOptions} from '@gql';
+import dotenv from 'dotenv';
 
 export { expect };
-
-const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
-
+dotenv.config({ path: '../.env' });
+const options: RequesterOptions = {
+    gqlEndpoint: '/graphql', 
+};
 type WorkerFixtures = {
+    apiContext: APIRequestContext;
     gql: ReturnType<typeof getClient>;
 };
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
-    gql: [
-        async ({ }, use) => { // NOSONAR
-            const options = {
+    apiContext: [
+        async ({ }, use) => {
+            const apiContext = await request.newContext({
+                baseURL: process.env.BASEURL,
                 extraHTTPHeaders: {
                     'Authorization': `Bearer ${process.env.GRAPHQL_AUTH_TOKEN || ''}`
-                }
-            };
-            const apiContext = await request.newContext(options);
-            await use(getClient(apiContext));
+                },
+            })
+            await use(apiContext);
+        }, { scope: 'worker' }
+    ],
+    gql: [
+        async ({ apiContext }, use) => { // NOSONAR
+            await use(getClient(apiContext, options));
         }, { auto: false, scope: 'worker' }
     ]
 });
