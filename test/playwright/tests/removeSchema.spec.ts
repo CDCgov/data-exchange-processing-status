@@ -1,9 +1,9 @@
 import { test, expect } from '@fixtures/gql';
-import { APIRequestContext, request } from '@playwright/test';
-import { getSdk } from '@gql';
-import { getSdkRequester } from 'playwright-graphql';
+import { request } from '@playwright/test';
+import { getClient } from '@gql';
 import removalSchema from '../fixtures/removal-schema.json';
 import { GraphQLError } from 'graphql';
+
 type GraphQLErrorResponse = { errors:GraphQLError[] };
 
 test.describe("removeSchema mutation", async () => {
@@ -37,7 +37,7 @@ test.describe("removeSchema mutation", async () => {
             }, { failOnEmptyData: false });
         }
     });
-    
+     
     test("should successfully remove an existing schema", async ({ gql }) => {
         const schema = testSchemas[0];
         
@@ -65,10 +65,12 @@ test.describe("removeSchema mutation", async () => {
         expect(JSON.stringify(response.errors)).toMatchSnapshot("remove-schema-gracefully");
     });
 
-    test("should not remove a schema when a token is not provided", async ({ }) => {
-        const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
-        const noTokenGQL = getClient(await request.newContext());
-        
+    test("should throw an error when a token is not provided", async ({  }) => {
+        const apiContext = await request.newContext({
+            baseURL: process.env.BASEURL,
+        })
+        const noTokenGQL = getClient(apiContext, { gqlEndpoint: '/graphql' });
+
         const errorResponse = await noTokenGQL.removeSchema({
             schemaName: "test-schema",
             schemaVersion: "1.0.0"
@@ -77,21 +79,21 @@ test.describe("removeSchema mutation", async () => {
         expect(JSON.stringify(errorResponse.errors)).toMatchSnapshot("remove-schema-no-token");
     });
 
-    test("should not remove a schema when a provided token is incorrect", async ({ }) => {
-        const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
-        const badOption = {
+    test("should throw an error when a provided token is incorrect", async ({ }) => {
+        const apiContext = await request.newContext({
+            baseURL: process.env.BASEURL,
             extraHTTPHeaders: {
                 'Authorization': `Bearer THIS_TOKEN_IS_INCORRECT`
             }
-        };
-        const badTokenGQL = getClient(await request.newContext(badOption));
-        
+        })
+        const badTokenGQL = getClient(apiContext, { gqlEndpoint: '/graphql' });
+
         const errorResponse = await badTokenGQL.removeSchema({
             schemaName: "test-schema",
             schemaVersion: "1.0.0"
         }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
-        expect(JSON.stringify(errorResponse.errors)).toMatchSnapshot("remove-schema-incorrect-token");
+        expect(JSON.stringify(errorResponse.errors)).toMatchSnapshot("remove-schema-bad-token");
     });
 
     test.describe("validation failures", async () => {
