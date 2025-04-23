@@ -13,7 +13,6 @@ test.describe("removeSchema mutation", async () => {
     ];
 
     test.beforeAll(async ({ gql }) => {
-        // Create the test schemas
         for (const schema of testSchemas) {
             await gql.upsertSchema({
                 schemaName: schema.schemaName,
@@ -40,15 +39,13 @@ test.describe("removeSchema mutation", async () => {
      
     test("should successfully remove an existing schema", async ({ gql }) => {
         const schema = testSchemas[0];
-        
-        // Remove the schema
+    
         const removeResponse = await gql.removeSchema({
             schemaName: schema.schemaName,
             schemaVersion: schema.version
         });
         expect(removeResponse.removeSchema.result).toBe("Success");
 
-        // Verify the schema is gone
         const checkResponse = await gql.schemaContent({
             schemaName: schema.schemaName,
             schemaVersion: schema.version
