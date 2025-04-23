@@ -1,20 +1,25 @@
 package gov.cdc.ocio.processingnotifications.activity
 
-import gov.cdc.ocio.processingnotifications.email.EmailDispatcher
-import gov.cdc.ocio.processingnotifications.webhook.WebhookDispatcher
+import gov.cdc.ocio.notificationdispatchers.NotificationDispatcher
+import gov.cdc.ocio.notificationdispatchers.model.EmailNotificationContent
+import gov.cdc.ocio.notificationdispatchers.model.WebhookNotificationContent
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.time.LocalDate
 
 
 /**
  * Implementation class for sending email notifications for various notifications
  */
-class NotificationActivitiesImpl : NotificationActivities {
+class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
-    private val emailService = EmailDispatcher()
-    private val webhookService = WebhookDispatcher()
+    private val notifications by inject<NotificationDispatcher>()
+
+    private val fromEmail = "donotreply@cdc.gov"
+    private val fromName = "Do not reply (PHDO team)"
 
     /**
      * Send notification method which uses the email service to send email when an upload fails
@@ -31,10 +36,14 @@ class NotificationActivitiesImpl : NotificationActivities {
                 + "jurisdiction: $jurisdiction on " + LocalDate.now() + ".")
 
         logger.info(msg)
-        emailService.sendEmail(
-            "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
-            msg,
-            emailAddresses
+        notifications.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                "UPLOAD DEADLINE CHECK EXPIRED for $jurisdiction on " + LocalDate.now(),
+                msg
+            )
         )
     }
 
@@ -50,10 +59,15 @@ class NotificationActivitiesImpl : NotificationActivities {
         emailAddresses: List<String>
     ) {
         logger.info(emailBody)
-        emailService.sendEmail(
-            "DATA STREAM TOP ERRORS NOTIFICATION",
-            emailBody,
-            emailAddresses)
+        notifications.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                "DATA STREAM TOP ERRORS NOTIFICATION",
+                emailBody
+            )
+        )
     }
 
     /**
@@ -66,17 +80,34 @@ class NotificationActivitiesImpl : NotificationActivities {
         emailBody: String,
         emailAddresses: List<String>
     ) {
-        emailService.sendEmail(
-            "PHDO UPLOAD DIGEST NOTIFICATION",
-            emailBody,
-            emailAddresses)
+        notifications.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                "PHDO UPLOAD DIGEST NOTIFICATION",
+                emailBody
+            )
+        )
     }
 
     override fun sendEmail(emailAddresses: List<String>, subject: String, body: String) {
-        emailService.sendEmail(subject, body, emailAddresses)
+        notifications.send(
+            EmailNotificationContent(
+                emailAddresses,
+                fromEmail,
+                fromName,
+                subject,
+                body
+            )
+        )
     }
 
     override fun sendWebhook(url: String, body: Any) {
-        webhookService.sendPayload(url, body)
+        notifications.send(
+            WebhookNotificationContent(
+                url, body
+            )
+        )
     }
 }

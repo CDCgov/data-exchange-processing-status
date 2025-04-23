@@ -1,6 +1,6 @@
-package email
+package test.email
 
-import gov.cdc.ocio.types.email.EmailBuilder
+import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.jsoup.Jsoup

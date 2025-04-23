@@ -6,9 +6,9 @@ package gov.cdc.ocio.processingstatusnotifications.model
 fun interface NotificationAction {
 
     /**
-     * Common interface for sending a notification with the provided payload.
+     * Common interface for sending a notification with the provided content.
      *
-     * @param payload Any
+     * @param content Any
      */
-    fun doNotify(payload: Any)
+    fun doNotify(content: Any)
 }

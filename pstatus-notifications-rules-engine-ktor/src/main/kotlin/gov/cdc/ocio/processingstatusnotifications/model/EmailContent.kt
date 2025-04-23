@@ -5,7 +5,7 @@ import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.messagesystem.models.ReportMessage
 import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
 import gov.cdc.ocio.types.adapters.InstantTypeAdapter
-import gov.cdc.ocio.types.email.EmailBuilder
+import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
 import gov.cdc.ocio.types.model.SubscriptionRule
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML

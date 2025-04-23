@@ -32,6 +32,7 @@ application {
 
 dependencies {
     implementation(project(":libs:commons-database"))
+    implementation(project(":libs:notification-dispatchers"))
     implementation(project(":libs:commons-types"))
     implementation("io.temporal:temporal-sdk:1.15.1")
     implementation("com.sendgrid:sendgrid-java:4.9.2")
@@ -52,7 +53,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.12")
     implementation("io.insert-koin:koin-core:3.5.6")
     implementation("io.insert-koin:koin-ktor:3.5.6")
-    implementation("com.sun.mail:javax.mail:1.6.2")
     implementation("com.expediagroup:graphql-kotlin-ktor-server:7.1.1")
     implementation("com.graphql-java:graphql-java-extended-scalars:22.0")
     implementation("joda-time:joda-time:2.12.7")
