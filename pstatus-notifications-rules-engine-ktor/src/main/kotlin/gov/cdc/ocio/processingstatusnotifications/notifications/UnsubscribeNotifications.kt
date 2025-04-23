@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusnotifications.notifications
 
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
-import jdk.jshell.spi.ExecutionControl.InternalException
 import mu.KotlinLogging
 
 
