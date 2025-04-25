@@ -46,13 +46,14 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
     )
 
     /**
-     * The function which gets invoked by the temporal WF engine which checks whether upload has occurred within a
-     * specified time or not invokes the activity, if there are errors.
+     * The function invoked by the Temporal Workflow engine to check if an upload occurred within a specified time.
      *
-     * @param dataStreamId String
-     * @param jurisdiction String
-     * @param cronSchedule String
-     * @param emailAddresses List<String>
+     * If the upload has not occurred, it triggers a notification based on the subscription's configured notification
+     * type (email or webhook). For email notifications, the specified email addresses are notified. For webhook
+     * notifications, a webhook payload is sent to the configured webhook URL.
+     *
+     * @param workflowSubscription The subscription containing workflow-related configuration such as data stream ID,
+     * jurisdiction, email addresses, webhook URL, and notification type.
      */
     override fun checkUploadAndNotify(
         workflowSubscription: WorkflowSubscription
@@ -88,11 +89,15 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
     }
 
     /**
-     *  The actual function which checks for whether the upload has occurred or not within a specified time
-     *   @param dataStreamId String
-     *   @param jurisdiction String
-     *  @return True if there are records; false otherwise.
-     *  @throws Exception if an error occurs while querying the db.
+     * Checks whether an upload has occurred within a specified time range for the given data stream and jurisdiction.
+     *
+     * The method generates a query to search for uploads in the database, using today's date and a specific
+     * start and end time range in UTC. If any matching results are found, the method returns true; otherwise, false.
+     * In case of any errors during execution, an exception is thrown.
+     *
+     * @param dataStreamId The identifier of the data stream to check for uploads.
+     * @param jurisdiction The jurisdiction associated with the data stream.
+     * @return True if an upload is found within the specified time range, otherwise false.
      */
     private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
         /** Get today's date in UTC **/
