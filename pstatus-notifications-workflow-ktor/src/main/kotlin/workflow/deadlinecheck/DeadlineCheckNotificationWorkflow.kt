@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications.workflow.lateuploads
+package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
 import gov.cdc.ocio.types.model.WorkflowSubscription
 import io.temporal.workflow.WorkflowInterface
@@ -8,7 +8,7 @@ import io.temporal.workflow.WorkflowMethod
  * The interface which define the upload error and notify method
  */
 @WorkflowInterface
-interface NotificationWorkflow {
+interface DeadlineCheckNotificationWorkflow {
 
     @WorkflowMethod
     fun checkUploadAndNotify(

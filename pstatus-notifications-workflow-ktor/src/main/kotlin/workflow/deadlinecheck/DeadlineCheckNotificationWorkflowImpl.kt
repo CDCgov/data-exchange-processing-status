@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingnotifications.workflow.lateuploads
+package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
@@ -26,7 +26,7 @@ import java.time.format.DateTimeFormatter
  * @property logger KLogger
  * @property activities (NotificationActivities..NotificationActivities?)
  */
-class NotificationWorkflowImpl : NotificationWorkflow, KoinComponent {
+class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow, KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 

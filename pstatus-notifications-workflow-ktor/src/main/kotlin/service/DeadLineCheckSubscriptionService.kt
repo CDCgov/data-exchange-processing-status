@@ -2,8 +2,8 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.lateuploads.NotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
 import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.temporal.client.WorkflowClient
@@ -43,15 +43,15 @@ class DeadLineCheckSubscriptionService: KoinComponent {
     ): WorkflowSubscriptionResult {
 
         val cronSchedule = subscription.cronSchedule
-        val taskQueue = "notificationTaskQueue"
+        val taskQueue = "deadlineCheckNotificationTaskQueue"
 
         val workflow = workflowEngine.setupWorkflow(
             description,
             taskQueue,
             cronSchedule,
-            NotificationWorkflowImpl::class.java,
+            DeadlineCheckNotificationWorkflowImpl::class.java,
             notificationActivitiesImpl,
-            NotificationWorkflow::class.java
+            DeadlineCheckNotificationWorkflow::class.java
         )
 
         val execution = WorkflowClient.start(
