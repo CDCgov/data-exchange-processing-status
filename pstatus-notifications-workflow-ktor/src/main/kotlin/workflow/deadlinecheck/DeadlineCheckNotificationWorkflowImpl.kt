@@ -55,7 +55,7 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
      * @param workflowSubscription The subscription containing workflow-related configuration such as data stream ID,
      * jurisdiction, email addresses, webhook URL, and notification type.
      */
-    override fun checkUploadAndNotify(
+    override fun checkUploadDeadlinesAndNotify(
         workflowSubscription: WorkflowSubscription
     ) {
         val dataStreamId = workflowSubscription.dataStreamIds.first()

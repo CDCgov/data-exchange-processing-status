@@ -11,7 +11,7 @@ import io.temporal.workflow.WorkflowMethod
 interface DeadlineCheckNotificationWorkflow {
 
     @WorkflowMethod
-    fun checkUploadAndNotify(
+    fun checkUploadDeadlinesAndNotify(
         workflowSubscription: WorkflowSubscription
     )
 }

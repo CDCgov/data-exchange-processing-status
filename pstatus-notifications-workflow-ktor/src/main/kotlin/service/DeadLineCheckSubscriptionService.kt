@@ -55,7 +55,7 @@ class DeadLineCheckSubscriptionService: KoinComponent {
         )
 
         val execution = WorkflowClient.start(
-            workflow::checkUploadAndNotify,
+            workflow::checkUploadDeadlinesAndNotify,
             subscription
         )
 
