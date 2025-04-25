@@ -3,8 +3,6 @@ name: pstatus-api-core
 services:
   graphql:
     image: quay.io/us-cdcgov/phdo/pstatus-graphql:latest
-    env_file:
-      - .env.local
     networks:
       - core-services
     ports:
@@ -36,8 +34,6 @@ services:
 
   report-sink:
     image: quay.io/us-cdcgov/phdo/pstatus-report-sink:latest
-    env_file:
-      - .env.local
     networks:
       - core-services
     ports:

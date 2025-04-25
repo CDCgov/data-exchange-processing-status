@@ -62,8 +62,6 @@ services:
   notifications-workflow:
     container_name: notifications-workflow
     image: quay.io/us-cdcgov/phdo/pstatus-notifications-workflow
-    env_file:
-      - .env.local
     networks:
       - temporal-network
       - core-services
@@ -88,8 +86,6 @@ services:
   notifications-rules-engine:
     container_name: notifications-rules-engine
     image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine
-    env_file:
-      - .env.local
     networks:
       - core-services
     ports:

@@ -196,7 +196,7 @@ The PS API Notifications services can be deployed along with the core services u
 
 #### Setup
 - Step 1: Configure Email (if needed)  
-    By default, the notifications will dispatch emails to the log only.  If you want to send emails via an SMTP, set the following environment variables in the `.env.local` file.  
+    By default, the notifications will dispatch emails to the log only.  If you want to send emails via an SMTP, set the following environment variables in a `.env` file.  
   - `EMAIL_PROTOCOL`: SMTP
   - `SMTP_HOST`: Hostname of the SMTP server
   - `SMTP_PORT`: Port number to use, typically 25
