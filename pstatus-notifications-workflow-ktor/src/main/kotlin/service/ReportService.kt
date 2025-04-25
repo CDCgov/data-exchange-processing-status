@@ -5,9 +5,6 @@ import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.Status
-import io.ktor.server.plugins.*
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Instant
