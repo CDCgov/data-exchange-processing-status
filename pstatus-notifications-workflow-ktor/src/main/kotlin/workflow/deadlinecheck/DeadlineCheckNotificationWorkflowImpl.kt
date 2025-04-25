@@ -6,6 +6,7 @@ import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
+import gov.cdc.ocio.processingnotifications.query.DeadlineCheckQuery
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscription
@@ -59,12 +60,13 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
         workflowSubscription: WorkflowSubscription
     ) {
         val dataStreamId = workflowSubscription.dataStreamIds.first()
+        val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
         val jurisdiction = workflowSubscription.jurisdictions.first()
         val emailAddresses = workflowSubscription.emailAddresses
 
         try {
             // Logic to check if the upload occurred*/
-            val uploadOccurred = checkUpload(dataStreamId, jurisdiction)
+            val uploadOccurred = performaDeadlineCheck(dataStreamId, dataStreamRoute)
             if (!uploadOccurred) {
                 when (workflowSubscription.notificationType) {
                     NotificationType.EMAIL -> emailAddresses?.let { activities.sendNotification(dataStreamId, jurisdiction, emailAddresses) }
@@ -99,39 +101,28 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
      * @param jurisdiction The jurisdiction associated with the data stream.
      * @return True if an upload is found within the specified time range, otherwise false.
      */
-    private fun checkUpload(dataStreamId: String, jurisdiction: String): Boolean {
-        /** Get today's date in UTC **/
-        val today = LocalDate.now(ZoneId.of("UTC"))
-        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
-        val reportsCollection = repository.reportsCollection
-        val collectionName = reportsCollection.collectionNameForQuery
-        val cVar = reportsCollection.collectionVariable
-        val cPrefix = reportsCollection.collectionVariablePrefix
+    private fun performaDeadlineCheck(dataStreamId: String, dataStreamRoute: String): Boolean {
 
-        val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
-        val dateEnd = today.atTime(12, 0, 0).atZone(ZoneOffset.UTC).format(formatter)
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
+        val query = DeadlineCheckQuery.Builder(repository)
+            .withDataStreamIds(listOf(dataStreamId))
+            .withDataStreamRoutes(listOf(dataStreamRoute))
+            .build()
 
-        val notificationQuery = """
-           SELECT ${cPrefix}id 
-           FROM $collectionName $cVar 
-           WHERE ${cPrefix}dataStreamId = '$dataStreamId' 
-               AND ${cPrefix}jurisdiction = '$jurisdiction' 
-               AND $timeRangeWhereClause 
-           """.trimIndent()
+        val sqlQuery = query.buildSql()
 
-        logger.info("notification Query: $notificationQuery")
+        logger.info("Deadline check query: $sqlQuery")
 
         return try {
             val results = repository.reportsCollection.queryItems(
-                notificationQuery,
+                sqlQuery,
                 CheckUploadResponse::class.java
             )
             logger.info("notification Query results: ${results.size}")
             results.isNotEmpty() // Returns true if there are results, false if none
         } catch (ex: Exception) {
-            logger.error("Error occurred while checking upload for $dataStreamId and $jurisdiction: ${ex.message}")
-            throw Exception("Error occurred in checking upload")
+            val error = "Error occurred while checking upload deadlines: ${ex.message}"
+            logger.error(error)
+            throw Exception(error)
         }
     }
 
