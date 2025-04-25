@@ -13,13 +13,12 @@ import java.time.LocalDate
  * @constructor
  */
 abstract class UtcTimeToRunReportQuery(
-    name: String,
     repository: ProcessingStatusRepository,
     dataStreamIds: List<String>,
     dataStreamRoutes: List<String>,
     jurisdictions: List<String>,
     val utcDateToRun: LocalDate
-): ReportQuery(name, repository, dataStreamIds, dataStreamRoutes, jurisdictions) {
+): ReportQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions) {
 
     open class Builder<T : Builder<T>>(
         repository: ProcessingStatusRepository

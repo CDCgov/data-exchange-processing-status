@@ -12,7 +12,6 @@ import java.time.LocalDate
  * @constructor
  */
 abstract class ReportQuery(
-    private val name: String,
     repository: ProcessingStatusRepository,
     private val dataStreamIds: List<String>,
     private val dataStreamRoutes: List<String>,
@@ -125,10 +124,10 @@ abstract class ReportQuery(
     protected fun<T> runQuery(classType: Class<T>?): List<T> {
         return runCatching {
             val query = buildSql()
-            logger.info("Executing query '$name'")
+            logger.info("Executing query '${javaClass.simpleName}'")
             return@runCatching collection.queryItems(query, classType)
         }.getOrElse {
-            logger.error("Error occurred while running query '$name': ${it.localizedMessage}")
+            logger.error("Error occurred while running query '${javaClass.simpleName}': ${it.localizedMessage}")
             throw it
         }
     }

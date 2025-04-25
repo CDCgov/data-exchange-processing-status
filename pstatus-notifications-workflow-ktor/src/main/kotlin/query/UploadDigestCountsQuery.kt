@@ -18,7 +18,7 @@ class UploadDigestCountsQuery private constructor(
     dataStreamRoutes: List<String>,
     jurisdictions: List<String>,
     utcDateToRun: LocalDate
-): UtcTimeToRunReportQuery("upload digest counts", repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
+): UtcTimeToRunReportQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
 
     class Builder(
         repository: ProcessingStatusRepository
