@@ -16,8 +16,8 @@ class UploadMetricsQuery private constructor(
     dataStreamIds: List<String>,
     dataStreamRoutes: List<String>,
     jurisdictions: List<String>,
-    private val utcDateToRun: LocalDate
-): ReportQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions) {
+    utcDateToRun: LocalDate
+): UtcTimeToRunReportQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
 
     class Builder(
         repository: ProcessingStatusRepository

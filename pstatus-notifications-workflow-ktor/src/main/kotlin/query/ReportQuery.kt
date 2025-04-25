@@ -73,19 +73,13 @@ abstract class ReportQuery(
     }
 
     /**
-     * Use this to append the where class that filters by the data stream ids, data stream routes, jurisdictions,
-     * and date provided.
+     * Constructs a SQL WHERE clause based on the provided input lists for dataStreamIds, dataStreamRoutes,
+     * and jurisdictions. Each non-empty list is converted into a comma-separated list enclosed in parentheses
+     * and combined into a WHERE clause using SQL "AND" conditions.
      *
-     * @param utcDateToRun LocalDate
-     * @return String
+     * @return A string representation of the SQL WHERE clause with the chosen query conditions.
      */
-    protected fun whereClause(
-        utcDateToRun: LocalDate
-    ): String {
-        val instantRange = InstantRange.fromLocalDate(utcDateToRun)
-        val startTime = timeFunc(instantRange.start.epochSecond)
-        val endTime = timeFunc(instantRange.endInclusive.epochSecond)
-
+    protected open fun whereClause(): String {
         val jurisdictionIdsList = listForQuery(jurisdictions)
         val dataStreamIdsList = listForQuery(dataStreamIds)
         val dataStreamRoutesList = listForQuery(dataStreamRoutes)
@@ -105,11 +99,6 @@ abstract class ReportQuery(
         if (jurisdictionIdsList.isNotEmpty())
             querySB.append("""
                 AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
-                """)
-
-        querySB.append("""
-                AND ${cPrefix}dexIngestDateTime >= $startTime
-                AND ${cPrefix}dexIngestDateTime < $endTime
                 """)
 
         return querySB.toString().trimIndent()
