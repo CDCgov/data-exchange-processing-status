@@ -1,16 +1,14 @@
 package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.DeadlineCheckQuery
+import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscription
-import io.temporal.activity.ActivityOptions
-import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -32,18 +30,7 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
 
     private val repository by inject<ProcessingStatusRepository>()
 
-    private val activities = Workflow.newActivityStub(
-        NotificationActivities::class.java,
-        ActivityOptions.newBuilder()
-            .setStartToCloseTimeout(Duration.ofSeconds(10)) // Set the start-to-close timeout
-            .setScheduleToCloseTimeout(Duration.ofMinutes(1)) // Set the schedule-to-close timeout
-            .setRetryOptions(
-                RetryOptions.newBuilder()
-                    .setMaximumAttempts(3) // Set retry options if needed
-                    .build()
-            )
-            .build()
-    )
+    private val activities = WorkflowActivity.newDefaultActivityStub()
 
     /**
      * The function invoked by the Temporal Workflow engine to check if an upload occurred within a specified time.

@@ -1,21 +1,18 @@
 package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
 import gov.cdc.ocio.database.models.StageAction
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.service.ReportService
+import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscription
-import io.temporal.activity.ActivityOptions
-import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
-import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
@@ -33,18 +30,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     private val logger = KotlinLogging.logger {}
     private val reportService = ReportService()
 
-    private val activities = Workflow.newActivityStub(
-        NotificationActivities::class.java,
-        ActivityOptions.newBuilder()
-            .setStartToCloseTimeout(Duration.ofSeconds(10)) // Set the start-to-close timeout
-            .setScheduleToCloseTimeout(Duration.ofMinutes(1)) // Set the schedule-to-close timeout
-            .setRetryOptions(
-                RetryOptions.newBuilder()
-                    .setMaximumAttempts(3) // Set retry options if needed
-                    .build()
-            )
-            .build()
-    )
+    private val activities = WorkflowActivity.newDefaultActivityStub()
 
     /**
      * The function which determines the digest counts and top errors during an upload and its frequency.
