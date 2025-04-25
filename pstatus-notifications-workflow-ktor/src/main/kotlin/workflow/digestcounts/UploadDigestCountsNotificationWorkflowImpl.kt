@@ -51,13 +51,12 @@ class UploadDigestCountsNotificationWorkflowImpl :
     )
 
     /**
-     * The main function which is used by temporal workflow engine for orchestrating the daily upload digest counts.
+     * Processes the daily upload digest based on the provided subscription details.
+     * This method retrieves and aggregates upload counts, metrics, and durations, formats the information,
+     * and sends notifications via email or webhook depending on the subscription's configuration.
      *
-     * @param numDaysAgoToRun Long
-     * @param dataStreamIds List<String>
-     * @param dataStreamRoutes List<String>
-     * @param jurisdictions List<String>
-     * @param emailAddresses List<String>
+     * @param subscription The subscription details, including data stream IDs, routes, jurisdictions,
+     * notification type, and other relevant configurations for processing the daily upload digest.
      */
     override fun processDailyUploadDigest(
         subscription: WorkflowSubscription
