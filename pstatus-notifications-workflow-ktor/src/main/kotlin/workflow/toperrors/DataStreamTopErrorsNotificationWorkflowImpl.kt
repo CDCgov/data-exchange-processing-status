@@ -18,11 +18,10 @@ import java.time.format.DateTimeFormatter
 
 
 /**
- * The implementation class which determines the digest counts and top errors during an upload and its frequency.
- *
- * @property logger KLogger
- * @property reportService ReportService
- * @property activities (NotificationActivities..NotificationActivities?)
+ * Implementation of the `DataStreamTopErrorsNotificationWorkflow` interface.
+ * This class manages the workflow for checking data stream errors and notifying the relevant parties
+ * through various notification mechanisms (e.g., email, webhook). It processes error types, tallies counts,
+ * and formats output for notification.
  */
 class DataStreamTopErrorsNotificationWorkflowImpl
     : DataStreamTopErrorsNotificationWorkflow {
@@ -35,11 +34,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     /**
      * The function which determines the digest counts and top errors during an upload and its frequency.
      *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param jurisdiction String
-     * @param cronSchedule String
-     * @param emailAddresses List<String>
+     * @param workflowSubscription WorkflowSubscription
      */
     override fun checkDataStreamTopErrorsAndNotify(
         workflowSubscription: WorkflowSubscription
