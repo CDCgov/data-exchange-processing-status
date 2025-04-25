@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingstatusnotifications.notifications
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.processingstatusnotifications.model.*
 import gov.cdc.ocio.types.model.WebhookNotification
-import jdk.jshell.spi.ExecutionControl.InternalException
 import mu.KotlinLogging
 
 
@@ -56,7 +55,7 @@ class SubscribeWebhookNotifications {
         )
 
         if (subscriptionResult.subscriptionId == null)
-            throw InternalException("Unable to setup the subscription")
+            throw InternalError("Unable to setup the subscription")
 
         return subscriptionResult
     }

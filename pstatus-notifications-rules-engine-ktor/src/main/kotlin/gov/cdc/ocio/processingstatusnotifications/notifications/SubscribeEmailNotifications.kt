@@ -4,7 +4,6 @@ import gov.cdc.ocio.processingstatusnotifications.model.EmailSubscription
 import gov.cdc.ocio.processingstatusnotifications.model.SubscriptionResult
 import gov.cdc.ocio.processingstatusnotifications.subscription.SubscriptionManager
 import gov.cdc.ocio.types.model.EmailNotification
-import jdk.jshell.spi.ExecutionControl.InternalException
 
 
 /**
@@ -54,7 +53,7 @@ class SubscribeEmailNotifications {
         )
 
         if (subscriptionResult.subscriptionId == null)
-            throw InternalException("Unable to setup the subscription")
+            throw InternalError("Unable to setup the subscription")
 
         return subscriptionResult
     }

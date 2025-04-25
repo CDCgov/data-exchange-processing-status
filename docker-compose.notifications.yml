@@ -78,19 +78,18 @@ services:
       SMTP_AUTH: ${SMTP_AUTH:-false}
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      TEMPORAL_SERVICE_TARGET: localhost:7233
-      TEMPORAL_NAMESPACE: psapi
+      TEMPORAL_SERVICE_TARGET: temporal:7233
     depends_on:
       - postgresql
       - temporal
 
   notifications-rules-engine:
     container_name: notifications-rules-engine
-    image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine:experimental
+    image: quay.io/us-cdcgov/phdo/pstatus-notifications-rules-engine
     networks:
       - core-services
     ports:
-      - "8110:8110"
+      - "8110:8080"
     environment:
       COUCHBASE_CONNECTION_STRING: couchbase://couchbase
       COUCHBASE_PASSWORD: password

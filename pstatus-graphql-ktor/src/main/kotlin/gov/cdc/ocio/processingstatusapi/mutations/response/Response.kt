@@ -7,7 +7,6 @@ import io.ktor.client.call.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.plugins.*
-import jdk.jshell.spi.ExecutionControl.InternalException
 import kotlinx.serialization.Serializable
 
 
@@ -36,7 +35,7 @@ object SubscriptionResponse {
                 HttpStatusCode.Forbidden -> ForbiddenException(error)
                 HttpStatusCode.Unauthorized -> Exception("Unauthorized: $error")
                 HttpStatusCode.NotFound -> NotFoundException(error)
-                HttpStatusCode.InternalServerError -> InternalException(error)
+                HttpStatusCode.InternalServerError -> Exception("Internal server error: $error")
                 else -> ResponseException(error)
             }
         }
