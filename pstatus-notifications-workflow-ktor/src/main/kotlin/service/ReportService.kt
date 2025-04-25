@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications.service
 import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
+import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.Status
 import io.ktor.server.plugins.*
 import org.joda.time.DateTime
@@ -118,37 +119,9 @@ class ReportService: KoinComponent {
      */
     private fun appendTimeRange(query: String, daysInterval: Int?): String {
         if (daysInterval != null) {
-            return "$query and ${buildSqlClauseForDaysInterval(daysInterval, cPrefix)}"
+            return "$query and ${SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
         }
 
         return query
-    }
-
-    /**
-     * Builds an SQL clause to filter records based on a number of days interval.
-     *
-     * This function constructs a partial SQL query to ensure that records within
-     * a certain number of days from the current date (up to the specified interval)
-     * are selected. If no interval is provided, an empty clause is returned.
-     *
-     * @param daysInterval The number of days to define the date range. If null, no filtering is applied.
-     * @param cPrefix The prefix to be used for SQL column reference (e.g., table alias).
-     * @return A string representing the SQL clause for the date range filter, or an empty string if no interval is provided.
-     * @throws NumberFormatException If an error occurs during date parsing.
-     * @throws BadRequestException If the provided inputs are deemed invalid.
-     */
-    @Throws(NumberFormatException::class, BadRequestException::class)
-    private fun buildSqlClauseForDaysInterval(daysInterval: Int?, cPrefix: String): String {
-        val timeRangeSqlPortion = StringBuilder()
-        if (daysInterval != null) {
-            val dateStartEpochSecs = DateTime
-                .now(DateTimeZone.UTC)
-                .minusDays(daysInterval)
-                .withTimeAtStartOfDay()
-                .toDate()
-                .time / 1000
-            timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= $dateStartEpochSecs")
-        }
-        return timeRangeSqlPortion.toString()
     }
 }
