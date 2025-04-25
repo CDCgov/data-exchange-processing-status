@@ -19,12 +19,13 @@ import java.time.format.DateTimeFormatter
 
 
 /**
- * The implementation class which determines the daily digest counts of the list of jurisdictions for the set data
- * stream id list.
+ * Implementation of the `UploadDigestCountsNotificationWorkflow` interface designed to process
+ * and dispatch daily upload digest notifications. The workflow aggregates upload counts,
+ * metrics, and durations, formatting the data for either email or webhook delivery based on the
+ * subscriber's configuration.
  *
- * @property repository ProcessingStatusRepository
- * @property logger logger
- * @property activities T
+ * This class leverages Temporal Workflow functionality to process complex asynchronous workflows
+ * and includes error handling to manage scenarios such as activity failures or data inconsistencies.
  */
 class UploadDigestCountsNotificationWorkflowImpl :
     UploadDigestCountsNotificationWorkflow, KoinComponent {
