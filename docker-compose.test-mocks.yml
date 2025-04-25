@@ -1,0 +1,15 @@
+name: pstatus-test-mocks
+
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    networks:
+      - temporal-network
+
+networks:
+  temporal-network:
+    external: true 
