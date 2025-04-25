@@ -11,7 +11,7 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  * The class which loads the schema files from the class path
  */
 class UnsupportedSchemaLoader(
-    schemaLoaderName: String
+    schemaLoaderName: String?
 ) : SchemaLoader {
 
     override fun loadSchemaFile(fileName: String): SchemaFile {
@@ -34,5 +34,16 @@ class UnsupportedSchemaLoader(
         throw UnsupportedOperationException()
     }
 
-    override var healthCheckSystem = HealthCheckUnsupportedSchemaLoaderSystem(schemaLoaderName) as HealthCheckSystem
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        throw UnsupportedOperationException()
+    }
+
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        throw UnsupportedOperationException()
+    }
+
+    override var healthCheckSystem = HealthCheckUnsupportedSchemaLoaderSystem(
+        system,
+        schemaLoaderName
+    ) as HealthCheckSystem
 }

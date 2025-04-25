@@ -59,14 +59,9 @@ class ReportDeadLetterLoader: KoinComponent {
         daysInterval: Int?
     ): List<ReportDeadLetter> {
 
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
-            daysInterval,
-            getFormattedDateAsString(startDate),
-            getFormattedDateAsString(endDate),
-            cPrefix
-        )
+
+        val timeRangeWhereClause =
+            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
 
         val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
                 "and ${cPrefix}dataStreamRoute = '$dataStreamRoute' " +
@@ -100,20 +95,18 @@ class ReportDeadLetterLoader: KoinComponent {
     ): Int {
 
         val logger = KotlinLogging.logger {}
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        formatter.timeZone = TimeZone.getTimeZone("UTC") // Set time zone if needed
 
         val timeRangeWhereClause =
             SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
 
-        val reportsSqlQuery = "select value count(1) from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
+        val reportsSqlQuery = "select value count(*) from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
                 "and $timeRangeWhereClause " + if (dataStreamRoute != null) " and ${cPrefix}dataStreamRoute= '$dataStreamRoute'" else ""
 
         val reportItems = reportsDeadLetterCollection.queryItems(
             reportsSqlQuery,
             Int::class.java
         )
-        val count = reportItems.count()
+        val count = if(reportItems.size == 1) reportItems[0] else 0
         logger.info("Count of records: $count")
         return count
     }

@@ -7,6 +7,7 @@ import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
 import gov.cdc.ocio.reportschemavalidator.models.SchemaLoaderInfo
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -30,13 +31,15 @@ class FileSchemaLoader(
      * @return [SchemaFile]
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
-        val file = java.io.File("$schemaLocalSystemFilePath/$fileName")
-        if (!file.exists()) {
-            throw FileNotFoundException("Report rejected: file - $fileName not found for content schema.")
-        }
+        val file = File("$schemaLocalSystemFilePath/$fileName")
+
+        val content = if (file.exists())
+            file.inputStream().readAllBytes().decodeToString()
+        else null
+
         return SchemaFile(
-            fileName = fileName,
-            content = file.inputStream().readAllBytes().decodeToString()
+            fileName,
+            content
         )
     }
 
@@ -73,7 +76,7 @@ class FileSchemaLoader(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaFilename: String): Map<String, Any> {
-        val file = java.io.File("$schemaLocalSystemFilePath/$schemaFilename")
+        val file = File("$schemaLocalSystemFilePath/$schemaFilename")
         file.inputStream().use { inputStream ->
             val jsonContent = inputStream.readAllBytes().decodeToString()
             return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)
@@ -88,8 +91,45 @@ class FileSchemaLoader(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
-        return getSchemaContent("$schemaName.$schemaVersion.schema.json")
+        return getSchemaContent(getFilename(schemaName, schemaVersion))
     }
 
-    override var healthCheckSystem = HealthCheckFileSystem() as HealthCheckSystem
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val file = File(getSchemaFilePathName(schemaFilename))
+        file.writeText(content)
+        return schemaFilename
+    }
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val file = File(getSchemaFilePathName(schemaFilename))
+        var fileDeleted = false
+        if (file.exists())
+            fileDeleted = file.delete()
+        if (!fileDeleted)
+            throw FileNotFoundException("Schema file not found or could not be deleted: "
+                + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+        return schemaFilename
+    }
+
+    private fun getSchemaFilePathName(schemaFilename: String) = "$schemaLocalSystemFilePath/$schemaFilename"
+
+    override var healthCheckSystem = HealthCheckFileSystem(system, schemaLocalSystemFilePath) as HealthCheckSystem
 }

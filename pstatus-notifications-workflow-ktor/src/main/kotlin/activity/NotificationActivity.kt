@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications.activity
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 
+
 /**
  * Interface which defines the activity methods
  */
@@ -12,21 +13,22 @@ interface NotificationActivities {
     fun sendNotification(
         dataStreamId: String,
         jurisdiction: String,
-        deliveryReference: String
-    )
-    @ActivityMethod
-    fun sendUploadErrorsNotification(
-        error:String,
-        deliveryReference: String
+        emailAddresses: List<String>
     )
     @ActivityMethod
     fun sendDataStreamTopErrorsNotification(
-        error:String,
-        deliveryReference: String
+        emailBody: String,
+        emailAddresses: List<String>
     )
 
     @ActivityMethod
     fun sendDigestEmail(
         emailBody: String,
-        deliveryReference: String)
+        emailAddresses: List<String>)
+
+    @ActivityMethod
+    fun sendEmail(emailAddresses: List<String>, subject: String, body: String)
+
+    @ActivityMethod
+    fun sendWebhook(url: String, body: Any)
 }

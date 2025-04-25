@@ -5,9 +5,9 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import gov.cdc.ocio.database.models.Report
-import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.adapters.OffsetDateTimeTypeAdapter
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.extensions.snakeToCamelCase
@@ -22,6 +22,8 @@ import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.reportschemavalidator.service.SchemaValidationService
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
+import gov.cdc.ocio.messagesystem.MessageSystem
+import gov.cdc.ocio.messagesystem.MessageProcessorConfig
 import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
@@ -38,8 +40,8 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(logger) }
-    val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(logger) }
+    val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator() }
+    val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor() }
     val logger: KLogger by lazy { KotlinLogging.logger {} }
 
     val gson: Gson by lazy {
@@ -76,6 +78,10 @@ class ReportMutationService: KoinComponent {
 
     private val schemaLoader by inject<SchemaLoader>()
 
+    private val messageSystem by inject<MessageSystem>()
+
+    private val messageProcessorConfig by inject<MessageProcessorConfig>()
+
     /**
      * Upsert a report based on the provided input and action.
      *
@@ -83,17 +89,17 @@ class ReportMutationService: KoinComponent {
      * It validates the input and generates a new ID if the action is "create" and no ID is provided.
      * If the action is "replace", it ensures that the report ID is provided and that the report exists.
      *
-     * @param input The ReportInput containing details of the report to be created or replaced.
+     * @param report The ReportInput containing details of the report to be created or replaced.
      * @param action A string specifying the action to perform: "create" or "replace".
      * @return The updated or newly created Report, or null if the operation fails.
      * @throws BadRequestException If the action is invalid or if the ID is improperly provided.
      * @throws ContentException If there is an error with the content format.
      */
     @Throws(BadRequestException::class, ContentException::class, Exception::class)
-    fun upsertReport(action: String, input: BasicHashMap<String, Any?>): UpsertReportResult {
+    fun upsertReport(action: String, report: BasicHashMap<String, Any?>): UpsertReportResult {
         val result = runCatching {
             // Convert to a standard hash map
-            val mapOfContent = input.toHashMap()
+            val mapOfContent = report.toHashMap()
 
             // Validate action
             val actionType = validateAction(action)
@@ -110,6 +116,13 @@ class ReportMutationService: KoinComponent {
             when (actionType) {
                 Action.CREATE -> reportManager.createReport(validatedReport)
                 Action.REPLACE -> reportManager.replaceReport(validatedReport)
+            }
+
+            // Forward the validated report if enabled
+            if (messageProcessorConfig.forwardValidatedReports) {
+                // The forwarded messages need to remain snake case for downstream processing.
+                val validatedSnakeCaseReportJson = gson.toJson(mapOfContent)
+                messageSystem.send(validatedSnakeCaseReportJson)
             }
 
             return UpsertReportResult(

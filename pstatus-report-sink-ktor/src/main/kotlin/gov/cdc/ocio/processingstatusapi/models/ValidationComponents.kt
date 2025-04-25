@@ -6,9 +6,8 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 
-import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.processingstatusapi.utils.SchemaValidation
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
 import gov.cdc.ocio.reportschemavalidator.errors.ErrorLoggerProcessor
 import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
@@ -22,8 +21,8 @@ import java.util.*
 object ValidationComponents {
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
     private val jsonUtils: DefaultJsonUtils by lazy { DefaultJsonUtils(objectMapper) }
-    private val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator(SchemaValidation.logger) }
-    private val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor(SchemaValidation.logger) }
+    private val schemaValidator: JsonSchemaValidator by lazy { JsonSchemaValidator() }
+    private val errorProcessor: ErrorLoggerProcessor by lazy { ErrorLoggerProcessor() }
     private val logger: KLogger by lazy { KotlinLogging.logger {} }
 
     private val gson: Gson by lazy {

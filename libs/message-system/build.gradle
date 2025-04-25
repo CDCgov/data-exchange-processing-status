@@ -1,0 +1,37 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
+}
+
+group = "gov.cdc.ocio"
+version = "0.0.1"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+
+    implementation "aws.sdk.kotlin:sqs:1.0.0"
+    implementation "software.amazon.awssdk:sts:2.29.34"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2"
+    implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
+    implementation "com.azure:azure-messaging-servicebus:7.15.0"
+    implementation "com.azure:azure-identity:1.8.0"
+    implementation "io.insert-koin:koin-core:3.5.6"
+    implementation "io.insert-koin:koin-ktor:3.5.6"
+    implementation "com.rabbitmq:amqp-client:5.21.0"
+    implementation "io.ktor:ktor-server-core-jvm"
+    implementation "io.insert-koin:koin-core:3.5.6"
+    implementation "io.insert-koin:koin-ktor:3.5.6"
+    implementation "com.google.code.gson:gson:2.10.1"
+
+    implementation project(':libs:commons-types')
+}
+
+test {
+    useJUnitPlatform()
+}
+kotlin {
+    jvmToolchain(17)
+}

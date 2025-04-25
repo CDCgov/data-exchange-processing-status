@@ -1,4 +1,4 @@
-# Public Health Data Observability (PHDO) Processing Status (PS) API
+# Public Health Data Operations (PHDO) Processing Status (PS) API
 
 **General disclaimer** This repository was created for use by CDC programs to collaborate on public health related
 projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by
@@ -19,7 +19,7 @@ of any one particular service, product, or enterprise.
 * [Code of Conduct](code-of-conduct.md)
 
 ## Overview
-The Public Health Data Observability (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
+The Public Health Data Operations (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
 It was developed to support public health Data Senders in their effort to share critical public health data with
 internal CDC Programs. Data Senders are CDC partners across the country, including:
 
@@ -190,6 +190,37 @@ query GetReports {
 Run this query and you should see an output that looks like this:
 ![PS API GraphiQL Get Reports](./resources/ps-api-graphiql-get-reports.png)
 
+
+### Notifications
+The PS API Notifications services can be deployed along with the core services using docker compose as well. In order to accomplish this you must have PS API already running which can be done by following the steps outlined in the [Docker Compose](#docker-compose) section. Once the core services are up and running successfully you can run the following to deploy the Notifications services:
+
+#### Setup
+- Step 1: Configure Email (if needed)  
+    By default, the notifications will dispatch emails to the log only.  If you want to send emails via an SMTP, set the following environment variables in a `.env` file.  
+  - `EMAIL_PROTOCOL`: SMTP
+  - `SMTP_HOST`: Hostname of the SMTP server
+  - `SMTP_PORT`: Port number to use, typically 25
+  - `SMTP_AUTH`: If true, then the `username` and `password` is used to authenticate with the SMTP server
+  - `SMTP_USERNAME`: Username used for SMTP server auth
+  - `SMTP_PASSWORD`: Password used for SMTP server auth
+
+- Step 2: Run docker compose with the notifications file specified to launch
+  ```shell
+  docker compose -f docker-compose.notifications.yml up –d
+  ```
+    You should see the following:
+    ```
+    [+] Running 6/6
+    ✔ Container temporal-postgresql                                     Started                                                                                                                0.8s 
+    ✔ Container temporal                                                Started                                                                                                                1.0s 
+    ✔ Container temporal-admin-tools                                    Started                                                                                                                1.5s 
+    ✔ Container temporal-ui                                             Started                                                                                                                1.7s 
+    ✔ Container pstatus-api-notifications-notifications-rules-engine-1  Started                                                                                                                2.2s 
+    ✔ Container notifications-workflow                                  Started
+  ```
+- Step 3: Verify that all services are running in Docker Desktop or by running `docker ps`.
+
+ 
 ### Next Steps
 Please continue to explore in GraphQL for all the types of queries and mutations that can be done.  GraphQL provides a
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.

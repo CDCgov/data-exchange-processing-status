@@ -7,7 +7,7 @@ buildscript {
     }
 }
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'io.ktor.plugin' version '2.3.11'
 }
 apply plugin: "java"
@@ -87,11 +87,19 @@ repositories {
 }
 
 jib {
-    to {
-        image = 'imagehub.cdc.gov:6989/dex/pstatus/event-reader-sink-service'
+    from {
         auth {
-            username = System.getenv("IMAGEHUB_USERNAME") ?: ""
-            password = System.getenv("IMAGEHUB_PASSWORD") ?: ""
+            username = System.getenv("DOCKERHUB_USERNAME") ?: ""
+            password = System.getenv("DOCKERHUB_TOKEN") ?: ""
+        }
+    }
+
+    to {
+        image = System.getenv("IMAGE") ?: ""
+        tags = [ System.getenv("IMAGE_TAG") ?: "latest" ]
+        auth {
+            username = System.getenv("USERNAME") ?: ""
+            password = System.getenv("PASSWORD") ?: ""
         }
     }
 }

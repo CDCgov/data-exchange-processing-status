@@ -1,14 +1,23 @@
 package gov.cdc.ocio.processingnotifications
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.notificationdispatchers.NotificationDispatcherKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
+import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
+import io.grpc.StatusRuntimeException
+import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.temporal.client.WorkflowServiceException
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -16,17 +25,25 @@ import org.koin.ktor.plugin.Koin
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
     val databaseModule = DatabaseKoinCreator.moduleFromAppEnv(environment)
-    val temporalConfigModule = module {
-        single {
-            val appConfig: ApplicationConfig = get()
-            TemporalConfig(temporalServiceTarget =
-                appConfig.property("temporal.temporal_service_target").getString())
+    val notificationDispatcherModule = NotificationDispatcherKoinCreator.moduleFromAppEnv(environment)
+    val temporalModule = module {
+        val serviceTarget = environment.config.tryGetString("temporal.service_target") ?: "localhost:7233"
+        val namespace = environment.config.tryGetString("temporal.namespace") ?: "default"
+        val temporalConfig = TemporalConfig(serviceTarget, namespace)
+        single(createdAtStart = true) {
+            WorkflowEngine(temporalConfig)
         }
     }
-    return modules(listOf(databaseModule, temporalConfigModule, module { single { environment.config } }))
+    return modules(listOf(databaseModule, notificationDispatcherModule, temporalModule))
 }
 
 fun main(args: Array<String>) {
+    // Set the JVM to headless mode. The primary purpose of this is to prevent XChart from spinning up a Java GUI app
+    // during any line of code that instantiates a chart. A chart never actually shows anything in the GUI app, but
+    // one is spun up. Nothing will happen server-side, but when running locally, such as on a Mac this line prevents
+    // the app from appearing. Note: XChart is what is used to display charts in the HTML based notification emails.
+    System.setProperty("java.awt.headless", "true")
+
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
 }
 
@@ -35,18 +52,42 @@ fun Application.module() {
         loadKoinModules(environment)
     }
     install(ContentNegotiation) {
-        jackson()
+        jackson {
+            registerModule(JavaTimeModule())
+
+            // Serialize OffsetDateTime as ISO-8601
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        }
+    }
+    install(StatusPages) {
+        // Map exceptions to HTTP status codes that will be returned
+        val exceptionToHttpStatusCode = mapOf<Class<out Throwable>, HttpStatusCode>(
+            IllegalArgumentException::class.java to HttpStatusCode.BadRequest,
+            StatusRuntimeException::class.java to HttpStatusCode.InternalServerError,
+            WorkflowServiceException::class.java to HttpStatusCode.BadRequest,
+            IllegalStateException::class.java to HttpStatusCode.InternalServerError,
+        )
+
+        // Intercept all exceptions that occur during routing and return them as bad request errors with the error
+        // message.
+        exception<Exception> { call, cause ->
+            // Check to see if there is an internal cause and provide that if so as those are typically more helpful
+            // than the outer cause.
+            val errorMessage = cause.cause?.message ?: cause.message
+            val httpStatusCode = exceptionToHttpStatusCode[cause.javaClass] ?: HttpStatusCode.InternalServerError
+            call.respond(httpStatusCode, mapOf("error" to errorMessage))
+        }
     }
     routing {
         subscribeDeadlineCheckRoute()
         unsubscribeDeadlineCheck()
-        subscribeUploadErrorsNotification()
-        unsubscribeUploadErrorsNotification()
         subscribeDataStreamTopErrorsNotification()
         unsubscribesDataStreamTopErrorsNotification()
         subscribeUploadDigestCountsRoute()
         unsubscribeUploadDigestCountsRoute()
+        getWorkflowsRoute()
         healthCheckRoute()
+        versionRoute()
     }
 
 }

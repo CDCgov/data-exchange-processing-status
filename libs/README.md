@@ -4,16 +4,16 @@ The processing status libraries are currently only intended for internal use wit
 Please see the readme in each of the subfolders for the details of each library.
 
 ## commons-database
-The `commons-database` library is an interface for interacting with cloud and local databases.  With a common database interface you can have high-level code that works for all the supported databases.  Supported databases include cosmosdb, dynamodb, mongodb, and couchbase.
+The `commons-database` library is an interface for interacting with cloud and local databases.  With a common database interface you can have high-level code that works for all the supported databases.  Supported databases include cosmosdb, dynamodb, and couchbase.
 
 ## commons-types
 The `commons-types` library is a collection of types including enumerations, models, and utility classes that are commonly shared by the processing status API services.
 
-## rules-engine _(coming soon)_
-The `rules-engine` library allows business rules to be dynamically defined to drive actions.  The intended purpose is for use in workflows to specify conditions for state determination.
+## message-system
+The `message-system` library provides a system for sending and receiving messages on a queue or topic.  Current implementations include RabbitMQ, AWS SNS/SQS, and Azure Service Bus.
 
 ## schema-validation 
 The `schema-validation` library is used for processing status report validations.  Each report has a schema associated with it that this library can be used to determine whether the report is valid or not and if not, the reasons why.
 
-## subscription-management 
-The `subscriptions-management` library is used for managing notification subscriptions.  Notification subscriptions are setup by end-users to get automatically notified when conditions are met through a variety of delivery mechanisms.  This library will provide the means to define and manage those subscriptions.
+## notifications-dispatcher
+The `notifications-dispatcher` library provides an interface for dispatching notifications for various systems, including emails and webhooks. 

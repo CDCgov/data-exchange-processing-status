@@ -10,7 +10,7 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  */
 interface SchemaStorageClient {
     @Throws(Exception::class)
-    fun getSchemaFile(fileName: String): String
+    fun getSchemaFile(fileName: String): String?
 
     fun getSchemaFiles(): List<ReportSchemaMetadata>
 
@@ -19,6 +19,12 @@ interface SchemaStorageClient {
     fun getSchemaContent(schemaFilename: String): Map<String, Any>
 
     fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any>
+
+    fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String
+
+    fun removeSchema(schemaName: String, schemaVersion: String): String
+
+    fun getFilename(schemaName: String, schemaVersion: String) = "$schemaName.$schemaVersion.schema.json"
 
     var healthCheckSystem: HealthCheckSystem
 }

@@ -7,6 +7,18 @@ package gov.cdc.ocio.database.persistence
 interface Collection {
 
     /**
+     * Get a specific item by its ID.
+     *
+     * @param id String
+     * @param classType Class<T>?
+     * @return T?
+     */
+    fun <T> getItem(
+        id: String,
+        classType: Class<T>?
+    ): T?
+
+    /**
      * Query for items in the collection
      *
      * @param query String?

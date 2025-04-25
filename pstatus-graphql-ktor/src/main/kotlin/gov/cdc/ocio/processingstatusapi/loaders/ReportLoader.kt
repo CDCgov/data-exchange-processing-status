@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
+import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
@@ -122,7 +123,7 @@ class ReportLoader: KoinComponent {
                     SortOrder.Descending -> "desc"
                     else -> "asc" // default
                 }
-//                reportsSqlQuery.append(" order by ${cPrefix}dexIngestTimestamp $sortOrderVal")
+                reportsSqlQuery.append(" order by ${cPrefix}timestamp $sortOrderVal")
             }
             null -> {
                 // nothing to sort by
@@ -171,7 +172,7 @@ class ReportLoader: KoinComponent {
         val firstReport = reports.firstOrNull()
         val stageInfo = lastReport?.stageInfo
         // Find the first report with service "upload" and action "upload-status"
-        val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.action == "upload-status" }
+        val uploadStatusReport = reports.firstOrNull { it.stageInfo?.service == "upload" && it.stageInfo?.action == StageAction.UPLOAD_STARTED }
         // Retrieve the value associated with "outerKey2" and cast it to LinkedHashMap
         val retrievedInnerMap: LinkedHashMap<*, *>? = uploadStatusReport?.content?.get("report") as? LinkedHashMap<*, *>?
         val fileName = retrievedInnerMap?.get("received_filename")

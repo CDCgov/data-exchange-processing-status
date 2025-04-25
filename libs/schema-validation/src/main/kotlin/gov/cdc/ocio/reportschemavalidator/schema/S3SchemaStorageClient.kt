@@ -8,15 +8,18 @@ import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
+import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
+import software.amazon.awssdk.services.s3.model.*
+import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.function.Consumer
+import java.nio.charset.StandardCharsets
 
 
 class S3SchemaStorageClient(
+    system: String,
     private val bucketName: String,
     private val region: String,
     private val roleArn: String?,
@@ -54,9 +57,9 @@ class S3SchemaStorageClient(
      * Get a schema file from the provided filename.
      *
      * @param fileName String
-     * @return String
+     * @return String?
      */
-    override fun getSchemaFile(fileName: String): String {
+    override fun getSchemaFile(fileName: String): String? {
         val s3Client = getS3Client()
 
         val getObjectRequest = GetObjectRequest.builder()
@@ -64,14 +67,20 @@ class S3SchemaStorageClient(
             .key(fileName)
             .build()
 
-        val result = s3Client
-            .getObject(getObjectRequest)
-            .readAllBytes()
-            .decodeToString()
-
+        val result = runCatching {
+            s3Client
+                .getObject(getObjectRequest)
+                .readAllBytes()
+                .decodeToString()
+        }
         s3Client.close()
-
-        return result
+        result.onFailure {
+            when (it) {
+                is NoSuchKeyException -> return null
+                else -> throw it // such as token expired
+            }
+        }
+        return result.getOrNull()
     }
 
     /**
@@ -151,8 +160,70 @@ class S3SchemaStorageClient(
      * @return [Map]<[String], [Any]>
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
-        return getSchemaContent("$schemaName.$schemaVersion.schema.json")
+        return getSchemaContent(getFilename(schemaName, schemaVersion))
     }
 
-    override var healthCheckSystem = HealthCheckS3Bucket(::getS3Client, bucketName) as HealthCheckSystem
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String): String {
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val s3Client = getS3Client()
+
+        val request = PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(schemaFilename)
+            .build()
+
+        s3Client.putObject(request, RequestBody.fromString(content, StandardCharsets.UTF_8))
+        s3Client.close()
+
+        return schemaFilename
+    }
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String): String {
+        val schemaFilename = getFilename(schemaName, schemaVersion)
+        val s3Client = getS3Client()
+
+        val result = runCatching {
+            val headObjectRequest = HeadObjectRequest.builder()
+                .bucket(bucketName)
+                .key(schemaFilename)
+                .build()
+
+            s3Client.headObject(headObjectRequest) // If no exception, object exists
+        }
+        result.onFailure {
+            when (it) {
+                is NoSuchKeyException -> throw FileNotFoundException("Schema file not found or could not be deleted: "
+                        + "$schemaFilename for schema: $schemaName, schemaVersion: $schemaVersion")
+                else -> throw it
+            }
+        }
+
+        val deleteObjectRequest = DeleteObjectRequest.builder()
+            .bucket(bucketName)
+            .key(schemaFilename)
+            .build()
+
+        s3Client.deleteObject(deleteObjectRequest)
+        s3Client.close()
+
+        return schemaFilename
+    }
+
+    override var healthCheckSystem = HealthCheckS3Bucket(system, ::getS3Client, bucketName) as HealthCheckSystem
 }

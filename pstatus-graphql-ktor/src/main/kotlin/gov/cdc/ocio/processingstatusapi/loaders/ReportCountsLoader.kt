@@ -127,13 +127,13 @@ class ReportCountsLoader: KoinComponent {
                     + "value count(1) "
                     + "from (select distinct ${cPrefix}uploadId from $cName $cVar "
                     + "where ${cPrefix}dataStreamId = '$dataStreamId' and "
-                    + "${cPrefix}dataStreamRoute = '$dataStreamRoute' ) "
+                    + "${cPrefix}dataStreamRoute = '$dataStreamRoute' "
         )
         if(timeRangeWhereClause.isNotEmpty()) {
-            uploadIdCountSqlQuery.append("(and $timeRangeWhereClause)as distinctUploads")
+            uploadIdCountSqlQuery.append("and $timeRangeWhereClause)as distinctUploads")
         }
         else{
-            uploadIdCountSqlQuery.append("as distinctUploads")
+            uploadIdCountSqlQuery.append(")as distinctUploads")
         }
 
         val uploadIdCountResult = reportsCollection.queryItems(
@@ -275,8 +275,10 @@ class ReportCountsLoader: KoinComponent {
                 "select "
                         + "value count(1) "
                         + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = 'upload' and ${cPrefix}content['offset'] = ${cPrefix}content.size and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "where ${cPrefix}content.content_schema_name = 'upload-completed' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
+                        + "and (${cPrefix}content['offset'] is null or ${cPrefix}content['offset']= ${cPrefix}content.size)"
+
                 )
 
         val completedUploadingCountResult = reportsCollection.queryItems(
@@ -289,8 +291,9 @@ class ReportCountsLoader: KoinComponent {
                 "select "
                         + "value count(1) "
                         + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = 'upload' and ${cPrefix}content['offset'] != ${cPrefix}content.size and "
-                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
+                        + "where ${cPrefix}content.content_schema_name = 'upload-started' and "
+                        + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
+                        + "and (${cPrefix}content['offset'] is null or ${cPrefix}content['offset']!= ${cPrefix}content.size)"
                 )
 
         val uploadingCountResult = reportsCollection.queryItems(
@@ -303,7 +306,7 @@ class ReportCountsLoader: KoinComponent {
                 "select "
                         + "value count(1) "
                         + "from $cName $cVar "
-                        + "where ${cPrefix}content.schema_name = 'dex-metadata-verify' and ${cPrefix}content.issues != null and "
+                        + "where ${cPrefix}content.content_schema_name = 'dex-metadata-verify' and ${cPrefix}content.issues != null and "
                         + "${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause"
                 )
 
@@ -350,7 +353,7 @@ class ReportCountsLoader: KoinComponent {
         val rollupCountsQuery = (
                 "select "
                         + "${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version, "
-                        + "count(${cPrefix}stageName) as counts, ${cPrefix}stageName "
+                        + "count(*) as counts, ${cPrefix}stageName "
                         + "from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' and "
                         + "${cPrefix}dataStreamRoute = '$dataStreamRoute' and $timeRangeWhereClause "
                         + "group by ${cPrefix}stageName, ${cPrefix}content.content_schema_name, ${cPrefix}content.content_schema_version"

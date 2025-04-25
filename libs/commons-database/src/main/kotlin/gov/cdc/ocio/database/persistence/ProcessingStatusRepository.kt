@@ -12,19 +12,17 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  *
  * @property reportsCollection [Collection]
  * @property reportsDeadLetterCollection [Collection]
- * @property subscriptionManagementCollection [Collection]
  * @property notificationSubscriptionsCollection [Collection]
  */
 abstract class ProcessingStatusRepository {
+
+    val system = "Database"
 
     // Common interface for the reports collection
     open lateinit var reportsCollection: Collection
 
     // Common interface for the reports deadletter collection
     open lateinit var reportsDeadLetterCollection: Collection
-
-    // Common interface for the subscription management collection
-    open lateinit var subscriptionManagementCollection: Collection
 
     // Common interface for the notification subscriptions collection
     open lateinit var notificationSubscriptionsCollection: Collection
@@ -47,5 +45,23 @@ abstract class ProcessingStatusRepository {
         val jsonMap: Map<String, Any> =
             gson.fromJson(Gson().toJson(content, MutableMap::class.java).toString(), typeObject)
         return jsonMap
+    }
+
+    /**
+     * Interface function for creating a collection from a NoSQL database.
+     *
+     * @param name String
+     */
+    open fun createCollection(name: String) {
+        throw NotImplementedError()
+    }
+
+    /**
+     * Interface function for deleting a collection from a NoSQL database.
+     *
+     * @param name String
+     */
+    open fun deleteCollection(name: String) {
+        throw NotImplementedError()
     }
 }

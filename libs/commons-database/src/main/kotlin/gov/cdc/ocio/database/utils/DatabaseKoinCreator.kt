@@ -7,8 +7,6 @@ import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.database.couchbase.CouchbaseConfiguration
 import gov.cdc.ocio.database.couchbase.CouchbaseRepository
 import gov.cdc.ocio.database.dynamo.DynamoRepository
-import gov.cdc.ocio.database.mongo.MongoConfiguration
-import gov.cdc.ocio.database.mongo.MongoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import io.ktor.server.application.*
 import io.ktor.server.config.*
@@ -32,20 +30,9 @@ object DatabaseKoinCreator {
         val logger = KotlinLogging.logger {}
 
         val databaseModule = module {
-            val database = environment.config.property("ktor.database").getString()
+            val database = environment.config.tryGetString("ktor.database")
 
-            when (database.lowercase()) {
-                DatabaseType.MONGO.value -> {
-                    val connectionString = environment.config.property("mongo.connection_string").getString()
-                    val databaseName = environment.config.property("mongo.database_name").getString()
-                    single<ProcessingStatusRepository>(createdAtStart = true) {
-                        MongoRepository(connectionString, databaseName)
-                    }
-
-                    //  Create a MongoDB config that can be dependency injected (for health checks)
-                    single { MongoConfiguration(connectionString, databaseName) }
-                }
-
+            when (database?.lowercase() ?: "") {
                 DatabaseType.COUCHBASE.value -> {
                     val connectionString = environment.config.property("couchbase.connection_string").getString()
                     val username = environment.config.property("couchbase.username").getString()
@@ -74,7 +61,7 @@ object DatabaseKoinCreator {
                     val roleArn = environment.config.tryGetString("aws.role_arn") ?: ""
                     val webIdentityTokenFile = environment.config.tryGetString("aws.web_identity_token_file")?: ""
                     single<ProcessingStatusRepository>(createdAtStart = true) {
-                        DynamoRepository(dynamoTablePrefix,roleArn,webIdentityTokenFile)
+                        DynamoRepository(dynamoTablePrefix, roleArn, webIdentityTokenFile)
                     }
                 }
 

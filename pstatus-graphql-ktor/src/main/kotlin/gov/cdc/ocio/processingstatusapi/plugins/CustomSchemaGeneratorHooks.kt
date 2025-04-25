@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import gov.cdc.ocio.processingstatusapi.collections.BasicHashMap
+import gov.cdc.ocio.types.health.HealthStatusType
 import graphql.GraphQLContext
 import graphql.execution.CoercedVariables
 import graphql.language.*
@@ -106,6 +107,25 @@ val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
     .name("BasicHashMap")
     .description("A basic hash map scalar")
     .coercing(object : Coercing<BasicHashMap<String, Any?>, JsonNode> {
+
+        /**
+         * Coerces an [Any] input to a [BasicHashMap].
+         *
+         * @param input Any
+         * @return BasicHashMap<String, Any?>
+         */
+        @Deprecated("Deprecated in Java")
+        override fun parseValue(input: Any): BasicHashMap<String, Any?> {
+            return when (input) {
+                is LinkedHashMap<*, *> -> {
+                    val hashMap = BasicHashMap<String, Any?>()
+                    input.forEach { hashMap.put(it.key as String, it.value) }
+                    hashMap
+                }
+                else -> throw CoercingParseValueException("Expected a LinkedHashMap<*, *>")
+            }
+        }
+
         /**
          * Coerces a [Value] generic to a [BasicHashMap].
          *
@@ -121,10 +141,9 @@ val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
             graphQLContext: GraphQLContext,
             locale: Locale
         ): BasicHashMap<String, Any?> {
-            if (input is ObjectValue) {
-                return objectValueToHashMap(input)
-            } else {
-                throw CoercingParseLiteralException("Expected an ObjectValue")
+            return when (input) {
+                is ObjectValue -> objectValueToHashMap(input)
+                else -> throw CoercingParseLiteralException("Expected an ObjectValue")
             }
         }
     })
@@ -136,6 +155,29 @@ val basicHashMapScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
 val graphqlLongClassType: GraphQLScalarType = GraphQLScalarType.newScalar()
     .name("Long")
     .coercing(ExtendedScalars.GraphQLLong.coercing)
+    .build()
+
+/**
+ * Define a GraphQL scalar for the HealthStatus type.
+ */
+val healthStatusTypeScalar: GraphQLScalarType = GraphQLScalarType.newScalar()
+    .name("HealthStatusType")
+    .coercing(object : Coercing<HealthStatusType, String> {
+        /**
+         * Serialize implementation of the [HealthStatusType] scalar.
+         *
+         * @param dataFetcherResult Any
+         * @param graphQLContext GraphQLContext
+         * @param locale Locale
+         * @return String
+         */
+        override fun serialize(dataFetcherResult: Any, graphQLContext: GraphQLContext, locale: Locale): String {
+            if (dataFetcherResult is HealthStatusType)
+                return dataFetcherResult.value
+            else
+                throw CoercingSerializeException("Expected a HealthStatusType")
+        }
+    })
     .build()
 
 /**
@@ -154,6 +196,7 @@ class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
         Long::class -> graphqlLongClassType
         Map::class -> ExtendedScalars.Json
         BasicHashMap::class -> basicHashMapScalar
+        HealthStatusType::class -> healthStatusTypeScalar
         else -> null
     }
 

@@ -61,6 +61,26 @@ class CloudSchemaLoader(
      */
     override fun getSchemaContent(schemaName: String, schemaVersion: String) = storageClient.getSchemaContent(schemaName, schemaVersion)
 
+    /**
+     * Upserts a report schema -- if it does not exist it is added, otherwise the schema is replaced.  The schema is
+     * validated before it is allowed to be upserted.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @param content [String]
+     * @return [String] - filename of the upserted report schema
+     */
+    override fun upsertSchema(schemaName: String, schemaVersion: String, content: String) = storageClient.upsertSchema(schemaName, schemaVersion, content)
+
+    /**
+     * Removes the schema file associated with the name and version provided.
+     *
+     * @param schemaName [String]
+     * @param schemaVersion [String]
+     * @return [String] - filename of the removed report schema
+     */
+    override fun removeSchema(schemaName: String, schemaVersion: String) = storageClient.removeSchema(schemaName, schemaVersion)
+
     override var healthCheckSystem = storageClient.healthCheckSystem
 
     /**
@@ -74,12 +94,12 @@ class CloudSchemaLoader(
                 val region = config["REPORT_SCHEMA_S3_REGION"] ?: "us-east-1"
                 val roleArn = config["AWS_ROLE_ARN"] ?: ""
                 val webIdentityTokenFile = config["AWS_WEB_IDENTITY_TOKEN_FILE"]
-                S3SchemaStorageClient(bucketName, region, roleArn, webIdentityTokenFile)
+                S3SchemaStorageClient(system, bucketName, region, roleArn, webIdentityTokenFile)
             }
             "blob_storage" -> {
                 val connectionString = config["REPORT_SCHEMA_BLOB_CONNECTION_STR"] ?: throw IllegalArgumentException("Blob connection string not configured")
                 val containerName = config["REPORT_SCHEMA_BLOB_CONTAINER"] ?: "default-container"
-                BlobStorageSchemaClient(connectionString, containerName)
+                BlobStorageSchemaClient(system, connectionString, containerName)
             }
             else -> throw IllegalArgumentException("Unsupported storage type: $storageType")
         }

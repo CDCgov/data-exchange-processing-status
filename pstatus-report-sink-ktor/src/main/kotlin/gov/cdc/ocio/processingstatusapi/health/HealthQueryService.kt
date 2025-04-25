@@ -1,11 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.health
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingstatusapi.messagesystems.MessageSystem
+import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.reportschemavalidator.loaders.SchemaLoader
 import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
+import gov.cdc.ocio.types.utils.TimeUtils
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -71,7 +72,7 @@ class HealthQueryService: KoinComponent {
             )
                 HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN
 
-            totalChecksDuration = formatMillisToHMS(totalTime)
+            totalChecksDuration = TimeUtils.formatMillisToHMS(totalTime)
 
             dependencyHealthChecks.add(databaseHealth)
             dependencyHealthChecks.add(messageSystemHealth)
@@ -79,19 +80,4 @@ class HealthQueryService: KoinComponent {
         }
     }
 
-    /**
-     * Format the time in milliseconds to 00:00:00.000 format.
-     *
-     * @param millis Long
-     * @return String
-     */
-    private fun formatMillisToHMS(millis: Long): String {
-        val seconds = millis / 1000
-        val hours = seconds / 3600
-        val minutes = (seconds % 3600) / 60
-        val remainingSeconds = seconds % 60
-        val remainingMillis = millis % 1000
-
-        return "%02d:%02d:%02d.%03d".format(hours, minutes, remainingSeconds, remainingMillis / 10)
-    }
 }

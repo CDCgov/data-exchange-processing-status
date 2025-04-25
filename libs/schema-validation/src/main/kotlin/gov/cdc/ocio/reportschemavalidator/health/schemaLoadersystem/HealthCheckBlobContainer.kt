@@ -11,8 +11,9 @@ import gov.cdc.ocio.types.health.HealthStatusType
  * Concrete implementation of the blob container health checks.
  */
 class HealthCheckBlobContainer(
+    system: String,
     private val blobContainerClient: BlobContainerClient
-) : HealthCheckSystem("blob_storage") {
+) : HealthCheckSystem(system, "blob_storage") {
 
     /**
      * Checks and sets blob container accessible status
@@ -24,9 +25,9 @@ class HealthCheckBlobContainer(
         result.onFailure { error ->
             val reason = "Blob container is not accessible and hence not healthy ${error.localizedMessage}"
             logger.error(reason)
-            return HealthCheckResult(service, HealthStatusType.STATUS_DOWN, reason)
+            return HealthCheckResult(system, service, HealthStatusType.STATUS_DOWN, reason)
         }
-        return HealthCheckResult(service, HealthStatusType.STATUS_UP)
+        return HealthCheckResult(system, service, HealthStatusType.STATUS_UP)
     }
 
     /**

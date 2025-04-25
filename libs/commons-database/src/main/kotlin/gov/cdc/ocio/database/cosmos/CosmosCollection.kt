@@ -6,17 +6,17 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import gov.cdc.ocio.database.persistence.Collection
-import gov.cdc.ocio.database.utils.EpochToInstantConverter
+import gov.cdc.ocio.types.adapters.EpochToInstantConverter
 import io.netty.handler.codec.http.HttpResponseStatus
 import mu.KotlinLogging
 import java.time.Instant
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 
+
 /**
  * Cosmos Collection implementation.
  *
- * @param containerName[String] Name of the container used for this collection.
  * @property cosmosContainer[CosmosContainer] Cosmos container associated with this collection.
  * @constructor Creates a couchbase collection for use with the [Collection] interface.
  *
@@ -24,11 +24,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
  * @see [Collection]
  */
 class CosmosCollection(
-    containerName: String,
     private val cosmosContainer: CosmosContainer?
 ) : Collection {
 
     private val logger = KotlinLogging.logger {}
+
     // Create a custom ObjectMapper with the InstantToOffsetDateTimeConverter registered
     private fun createObjectMapper(): ObjectMapper {
         val module = SimpleModule().apply {
@@ -43,7 +43,26 @@ class CosmosCollection(
     // This will hold your ObjectMapper
     private val objectMapper: ObjectMapper = createObjectMapper()
 
-
+    /**
+     * Get a specific item by its ID.
+     *
+     * @param id String
+     * @param classType Class<T>?
+     * @return T?
+     */
+    override fun <T> getItem(id: String, classType: Class<T>?): T? {
+        val response = cosmosContainer?.readItem(
+            id, PartitionKey(id),
+            classType
+        )
+        return try {
+            objectMapper.convertValue(response?.item, classType)
+        }
+        catch (e:Exception){
+            logger.error { e.message }
+            null
+        }
+    }
 
     /**
      * Execute the provided query and return the results as POJOs.
@@ -58,12 +77,12 @@ class CosmosCollection(
             classType
         )
         try {
-            val response =items?.map {
+            val response = items?.map {
                 objectMapper.convertValue(it, classType)
             } ?: listOf()
             return  response
         }
-        catch (e:Exception){
+        catch (e:Exception) {
             logger.error { e.message }
         }
        return items?.toList() ?: listOf()
@@ -147,9 +166,6 @@ class CosmosCollection(
         )
         return response != null
     }
-
-
-
 
     /**
      * The function which calculates the interval after which the retry should occur

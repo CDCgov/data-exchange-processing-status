@@ -1,19 +1,31 @@
-name: pstatus-api
+name: pstatus-api-core
 
 services:
   graphql:
     image: quay.io/us-cdcgov/phdo/pstatus-graphql:latest
+    networks:
+      - core-services
     ports:
       - "127.0.0.1:8090:8080" # GraphQL listener port
     environment:
       SECURITY_ENABLED: false
+      MSG_SYSTEM: "rabbitmq"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VALIDATED_REPORT_QUEUE_NAME: "ValidatedReportQueue"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_VIRTUAL_HOST: "/"
+      FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
       DATABASE: "couchbase"
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
       COUCHBASE_USERNAME: "admin"
       COUCHBASE_PASSWORD: "password"
-      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
       REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+      PSTATUS_RULES_ENGINE_NOTIFICATIONS_BASE_URL: "http://notifications-rules-engine:8080"
+      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: "http://notifications-workflow:8080"
+      SCHEMA_ADMIN_SECRET_TOKEN: "${SCHEMA_ADMIN_SECRET_TOKEN:-LET_ME_IN_PLS_THANKS}"
     depends_on:
       - couchbase
     restart: "always"
@@ -22,6 +34,8 @@ services:
 
   report-sink:
     image: quay.io/us-cdcgov/phdo/pstatus-report-sink:latest
+    networks:
+      - core-services
     ports:
       - "127.0.0.1:${SINK_PORT:-8080}:8080" # Rest API listener port
     environment:
@@ -34,10 +48,12 @@ services:
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: 5672
       RABBITMQ_REPORT_QUEUE_NAME: "PSAPIQueue"
+      RABBITMQ_VALIDATED_REPORT_QUEUE_NAME: "ValidatedReportQueue"
       RABBITMQ_ROUTING_KEY: "psapi1234"
       RABBITMQ_USERNAME: "guest"
       RABBITMQ_PASSWORD: "guest"
       RABBITMQ_VIRTUAL_HOST: "/"
+      FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
       REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
     depends_on:
@@ -49,6 +65,8 @@ services:
 
   couchbase:
     image: couchbase
+    networks:
+      - core-services
     ports:
       - "8091-8096:8091-8096"
       - "11210-11211:11210-11211"
@@ -62,6 +80,8 @@ services:
 
   couchbase-setup:
     image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
+    networks:
+      - core-services
     depends_on:
       - couchbase
     restart: "no"
@@ -71,6 +91,8 @@ services:
 
   rabbitmq:
     image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+    networks:
+      - core-services
     ports:
       - "5672:5672" # AMQP protocol port
       - "15672:15672" # Management UI port
@@ -86,5 +108,6 @@ volumes:
     external: false
 
 networks:
-  default:
+  core-services:
     driver: bridge
+    name: core-services

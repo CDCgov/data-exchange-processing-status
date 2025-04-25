@@ -12,8 +12,8 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
  * @constructor
  */
 class UnsupportedRepository(
-    databaseName: String
+    databaseName: String?
 ) : ProcessingStatusRepository() {
 
-    override var healthCheckSystem = HealthCheckUnsupportedDb(databaseName) as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckUnsupportedDb(system, databaseName) as HealthCheckSystem
 }

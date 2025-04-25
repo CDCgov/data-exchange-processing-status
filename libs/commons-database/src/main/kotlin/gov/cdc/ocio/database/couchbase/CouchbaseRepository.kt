@@ -1,11 +1,17 @@
 package gov.cdc.ocio.database.couchbase
 
+import com.couchbase.client.core.error.CollectionExistsException
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.Scope
+import com.couchbase.client.java.manager.collection.CollectionSpec
+import com.couchbase.client.java.manager.collection.CreateCollectionSettings
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.model.Notification
+import mu.KotlinLogging
 import java.time.Duration
 
 
@@ -44,6 +50,8 @@ class CouchbaseRepository(
     notificationSubscriptionsCollectionName: String = "NotificationSubscriptions"
 ) : ProcessingStatusRepository() {
 
+    private val logger = KotlinLogging.logger {}
+
     // Connect without customizing the cluster environment
     private var cluster = Cluster.connect(connectionString, username, password)
 
@@ -58,7 +66,12 @@ class CouchbaseRepository(
     private val notificationSubscriptionsCouchbaseCollection: com.couchbase.client.java.Collection
 
     init {
-        processingStatusBucket.waitUntilReady(Duration.ofSeconds(10))
+        val result = runCatching {
+            processingStatusBucket.waitUntilReady(Duration.ofSeconds(10))
+        }
+        result.onFailure {
+            logger.error("Failed to establish an initial connection to Couchbase!")
+        }
 
         scope = processingStatusBucket.scope(scopeName)
 
@@ -85,10 +98,25 @@ class CouchbaseRepository(
 
     override var notificationSubscriptionsCollection =
         CouchbaseCollection(
-            reportsDeadLetterCollectionName,
+            notificationSubscriptionsCollectionName,
             scope,
-            notificationSubscriptionsCouchbaseCollection
+            notificationSubscriptionsCouchbaseCollection,
+            typeAdapters = mapOf(Notification::class.java to NotificationTypeAdapter())
         ) as Collection
 
-    override var healthCheckSystem = HealthCheckCouchbaseDb() as HealthCheckSystem
+    override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
+
+    override fun createCollection(name: String) {
+        val cm = processingStatusBucket.collections()
+        try {
+            cm.createCollection("data", name, CreateCollectionSettings.createCollectionSettings())
+        } catch (e: CollectionExistsException) {
+            logger.warn("collection $name already exists")
+        }
+    }
+
+    override fun deleteCollection(name: String) {
+        val cm = processingStatusBucket.collections()
+        cm.dropCollection("data", name)
+    }
 }

@@ -1,20 +1,24 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.cache.InMemoryCacheService
-import gov.cdc.ocio.processingnotifications.model.WorkflowSubscriptionResult
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
+import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import mu.KotlinLogging
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
 
 /**
  * The main class which unsubscribes the workflow execution
- * for upload errors
- * @property cacheService IMemoryCacheService
+ * for upload errors.
+ *
+ * @property logger KLogger
  * @property workflowEngine WorkflowEngine
  */
-class DeadLineCheckUnSubscriptionService {
+class DeadLineCheckUnSubscriptionService : KoinComponent {
+
     private val logger = KotlinLogging.logger {}
-    private val cacheService: InMemoryCacheService = InMemoryCacheService()
-    private val workflowEngine: WorkflowEngine = WorkflowEngine()
+
+    private val workflowEngine by inject<WorkflowEngine>()
 
     /**
      * The main method which cancels the workflow based on the workflow Id
@@ -25,7 +29,12 @@ class DeadLineCheckUnSubscriptionService {
             WorkflowSubscriptionResult {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
-            return cacheService.updateDeadlineCheckUnSubscriptionPreferences(subscriptionId)
+            return WorkflowSubscriptionResult(
+                subscriptionId = subscriptionId,
+                message = "",
+                emailAddresses = listOf(),
+                webhookUrl = ""
+            )
         }
         catch (e:Exception){
             logger.error("Error occurred while unsubscribing and canceling the workflow for upload deadline with workflowId $subscriptionId: ${e.message}")

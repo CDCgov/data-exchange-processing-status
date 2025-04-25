@@ -3,12 +3,15 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
+import com.couchbase.client.java.query.QueryOptions
+import com.couchbase.client.java.query.QueryScanConsistency
 import com.google.gson.*
-import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.adapters.OffsetDateTimeTypeAdapter
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.lang.reflect.Type
 import java.util.*
 
 
@@ -26,15 +29,44 @@ import java.util.*
 class CouchbaseCollection(
     collectionName: String,
     private val couchbaseScope: Scope,
-    private val couchbaseCollection: com.couchbase.client.java.Collection
+    private val couchbaseCollection: com.couchbase.client.java.Collection,
+    private val typeAdapters: Map<Type, Any> = emptyMap()
 ): Collection {
 
-    private val gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
-        .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-        .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
-        .create()
+    private val gson = createGson()
+
+    private fun createGson(): Gson {
+        val builder = GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
+
+        typeAdapters.forEach { (type, adapter) ->
+            builder.registerTypeAdapter(type, adapter)
+        }
+        return builder.create()
+    }
+
+    /**
+     * Get a specific item by its ID.
+     *
+     * @param id String
+     * @param classType Class<T>?
+     * @return T?
+     */
+    override fun <T> getItem(id: String, classType: Class<T>?): T? {
+        val result = couchbaseCollection.get(id)
+        return when (classType) {
+            String::class.java, Float::class.java, Int::class.java, Long::class.java, Boolean::class.java -> {
+                result.contentAs(classType)
+            }
+            // Handle all others as JSON objects
+            else -> {
+                jsonObjectToType(result.contentAsObject(), classType)
+            }
+        }
+    }
 
     /**
      * Execute the provided query and return the results as POJOs.
@@ -44,27 +76,43 @@ class CouchbaseCollection(
      * @return List<T>
      */
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
-        val result = couchbaseScope.query(query)
+        val queryResult = couchbaseScope.query(query, QueryOptions.queryOptions().scanConsistency(QueryScanConsistency.REQUEST_PLUS))
         val results = mutableListOf<T>()
         when (classType) {
             // Handle primitive types
-            String::class.java, Float::class.java, Int::class.java, Long::class.java, Boolean::class.java -> {
-                results.addAll(result.rowsAs(classType))
+            String::class.java, Boolean::class.java -> {
+                results.addAll(queryResult.rowsAs(classType))
+            }
+            Int::class.java, Long::class.java, Float::class.java, Array<Int>::class.java, Array<Long>::class.java, Array<Float>::class.java -> {
+                val expectedResult = queryResult.rowsAs(classType)[0]
+                results.add(expectedResult as T)
             }
             // Handle all others as JSON objects
             else -> {
-                val jsonObjects = result.rowsAsObject()
-                jsonObjects.forEach {
-                    // Couchbase items are received as an array, but within each array element is a field with the content.
-                    // The content field name will match that of the collection name.
-                    val collectionName = it.names.first()
-                    val item = if (collectionName.equals(collectionVariable)) it.get(collectionName) else it
-                    val obj = gson.fromJson(item.toString(), classType)
-                    results.add(obj)
-                }
+                val jsonObjects = queryResult.rowsAsObject()
+                results.addAll(jsonObjects.map {
+                    jsonObjectToType(it, classType)
+                })
             }
         }
         return results
+    }
+
+    /**
+     * Converts a [JsonObject] to the class type provided.
+     *
+     * @param jsonObject JsonObject
+     * @param classType Class<T>?
+     * @return T
+     * @throws JsonSyntaxException
+     */
+    @Throws(JsonSyntaxException::class)
+    private fun <T> jsonObjectToType(jsonObject: JsonObject, classType: Class<T>?): T {
+        // Couchbase items are received as an array, but within each array element is a field with the content.
+        // The content field name will match that of the collection name.
+        val collectionName = jsonObject.names.first()
+        val item = if (collectionName.equals(collectionVariable)) jsonObject.get(collectionName) else jsonObject
+        return gson.fromJson(item.toString(), classType)
     }
 
     /**
@@ -92,8 +140,9 @@ class CouchbaseCollection(
      * @return Boolean
      */
     override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
-        val removeResult = couchbaseCollection.remove(itemId)
-        return removeResult != null
+        return runCatching {
+            couchbaseCollection.remove(itemId)
+        }.isSuccess
     }
 
     override val collectionVariable = "r"
@@ -108,4 +157,7 @@ class CouchbaseCollection(
 
     override val collectionElementForQuery = { name: String -> name }
 
+    // converting seconds to millis as couchbase stores epochs in millis.
+    override val timeConversionForQuery: (Long) -> String
+        get() = { timeEpoch: Long -> (timeEpoch * 1000).toString() }
 }

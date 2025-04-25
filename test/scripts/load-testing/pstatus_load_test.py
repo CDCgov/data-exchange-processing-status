@@ -1,6 +1,7 @@
+import random
 import asyncio
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import pika
 import boto3
 from azure.servicebus.aio import ServiceBusClient
@@ -11,7 +12,6 @@ from config import load_config
 from pika.exceptions import (
     ChannelClosedByBroker
 )
-
 
 ############################################################################################
 # -- INSTRUCTIONS --
@@ -284,17 +284,33 @@ class AzureSystem(MessageSystem):
             raise
 
 
-async def simulate(message_system: MessageSystem, upload_id: str, dex_ingest_datetime: str):
+def random_datetime_in_future(relative_datetime):
+    random_milliseconds = random.randint(100, 3000)
+    # Generate a future datetime
+    future_datetime = relative_datetime + timedelta(milliseconds=random_milliseconds)
+    # print(f'random_datetime_in_future: relative_datetime: {relative_datetime}, future_datetime: {future_datetime}')
+    return future_datetime
+
+async def simulate(message_system: MessageSystem):
+    # Generate upload ID and timestamp
+    upload_id = str(uuid.uuid4())
+    start_datetime = datetime.now(timezone.utc)
+    dex_ingest_datetime = start_datetime.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    print(f"Upload ID = {upload_id}")
+
     print("Sending simulated reports...")
 
     # Send metadata verify
     print("Sending METADATA-VERIFY report...")
-    message = reports.create_metadata_verify(upload_id, dex_ingest_datetime)
+    end_datetime = random_datetime_in_future(start_datetime)
+    message = reports.create_metadata_verify(upload_id, dex_ingest_datetime, start_datetime, end_datetime)
     await message_system.send_message(message)
 
     # Send upload started
     print("Sending UPLOAD-STARTED report...")
-    message = reports.create_upload_started(upload_id, dex_ingest_datetime)
+    start_datetime = end_datetime
+    end_datetime = random_datetime_in_future(start_datetime)
+    message = reports.create_upload_started(upload_id, dex_ingest_datetime, start_datetime, end_datetime)
     await message_system.send_message(message)
 
     # Send upload status messages
@@ -303,18 +319,24 @@ async def simulate(message_system: MessageSystem, upload_id: str, dex_ingest_dat
     for index in range(num_chunks):
         offset = int((index + 1) * size / num_chunks)
         print(f"Sending UPLOAD-STATUS ({offset} of {size} bytes) report...")
-        message = reports.create_upload_status(upload_id, dex_ingest_datetime, offset, size)
+        start_datetime = end_datetime
+        end_datetime = random_datetime_in_future(start_datetime)
+        message = reports.create_upload_status(upload_id, dex_ingest_datetime, start_datetime, end_datetime, offset, size)
         await message_system.send_message(message)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
     # Send upload completed
     print("Sending UPLOAD-COMPLETED report...")
-    message = reports.create_upload_completed(upload_id, dex_ingest_datetime)
+    start_datetime = end_datetime
+    end_datetime = random_datetime_in_future(start_datetime)
+    message = reports.create_upload_completed(upload_id, dex_ingest_datetime, start_datetime, end_datetime)
     await message_system.send_message(message)
 
     # Send routing message
     print("Sending UPLOAD-ROUTED report...")
-    message = reports.create_routing(upload_id, dex_ingest_datetime)
+    start_datetime = end_datetime
+    end_datetime = random_datetime_in_future(start_datetime)
+    message = reports.create_routing(upload_id, dex_ingest_datetime, start_datetime, end_datetime)
     await message_system.send_message(message)
 
 
@@ -339,14 +361,10 @@ async def run():
         # Initialize the message system
         await message_system.initialize()
 
-        # Generate upload ID and timestamp
-        upload_id = str(uuid.uuid4())
-        dex_ingest_datetime = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-        print(f"Upload ID = {upload_id}")
         print(f"Using message system: {system_type}")
 
         # Run simulation
-        await simulate(message_system, upload_id, dex_ingest_datetime)
+        await simulate(message_system)
 
     finally:
         if message_system:
