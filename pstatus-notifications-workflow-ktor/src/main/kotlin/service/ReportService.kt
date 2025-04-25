@@ -3,11 +3,14 @@ package gov.cdc.ocio.processingnotifications.service
 import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
-import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
-import mu.KotlinLogging
+import gov.cdc.ocio.types.model.Status
+import io.ktor.server.plugins.*
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Instant
+
 
 /**
  * Singleton class for a service layer between the middleware and repository layers.
@@ -38,7 +41,7 @@ class ReportService: KoinComponent {
      */
     fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: StageAction, daysInterval: Int?): Int {
         val query = "select value count(1) from $cName $cVar " +
-                "where ${cPrefix}stageInfo.${cElFunc("status")} = 'FAILURE' " +
+                "where ${cPrefix}stageInfo.${cElFunc("status")} = '${Status.FAILURE}' " +
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '$action' " +
                 "and dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute'"
@@ -57,7 +60,7 @@ class ReportService: KoinComponent {
         val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-started' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsStarted = repository.reportsCollection.queryItems(appendTimeRange(uploadsStartedQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -67,7 +70,7 @@ class ReportService: KoinComponent {
         val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -88,7 +91,7 @@ class ReportService: KoinComponent {
         val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -98,7 +101,7 @@ class ReportService: KoinComponent {
         val uploadsDeliveredQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'blob-file-copy' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.FILE_DELIVERY}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsDelivered = repository.reportsCollection.queryItems(appendTimeRange(uploadsDeliveredQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -115,9 +118,37 @@ class ReportService: KoinComponent {
      */
     private fun appendTimeRange(query: String, daysInterval: Int?): String {
         if (daysInterval != null) {
-            return "$query and ${SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
+            return "$query and ${buildSqlClauseForDaysInterval(daysInterval, cPrefix)}"
         }
 
         return query
+    }
+
+    /**
+     * Builds an SQL clause to filter records based on a number of days interval.
+     *
+     * This function constructs a partial SQL query to ensure that records within
+     * a certain number of days from the current date (up to the specified interval)
+     * are selected. If no interval is provided, an empty clause is returned.
+     *
+     * @param daysInterval The number of days to define the date range. If null, no filtering is applied.
+     * @param cPrefix The prefix to be used for SQL column reference (e.g., table alias).
+     * @return A string representing the SQL clause for the date range filter, or an empty string if no interval is provided.
+     * @throws NumberFormatException If an error occurs during date parsing.
+     * @throws BadRequestException If the provided inputs are deemed invalid.
+     */
+    @Throws(NumberFormatException::class, BadRequestException::class)
+    private fun buildSqlClauseForDaysInterval(daysInterval: Int?, cPrefix: String): String {
+        val timeRangeSqlPortion = StringBuilder()
+        if (daysInterval != null) {
+            val dateStartEpochSecs = DateTime
+                .now(DateTimeZone.UTC)
+                .minusDays(daysInterval)
+                .withTimeAtStartOfDay()
+                .toDate()
+                .time / 1000
+            timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= $dateStartEpochSecs")
+        }
+        return timeRangeSqlPortion.toString()
     }
 }
