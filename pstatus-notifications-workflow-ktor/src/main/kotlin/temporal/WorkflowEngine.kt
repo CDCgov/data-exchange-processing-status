@@ -31,6 +31,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.temporal.common.converter.DefaultDataConverter
+import io.temporal.common.converter.JacksonJsonPayloadConverter
 
 
 /**
@@ -56,12 +61,17 @@ class WorkflowEngine(
 
     private val logger = KotlinLogging.logger {}
 
+    private val payloadConverter = JacksonJsonPayloadConverter(jacksonObjectMapper())
+
+    private val dataConverter = DefaultDataConverter(payloadConverter)
+
     private val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
         .setTarget(temporalConfig.serviceTarget)
         .build()
 
     private val clientOptions = WorkflowClientOptions.newBuilder()
         .setNamespace(temporalConfig.namespace)
+        .setDataConverter(dataConverter)
         .build()
 
     private lateinit var service: WorkflowServiceStubs
