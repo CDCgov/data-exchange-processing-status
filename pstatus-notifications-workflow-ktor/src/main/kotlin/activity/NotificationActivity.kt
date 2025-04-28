@@ -9,22 +9,6 @@ import io.temporal.activity.ActivityMethod
  */
 @ActivityInterface
 interface NotificationActivities {
-    @ActivityMethod
-    fun sendNotification(
-        dataStreamId: String,
-        jurisdiction: String,
-        emailAddresses: List<String>
-    )
-    @ActivityMethod
-    fun sendDataStreamTopErrorsNotification(
-        emailBody: String,
-        emailAddresses: List<String>
-    )
-
-    @ActivityMethod
-    fun sendDigestEmail(
-        emailBody: String,
-        emailAddresses: List<String>)
 
     @ActivityMethod
     fun sendEmail(emailAddresses: List<String>, subject: String, body: String)

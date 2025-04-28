@@ -4,7 +4,7 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
@@ -35,11 +35,11 @@ class DeadLineCheckSubscriptionService: KoinComponent {
     /**
      *  The main method which executes workflow for uploadDeadline check.
      *
-     *  @param subscription DeadlineCheckSubscription
+     *  @param subscription WorkflowSubscriptionDeadlineCheck
      *  @return WorkflowSubscriptionResult
      */
     fun run(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionDeadlineCheck
     ): WorkflowSubscriptionResult {
 
         val cronSchedule = subscription.cronSchedule

@@ -4,8 +4,8 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
-import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
+import gov.cdc.ocio.types.model.WorkflowSubscriptionWithSinceDays
 import io.grpc.StatusRuntimeException
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
@@ -43,7 +43,7 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
      */
     @Throws(IllegalStateException::class, StatusRuntimeException::class)
     fun run(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionWithSinceDays
     ): WorkflowSubscriptionResult {
         val taskQueue = "uploadDigestCountsTaskQueue"
 

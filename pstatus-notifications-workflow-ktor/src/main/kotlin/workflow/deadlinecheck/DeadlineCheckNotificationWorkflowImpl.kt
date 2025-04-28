@@ -1,14 +1,14 @@
 package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingnotifications.model.CheckUploadResponse
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.DeadlineCheckQuery
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
+import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -18,13 +18,22 @@ import java.time.format.DateTimeFormatter
 
 
 /**
- * The implementation class for notifying if an upload has not occurred by a specified time.
+ * Implementation of the `DeadlineCheckNotificationWorkflow` interface, responsible for handling the process of
+ * verifying upload deadlines and notifying subscribed entities if uploads are missing for specific jurisdictions.
  *
- * @property repository ProcessingStatusRepository
- * @property logger KLogger
- * @property activities (NotificationActivities..NotificationActivities?)
+ * This workflow checks uploads associated with a given data stream and jurisdictions within a specified time frame.
+ * Notifications are sent via email or webhook depending on the subscription's configuration.
+ *
+ * The class interacts with the Temporal Workflow engine, a `ProcessingStatusRepository` instance to handle data storage
+ * and retrieval, and an activity stub for executing external tasks like sending notifications.
+ *
+ * Key Features:
+ * - Verify if uploads occurred within a defined deadline.
+ * - Identify jurisdictions with missing uploads.
+ * - Send notifications using configured methods (email or webhook) when uploads are missing.
  */
-class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow, KoinComponent {
+class DeadlineCheckNotificationWorkflowImpl
+    : DeadlineCheckNotificationWorkflow, KoinComponent {
 
     private val logger = KotlinLogging.logger {}
 
@@ -43,19 +52,22 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
      * jurisdiction, email addresses, webhook URL, and notification type.
      */
     override fun checkUploadDeadlinesAndNotify(
-        workflowSubscription: WorkflowSubscription
+        workflowSubscription: WorkflowSubscriptionDeadlineCheck
     ) {
         val dataStreamId = workflowSubscription.dataStreamIds.first()
         val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
-        val jurisdiction = workflowSubscription.jurisdictions.first()
+        val jurisdictions = workflowSubscription.jurisdictions
         val emailAddresses = workflowSubscription.emailAddresses
 
         try {
-            // Logic to check if the upload occurred*/
-            val uploadOccurred = performaDeadlineCheck(dataStreamId, dataStreamRoute)
-            if (!uploadOccurred) {
+            // Logic to check if the upload occurred
+            val missingJurisdictions = performaDeadlineCheck(
+                dataStreamId, dataStreamRoute, jurisdictions, workflowSubscription.deadlineTime)
+            if (missingJurisdictions.isNotEmpty()) {
                 when (workflowSubscription.notificationType) {
-                    NotificationType.EMAIL -> emailAddresses?.let { activities.sendNotification(dataStreamId, jurisdiction, emailAddresses) }
+                    NotificationType.EMAIL -> emailAddresses?.let {
+//                        activities.sendNotification(dataStreamId, jurisdiction, emailAddresses)
+                    }
                     NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
                         val subId = Workflow.getInfo().workflowId
                         val triggered = Workflow.getInfo().runStartedTimestampMillis
@@ -64,7 +76,7 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
                             WorkflowType.UPLOAD_DEADLINE_CHECK,
                             workflowSubscription,
                             DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
-                            DeadlineCheck(dataStreamId, jurisdiction, LocalDate.now().toString())
+                            DeadlineCheck(dataStreamId, ""/*jurisdiction*/, LocalDate.now().toString())
                         )
                         activities.sendWebhook(it, payload)
                     }
@@ -84,31 +96,32 @@ class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow,
      * In case of any errors during execution, an exception is thrown.
      *
      * @param dataStreamId The identifier of the data stream to check for uploads.
-     * @param jurisdiction The jurisdiction associated with the data stream.
+     * @param jurisdictions The jurisdictions to check for.
      * @return True if an upload is found within the specified time range, otherwise false.
      */
-    private fun performaDeadlineCheck(dataStreamId: String, dataStreamRoute: String): Boolean {
-
+    private fun performaDeadlineCheck(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        jurisdictions: List<String>,
+        deadlineTime: LocalTime
+    ): List<String> {
         val query = DeadlineCheckQuery.Builder(repository)
             .withDataStreamIds(listOf(dataStreamId))
             .withDataStreamRoutes(listOf(dataStreamRoute))
+            .withJurisdictions(jurisdictions)
+            .withDeadlineTime(deadlineTime)
             .build()
 
-        val sqlQuery = query.buildSql()
-
-        logger.info("Deadline check query: $sqlQuery")
-
-        return try {
-            val results = repository.reportsCollection.queryItems(
-                sqlQuery,
-                CheckUploadResponse::class.java
-            )
-            logger.info("notification Query results: ${results.size}")
-            results.isNotEmpty() // Returns true if there are results, false if none
+        try {
+            val missingJurisdictions = query.run()
+            logger.info("Missing jurisdictions: $missingJurisdictions")
+            return missingJurisdictions
+        } catch (ex: ActivityFailure) {
+            logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
+            throw ex
         } catch (ex: Exception) {
-            val error = "Error occurred while checking upload deadlines: ${ex.message}"
-            logger.error(error)
-            throw Exception(error)
+            logger.error("Error while processing daily upload digest: ${ex.localizedMessage}")
+            throw ex
         }
     }
 

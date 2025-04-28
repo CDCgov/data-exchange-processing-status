@@ -1,6 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 
@@ -12,6 +12,6 @@ interface DeadlineCheckNotificationWorkflow {
 
     @WorkflowMethod
     fun checkUploadDeadlinesAndNotify(
-        workflowSubscription: WorkflowSubscription
+        workflowSubscription: WorkflowSubscriptionDeadlineCheck
     )
 }

@@ -8,7 +8,7 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionWithSinceDays
 import io.temporal.workflow.Workflow
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
@@ -37,7 +37,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
      * @param workflowSubscription WorkflowSubscription
      */
     override fun checkDataStreamTopErrorsAndNotify(
-        workflowSubscription: WorkflowSubscription
+        workflowSubscription: WorkflowSubscriptionWithSinceDays
     ) {
         val dayInterval = workflowSubscription.sinceDays
         val dataStreamId = workflowSubscription.dataStreamIds.first()
@@ -60,7 +60,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                         delayedDeliveries,
                         dayInterval
                     )
-                    workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, it) }
+                    workflowSubscription.emailAddresses?.let { activities.sendEmail(it, "PHDO TOP ERRORS NOTIFICATION", body) }
                 }
                 NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
                     val subId = Workflow.getInfo().workflowId

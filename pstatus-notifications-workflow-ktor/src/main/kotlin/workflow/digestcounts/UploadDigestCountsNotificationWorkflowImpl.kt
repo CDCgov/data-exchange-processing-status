@@ -7,7 +7,7 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.*
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionWithSinceDays
 import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
@@ -47,7 +47,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * notification type, and other relevant configurations for processing the daily upload digest.
      */
     override fun processDailyUploadDigest(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionWithSinceDays
     ) {
         try {
             val utcDateToRun = LocalDate.now().minusDays(subscription.sinceDays.toLong())
@@ -141,7 +141,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * @param uploadDurations List of upload durations, used for additional notification or payload formatting.
      */
     private fun dispatchNotification(
-        subscription: WorkflowSubscription,
+        subscription: WorkflowSubscriptionWithSinceDays,
         utcDateToRun: LocalDate,
         aggregatedCounts: UploadDigestCounts,
         uploadMetrics: UploadMetrics,
@@ -166,7 +166,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
                     uploadDurations
                 ).build()
                 logger.info("Sending upload digest counts email")
-                subscription.emailAddresses?.let { activities.sendDigestEmail(emailBody, it) }
+                subscription.emailAddresses?.let { activities.sendEmail(it, "PHDO UPLOAD DIGEST NOTIFICATION", emailBody) }
             }
 
             NotificationType.WEBHOOK -> subscription.webhookUrl?.let {

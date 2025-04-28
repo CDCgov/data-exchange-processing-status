@@ -4,8 +4,8 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
-import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
+import gov.cdc.ocio.types.model.WorkflowSubscriptionWithSinceDays
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -41,7 +41,7 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
      * @param subscription DataStreamTopErrorsNotificationSubscription
      */
     fun run(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionWithSinceDays
     ): WorkflowSubscriptionResult {
 
         val cronSchedule = subscription.cronSchedule

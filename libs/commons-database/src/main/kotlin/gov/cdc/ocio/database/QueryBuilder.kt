@@ -28,6 +28,7 @@ open class QueryBuilder(
     protected val openBkt = collection.openBracketChar
     protected val closeBkt = collection.closeBracketChar
     protected val timeFunc = collection.timeConversionForQuery
+    protected val cElFunc = collection.collectionElementForQuery
 
     /**
      * Prepares a list of [Any] type that has a toString() implementation that needs to be joined by a comma separated
