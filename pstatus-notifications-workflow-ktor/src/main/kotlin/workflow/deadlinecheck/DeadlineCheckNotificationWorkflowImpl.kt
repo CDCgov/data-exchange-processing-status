@@ -54,28 +54,38 @@ class DeadlineCheckNotificationWorkflowImpl
     override fun checkUploadDeadlinesAndNotify(
         workflowSubscription: WorkflowSubscriptionDeadlineCheck
     ) {
-        val dataStreamId = workflowSubscription.dataStreamIds.first()
-        val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
-        val jurisdictions = workflowSubscription.jurisdictions
+        val dataStreamId = workflowSubscription.dataStreamId
+        val dataStreamRoute = workflowSubscription.dataStreamRoute
+        val expectedJurisdictions = workflowSubscription.expectedJurisdictions
         val emailAddresses = workflowSubscription.emailAddresses
+        val workflowId = Workflow.getInfo().workflowId
+        val cronSchedule = Workflow.getInfo().cronSchedule
+        val triggered = Workflow.getInfo().runStartedTimestampMillis
+        val triggeredAsString = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered));
 
         try {
             // Logic to check if the upload occurred
             val missingJurisdictions = performaDeadlineCheck(
-                dataStreamId, dataStreamRoute, jurisdictions, workflowSubscription.deadlineTime)
+                dataStreamId, dataStreamRoute, expectedJurisdictions, workflowSubscription.deadlineTime)
             if (missingJurisdictions.isNotEmpty()) {
                 when (workflowSubscription.notificationType) {
                     NotificationType.EMAIL -> emailAddresses?.let {
-//                        activities.sendNotification(dataStreamId, jurisdiction, emailAddresses)
+                        val body = DeadlineCheckEmailBuilder(
+                            workflowId,
+                            cronSchedule,
+                            triggered,
+                            dataStreamId,
+                            dataStreamRoute,
+                            expectedJurisdictions
+                        ).build()
+                        workflowSubscription.emailAddresses?.let { activities.sendEmail(it, "PHDO DEADLINE MISSED NOTIFICATION", body) }
                     }
                     NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
-                        val subId = Workflow.getInfo().workflowId
-                        val triggered = Workflow.getInfo().runStartedTimestampMillis
                         val payload = WebhookContent(
-                            subId,
+                            workflowId,
                             WorkflowType.UPLOAD_DEADLINE_CHECK,
                             workflowSubscription,
-                            DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                            triggeredAsString,
                             DeadlineCheck(dataStreamId, ""/*jurisdiction*/, LocalDate.now().toString())
                         )
                         activities.sendWebhook(it, payload)

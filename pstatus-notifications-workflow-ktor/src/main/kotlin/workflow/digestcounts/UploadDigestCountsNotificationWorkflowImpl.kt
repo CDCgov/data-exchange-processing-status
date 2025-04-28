@@ -7,7 +7,7 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.*
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WorkflowSubscriptionWithSinceDays
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
@@ -47,7 +47,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * notification type, and other relevant configurations for processing the daily upload digest.
      */
     override fun processDailyUploadDigest(
-        subscription: WorkflowSubscriptionWithSinceDays
+        subscription: WorkflowSubscriptionForDataStreams
     ) {
         try {
             val utcDateToRun = LocalDate.now().minusDays(subscription.sinceDays.toLong())
@@ -141,7 +141,7 @@ class UploadDigestCountsNotificationWorkflowImpl :
      * @param uploadDurations List of upload durations, used for additional notification or payload formatting.
      */
     private fun dispatchNotification(
-        subscription: WorkflowSubscriptionWithSinceDays,
+        subscription: WorkflowSubscriptionForDataStreams,
         utcDateToRun: LocalDate,
         aggregatedCounts: UploadDigestCounts,
         uploadMetrics: UploadMetrics,

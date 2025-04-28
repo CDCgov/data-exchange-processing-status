@@ -4,24 +4,20 @@ import kotlinx.serialization.Serializable
 
 
 /**
- * Represents a subscription to a workflow, defining parameters required for scheduling and notifications.
+ * Represents a subscription to a workflow, providing a way to define scheduled notifications,
+ * the type of notification (email or webhook), and the related contact information. This is a sealed
+ * class intended to be extended for different specific types of workflow subscriptions.
  *
- * The `WorkflowSubscription` serves as a base class for specific types of workflow subscriptions.
- * Implementations of this class can define additional parameters as needed.
- *
- * @property dataStreamIds List of unique identifiers for data streams associated with the subscription.
- * @property dataStreamRoutes List of routes for data streams associated with the subscription.
- * @property jurisdictions List of jurisdictions applicable to the subscription.
- * @property cronSchedule Cron expression defining the schedule for the subscription.
- * @property notificationType Type of notification to be used (e.g., EMAIL or WEBHOOK).
- * @property emailAddresses Optional list of email addresses to receive notifications if the notification type is EMAIL.
- * @property webhookUrl Optional URL to send notifications to if the notification type is WEBHOOK.
+ * @property cronSchedule Specifies the schedule for the workflow subscription in CRON format.
+ * It determines when the subscription workflows are triggered.
+ * @property notificationType Defines the type of notification. Possible values are EMAIL or WEBHOOK.
+ * @property emailAddresses The list of email addresses to be notified if the notification type is EMAIL.
+ * This property is optional and can be null if the notification type is WEBHOOK.
+ * @property webhookUrl The URL to send notifications to if the notification type is WEBHOOK.
+ * This property is optional and can be null if the notification type is EMAIL.
  */
 @Serializable
 sealed class WorkflowSubscription {
-    abstract val dataStreamIds: List<String>
-    abstract val dataStreamRoutes: List<String>
-    abstract val jurisdictions: List<String>
     abstract val cronSchedule: String
     abstract val notificationType: NotificationType
     abstract val emailAddresses: List<String>?

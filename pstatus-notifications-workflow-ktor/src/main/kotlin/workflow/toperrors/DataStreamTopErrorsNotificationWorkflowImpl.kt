@@ -8,7 +8,7 @@ import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.service.ReportService
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WorkflowSubscriptionWithSinceDays
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.temporal.workflow.Workflow
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
@@ -37,7 +37,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
      * @param workflowSubscription WorkflowSubscription
      */
     override fun checkDataStreamTopErrorsAndNotify(
-        workflowSubscription: WorkflowSubscriptionWithSinceDays
+        workflowSubscription: WorkflowSubscriptionForDataStreams
     ) {
         val dayInterval = workflowSubscription.sinceDays
         val dataStreamId = workflowSubscription.dataStreamIds.first()
