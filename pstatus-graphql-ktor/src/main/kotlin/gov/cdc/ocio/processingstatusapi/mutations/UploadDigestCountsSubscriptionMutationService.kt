@@ -5,6 +5,7 @@ import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -41,7 +42,7 @@ class UploadDigestCountsSubscriptionMutationService(
     @GraphQLDescription("Subscribe daily digest counts lets you get notifications with the counts of all jurisdictions for a given set of data streams after the prescribed time to run is past")
     @Suppress("unused")
     fun subscribeUploadDigestCounts(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionForDataStreams
     ): WorkflowSubscriptionResult {
         val url = workflowServiceConnection.buildUrl("/subscribe/uploadDigestCounts")
 

@@ -5,6 +5,8 @@ import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -35,13 +37,13 @@ class DeadlineCheckSubscriptionMutationService(
     /**
      * The mutation function which invokes the upload deadline check microservice route to subscribe.
      *
-     * @param subscription WorkflowSubscription
+     * @param subscription WorkflowSubscriptionDeadlineCheck
      * @return WorkflowSubscriptionResult
      */
     @GraphQLDescription("Subscribe Deadline Check lets you get notifications when an upload from jurisdictions has not happened by 12pm")
     @Suppress("unused")
     fun subscribeDeadlineCheck(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionDeadlineCheck
     ): WorkflowSubscriptionResult {
         val url = workflowServiceConnection.buildUrl("/subscribe/deadlineCheck")
 
