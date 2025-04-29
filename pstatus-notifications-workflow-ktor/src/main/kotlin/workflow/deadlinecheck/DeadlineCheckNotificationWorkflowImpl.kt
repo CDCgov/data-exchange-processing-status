@@ -61,7 +61,7 @@ class DeadlineCheckNotificationWorkflowImpl
         val workflowId = Workflow.getInfo().workflowId
         val cronSchedule = Workflow.getInfo().cronSchedule
         val triggered = Workflow.getInfo().runStartedTimestampMillis
-        val triggeredAsString = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered));
+        val triggeredAsString = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered))
 
         try {
             // Logic to check if the upload occurred
@@ -76,7 +76,9 @@ class DeadlineCheckNotificationWorkflowImpl
                             triggered,
                             dataStreamId,
                             dataStreamRoute,
-                            expectedJurisdictions
+                            expectedJurisdictions,
+                            missingJurisdictions,
+                            workflowSubscription.deadlineTime
                         ).build()
                         workflowSubscription.emailAddresses?.let { emailAddresses ->
                             activities.sendEmail(
@@ -95,6 +97,7 @@ class DeadlineCheckNotificationWorkflowImpl
                             DeadlineCheck(
                                 dataStreamId,
                                 dataStreamRoute,
+                                expectedJurisdictions,
                                 missingJurisdictions,
                                 DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered))
                             )

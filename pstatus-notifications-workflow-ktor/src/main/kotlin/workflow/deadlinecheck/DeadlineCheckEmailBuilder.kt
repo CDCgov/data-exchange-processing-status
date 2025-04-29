@@ -1,21 +1,29 @@
 package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
-import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
+import gov.cdc.ocio.processingnotifications.model.workflowFooter
+import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 /**
- * This class is responsible for building HTML email content related to deadline checks for data stream uploads.
- * It generates a structured email containing various sections like upload metrics, durations, and workflow details.
+ * Class responsible for building HTML email content for deadline check notifications.
+ * This includes an overview table summarizing details of the workflow run and
+ * jurisdiction data, alongside custom styling for public health data notifications.
  *
- * @property workflowId Unique identifier of the workflow associated with the email.
- * @property cronSchedule Cron schedule string representing the periodic job triggering timings.
- * @property triggered Timestamp marking when the job was triggered.
- * @property dataStreamId Identifier for the related data stream.
- * @property dataStreamRoute The route or path associated with the data stream.
- * @property expectedJurisdictions List of jurisdictions expected for data processing.
+ * @property workflowId The unique identifier for the workflow.
+ * @property cronSchedule The cron expression defining the schedule of the workflow.
+ * @property triggered The timestamp indicating when the workflow was triggered.
+ * @property dataStreamId The unique identifier for the data stream.
+ * @property dataStreamRoute The route associated with the data stream.
+ * @property expectedJurisdictions The list of jurisdictions expected to have submitted data.
+ * @property missingJurisdictions The list of jurisdictions identified as missing in the submission.
+ * @property deadlineTime The time jurisdictions should have provided at least one upload by.
  */
 class DeadlineCheckEmailBuilder(
     private val workflowId: String,
@@ -23,11 +31,20 @@ class DeadlineCheckEmailBuilder(
     private val triggered: Long,
     private val dataStreamId: String,
     private val dataStreamRoute: String,
-    private val expectedJurisdictions: List<String>
+    private val expectedJurisdictions: List<String>,
+    private val missingJurisdictions: List<String>,
+    private val deadlineTime: LocalTime
 ) {
 
-    fun build(): String {
+    private val triggerFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
+    private val deadlineFormatter = DateTimeFormatter.ofPattern("hh:mm:ss")
 
+    fun build(): String {
+        val cronScheduleDesc = CronUtils.description(cronSchedule)?.replaceFirstChar { it.uppercaseChar() } ?: "Unknown"
+        val triggeredDesc = triggerFormatter.format(Instant.ofEpochMilli(triggered))
+        val expectedJurisdictionsDesc = expectedJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
+        val missingJurisdictionsDesc = missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
+        val deadlineTimeDesc = deadlineFormatter.format(deadlineTime) + " UTC"
 
         val content = buildString {
             appendHTML().body {
@@ -36,62 +53,46 @@ class DeadlineCheckEmailBuilder(
                     span(classes = "uppercase") { +" Data Operations" }
                 }
                 hr {  }
-                h2 { +"Upload Digest for Data Streams" }
-                div { +"Run: $triggered" }
-                h3 { +"Overview" }
+                h2 { +"Upload Deadline Check" }
                 table {
                     tr {
                         td { +"Workflow ID" }
                         td { strong { +workflowId } }
                     }
-                }
-                h3 { +"Upload Metrics" }
-                p {
-                    +"The "
-                    b { +"Upload Duration"}
-                    +" is the time from when the upload is initiated, including the metadata verification step to when"
-                    +" the upload completes."
-                    +" The "
-                    b { +"Delivery Duration" }
-                    +" includes the latency that may occur between the completion of the upload and the completion of"
-                    +" the delivery."
-                }
-                table(classes = "stylish-table") {
-                    thead {
-                        tr {
-                            th { +"Category" }
-                            th { +"Min" }
-                            th { +"Max" }
-                            th { +"Average (Mean)" }
-                            th { +"Median" }
-                        }
+                    tr {
+                        td { +"Run Schedule" }
+                        td { strong { +cronScheduleDesc } }
                     }
                     tr {
-                        td { strong { +"Upload Duration" } }
-
+                        td { +"Data Stream ID" }
+                        td { strong { +dataStreamId } }
                     }
                     tr {
-                        td { strong { +"Delivery Duration" } }
-
+                        td { +"Data Stream Route" }
+                        td { strong { +dataStreamRoute } }
                     }
                     tr {
-                        td { strong { +"Total Duration" } }
-
+                        td { +"Expected Jurisdiction(s)" }
+                        td { strong { +expectedJurisdictionsDesc } }
                     }
                     tr {
-                        td { strong { +"Upload File Size" } }
+                        td { +"Missing Jurisdiction(s)*" }
+                        td { strong { +missingJurisdictionsDesc } }
+                    }
+                    tr {
+                        td { +"Deadline" }
+                        td { strong { +deadlineTimeDesc } }
+                    }
+                    tr {
+                        td { +"Run" }
+                        td { strong { +triggeredDesc } }
                     }
                 }
-                h3 { +"Total Duration"}
-                p {
-                    +"The "
-                    b { +"Total Duration" }
-                    +" is the time from when an upload starts to when the uploaded file has been delivered. "
-                    +"The chart below shows a histogram of the durations, categorized by time buckets. The "
-                    b { +"Number of Uploads" }
-                    +" is the count of durations that fall within the duration bucket time range (duration bins)."
+                div {
+                    p {
+                        +"* The missing jurisdiction(s) are those that did not provide any data uploads by the expected deadline of $deadlineTimeDesc starting at midnight of that day."
+                    }
                 }
-
 
                 workflowFooter()
             }
