@@ -43,8 +43,6 @@ dependencies {
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
-//    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-//    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0") // Java time module
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
