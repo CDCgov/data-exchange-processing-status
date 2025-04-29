@@ -3,7 +3,6 @@ package gov.cdc.ocio.processingnotifications
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.notificationdispatchers.NotificationDispatcherKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
