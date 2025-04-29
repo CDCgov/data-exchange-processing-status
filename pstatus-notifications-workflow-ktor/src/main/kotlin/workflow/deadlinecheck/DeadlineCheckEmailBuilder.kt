@@ -36,12 +36,12 @@ class DeadlineCheckEmailBuilder(
     private val deadlineTime: LocalTime
 ) {
 
-    private val triggerFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
+    private val triggeredFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
     private val deadlineFormatter = DateTimeFormatter.ofPattern("hh:mm:ss")
 
     fun build(): String {
         val cronScheduleDesc = CronUtils.description(cronSchedule)?.replaceFirstChar { it.uppercaseChar() } ?: "Unknown"
-        val triggeredDesc = triggerFormatter.format(Instant.ofEpochMilli(triggered))
+        val triggeredDesc = triggeredFormatter.format(Instant.ofEpochMilli(triggered))
         val expectedJurisdictionsDesc = expectedJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
         val missingJurisdictionsDesc = missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
         val deadlineTimeDesc = deadlineFormatter.format(deadlineTime) + " UTC"

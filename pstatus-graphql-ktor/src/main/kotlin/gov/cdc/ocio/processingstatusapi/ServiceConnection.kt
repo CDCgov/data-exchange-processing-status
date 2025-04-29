@@ -8,7 +8,6 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.jackson.*
-import io.ktor.serialization.kotlinx.json.*
 
 
 /**
@@ -33,7 +32,6 @@ class ServiceConnection(
 
     val client = HttpClient {
         install(ContentNegotiation) {
-//            json()
             jackson {
                 // This is where you customize the ObjectMapper
                 registerModule(JavaTimeModule())   // Java time support
