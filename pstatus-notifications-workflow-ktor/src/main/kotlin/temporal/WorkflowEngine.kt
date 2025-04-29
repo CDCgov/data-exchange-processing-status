@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.google.protobuf.ByteString
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
@@ -32,6 +33,8 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.temporal.common.converter.DefaultDataConverter
@@ -61,7 +64,12 @@ class WorkflowEngine(
 
     private val logger = KotlinLogging.logger {}
 
-    private val payloadConverter = JacksonJsonPayloadConverter(jacksonObjectMapper())
+    private val jacksonObjectMapper = jacksonObjectMapper()
+        .registerModule(JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+    private val payloadConverter = JacksonJsonPayloadConverter(jacksonObjectMapper)
 
     private val dataConverter = DefaultDataConverter(payloadConverter)
 
