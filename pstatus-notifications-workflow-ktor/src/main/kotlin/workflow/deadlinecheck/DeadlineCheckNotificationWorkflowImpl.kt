@@ -86,7 +86,12 @@ class DeadlineCheckNotificationWorkflowImpl
                             WorkflowType.UPLOAD_DEADLINE_CHECK,
                             workflowSubscription,
                             triggeredAsString,
-                            DeadlineCheck(dataStreamId, ""/*jurisdiction*/, LocalDate.now().toString())
+                            DeadlineCheck(
+                                dataStreamId,
+                                dataStreamRoute,
+                                missingJurisdictions,
+                                DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered))
+                            )
                         )
                         activities.sendWebhook(it, payload)
                     }
@@ -116,9 +121,9 @@ class DeadlineCheckNotificationWorkflowImpl
         deadlineTime: LocalTime
     ): List<String> {
         val query = DeadlineCheckQuery.Builder(repository)
-            .withDataStreamIds(listOf(dataStreamId))
-            .withDataStreamRoutes(listOf(dataStreamRoute))
-            .withJurisdictions(jurisdictions)
+            .withDataStreamId(dataStreamId)
+            .withDataStreamRoute(dataStreamRoute)
+            .withExpectedJurisdictions(jurisdictions)
             .withDeadlineTime(deadlineTime)
             .build()
 

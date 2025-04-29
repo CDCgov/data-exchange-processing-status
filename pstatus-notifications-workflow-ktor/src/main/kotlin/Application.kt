@@ -1,7 +1,9 @@
 package gov.cdc.ocio.processingnotifications
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.notificationdispatchers.NotificationDispatcherKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
@@ -18,9 +20,9 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.temporal.client.WorkflowServiceException
+import org.koin.ktor.plugin.Koin
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
-import org.koin.ktor.plugin.Koin
 
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
@@ -51,14 +53,16 @@ fun Application.module() {
     install(Koin) {
         loadKoinModules(environment)
     }
+
     install(ContentNegotiation) {
         jackson {
             registerModule(JavaTimeModule())
-
             // Serialize OffsetDateTime as ISO-8601
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
     }
+
     install(StatusPages) {
         // Map exceptions to HTTP status codes that will be returned
         val exceptionToHttpStatusCode = mapOf<Class<out Throwable>, HttpStatusCode>(

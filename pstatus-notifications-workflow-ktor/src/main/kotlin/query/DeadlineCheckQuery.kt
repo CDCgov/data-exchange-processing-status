@@ -14,16 +14,34 @@ import java.time.format.DateTimeFormatter
 
 class DeadlineCheckQuery private constructor(
     val repository: ProcessingStatusRepository,
-    dataStreamIds: List<String>,
-    dataStreamRoutes: List<String>,
+    dataStreamId: String,
+    dataStreamRoute: String,
     private val expectedJurisdictions: List<String>,
     private val deadlineTime: LocalTime,
-): ReportQuery(repository, dataStreamIds, dataStreamRoutes, expectedJurisdictions) {
+): ReportQuery(repository, listOf(dataStreamId), listOf(dataStreamRoute), expectedJurisdictions) {
 
     private val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
 
-    class Builder(repository: ProcessingStatusRepository): ReportQuery.Builder<Builder>(repository) {
+    class Builder(private val repository: ProcessingStatusRepository): ReportQueryBuilder {
+        private var dataStreamId: String = ""
+        private var dataStreamRoute: String = ""
         private var deadlineTime: LocalTime = LocalTime.of(12, 0)
+        private var expectedJurisdictions: List<String> = listOf()
+
+        fun withDataStreamId(dataStreamId: String): Builder {
+            this.dataStreamId = dataStreamId
+            return this
+        }
+
+        fun withDataStreamRoute(dataStreamRoute: String): Builder {
+            this.dataStreamRoute = dataStreamRoute
+            return this
+        }
+
+        fun withExpectedJurisdictions(expectedJurisdictions: List<String>): Builder {
+            this.expectedJurisdictions = expectedJurisdictions
+            return this
+        }
 
         fun withDeadlineTime(hourOfDayDeadline: LocalTime): Builder {
             this.deadlineTime = hourOfDayDeadline
@@ -31,8 +49,9 @@ class DeadlineCheckQuery private constructor(
         }
 
         override fun build() = DeadlineCheckQuery(
-            repository, dataStreamIds, dataStreamRoutes,
-            listOf(),
+            repository,
+            dataStreamId, dataStreamRoute,
+            expectedJurisdictions,
             deadlineTime)
     }
 
@@ -51,16 +70,16 @@ class DeadlineCheckQuery private constructor(
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
 
         querySB.append("""
-            SELECT ${cPrefix}jurisdiction
-            FROM $collectionName $cVar
+            SELECT ${cPrefix}jurisdiction 
+            FROM $collectionName $cVar 
             """.trimIndent()
         )
-        querySB.append(whereClause())
-//            AND ${cPrefix}jurisdiction NOT IN (${expectedJurisdictions.joinToString { "'$it'" }})        
+        querySB.append(whereClause(isFirstClause = true))
+
         querySB.append("""
-            AND ${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}'
-            AND ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}'
-            AND ${cPrefix}stageInfo.status = '${Status.SUCCESS}'
+            AND ${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' 
+            AND ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' 
+            AND ${cPrefix}stageInfo.status = '${Status.SUCCESS}' 
             """.trimIndent()
         )
 

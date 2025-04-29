@@ -1,9 +1,13 @@
 package gov.cdc.ocio.processingstatusapi
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.serialization.jackson.*
 import io.ktor.serialization.kotlinx.json.*
 
 
@@ -29,7 +33,13 @@ class ServiceConnection(
 
     val client = HttpClient {
         install(ContentNegotiation) {
-            json()
+//            json()
+            jackson {
+                // This is where you customize the ObjectMapper
+                registerModule(JavaTimeModule())   // Java time support
+                disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
         install(Logging) {
             logger = Logger.DEFAULT

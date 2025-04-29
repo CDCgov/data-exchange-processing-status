@@ -1,6 +1,8 @@
 @file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package gov.cdc.ocio.processingnotifications
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
@@ -18,7 +20,17 @@ import java.util.*
  */
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
-        val subscription = call.receive<WorkflowSubscriptionDeadlineCheck>()
+//        val contentType = call.request.contentType()
+//        println("Incoming content type: $contentType")
+        val rawBody = call.receiveText()
+        println("Incoming raw body: $rawBody")
+
+        // Then if you still want to parse it manually:
+        val subscription = jacksonObjectMapper()
+            .registerModule(JavaTimeModule())
+            .readValue(rawBody, WorkflowSubscriptionDeadlineCheck::class.java)
+
+//        val subscription = call.receive<WorkflowSubscriptionDeadlineCheck>()
         val result = DeadLineCheckSubscriptionService().run(subscription)
         call.respond(result)
     }
