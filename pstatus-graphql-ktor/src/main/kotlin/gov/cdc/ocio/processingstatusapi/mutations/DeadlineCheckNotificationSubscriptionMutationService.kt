@@ -4,9 +4,7 @@ import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
-import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
-import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.ktor.client.request.*
 import io.ktor.http.*
