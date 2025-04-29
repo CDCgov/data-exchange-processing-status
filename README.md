@@ -250,9 +250,6 @@ When using the mock webhook setup with webhook.site, the following settings are 
 - Web UI: http://localhost:8000 - View received webhook calls through the webhook.site interface
 - API Port: `8000` - The port webhook.site listens on for incoming webhook requests
 
-
-
-
 Additional details for automated testing can be found in the [playwright tests folder](./test/playwright/README.md).
 
 ### Next Steps
