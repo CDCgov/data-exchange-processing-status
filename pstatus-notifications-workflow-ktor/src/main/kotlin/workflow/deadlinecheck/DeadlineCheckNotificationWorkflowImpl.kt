@@ -78,7 +78,13 @@ class DeadlineCheckNotificationWorkflowImpl
                             dataStreamRoute,
                             expectedJurisdictions
                         ).build()
-                        workflowSubscription.emailAddresses?.let { activities.sendEmail(it, "PHDO DEADLINE MISSED NOTIFICATION", body) }
+                        workflowSubscription.emailAddresses?.let { emailAddresses ->
+                            activities.sendEmail(
+                                emailAddresses,
+                                "PHDO DEADLINE MISSED NOTIFICATION",
+                                body
+                            )
+                        }
                     }
                     NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
                         val payload = WebhookContent(
