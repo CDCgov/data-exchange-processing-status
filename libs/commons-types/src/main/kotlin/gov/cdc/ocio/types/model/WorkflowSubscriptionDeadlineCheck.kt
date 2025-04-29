@@ -1,5 +1,6 @@
 package gov.cdc.ocio.types.model
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import gov.cdc.ocio.types.serializers.LocalTimeSerializer
 import kotlinx.serialization.Serializable
 import java.time.LocalTime
@@ -26,5 +27,6 @@ data class WorkflowSubscriptionDeadlineCheck(
     val dataStreamRoute: String,
     val expectedJurisdictions: List<String>,
     @Serializable(with = LocalTimeSerializer::class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     val deadlineTime: LocalTime
 ) : WorkflowSubscription()
