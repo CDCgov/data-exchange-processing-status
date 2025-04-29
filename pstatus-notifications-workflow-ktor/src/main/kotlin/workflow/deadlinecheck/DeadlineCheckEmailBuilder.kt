@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
+import gov.cdc.ocio.processingnotifications.model.workflowHeader
 import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import kotlinx.html.*
@@ -48,11 +49,7 @@ class DeadlineCheckEmailBuilder(
 
         val content = buildString {
             appendHTML().body {
-                div {
-                    span(classes = "bold-uppercase") { +"\u271A Public Health" }
-                    span(classes = "uppercase") { +" Data Operations" }
-                }
-                hr {  }
+                workflowHeader()
                 h2 { +"Upload Deadline Check" }
                 table {
                     tr {

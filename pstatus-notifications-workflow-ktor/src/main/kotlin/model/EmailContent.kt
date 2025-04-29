@@ -2,6 +2,14 @@ package gov.cdc.ocio.processingnotifications.model
 
 import kotlinx.html.*
 
+fun BODY.workflowHeader() {
+    div {
+        span(classes = "bold-uppercase") { +"\u271A Public Health" }
+        span(classes = "uppercase") { +" Data Operations" }
+    }
+    hr {  }
+}
+
 /**
  * Html BODY extension for the common workflow footer.
  *

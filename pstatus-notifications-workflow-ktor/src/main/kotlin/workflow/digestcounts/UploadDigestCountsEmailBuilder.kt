@@ -1,5 +1,6 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
+import gov.cdc.ocio.processingnotifications.model.workflowHeader
 import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
@@ -91,11 +92,7 @@ class UploadDigestCountsEmailBuilder(
 
         val content = buildString {
             appendHTML().body {
-                div {
-                    span(classes = "bold-uppercase") { +"\u271A Public Health" }
-                    span(classes = "uppercase") { +" Data Operations" }
-                }
-                hr {  }
+                workflowHeader()
                 h2 { +"Upload Digest for Data Streams" }
                 div { +"Date: $runDateUtc (12:00:00am through 12:59:59pm UTC)" }
                 h3 { +"Overview" }
