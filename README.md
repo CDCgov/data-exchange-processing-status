@@ -220,7 +220,41 @@ The PS API Notifications services can be deployed along with the core services u
   ```
 - Step 3: Verify that all services are running in Docker Desktop or by running `docker ps`.
 
- 
+#### Setup (Local Mail & Webhook Mocking)
+For local development and testing, you can use a mock email server setup. This allows you to test the notifications functionality without needing to configure a real SMTP server.  A default mock-email.env file has been provided to feed in some default environment variables to be used for local tests.
+
+1. Start the notifications services with the mock email configuration:
+   ```shell
+   docker compose -f docker-compose.notifications.yml --env-file mock-email.env up -d
+   ```
+
+2. Start the test mocks service which provides mock services for email and webhooks:
+   ```shell
+   docker compose -f docker-compose.test-mocks.yml up -d
+   ```
+   This will start additional containers that provide mock implementations for services like smtp email (Mailhog) and webhook listeners (webhook.site) making it easier to test the system in isolation.
+
+##### Email Settings
+When using the mock email setup with Mailhog, the following settings are available:
+
+- Web UI: http://localhost:8025 - View sent emails through the Mailhog web interface
+- SMTP Port: `1025` - The port Mailhog listens on for SMTP connections
+- API Port: `8025` - The port for Mailhog's HTTP API
+
+These settings are configured in `mock-email.env`.
+
+
+##### Webhook Settings
+When using the mock webhook setup with webhook.site, the following settings are available:
+
+- Web UI: http://localhost:8000 - View received webhook calls through the webhook.site interface
+- API Port: `8000` - The port webhook.site listens on for incoming webhook requests
+
+
+
+
+Additional details for automated testing can be found in the [playwright tests folder](./test/playwright/README.md).
+
 ### Next Steps
 Please continue to explore in GraphQL for all the types of queries and mutations that can be done.  GraphQL provides a
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.
