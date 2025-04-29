@@ -1,8 +1,6 @@
 @file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package gov.cdc.ocio.processingnotifications
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
