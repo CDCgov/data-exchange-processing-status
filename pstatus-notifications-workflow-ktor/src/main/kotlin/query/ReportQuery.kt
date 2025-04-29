@@ -71,35 +71,41 @@ abstract class ReportQuery(
     }
 
     /**
-     * Constructs a SQL WHERE clause based on the provided input lists for dataStreamIds, dataStreamRoutes,
-     * and jurisdictions. Each non-empty list is converted into a comma-separated list enclosed in parentheses
-     * and combined into a WHERE clause using SQL "AND" conditions.
+     * Constructs a SQL WHERE clause based on the provided conditions.
      *
-     * @return A string representation of the SQL WHERE clause with the chosen query conditions.
+     * Combines multiple filtering criteria into a single clause using "AND" conjunctions.
+     * If no valid filtering conditions are provided, an empty string is returned.
+     * The "WHERE" or "AND" prefix is applied based on whether this is the first clause
+     * in the SQL query.
+     *
+     * @param isFirstClause Boolean indicating whether this is the first clause in the query.
+     *                      If true, "WHERE" is used as the prefix; otherwise, "AND" is used.
+     * @return String representing the constructed SQL WHERE clause or an empty string if no conditions are specified.
      */
-    protected open fun whereClause(): String {
+    protected open fun whereClause(isFirstClause: Boolean = false): String {
         val jurisdictionIdsList = listForQuery(jurisdictions)
         val dataStreamIdsList = listForQuery(dataStreamIds)
         val dataStreamRoutesList = listForQuery(dataStreamRoutes)
 
-        val querySB = StringBuilder()
+        val clauses = mutableListOf<String>()
 
-        if (dataStreamIds.isNotEmpty())
-            querySB.append("""
-                AND ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
-                """)
+        if (dataStreamIds.isNotEmpty()) {
+            clauses.add("${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}")
+        }
 
-        if (dataStreamRoutesList.isNotEmpty())
-            querySB.append("""
-                AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
-                """)
+        if (dataStreamRoutesList.isNotEmpty()) {
+            clauses.add("${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}")
+        }
 
-        if (jurisdictionIdsList.isNotEmpty())
-            querySB.append("""
-                AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
-                """)
+        if (jurisdictionIdsList.isNotEmpty()) {
+            clauses.add("${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}")
+        }
 
-        return querySB.toString().trimIndent()
+        if (clauses.isEmpty()) return ""
+
+        val prefix = if (isFirstClause) "WHERE" else "AND"
+
+        return "$prefix ${clauses.joinToString(" AND ")} " // add space at the end in case other clauses follow
     }
 
     /**
