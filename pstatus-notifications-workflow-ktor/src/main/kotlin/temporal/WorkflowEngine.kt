@@ -32,31 +32,21 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.temporal.common.converter.DefaultDataConverter
 import io.temporal.common.converter.JacksonJsonPayloadConverter
 
 
 /**
- * Workflow engine class which creates a grpC client instance of the temporal server
- * using which it registers the workflow and the activity implementation
- * Also,using the workflow options the client creates a new workflow stub
- * Note: CRON expression is used to set the schedule
+ * WorkflowEngine is responsible for setting up, managing, and monitoring workflows using
+ * Temporal framework. It provides functionalities to initialize Temporal clients,
+ * schedule workflows, manage workflow execution, monitor worker status, and retrieve
+ * workflow information.
  *
- * @property temporalConfig TemporalConfig
- * @property logger KLogger
- * @property serviceOptions (WorkflowServiceStubsOptions..WorkflowServiceStubsOptions?)
- * @property clientOptions (WorkflowClientOptions..WorkflowClientOptions?)
- * @property service WorkflowServiceStubs
- * @property client WorkflowClient
- * @property factory WorkerFactory
- * @property scheduler [@EnhancedForWarnings(ScheduledExecutorService)] (ScheduledExecutorService..ScheduledExecutorService?)
- * @property healthCheckSystem HealthCheckTemporalServer
- * @constructor
+ * @constructor Creates a new instance of WorkflowEngine with the specified Temporal configuration.
+ * @param temporalConfig The Temporal configuration required to set up the client and server connection.
  */
 class WorkflowEngine(
     private val temporalConfig: TemporalConfig
