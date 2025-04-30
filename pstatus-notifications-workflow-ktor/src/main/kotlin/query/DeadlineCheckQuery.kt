@@ -8,9 +8,6 @@ import gov.cdc.ocio.types.model.Status
 import java.time.*
 import java.time.format.DateTimeFormatter
 
-data class DeadlineQueryResult(val jurisdiction: String, val earliestUpload: Instant)
-data class DeadlineCheckResults(val missingJurisdictions: List<String>, val lateJurisdictions: List<String>)
-
 class DeadlineCheckQuery private constructor(
     val repository: ProcessingStatusRepository,
     dataStreamId: String,
