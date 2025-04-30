@@ -76,15 +76,8 @@ class DeadlineCheckEmailBuilder(
                 h3 { +"Missing Jurisdictions" }
                 p {
                     +"The following jurisdictions did not provide any uploads by the expected deadline of "
-                    +"$deadlineTimeDesc starting at midnight." }
-                p {
-                    +"If you believe this is an error, please contact the PHDO Processing Status (PS) API "
-                    +"support team at "
-                    a(href = "mailto:DEXUploadAPI@cdc.gov") {
-                        +"PHDO Upload API Support"
-                    }
-                    +"."
-                }
+                    +"$deadlineTimeDesc starting at midnight. If an upload for a jurisdiction has occurred, but is "
+                    +"past the deadline it will still show on this list."}
                 table {
                     tr {
                         td { +"Expected Jurisdiction(s)" }
@@ -106,6 +99,14 @@ class DeadlineCheckEmailBuilder(
                 div {
                     p {
                         +"* The missing jurisdiction(s) are those that did not provide any data uploads by the expected deadline of $deadlineTimeDesc starting at midnight."
+                    }
+                    p {
+                        +"If you believe there is an error, please contact the PHDO Processing Status (PS) API "
+                        +"support team at "
+                        a(href = "mailto:DEXUploadAPI@cdc.gov") {
+                            +"PHDO Upload API Support"
+                        }
+                        +"."
                     }
                 }
                 h3 { +"Reported Jurisdictions" }
