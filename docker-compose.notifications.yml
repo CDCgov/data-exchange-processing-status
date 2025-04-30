@@ -106,7 +106,7 @@ services:
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
       RABBITMQ_PORT: 5672
-      RABBITMQ_VALIDATION_QUEUE_NAME: ValidatedReportQueue
+      RABBITMQ_REPORT_QUEUE_NAME: ValidatedReportQueue
       RABBITMQ_VIRTUAL_HOST: /
 
 networks:
