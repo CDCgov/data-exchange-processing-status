@@ -83,9 +83,9 @@ abstract class ReportQuery(
      * @return String representing the constructed SQL WHERE clause or an empty string if no conditions are specified.
      */
     protected open fun whereClause(isFirstClause: Boolean = false): String {
-        val jurisdictionIdsList = listForQuery(jurisdictions)
         val dataStreamIdsList = listForQuery(dataStreamIds)
         val dataStreamRoutesList = listForQuery(dataStreamRoutes)
+        val jurisdictionIdsList = listForQuery(jurisdictions)
 
         val clauses = mutableListOf<String>()
 

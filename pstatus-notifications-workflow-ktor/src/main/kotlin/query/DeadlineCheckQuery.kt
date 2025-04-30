@@ -70,7 +70,7 @@ class DeadlineCheckQuery private constructor(
         val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
 
         querySB.append("""
-            SELECT ${cPrefix}jurisdiction 
+            SELECT RAW ARRAY_DISTINCT(ARRAY_AGG(${cPrefix}jurisdiction)) 
             FROM $collectionName $cVar 
             """.trimIndent()
         )
@@ -83,14 +83,13 @@ class DeadlineCheckQuery private constructor(
             """.trimIndent()
         )
 
-        querySB.append(whereClause())
         querySB.append("AND $timeRangeWhereClause")
 
         return querySB.toString().trimIndent()
     }
 
     fun run(): List<String> {
-        val foundJurisdictions = runQuery(String::class.java)
+        val foundJurisdictions = runQuery(Array<String>::class.java).firstOrNull().orEmpty()
         val missingJurisdictions = expectedJurisdictions.filter { !foundJurisdictions.contains(it) }
         return missingJurisdictions.toList()
     }

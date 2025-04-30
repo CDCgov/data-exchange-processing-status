@@ -83,7 +83,7 @@ class CouchbaseCollection(
             String::class.java, Boolean::class.java -> {
                 results.addAll(queryResult.rowsAs(classType))
             }
-            Int::class.java, Long::class.java, Float::class.java, Array<Int>::class.java, Array<Long>::class.java, Array<Float>::class.java -> {
+            Int::class.java, Long::class.java, Float::class.java, Array<Int>::class.java, Array<Long>::class.java, Array<Float>::class.java, Array<String>::class.java -> {
                 val expectedResult = queryResult.rowsAs(classType)[0]
                 results.add(expectedResult as T)
             }
