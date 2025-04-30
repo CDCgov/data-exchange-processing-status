@@ -12,6 +12,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
+data class JurisdictionFacts(val count: Int, val lastUpload: Instant?)
+
 /**
  * Class responsible for building HTML email content for deadline check notifications.
  * This includes an overview table summarizing details of the workflow run and
@@ -34,15 +36,16 @@ class DeadlineCheckEmailBuilder(
     private val dataStreamRoute: String,
     private val expectedJurisdictions: List<String>,
     private val missingJurisdictions: List<String>,
-    private val deadlineTime: LocalTime
+    private val deadlineTime: LocalTime,
+    private val jurisdictionCounts: Map<String, JurisdictionFacts>
 ) {
 
-    private val triggeredFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
+    private val standardFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
     private val deadlineFormatter = DateTimeFormatter.ofPattern("hh:mm:ss")
 
     fun build(): String {
         val cronScheduleDesc = CronUtils.description(cronSchedule)?.replaceFirstChar { it.uppercaseChar() } ?: "Unknown"
-        val triggeredDesc = triggeredFormatter.format(Instant.ofEpochMilli(triggered))
+        val triggeredDesc = standardFormatter.format(Instant.ofEpochMilli(triggered))
         val expectedJurisdictionsDesc = expectedJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
         val missingJurisdictionsDesc = missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
         val deadlineTimeDesc = deadlineFormatter.format(deadlineTime) + " UTC"
@@ -51,6 +54,7 @@ class DeadlineCheckEmailBuilder(
             appendHTML().body {
                 workflowHeader()
                 h2 { +"Upload Deadline Check" }
+                h3 { +"Overview" }
                 table {
                     tr {
                         td { +"Workflow ID" }
@@ -68,6 +72,20 @@ class DeadlineCheckEmailBuilder(
                         td { +"Data Stream Route" }
                         td { strong { +dataStreamRoute } }
                     }
+                }
+                h3 { +"Missing Jurisdictions" }
+                p {
+                    +"The following jurisdictions did not provide any uploads by the expected deadline of "
+                    +"$deadlineTimeDesc starting at midnight." }
+                p {
+                    +"If you believe this is an error, please contact the PHDO Processing Status (PS) API "
+                    +"support team at "
+                    a(href = "mailto:DEXUploadAPI@cdc.gov") {
+                        +"PHDO Upload API Support"
+                    }
+                    +"."
+                }
+                table {
                     tr {
                         td { +"Expected Jurisdiction(s)" }
                         td { strong { +expectedJurisdictionsDesc } }
@@ -87,10 +105,33 @@ class DeadlineCheckEmailBuilder(
                 }
                 div {
                     p {
-                        +"* The missing jurisdiction(s) are those that did not provide any data uploads by the expected deadline of $deadlineTimeDesc starting at midnight of that day."
+                        +"* The missing jurisdiction(s) are those that did not provide any data uploads by the expected deadline of $deadlineTimeDesc starting at midnight."
                     }
                 }
-
+                h3 { +"Reported Jurisdictions" }
+                div {
+                    if (jurisdictionCounts.isEmpty()) {
+                        p { +"No jurisdictions reported." }
+                    } else {
+                        table(classes = "stylish-table") {
+                            thead {
+                                tr {
+                                    th { +"Jurisdiction" }
+                                    th { +"Count" }
+                                    th { +"Last Upload" }
+                                }
+                            }
+                            tr {
+                                jurisdictionCounts.forEach { (jurisdiction, facts) ->
+                                    val lastUpload = standardFormatter.format(facts.lastUpload) ?: "Unknown"
+                                    td { +jurisdiction }
+                                    td { +facts.count.toString() }
+                                    td { +lastUpload }
+                                }
+                            }
+                        }
+                    }
+                }
                 workflowFooter()
             }
         }

@@ -5,6 +5,7 @@ import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.DeadlineCheckQuery
+import gov.cdc.ocio.processingnotifications.query.UploadDigestCountsQuery
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
@@ -65,8 +66,9 @@ class DeadlineCheckNotificationWorkflowImpl
 
         try {
             // Logic to check if the upload occurred
-            val missingJurisdictions = performaDeadlineCheck(
+            val (missingJurisdictions, jurisdictionCounts) = performaDeadlineCheck(
                 dataStreamId, dataStreamRoute, expectedJurisdictions, workflowSubscription.deadlineTime)
+
             if (missingJurisdictions.isNotEmpty()) {
                 when (workflowSubscription.notificationType) {
                     NotificationType.EMAIL -> emailAddresses?.let {
@@ -78,7 +80,8 @@ class DeadlineCheckNotificationWorkflowImpl
                             dataStreamRoute,
                             expectedJurisdictions,
                             missingJurisdictions,
-                            workflowSubscription.deadlineTime
+                            workflowSubscription.deadlineTime,
+                            jurisdictionCounts
                         ).build()
                         activities.sendEmail(
                             emailAddresses,
@@ -126,23 +129,36 @@ class DeadlineCheckNotificationWorkflowImpl
         dataStreamRoute: String,
         jurisdictions: List<String>,
         deadlineTime: LocalTime
-    ): List<String> {
-        val query = DeadlineCheckQuery.Builder(repository)
+    ): Pair<List<String>, Map<String, JurisdictionFacts>> {
+
+        val deadlineCheckQuery = DeadlineCheckQuery.Builder(repository)
             .withDataStreamId(dataStreamId)
             .withDataStreamRoute(dataStreamRoute)
             .withExpectedJurisdictions(jurisdictions)
             .withDeadlineTime(deadlineTime)
             .build()
 
+        val uploadDigestQuery = UploadDigestCountsQuery.Builder(repository)
+            .withDataStreamIds(listOf(dataStreamId))
+            .withDataStreamRoutes(listOf(dataStreamRoute))
+            .withUtcToRun(LocalDate.now())
+            .build()
+
         try {
-            val missingJurisdictions = query.run()
+            val missingJurisdictions = deadlineCheckQuery.run()
             logger.info("Missing jurisdictions: $missingJurisdictions")
-            return missingJurisdictions
+
+            val uploadDigestResults = uploadDigestQuery.run()
+            val jurisdictionCounts = mapOf<String, JurisdictionFacts>().toMutableMap()
+            uploadDigestResults.forEach {
+                jurisdictionCounts[it.jurisdiction] = JurisdictionFacts(it.completed, it.lastUploadCompletedTime)
+            }
+            return Pair(missingJurisdictions, jurisdictionCounts)
         } catch (ex: ActivityFailure) {
-            logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
+            logger.error("Error while processing deadline check. The workflow may have been canceled. Error: ${ex.localizedMessage}")
             throw ex
         } catch (ex: Exception) {
-            logger.error("Error while processing daily upload digest: ${ex.localizedMessage}")
+            logger.error("Error while processing deadline check: ${ex.localizedMessage}")
             throw ex
         }
     }
