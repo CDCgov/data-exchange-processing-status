@@ -1,5 +1,7 @@
 package gov.cdc.ocio.processingnotifications.model
 
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.JurisdictionFacts
+
 
 /**
  * Represents a deadline check entity containing details about a specific data stream upload process.
@@ -15,5 +17,6 @@ data class DeadlineCheck(
     val dataStreamRoute: String,
     val expectedJurisdictions: List<String>,
     val missingJurisdictions: List<String>,
-    val timestamp: String
+    val timestamp: String,
+    val jurisdictionCounts: Map<String, JurisdictionFacts>
 )

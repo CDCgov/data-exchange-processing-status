@@ -100,7 +100,8 @@ class DeadlineCheckNotificationWorkflowImpl
                                 dataStreamRoute,
                                 expectedJurisdictions,
                                 missingJurisdictions,
-                                DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered))
+                                DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
+                                jurisdictionCounts
                             )
                         )
                         activities.sendWebhook(it, payload)
