@@ -5,6 +5,7 @@ import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.query.DeadlineCheckQuery
+import gov.cdc.ocio.processingnotifications.query.DeadlineCheckResults
 import gov.cdc.ocio.processingnotifications.query.UploadDigestCountsQuery
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
@@ -66,46 +67,44 @@ class DeadlineCheckNotificationWorkflowImpl
 
         try {
             // Logic to check if the upload occurred
-            val (missingJurisdictions, jurisdictionCounts) = performaDeadlineCheck(
+            val (deadlineCheckResults, jurisdictionCounts) = performaDeadlineCheck(
                 dataStreamId, dataStreamRoute, expectedJurisdictions, workflowSubscription.deadlineTime)
 
-            if (missingJurisdictions.isNotEmpty()) {
-                when (workflowSubscription.notificationType) {
-                    NotificationType.EMAIL -> emailAddresses?.let {
-                        val body = DeadlineCheckEmailBuilder(
-                            workflowId,
-                            cronSchedule,
-                            triggered,
+            when (workflowSubscription.notificationType) {
+                NotificationType.EMAIL -> emailAddresses?.let {
+                    val body = DeadlineCheckEmailBuilder(
+                        workflowId,
+                        cronSchedule,
+                        triggered,
+                        dataStreamId,
+                        dataStreamRoute,
+                        expectedJurisdictions,
+                        deadlineCheckResults,
+                        workflowSubscription.deadlineTime,
+                        jurisdictionCounts
+                    ).build()
+                    activities.sendEmail(
+                        emailAddresses,
+                        "PHDO DEADLINE MISSED NOTIFICATION",
+                        body
+                    )
+                }
+                NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
+                    val payload = WebhookContent(
+                        workflowId,
+                        WorkflowType.UPLOAD_DEADLINE_CHECK,
+                        workflowSubscription,
+                        triggeredAsString,
+                        DeadlineCheck(
                             dataStreamId,
                             dataStreamRoute,
                             expectedJurisdictions,
-                            missingJurisdictions,
-                            workflowSubscription.deadlineTime,
+                            deadlineCheckResults,
+                            DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
                             jurisdictionCounts
-                        ).build()
-                        activities.sendEmail(
-                            emailAddresses,
-                            "PHDO DEADLINE MISSED NOTIFICATION",
-                            body
                         )
-                    }
-                    NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
-                        val payload = WebhookContent(
-                            workflowId,
-                            WorkflowType.UPLOAD_DEADLINE_CHECK,
-                            workflowSubscription,
-                            triggeredAsString,
-                            DeadlineCheck(
-                                dataStreamId,
-                                dataStreamRoute,
-                                expectedJurisdictions,
-                                missingJurisdictions,
-                                DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
-                                jurisdictionCounts
-                            )
-                        )
-                        activities.sendWebhook(it, payload)
-                    }
+                    )
+                    activities.sendWebhook(it, payload)
                 }
             }
         } catch (e: Exception) {
@@ -130,7 +129,7 @@ class DeadlineCheckNotificationWorkflowImpl
         dataStreamRoute: String,
         jurisdictions: List<String>,
         deadlineTime: LocalTime
-    ): Pair<List<String>, Map<String, JurisdictionFacts>> {
+    ): Pair<DeadlineCheckResults, Map<String, JurisdictionFacts>> {
 
         val deadlineCheckQuery = DeadlineCheckQuery.Builder(repository)
             .withDataStreamId(dataStreamId)
@@ -146,15 +145,15 @@ class DeadlineCheckNotificationWorkflowImpl
             .build()
 
         try {
-            val missingJurisdictions = deadlineCheckQuery.run()
-            logger.info("Missing jurisdictions: $missingJurisdictions")
+            val deadlineCheckResults = deadlineCheckQuery.run()
+            logger.info("Missing jurisdictions: $deadlineCheckResults.missingJurisdictions, late jurisdictions: $deadlineCheckResults.lateJurisdictions")
 
             val uploadDigestResults = uploadDigestQuery.run()
             val jurisdictionCounts = mapOf<String, JurisdictionFacts>().toMutableMap()
             uploadDigestResults.forEach {
                 jurisdictionCounts[it.jurisdiction] = JurisdictionFacts(it.completed, it.lastUploadCompletedTime)
             }
-            return Pair(missingJurisdictions, jurisdictionCounts)
+            return Pair(deadlineCheckResults, jurisdictionCounts)
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing deadline check. The workflow may have been canceled. Error: ${ex.localizedMessage}")
             throw ex

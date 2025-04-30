@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
 import gov.cdc.ocio.processingnotifications.model.workflowHeader
 import gov.cdc.ocio.processingnotifications.model.workflowFooter
+import gov.cdc.ocio.processingnotifications.query.DeadlineCheckResults
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
@@ -15,18 +16,21 @@ import java.time.format.DateTimeFormatter
 data class JurisdictionFacts(val count: Int, val lastUpload: Instant?)
 
 /**
- * Class responsible for building HTML email content for deadline check notifications.
- * This includes an overview table summarizing details of the workflow run and
- * jurisdiction data, alongside custom styling for public health data notifications.
+ * Responsible for constructing email notifications regarding upload deadline checks.
  *
- * @property workflowId The unique identifier for the workflow.
- * @property cronSchedule The cron expression defining the schedule of the workflow.
- * @property triggered The timestamp indicating when the workflow was triggered.
- * @property dataStreamId The unique identifier for the data stream.
- * @property dataStreamRoute The route associated with the data stream.
- * @property expectedJurisdictions The list of jurisdictions expected to have submitted data.
- * @property missingJurisdictions The list of jurisdictions identified as missing in the submission.
- * @property deadlineTime The time jurisdictions should have provided at least one upload by.
+ * This class generates an HTML email report for a specific workflow, summarizing the results of an upload
+ * deadline check for jurisdictions within a data stream. It provides details about missing and late
+ * jurisdictions, along with relevant upload statistics and deadline information.
+ *
+ * @property workflowId The unique identifier for the workflow associated with this email.
+ * @property cronSchedule The cron expression representing the schedule for the workflow run.
+ * @property triggered The timestamp indicating when the deadline check was triggered.
+ * @property dataStreamId The identifier of the data stream associated with the deadline check.
+ * @property dataStreamRoute The route related to the data stream.
+ * @property expectedJurisdictions List of jurisdictions expected to participate in the upload.
+ * @property deadlineCheckResults Results of the deadline check, containing information about missing and late jurisdictions.
+ * @property deadlineTime The specific deadline time (HH:mm:ss) in UTC for uploads to be completed.
+ * @property jurisdictionCounts Map of jurisdictions to their respective upload counts and last upload timestamps.
  */
 class DeadlineCheckEmailBuilder(
     private val workflowId: String,
@@ -35,19 +39,20 @@ class DeadlineCheckEmailBuilder(
     private val dataStreamId: String,
     private val dataStreamRoute: String,
     private val expectedJurisdictions: List<String>,
-    private val missingJurisdictions: List<String>,
+    private val deadlineCheckResults: DeadlineCheckResults,
     private val deadlineTime: LocalTime,
     private val jurisdictionCounts: Map<String, JurisdictionFacts>
 ) {
 
     private val standardFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
-    private val deadlineFormatter = DateTimeFormatter.ofPattern("hh:mm:ss")
+    private val deadlineFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
     fun build(): String {
         val cronScheduleDesc = CronUtils.description(cronSchedule)?.replaceFirstChar { it.uppercaseChar() } ?: "Unknown"
         val triggeredDesc = standardFormatter.format(Instant.ofEpochMilli(triggered))
         val expectedJurisdictionsDesc = expectedJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
-        val missingJurisdictionsDesc = missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
+        val missingJurisdictionsDesc = deadlineCheckResults.missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
+        val lateJurisdictionsDesc = deadlineCheckResults.lateJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
         val deadlineTimeDesc = deadlineFormatter.format(deadlineTime) + " UTC"
 
         val content = buildString {
@@ -73,19 +78,22 @@ class DeadlineCheckEmailBuilder(
                         td { strong { +dataStreamRoute } }
                     }
                 }
-                h3 { +"Missing Jurisdictions" }
+                h3 { +"Missing or Late Jurisdictions" }
                 p {
                     +"The following jurisdictions did not provide any uploads by the expected deadline of "
-                    +"$deadlineTimeDesc starting at midnight. If an upload for a jurisdiction has occurred, but is "
-                    +"past the deadline it will still show on this list."}
+                    +"$deadlineTimeDesc starting at midnight." }
                 table {
                     tr {
                         td { +"Expected Jurisdiction(s)" }
                         td { strong { +expectedJurisdictionsDesc } }
                     }
                     tr {
-                        td { +"Missing Jurisdiction(s)*" }
+                        td { +"Missing Jurisdiction(s) [1]" }
                         td { strong { +missingJurisdictionsDesc } }
+                    }
+                    tr {
+                        td { +"Late Jurisdiction(s) [2]" }
+                        td { strong { +lateJurisdictionsDesc } }
                     }
                     tr {
                         td { +"Deadline" }
@@ -98,7 +106,14 @@ class DeadlineCheckEmailBuilder(
                 }
                 div {
                     p {
-                        +"* The missing jurisdiction(s) are those that did not provide any data uploads by the expected deadline of $deadlineTimeDesc starting at midnight."
+                        +"[1] The "
+                        b { +"missing jurisdiction(s)" }
+                        +" are those that did not provide any data uploads by the expected deadline of $deadlineTimeDesc starting at midnight."
+                    }
+                    p {
+                        +"[2] The "
+                        b { +"late jurisdiction(s)" }
+                        +" are those that provided an upload, but after the deadline."
                     }
                     p {
                         +"If you believe there is an error, please contact the PHDO Processing Status (PS) API "

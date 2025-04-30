@@ -5,12 +5,11 @@ import gov.cdc.ocio.database.models.StageService
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.Status
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.*
 import java.time.format.DateTimeFormatter
 
+data class DeadlineQueryResult(val jurisdiction: String, val earliestUpload: Instant)
+data class DeadlineCheckResults(val missingJurisdictions: List<String>, val lateJurisdictions: List<String>)
 
 class DeadlineCheckQuery private constructor(
     val repository: ProcessingStatusRepository,
@@ -62,35 +61,35 @@ class DeadlineCheckQuery private constructor(
         val today = LocalDate.now(ZoneId.of("UTC"))
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
-        val dateEnd = today.atTime(
-            deadlineTime.hour,
-            deadlineTime.minute,
-            deadlineTime.second
-        ).atZone(ZoneOffset.UTC).format(formatter)
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
+        val dateEnd = today.atTime(23, 59, 59).atZone(ZoneOffset.UTC).format(formatter)
+        val entireDayTimeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
 
         querySB.append("""
-            SELECT RAW ARRAY_DISTINCT(ARRAY_AGG(${cPrefix}jurisdiction)) 
+            SELECT r.jurisdiction, MIN(r.dexIngestDateTime) AS earliestUpload
             FROM $collectionName $cVar 
-            """.trimIndent()
-        )
-        querySB.append(whereClause(isFirstClause = true))
-
-        querySB.append("""
+            ${whereClause(isFirstClause = true)} 
             AND ${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' 
             AND ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' 
             AND ${cPrefix}stageInfo.status = '${Status.SUCCESS}' 
+            AND $entireDayTimeRangeWhereClause 
+            GROUP BY r.jurisdiction;
             """.trimIndent()
         )
-
-        querySB.append("AND $timeRangeWhereClause")
 
         return querySB.toString().trimIndent()
     }
 
-    fun run(): List<String> {
-        val foundJurisdictions = runQuery(Array<String>::class.java).firstOrNull().orEmpty()
+    fun run(): DeadlineCheckResults {
+        val deadlineQueryResults = runQuery(DeadlineQueryResult::class.java)
+        val foundJurisdictions = deadlineQueryResults.map { it.jurisdiction }
         val missingJurisdictions = expectedJurisdictions.filter { !foundJurisdictions.contains(it) }
-        return missingJurisdictions.toList()
+        val deadline = LocalDate.now(ZoneId.of("UTC")).atTime(deadlineTime).toInstant(ZoneOffset.UTC)
+        val lateJurisdictions = deadlineQueryResults.filter {
+            it.earliestUpload.isAfter(deadline)
+        }.map { it.jurisdiction }
+        return DeadlineCheckResults(
+            missingJurisdictions,
+            lateJurisdictions
+        )
     }
 }
