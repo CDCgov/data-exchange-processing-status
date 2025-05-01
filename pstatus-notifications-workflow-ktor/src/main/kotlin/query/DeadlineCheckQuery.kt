@@ -64,7 +64,7 @@ class DeadlineCheckQuery private constructor(
         querySB.append("""
             SELECT r.jurisdiction, MIN(r.dexIngestDateTime) AS earliestUpload
             FROM $collectionName $cVar 
-            ${whereClause(isFirstClause = true)} 
+            ${whereClause(prefix = "WHERE")} 
             AND ${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' 
             AND ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' 
             AND ${cPrefix}stageInfo.status = '${Status.SUCCESS}' 

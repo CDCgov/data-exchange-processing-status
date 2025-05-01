@@ -71,18 +71,14 @@ abstract class ReportQuery(
     }
 
     /**
-     * Constructs a SQL WHERE clause based on the provided conditions.
+     * Constructs a where clause for a SQL query based on the provided class fields and their values.
+     * The where clause will include conditions for `dataStreamIds`, `dataStreamRoutes`, and `jurisdictions`
+     * if the respective collections are not empty.
      *
-     * Combines multiple filtering criteria into a single clause using "AND" conjunctions.
-     * If no valid filtering conditions are provided, an empty string is returned.
-     * The "WHERE" or "AND" prefix is applied based on whether this is the first clause
-     * in the SQL query.
-     *
-     * @param isFirstClause Boolean indicating whether this is the first clause in the query.
-     *                      If true, "WHERE" is used as the prefix; otherwise, "AND" is used.
-     * @return String representing the constructed SQL WHERE clause or an empty string if no conditions are specified.
+     * @param prefix A string to prefix the where clause. Defaults to "WHERE".
+     * @return A SQL where clause as a string. Returns an empty string if no conditions are generated.
      */
-    protected open fun whereClause(isFirstClause: Boolean = false): String {
+    protected open fun whereClause(prefix: String = "WHERE"): String {
         val dataStreamIdsList = listForQuery(dataStreamIds)
         val dataStreamRoutesList = listForQuery(dataStreamRoutes)
         val jurisdictionIdsList = listForQuery(jurisdictions)
@@ -102,8 +98,6 @@ abstract class ReportQuery(
         }
 
         if (clauses.isEmpty()) return ""
-
-        val prefix = if (isFirstClause) "WHERE" else "AND"
 
         return "$prefix ${clauses.joinToString(" AND ")} " // add space at the end in case other clauses follow
     }

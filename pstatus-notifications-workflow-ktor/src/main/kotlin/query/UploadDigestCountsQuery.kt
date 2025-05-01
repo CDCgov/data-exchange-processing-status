@@ -45,11 +45,7 @@ class UploadDigestCountsQuery private constructor(
             
             FROM $collectionName $cVar
             WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.FILE_DELIVERY}'${closeBkt}
-            """)
-
-        querySB.append(whereClause(utcDateToRun))
-
-        querySB.append("""
+            ${whereClause(utcDateToRun, prefix = "AND")}
             GROUP BY ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
             """)
 

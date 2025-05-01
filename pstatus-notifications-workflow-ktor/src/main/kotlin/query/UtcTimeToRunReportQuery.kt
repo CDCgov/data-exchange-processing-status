@@ -39,27 +39,24 @@ abstract class UtcTimeToRunReportQuery(
     }
 
     /**
-     * Constructs a SQL WHERE clause for filtering data based on a specified UTC date range.
+     * Constructs a SQL where clause for filtering data based on a specific UTC date.
+     * The generated clause includes conditions for a datetime range, calculated from the provided date,
+     * and appends it to the parent `whereClause` method result.
      *
-     * Generates a SQL fragment using the provided date as a range filter for the `dexIngestDateTime` field.
-     * The clause is prefixed with "WHERE" or "AND" based on whether it is the first clause of the query.
-     *
-     * @param utcDateToRun The `LocalDate` representing the UTC date that defines the range to filter data.
-     *                     The filtering range will be set from the start to the end of this date in UTC timezone.
-     * @param isFirstClause A Boolean indicating whether this is the first clause in the query. If true,
-     *                      the clause is prefixed with "WHERE"; if false, it is prefixed with "AND".
-     * @return A `String` representing the constructed SQL WHERE clause with the specified date range conditions.
+     * @param utcDateToRun The date for which the SQL query will filter records. Assumes UTC timezone.
+     * @param prefix The prefix for the where clause. Defaults to "WHERE".
+     * @return A SQL where clause as a string containing conditions for the specified UTC date range.
      */
     fun whereClause(
         utcDateToRun: LocalDate,
-        isFirstClause: Boolean = false,
+        prefix: String = "WHERE",
     ): String {
         val instantRange = InstantRange.fromLocalDate(utcDateToRun)
         val startTime = timeFunc(instantRange.start.epochSecond)
         val endTime = timeFunc(instantRange.endInclusive.epochSecond)
 
         val querySB = StringBuilder()
-        querySB.append(super.whereClause(isFirstClause))
+        querySB.append(super.whereClause(prefix))
 
         querySB.append("""
                 AND ${cPrefix}dexIngestDateTime >= $startTime
