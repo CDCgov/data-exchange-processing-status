@@ -1,31 +1,27 @@
 package gov.cdc.ocio.processingnotifications.workflow.toperrors
 
 import gov.cdc.ocio.database.models.StageAction
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.model.ErrorDetail
 import gov.cdc.ocio.processingnotifications.model.UploadErrorSummary
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
 import gov.cdc.ocio.processingnotifications.service.ReportService
+import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
-import gov.cdc.ocio.types.model.WorkflowSubscription
-import io.temporal.activity.ActivityOptions
-import io.temporal.common.RetryOptions
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.temporal.workflow.Workflow
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
-import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 
 /**
- * The implementation class which determines the digest counts and top errors during an upload and its frequency.
- *
- * @property logger KLogger
- * @property reportService ReportService
- * @property activities (NotificationActivities..NotificationActivities?)
+ * Implementation of the `DataStreamTopErrorsNotificationWorkflow` interface.
+ * This class manages the workflow for checking data stream errors and notifying the relevant parties
+ * through various notification mechanisms (e.g., email, webhook). It processes error types, tallies counts,
+ * and formats output for notification.
  */
 class DataStreamTopErrorsNotificationWorkflowImpl
     : DataStreamTopErrorsNotificationWorkflow {
@@ -33,30 +29,15 @@ class DataStreamTopErrorsNotificationWorkflowImpl
     private val logger = KotlinLogging.logger {}
     private val reportService = ReportService()
 
-    private val activities = Workflow.newActivityStub(
-        NotificationActivities::class.java,
-        ActivityOptions.newBuilder()
-            .setStartToCloseTimeout(Duration.ofSeconds(10)) // Set the start-to-close timeout
-            .setScheduleToCloseTimeout(Duration.ofMinutes(1)) // Set the schedule-to-close timeout
-            .setRetryOptions(
-                RetryOptions.newBuilder()
-                    .setMaximumAttempts(3) // Set retry options if needed
-                    .build()
-            )
-            .build()
-    )
+    private val activities = WorkflowActivity.newDefaultActivityStub()
 
     /**
      * The function which determines the digest counts and top errors during an upload and its frequency.
      *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param jurisdiction String
-     * @param cronSchedule String
-     * @param emailAddresses List<String>
+     * @param workflowSubscription WorkflowSubscription
      */
     override fun checkDataStreamTopErrorsAndNotify(
-        workflowSubscription: WorkflowSubscription
+        workflowSubscription: WorkflowSubscriptionForDataStreams
     ) {
         val dayInterval = workflowSubscription.sinceDays
         val dataStreamId = workflowSubscription.dataStreamIds.first()
@@ -79,7 +60,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                         delayedDeliveries,
                         dayInterval
                     )
-                    workflowSubscription.emailAddresses?.let { activities.sendDataStreamTopErrorsNotification(body, it) }
+                    workflowSubscription.emailAddresses?.let { activities.sendEmail(it, "PHDO TOP ERRORS NOTIFICATION", body) }
                 }
                 NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
                     val subId = Workflow.getInfo().workflowId

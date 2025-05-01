@@ -4,7 +4,7 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.grpc.StatusRuntimeException
 import io.temporal.client.WorkflowClient
@@ -36,14 +36,14 @@ class UploadDigestCountsNotificationSubscriptionService: KoinComponent {
     /**
      * The main method which executes workflow for orchestrating the daily digest counts.
      *
-     * @param subscription WorkflowSubscription
+     * @param subscription WorkflowSubscriptionForDataStreams
      * @return WorkflowSubscriptionResult
      * @throws IllegalStateException
      * @throws StatusRuntimeException
      */
     @Throws(IllegalStateException::class, StatusRuntimeException::class)
     fun run(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionForDataStreams
     ): WorkflowSubscriptionResult {
         val taskQueue = "uploadDigestCountsTaskQueue"
 

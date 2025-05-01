@@ -1,5 +1,8 @@
 package gov.cdc.ocio.processingstatusapi
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.messagesystem.utils.MessageProcessorConfigKoinCreator
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
@@ -57,7 +60,11 @@ fun Application.module() {
     configureRouting()
 
     install(ContentNegotiation) {
-        jackson()
+        jackson {
+            registerModule(JavaTimeModule()) // Support java.time.*
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        }
     }
 
     // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars

@@ -4,10 +4,11 @@ import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
-import mu.KotlinLogging
+import gov.cdc.ocio.types.model.Status
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Instant
+
 
 /**
  * Singleton class for a service layer between the middleware and repository layers.
@@ -38,7 +39,7 @@ class ReportService: KoinComponent {
      */
     fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: StageAction, daysInterval: Int?): Int {
         val query = "select value count(1) from $cName $cVar " +
-                "where ${cPrefix}stageInfo.${cElFunc("status")} = 'FAILURE' " +
+                "where ${cPrefix}stageInfo.${cElFunc("status")} = '${Status.FAILURE}' " +
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '$action' " +
                 "and dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute'"
@@ -57,7 +58,7 @@ class ReportService: KoinComponent {
         val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-started' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsStarted = repository.reportsCollection.queryItems(appendTimeRange(uploadsStartedQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -67,7 +68,7 @@ class ReportService: KoinComponent {
         val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -88,7 +89,7 @@ class ReportService: KoinComponent {
         val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }
@@ -98,7 +99,7 @@ class ReportService: KoinComponent {
         val uploadsDeliveredQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
                 "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = 'blob-file-copy' " +
+                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.FILE_DELIVERY}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsDelivered = repository.reportsCollection.queryItems(appendTimeRange(uploadsDeliveredQuery, daysInterval), UploadInfo::class.java)
             .map { it.uploadId }

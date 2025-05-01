@@ -4,7 +4,7 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.temporal.client.WorkflowClient
 import mu.KotlinLogging
@@ -38,10 +38,10 @@ class DataStreamTopErrorsNotificationSubscriptionService : KoinComponent {
      * The main method which gets called from the route which executes and kicks off the
      * workflow execution for digest counts and the frequency with which each of the top 5 errors occur
      *
-     * @param subscription DataStreamTopErrorsNotificationSubscription
+     * @param subscription WorkflowSubscriptionForDataStreams
      */
     fun run(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionForDataStreams
     ): WorkflowSubscriptionResult {
 
         val cronSchedule = subscription.cronSchedule

@@ -3,7 +3,8 @@ package gov.cdc.ocio.processingnotifications
 
 import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
-import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -17,7 +18,7 @@ import java.util.*
  */
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
-        val subscription = call.receive<WorkflowSubscription>()
+        val subscription = call.receive<WorkflowSubscriptionDeadlineCheck>()
         val result = DeadLineCheckSubscriptionService().run(subscription)
         call.respond(result)
     }
@@ -39,7 +40,7 @@ fun Route.unsubscribeDeadlineCheck() {
  */
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
-        val subscription = call.receive<WorkflowSubscription>()
+        val subscription = call.receive<WorkflowSubscriptionForDataStreams>()
         val result = UploadDigestCountsNotificationSubscriptionService()
             .run(subscription)
         call.respond(result)
@@ -63,7 +64,7 @@ fun Route.unsubscribeUploadDigestCountsRoute() {
  */
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
-        val subscription = call.receive<WorkflowSubscription>()
+        val subscription = call.receive<WorkflowSubscriptionForDataStreams>()
         val result = DataStreamTopErrorsNotificationSubscriptionService()
             .run(subscription)
         call.respond(result)

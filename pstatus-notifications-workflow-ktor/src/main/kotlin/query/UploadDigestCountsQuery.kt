@@ -18,7 +18,7 @@ class UploadDigestCountsQuery private constructor(
     dataStreamRoutes: List<String>,
     jurisdictions: List<String>,
     utcDateToRun: LocalDate
-): UtcTimeToRunReportQuery("upload digest counts", repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
+): UtcTimeToRunReportQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
 
     class Builder(
         repository: ProcessingStatusRepository
@@ -38,15 +38,14 @@ class UploadDigestCountsQuery private constructor(
                 SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_STARTED}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS started,
                 SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_COMPLETED}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS completed,
                 SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' AND ${cPrefix}stageInfo.status != '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS failedDelivery,
-                SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS delivered
+                SUM(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}' AND ${cPrefix}stageInfo.status = '${StageStatus.SUCCESS}' THEN 1 ELSE 0 END) AS delivered,
+            
+                -- Last upload completed time
+                MAX(CASE WHEN ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_COMPLETED}' THEN ${cPrefix}stageInfo.end_processing_time END) AS lastUploadCompletedTime
             
             FROM $collectionName $cVar
             WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.FILE_DELIVERY}'${closeBkt}
-            """)
-
-        querySB.append(whereClause(utcDateToRun))
-
-        querySB.append("""
+            ${whereClause(utcDateToRun, prefix = "AND")}
             GROUP BY ${cPrefix}dataStreamId, ${cPrefix}dataStreamRoute, ${cPrefix}jurisdiction
             """)
 

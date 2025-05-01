@@ -74,8 +74,10 @@ dependencies {
     implementation "io.ktor:ktor-server-netty:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
     implementation "io.ktor:ktor-client-logging:$ktor_version"
+    implementation "io.ktor:ktor-serialization-jackson:$ktor_version"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0") // Java time module
     implementation "software.amazon.awssdk:sts:2.29.34"
     implementation("org.json:json:20250107")
 

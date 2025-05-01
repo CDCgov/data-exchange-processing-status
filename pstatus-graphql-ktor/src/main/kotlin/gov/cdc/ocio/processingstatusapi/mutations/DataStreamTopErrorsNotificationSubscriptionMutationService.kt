@@ -5,6 +5,7 @@ import com.expediagroup.graphql.server.operations.Mutation
 import gov.cdc.ocio.processingstatusapi.ServiceConnection
 import gov.cdc.ocio.processingstatusapi.mutations.response.SubscriptionResponse
 import gov.cdc.ocio.types.model.WorkflowSubscription
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -35,13 +36,13 @@ class DataStreamTopErrorsNotificationSubscriptionMutationService(
     /**
      * The mutation function which invokes the data stream top errors and digest counts microservice route to subscribe.
      *
-     * @param subscription WorkflowSubscription
+     * @param subscription WorkflowSubscriptionForDataStreams
      * @return WorkflowSubscriptionResult
      */
     @GraphQLDescription("Subscribe data stream top errors lets you subscribe to get notifications for top data stream errors and its frequency during an upload")
     @Suppress("unused")
     fun subscribeDataStreamTopErrorsNotification(
-        subscription: WorkflowSubscription
+        subscription: WorkflowSubscriptionForDataStreams
     ): WorkflowSubscriptionResult {
         val url = workflowServiceConnection.buildUrl("subscribe/dataStreamTopErrorsNotification")
 
