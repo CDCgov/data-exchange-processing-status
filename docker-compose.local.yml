@@ -1,0 +1,162 @@
+name: pstatus-local
+
+services:
+  graphql:
+    image: pstatus-graphql-ktor:latest
+    ports:
+    - "127.0.0.1:8090:8080" # GraphQL listener port
+    environment:
+      SECURITY_ENABLED: false
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: ""
+      REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+    depends_on:
+      - couchbase
+    restart: "always"
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
+
+  report-sink:
+    image: pstatus-report-sink-ktor:latest
+    ports:
+    - "127.0.0.1:${SINK_PORT:-8080}:8080" # Rest API listener port
+    environment:
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+      MSG_SYSTEM: "RABBITMQ"
+      RABBITMQ_EXCHANGE_TOPIC_NAME: "PSAPIExchange"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_REPORT_QUEUE_NAME: "PSAPIQueue"
+      RABBITMQ_ROUTING_KEY: "psapi1234"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_VIRTUAL_HOST: "/"
+      REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+    depends_on:
+      - couchbase
+      - rabbitmq
+    restart: "always"
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
+
+  couchbase:
+    image: couchbase
+    ports:
+      - "8091-8096:8091-8096"
+      - "11210-11211:11210-11211"
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+    deploy:
+      resources:
+        limits:
+          memory: 4G # Set the memory limit here
+
+  couchbase-setup:
+    image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
+    depends_on:
+      - couchbase
+    restart: "no"
+    volumes:
+      - ./couchbase-init.sh:/scripts/couchbase-init.sh # Mount the setup script
+    entrypoint: ["bash", "-c", "/scripts/couchbase-init.sh"]
+
+  rabbitmq:
+    image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+    ports:
+      - "5672:5672" # AMQP protocol port
+      - "15672:15672" # Management UI port
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+  postgresql:
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    volumes:
+      - /var/lib/postgresql/data
+
+  temporal:
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yml
+    image: temporalio/auto-setup:latest
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-admin-tools:
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:latest
+    stdin_open: true
+    tty: true
+  
+  notifications-workflow:
+    image: pstatus-notifications-workflow-ktor:latest
+    ports:
+      - 8000:8080
+    environment: 
+      COUCHBASE_CONNECTION_STRING: couchbase://couchbase
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_USERNAME: admin
+      DATABASE: couchbase
+      TEMPORAL_SERVICE_TARGET: localhost:7233
+      TEMPORAL_NAMESPACE: psapi
+    depends_on:
+      - postgresql
+      - temporal
+
+  notifications-rules-engine:
+    image: pstatus-notifications-rules-engine-ktor:latest
+    ports:
+      - 8001:8080
+    environment:
+      COUCHBASE_CONNECTION_STRING: couchbase://localhost
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_USERNAME: admin
+      DATABASE: couchbase
+      MSG_SYSTEM: rabbitmq
+      RABBITMQ_HOST: localhost
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VALIDATION_QUEUE_NAME: PSAPIValidation
+      RABBITMQ_VIRTUAL_HOST: /
+      REPORT_SCHEMA_LOADER_SYSTEM: file_system
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: ./reports
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
+    depends_on:
+      - postgresql
+      - temporal
+
+volumes:
+  couchbase_data:
+    external: false
+
