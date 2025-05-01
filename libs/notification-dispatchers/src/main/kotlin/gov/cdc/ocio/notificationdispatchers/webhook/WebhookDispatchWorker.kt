@@ -14,6 +14,8 @@ import io.ktor.client.request.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
+import java.io.EOFException
 import java.time.Instant
 import java.util.*
 
@@ -22,6 +24,8 @@ import java.util.*
  * Dispatch worker for invoking webhooks.
  */
 class WebhookDispatchWorker: DispatchWorker {
+
+    private val logger = KotlinLogging.logger {}
 
     private val gson =
         GsonBuilder()
@@ -41,17 +45,34 @@ class WebhookDispatchWorker: DispatchWorker {
 
         runBlocking {
             val client = HttpClient(CIO) {
+                // Timeout configurations
+                engine {
+                    requestTimeout = 10000 // 10 seconds
+                }
                 install(ContentNegotiation) {
                     json()
                 }
             }
 
-            client.post(content.webhookUrl) {
-                contentType(ContentType.Application.Json)
-                setBody(gson.toJson(content.payload))
-            }
+            try {
+                val response = client.post(content.webhookUrl) {
+                    contentType(ContentType.Application.Json)
+                    setBody(gson.toJson(content.payload))
+                }
 
-            client.close()
+                // Handle HTTP response
+                when (response.status) {
+                    HttpStatusCode.OK -> logger.info("Webhook sent successfully!")
+                    else -> logger.error("Unexpected response: ${response.status}")
+                }
+
+            } catch (e: EOFException) {
+                logger.error("EOFException occurred: ${e.message}. Possible server disconnection issue.")
+            } catch (e: Exception) {
+                logger.error("An error occurred during the HTTP request: ${e.message}")
+            } finally {
+                client.close()
+            }
         }
     }
 
