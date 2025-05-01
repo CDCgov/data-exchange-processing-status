@@ -30,10 +30,7 @@ class DeadLineCheckUnSubscriptionService : KoinComponent {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
             return WorkflowSubscriptionResult(
-                subscriptionId = subscriptionId,
-                message = "",
-                emailAddresses = listOf(),
-                webhookUrl = ""
+                subscriptionId = subscriptionId
             )
         }
         catch (e:Exception){
