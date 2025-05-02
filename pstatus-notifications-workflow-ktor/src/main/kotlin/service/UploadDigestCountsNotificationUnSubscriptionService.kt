@@ -23,17 +23,15 @@ class UploadDigestCountsNotificationUnSubscriptionService : KoinComponent {
      * The main method which cancels a workflow based on the workflow Id
      * @param subscriptionId String
      */
-    fun run(subscriptionId: String):
-            WorkflowSubscriptionResult {
+    fun run(subscriptionId: String): WorkflowSubscriptionResult {
         try {
             workflowEngine.cancelWorkflow(subscriptionId)
             return WorkflowSubscriptionResult(
                 subscriptionId = subscriptionId
             )
+        } catch (ex: Exception) {
+            logger.error("Error occurred while unsubscribing and canceling the workflow for workflowId $subscriptionId: ${ex.message}")
+            throw ex
         }
-        catch (e:Exception ){
-            logger.error("Error occurred while checking for upload digest: ${e.message}")
-        }
-        throw Exception("Error occurred while canceling the execution of workflow engine to cancel workflow for workflow Id $subscriptionId")
     }
 }

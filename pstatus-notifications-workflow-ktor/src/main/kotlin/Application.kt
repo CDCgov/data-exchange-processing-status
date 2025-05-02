@@ -18,6 +18,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.temporal.client.WorkflowNotFoundException
 import io.temporal.client.WorkflowServiceException
 import org.koin.ktor.plugin.Koin
 import org.koin.core.KoinApplication
@@ -68,6 +69,7 @@ fun Application.module() {
             IllegalArgumentException::class.java to HttpStatusCode.BadRequest,
             StatusRuntimeException::class.java to HttpStatusCode.InternalServerError,
             WorkflowServiceException::class.java to HttpStatusCode.BadRequest,
+            WorkflowNotFoundException::class.java to HttpStatusCode.NotFound,
             IllegalStateException::class.java to HttpStatusCode.InternalServerError,
         )
 
