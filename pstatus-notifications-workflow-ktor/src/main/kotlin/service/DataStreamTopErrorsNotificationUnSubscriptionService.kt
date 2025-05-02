@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
-import io.temporal.client.WorkflowNotFoundException
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
