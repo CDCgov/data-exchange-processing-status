@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivities
 import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.WorkflowTaskQueue
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
@@ -10,7 +9,6 @@ import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCo
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
-import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
