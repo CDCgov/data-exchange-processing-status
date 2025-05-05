@@ -1,8 +1,8 @@
 @file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package gov.cdc.ocio.processingnotifications
 
-import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
+import gov.cdc.ocio.types.model.UnsubscribeRequest
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.ktor.http.*

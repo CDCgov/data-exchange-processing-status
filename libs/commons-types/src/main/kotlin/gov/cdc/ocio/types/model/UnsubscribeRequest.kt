@@ -1,3 +1,3 @@
-package gov.cdc.ocio.processingnotifications.model
+package gov.cdc.ocio.types.model
 
 data class UnsubscribeRequest(val subscriptionId:String)
