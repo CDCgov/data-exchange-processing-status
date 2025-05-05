@@ -55,6 +55,7 @@ fun Application.graphQLModule() {
                 DataStreamTopErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
                 DeadlineCheckSubscriptionMutationService(workflowServiceUrl),
                 UploadDigestCountsSubscriptionMutationService(workflowServiceUrl),
+                UnsubscribeMutationService(workflowServiceUrl),
                 ReportMutation(),
                 ReportSchemaMutation()
             )

@@ -35,6 +35,7 @@ import kotlinx.coroutines.runBlocking
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.temporal.client.WorkflowNotFoundException
 import io.temporal.common.converter.DefaultDataConverter
 import io.temporal.common.converter.JacksonJsonPayloadConverter
 
@@ -154,6 +155,7 @@ class WorkflowEngine(
      *
      * @param workflowId String
      */
+    @Throws(WorkflowNotFoundException::class)
     fun cancelWorkflow(workflowId: String) {
         try {
             // Retrieve the workflow by its ID
@@ -165,7 +167,7 @@ class WorkflowEngine(
         } catch (ex: Exception) {
             val message = "Error while canceling the workflow: ${ex.message}"
             logger.error(message)
-            throw Exception(message)
+            throw ex
         }
     }
 
