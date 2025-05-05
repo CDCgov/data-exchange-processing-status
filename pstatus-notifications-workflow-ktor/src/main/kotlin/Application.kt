@@ -85,11 +85,9 @@ fun Application.module() {
     }
     routing {
         subscribeDeadlineCheckRoute()
-        unsubscribeDeadlineCheck()
         subscribeDataStreamTopErrorsNotification()
-        unsubscribesDataStreamTopErrorsNotification()
         subscribeUploadDigestCountsRoute()
-        unsubscribeUploadDigestCountsRoute()
+        unsubscribe()
         getWorkflowsRoute()
         healthCheckRoute()
         versionRoute()
