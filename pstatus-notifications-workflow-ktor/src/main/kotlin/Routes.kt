@@ -19,7 +19,7 @@ import java.util.*
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
         val subscription = call.receive<WorkflowSubscriptionDeadlineCheck>()
-        val result = DeadLineCheckSubscriptionService().run(subscription)
+        val result = NotificationSubscriptionService().subscribeDeadlineCheck(subscription)
         call.respond(result)
     }
 }
@@ -30,8 +30,8 @@ fun Route.subscribeDeadlineCheckRoute() {
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
         val subscription = call.receive<WorkflowSubscriptionForDataStreams>()
-        val result = UploadDigestCountsNotificationSubscriptionService()
-            .run(subscription)
+        val result = NotificationSubscriptionService()
+            .subscribeUploadDigest(subscription)
         call.respond(result)
     }
 }
@@ -42,8 +42,8 @@ fun Route.subscribeUploadDigestCountsRoute() {
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
         val subscription = call.receive<WorkflowSubscriptionForDataStreams>()
-        val result = DataStreamTopErrorsNotificationSubscriptionService()
-            .run(subscription)
+        val result = NotificationSubscriptionService()
+            .subscribeTopErrors(subscription)
         call.respond(result)
     }
 }

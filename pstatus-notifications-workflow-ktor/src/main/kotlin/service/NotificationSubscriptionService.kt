@@ -5,8 +5,12 @@ import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.TemporalSubscription
 import gov.cdc.ocio.processingnotifications.model.WorkflowTaskQueue
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.NotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
 import gov.cdc.ocio.types.model.WorkflowSubscription
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
@@ -21,31 +25,61 @@ class NotificationSubscriptionService: KoinComponent {
     private val workflowEngine by inject<WorkflowEngine>()
     private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
-    fun <T : WorkflowSubscription> run(
-        subscription: TemporalSubscription<T>,
-    ): WorkflowSubscriptionResult {
+    fun subscribeTopErrors(subscription: WorkflowSubscriptionForDataStreams): WorkflowSubscriptionResult {
         val workflow = workflowEngine.setupWorkflow(
-            subscription.description,
-            subscription.taskQueue.toString(),
-            subscription.workflowSubscription.cronSchedule,
-            NotificationWorkflowImpl::class.java,
+            "Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.",
+            WorkflowTaskQueue.TOP_ERRORS.toString(),
+            subscription.cronSchedule,
+            DataStreamTopErrorsNotificationWorkflowImpl::class.java,
             notificationActivitiesImpl,
-            NotificationWorkflow::class.java
+            DataStreamTopErrorsNotificationWorkflow::class.java
         )
 
-        val execution = when(subscription.taskQueue) {
-            WorkflowTaskQueue.TOP_ERRORS -> WorkflowClient.start(
-                workflow::notifyDataStreamTopErrors,
-                subscription.workflowSubscription as WorkflowSubscriptionForDataStreams)
-            WorkflowTaskQueue.UPLOAD_DIGEST -> WorkflowClient.start(
-                workflow::notifyUploadDigest,
-                subscription.workflowSubscription as WorkflowSubscriptionForDataStreams)
-            WorkflowTaskQueue.DEADLINE_CHECK -> WorkflowClient.start(
-                workflow::notifyUploadDeadlines,
-                subscription.workflowSubscription as WorkflowSubscriptionDeadlineCheck)
-        }
+        val execution = WorkflowClient.start(
+            workflow::checkDataStreamTopErrorsAndNotify,
+            subscription
+        )
 
-        // TODO log success message
+        return WorkflowSubscriptionResult(
+            subscriptionId = execution.workflowId
+        )
+    }
+
+    fun subscribeUploadDigest(subscription: WorkflowSubscriptionForDataStreams): WorkflowSubscriptionResult {
+        val workflow = workflowEngine.setupWorkflow(
+            "Provides a digest of the upload counts for the data streams and day provided.",
+            WorkflowTaskQueue.UPLOAD_DIGEST.toString(),
+            subscription.cronSchedule,
+            UploadDigestCountsNotificationWorkflowImpl::class.java,
+            notificationActivitiesImpl,
+            UploadDigestCountsNotificationWorkflow::class.java
+        )
+
+        val execution = WorkflowClient.start(
+            workflow::processDailyUploadDigest,
+            subscription
+        )
+
+        return WorkflowSubscriptionResult(
+            subscriptionId = execution.workflowId
+        )
+    }
+
+    fun subscribeDeadlineCheck(subscription: WorkflowSubscriptionDeadlineCheck): WorkflowSubscriptionResult {
+        val workflow = workflowEngine.setupWorkflow(
+            "Checks to see if all the expected uploads have occurred by the deadline provided.",
+            WorkflowTaskQueue.DEADLINE_CHECK.toString(),
+            subscription.cronSchedule,
+            DeadlineCheckNotificationWorkflowImpl::class.java,
+            notificationActivitiesImpl,
+            DeadlineCheckNotificationWorkflow::class.java
+        )
+
+        val execution = WorkflowClient.start(
+            workflow::checkUploadDeadlinesAndNotify,
+            subscription
+        )
+
         return WorkflowSubscriptionResult(
             subscriptionId = execution.workflowId
         )
