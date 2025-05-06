@@ -34,7 +34,7 @@ class TopErrorsEmailBuilder(
                 h3 { +"Overview" }
                 table {
                     tr {
-                        td { +"Workflow ID" }
+                        td { +"Subscription ID" }
                         td { strong { +workflowId } }
                     }
                     tr {
@@ -55,12 +55,33 @@ class TopErrorsEmailBuilder(
                     }
                 }
                 br { }
-                h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size}" }
-                ul {
-                    li { +"Failed Metadata Validation: $failedMetadataValidationCount" }
-                    li { +"Failed Deliveries: $failedDeliveryCount" }
-                    li { +"Delayed Uploads: ${delayedUploads.size}" }
-                    li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
+                table(classes = "stylish-table") {
+                    thead {
+                        tr {
+                            th { +"Category" }
+                            th { +"Count" }
+                        }
+                    }
+                    tr {
+                        td { +"Failed Metadata Validation" }
+                        td { +"$failedMetadataValidationCount" }
+                    }
+                    tr {
+                        td { +"Failed Deliveries" }
+                        td { +"$failedDeliveryCount" }
+                    }
+                    tr {
+                        td { +"Delayed Uploads" }
+                        td { +"${delayedUploads.size}" }
+                    }
+                    tr {
+                        td { +"Delayed Deliveries" }
+                        td { +"${delayedDeliveries.size}" }
+                    }
+                    tr {
+                        td { strong { +"Total" } }
+                        td { strong { +"${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size}" } }
+                    }
                 }
                 br { }
                 h3 { +"Delayed Uploads" }
