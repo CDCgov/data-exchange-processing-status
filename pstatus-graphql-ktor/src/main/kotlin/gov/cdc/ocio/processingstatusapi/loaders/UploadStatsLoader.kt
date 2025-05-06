@@ -24,6 +24,7 @@ class UploadStatsLoader: KoinComponent {
     private val openBkt = reportsCollection.openBracketChar
     private val closeBkt = reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val timeFunc = repository.reportsCollection.timeConversionForQuery
 
     @Throws(BadRequestException::class, ContentException::class)
     fun getUploadStats(
@@ -38,7 +39,8 @@ class UploadStatsLoader: KoinComponent {
             daysInterval,
             dateStart,
             dateEnd,
-            cPrefix
+            cPrefix,
+            timeFunc
         )
 
         val numUniqueUploadsQuery = (

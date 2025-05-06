@@ -81,11 +81,11 @@ class UploadStatusLoader: KoinComponent {
         }
 
         dateStart?.run {
-            val dateStartEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateStart, "date_start"))
+            val dateStartEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateStart))
             sqlQuery.append(" and ${cPrefix}dexIngestDateTime >= $dateStartEpochMillis")
         }
         dateEnd?.run {
-            val dateEndEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateEnd, "date_end"))
+            val dateEndEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateEnd))
             sqlQuery.append(" and ${cPrefix}dexIngestDateTime < $dateEndEpochMillis")
         }
 

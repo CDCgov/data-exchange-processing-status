@@ -23,6 +23,7 @@ class ReportDeadLetterLoader: KoinComponent {
     private val cName = reportsDeadLetterCollection.collectionNameForQuery
     private val cVar = reportsDeadLetterCollection.collectionVariable
     private val cPrefix = reportsDeadLetterCollection.collectionVariablePrefix
+    private val timeFunc = reportsDeadLetterCollection.timeConversionForQuery
 
     /**
      * Function that returns a list of DeadLetterReports based on uploadId
@@ -61,7 +62,7 @@ class ReportDeadLetterLoader: KoinComponent {
 
 
         val timeRangeWhereClause =
-            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
+            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix, timeFunc)
 
         val reportsSqlQuery = "select * from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
                 "and ${cPrefix}dataStreamRoute = '$dataStreamRoute' " +
@@ -97,7 +98,7 @@ class ReportDeadLetterLoader: KoinComponent {
         val logger = KotlinLogging.logger {}
 
         val timeRangeWhereClause =
-            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix)
+            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, startDate, endDate, cPrefix, timeFunc)
 
         val reportsSqlQuery = "select value count(*) from $cName $cVar where ${cPrefix}dataStreamId = '$dataStreamId' " +
                 "and $timeRangeWhereClause " + if (dataStreamRoute != null) " and ${cPrefix}dataStreamRoute= '$dataStreamRoute'" else ""

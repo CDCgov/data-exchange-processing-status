@@ -270,7 +270,7 @@ class ReportCountsLoader: KoinComponent {
     ): ProcessingCounts {
 
         val timeRangeWhereClause =
-            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
+            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix, timeFunc)
 
         // Get number completed uploading
         val numCompletedUploadingSqlQuery = (
@@ -350,7 +350,7 @@ class ReportCountsLoader: KoinComponent {
     ): List<StageCounts> {
 
         val timeRangeWhereClause =
-            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
+            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix, timeFunc)
 
         val rollupCountsQuery = (
                 "select "
