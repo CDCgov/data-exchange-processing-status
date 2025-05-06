@@ -3,6 +3,7 @@ package gov.cdc.ocio.processingnotifications.workflow.toperrors
 import gov.cdc.ocio.processingnotifications.model.workflowHeader
 import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
+import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
@@ -15,8 +16,8 @@ class TopErrorsEmailBuilder(
     private val dataStreamRoute: String,
     private val failedMetadataValidationCount: Int,
     private val failedDeliveryCount: Int,
-    private val delayedUploads: List<String>,
-    private val delayedDeliveries: List<String>,
+    private val delayedUploads: List<UploadInfo>,
+    private val delayedDeliveries: List<UploadInfo>,
     private val daysInterval: Int
 ) {
 
@@ -85,13 +86,43 @@ class TopErrorsEmailBuilder(
                 }
                 br { }
                 h3 { +"Delayed Uploads" }
-                ul {
-                    delayedUploads.map { li { +it } }
+                if (delayedUploads.isEmpty()) {
+                    p { +"No delayed uploads found." }
+                } else {
+                    table(classes = "stylish-table") {
+                        thead {
+                            tr {
+                                th { +"Upload ID" }
+                                th { +"Filename" }
+                            }
+                        }
+                        delayedUploads.forEach {
+                            tr {
+                                td { +it.uploadId }
+                                td { +(it.filename ?: "Unknown") }
+                            }
+                        }
+                    }
                 }
                 br { }
                 h3 { +"Delayed Deliveries" }
-                ul {
-                    delayedDeliveries.map { li { +it } }
+                if (delayedDeliveries.isEmpty()) {
+                    p { +"No delayed deliveries found." }
+                } else {
+                    table(classes = "stylish-table") {
+                        thead {
+                            tr {
+                                th { +"Upload ID" }
+                                th { +"Filename" }
+                            }
+                        }
+                        delayedDeliveries.forEach {
+                            tr {
+                                td { +it.uploadId }
+                                td { +(it.filename ?: "Unknown") }
+                            }
+                        }
+                    }
                 }
                 workflowFooter()
             }

@@ -1,3 +1,6 @@
 package gov.cdc.ocio.processingnotifications.model
 
-data class UploadInfo(val uploadId: String)
+data class UploadInfo(
+    val uploadId: String,
+    val filename: String? = null
+)

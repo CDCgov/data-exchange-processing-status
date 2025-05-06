@@ -50,11 +50,12 @@ class ReportService: KoinComponent {
 
     /**
      * Query the reports collection for in progress uploads that started at least an hour ago.
+     *
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param daysInterval Int?
      */
-    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<String> {
+    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<UploadInfo> {
         // first, get uploads that have upload-started reports older than 1 hour
         val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
@@ -62,7 +63,6 @@ class ReportService: KoinComponent {
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsStarted = repository.reportsCollection.queryItems(appendTimeRange(uploadsStartedQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
             .toSet()
 
         // then, get uploads that have upload-completed reports older than 1 hour
@@ -72,7 +72,6 @@ class ReportService: KoinComponent {
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
             .toSet()
 
         // then take the difference of those to get uploads that don't have upload-completed
@@ -85,7 +84,7 @@ class ReportService: KoinComponent {
      * @param dataStreamRoute String
      * @param daysInterval Int?
      */
-    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<String> {
+    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<UploadInfo> {
         // first, get completed uploads older than 1 hour
         val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
                 "where dataStreamId = '$dataStreamId' " +
@@ -93,7 +92,6 @@ class ReportService: KoinComponent {
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
             .toSet()
 
         // then, get uploads that have been successfully delivered
@@ -103,7 +101,6 @@ class ReportService: KoinComponent {
                 "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.FILE_DELIVERY}' " +
                 "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
         val uploadsDelivered = repository.reportsCollection.queryItems(appendTimeRange(uploadsDeliveredQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
             .toSet()
 
         // finally, take the difference to get uploads that haven't been delivered in over an hour
