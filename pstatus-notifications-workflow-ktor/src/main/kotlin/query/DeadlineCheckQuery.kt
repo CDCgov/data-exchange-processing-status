@@ -3,10 +3,11 @@ package gov.cdc.ocio.processingnotifications.query
 import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.models.StageService
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
+import gov.cdc.ocio.database.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.Status
 import java.time.*
 import java.time.format.DateTimeFormatter
+
 
 class DeadlineCheckQuery private constructor(
     val repository: ProcessingStatusRepository,
@@ -59,7 +60,7 @@ class DeadlineCheckQuery private constructor(
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
         val dateEnd = today.atTime(23, 59, 59).atZone(ZoneOffset.UTC).format(formatter)
-        val entireDayTimeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
+        val entireDayTimeRangeWhereClause = SqlClauseBuilder.buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
 
         querySB.append("""
             SELECT r.jurisdiction, MIN(r.dexIngestDateTime) AS earliestUpload

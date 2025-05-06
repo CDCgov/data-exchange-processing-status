@@ -1,5 +1,6 @@
-package gov.cdc.ocio.processingnotifications.utils
+package gov.cdc.ocio.database.utils
 
+import gov.cdc.ocio.types.utils.DateUtils
 import io.ktor.server.plugins.*
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -8,7 +9,8 @@ import org.joda.time.DateTimeZone
 /**
  * Builds a SQL clause for filtering timestamps based on a specified date range.
  */
-class SqlClauseBuilder {
+object SqlClauseBuilder {
+
     /**
      * @param daysInterval An optional number of days to subtract from today's date.
      * @param dateStart An optional start date in string format.
@@ -16,10 +18,12 @@ class SqlClauseBuilder {
      * @return A SQL clause as a String.
      */
     @Throws(NumberFormatException::class, BadRequestException::class)
-    fun buildSqlClauseForDateRange(daysInterval: Int?,
-                                   dateStart: String?,
-                                   dateEnd: String?,  cPrefix: String): String {
-
+    fun buildSqlClauseForDateRange(
+        daysInterval: Int?,
+        dateStart: String?,
+        dateEnd: String?,
+        cPrefix: String
+    ): String {
         val timeRangeSqlPortion = StringBuilder()
         if (daysInterval != null) {
             val dateStartEpochSecs = DateTime

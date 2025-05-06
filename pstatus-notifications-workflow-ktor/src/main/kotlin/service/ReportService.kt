@@ -2,8 +2,8 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.utils.SqlClauseBuilder
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
-import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.Status
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -117,7 +117,7 @@ class ReportService: KoinComponent {
      */
     private fun appendTimeRange(query: String, daysInterval: Int?): String {
         if (daysInterval != null) {
-            return "$query and ${SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
+            return "$query and ${SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
         }
 
         return query
