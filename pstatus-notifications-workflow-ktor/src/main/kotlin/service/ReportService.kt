@@ -8,6 +8,7 @@ import gov.cdc.ocio.types.model.Status
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 
 /**
@@ -28,7 +29,7 @@ class ReportService: KoinComponent {
     private val cPrefix = repository.reportsCollection.collectionVariablePrefix
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
     private val timeFunc = repository.reportsCollection.timeConversionForQuery
-    private val oneHourAgo = Instant.now().minusSeconds(3600).epochSecond
+    private val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
 
     /**
      * Query the reports collection for number of failed reports of a given action.

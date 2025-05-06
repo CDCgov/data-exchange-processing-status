@@ -10,8 +10,6 @@ import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.temporal.workflow.Workflow
-import kotlinx.html.*
-import kotlinx.html.stream.appendHTML
 import mu.KotlinLogging
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -42,16 +40,22 @@ class DataStreamTopErrorsNotificationWorkflowImpl
         val dayInterval = workflowSubscription.sinceDays
         val dataStreamId = workflowSubscription.dataStreamIds.first()
         val dataStreamRoute = workflowSubscription.dataStreamRoutes.first()
+
         try {
-            // Logic to check if the upload occurred*/
+            // Logic to check if the upload occurred
             val failedMetadataVerifyCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.METADATA_VERIFY, dayInterval)
             val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.FILE_DELIVERY, dayInterval)
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
 
+            val workflowId = Workflow.getInfo().workflowId
+            val cronSchedule = Workflow.getInfo().cronSchedule
+
             when (workflowSubscription.notificationType) {
-                NotificationType.EMAIL -> {
-                    val body = formatEmailBody(
+                NotificationType.EMAIL -> workflowSubscription.emailAddresses?.let {
+                    val body = TopErrorsEmailBuilder(
+                        workflowId,
+                        cronSchedule,
                         dataStreamId,
                         dataStreamRoute,
                         failedMetadataVerifyCount,
@@ -59,8 +63,8 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                         delayedUploads,
                         delayedDeliveries,
                         dayInterval
-                    )
-                    workflowSubscription.emailAddresses?.let { activities.sendEmail(it, "PHDO TOP ERRORS NOTIFICATION", body) }
+                    ).build()
+                    activities.sendEmail(it, "PHDO TOP ERRORS NOTIFICATION", body)
                 }
                 NotificationType.WEBHOOK -> workflowSubscription.webhookUrl?.let {
                     val subId = Workflow.getInfo().workflowId
@@ -77,53 +81,6 @@ class DataStreamTopErrorsNotificationWorkflowImpl
             }
         } catch (e: Exception) {
             logger.error("Error occurred while checking for counts and top errors and frequency in an upload: ${e.message}")
-        }
-    }
-
-    /**
-     * Builds the HTML string of the email body
-     *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param failedMetadataValidationCount Int
-     * @param failedDeliveryCount Int
-     * @param delayedUploads List<String>
-     * @param delayedDeliveries List<String>
-     * @param daysInterval Int
-     */
-    private fun formatEmailBody(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        failedMetadataValidationCount: Int,
-        failedDeliveryCount: Int,
-        delayedUploads: List<String>,
-        delayedDeliveries: List<String>,
-        daysInterval: Int
-    ): String {
-        return buildString {
-            appendHTML().html {
-                body {
-                    h2 { +"$dataStreamId $dataStreamRoute Upload Issues in the last $daysInterval days" }
-                    br {  }
-                    h3 { +"Total: ${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size }" }
-                    ul {
-                        li { +"Failed Metadata Validation: $failedMetadataValidationCount" }
-                        li { +"Failed Deliveries: $failedDeliveryCount" }
-                        li { +"Delayed Uploads: ${delayedUploads.size}" }
-                        li { +"Delayed Deliveries: ${delayedDeliveries.size}" }
-                    }
-                    br {  }
-                    h3 { +"Delayed Uploads" }
-                    ul {
-                        delayedUploads.map { li { +it } }
-                    }
-                    br {  }
-                    h3 { +"Delayed Deliveries" }
-                    ul {
-                        delayedDeliveries.map{ li { +it }}
-                    }
-                }
-            }
         }
     }
 
