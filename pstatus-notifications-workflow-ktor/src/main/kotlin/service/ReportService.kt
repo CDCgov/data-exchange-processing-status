@@ -117,7 +117,7 @@ class ReportService: KoinComponent {
      */
     private fun appendTimeRange(query: String, daysInterval: Int?): String {
         if (daysInterval != null) {
-            return "$query and ${SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
+             return "$query and ${SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, null, null, cPrefix, timeFunc)}"
         }
 
         return query

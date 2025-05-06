@@ -25,6 +25,7 @@ class ReportCountsLoader: KoinComponent {
     private val cName = reportsCollection.collectionNameForQuery
     private val cVar = reportsCollection.collectionVariable
     private val cPrefix = reportsCollection.collectionVariablePrefix
+    private val timeFunc = reportsCollection.timeConversionForQuery
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
 
     /**
@@ -117,7 +118,8 @@ class ReportCountsLoader: KoinComponent {
             daysInterval,
             dateStart,
             dateEnd,
-            cPrefix
+            cPrefix,
+            timeFunc
         )
 
         // Get the total matching upload ids

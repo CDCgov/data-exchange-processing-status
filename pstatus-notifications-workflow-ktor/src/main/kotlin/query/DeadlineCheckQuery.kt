@@ -60,7 +60,8 @@ class DeadlineCheckQuery private constructor(
 
         val dateStart = today.atStartOfDay(ZoneOffset.UTC).format(formatter)
         val dateEnd = today.atTime(23, 59, 59).atZone(ZoneOffset.UTC).format(formatter)
-        val entireDayTimeRangeWhereClause = SqlClauseBuilder.buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix)
+        val entireDayTimeRangeWhereClause = SqlClauseBuilder
+            .buildSqlClauseForDateRange(null, dateStart, dateEnd, cPrefix, timeFunc)
 
         querySB.append("""
             SELECT r.jurisdiction, MIN(r.dexIngestDateTime) AS earliestUpload

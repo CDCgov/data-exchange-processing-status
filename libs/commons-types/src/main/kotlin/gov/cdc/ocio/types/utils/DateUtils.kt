@@ -18,18 +18,17 @@ object DateUtils {
      * Get the epoch time from a string provided.
      *
      * @param dateStr String
-     * @param fieldName String
      * @return Long - Epoch time in milliseconds
      * @throws IllegalArgumentException
      */
     @Throws(IllegalArgumentException::class)
-    fun getEpochFromDateString(dateStr: String, fieldName: String): Long {
+    fun getEpochFromDateString(dateStr: String): Long {
         try {
             // Parse the date string to a Date object
             val date = dateFormat.parse(dateStr)
             return date.time
         } catch (e: ParseException) {
-            throw IllegalArgumentException("Failed to parse $fieldName: $dateStr. Format should be: ${DATE_FORMAT}.")
+            throw IllegalArgumentException("Failed to parse $dateStr as a date. Format should be: ${DATE_FORMAT}.")
         }
     }
 
