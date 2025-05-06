@@ -84,24 +84,48 @@ class ReportService: KoinComponent {
      * @param dataStreamRoute String
      * @param daysInterval Int?
      */
-    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<UploadInfo> {
+    fun getDelayedDeliveries(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        daysInterval: Int?
+    ): List<UploadInfo> {
         // first, get completed uploads older than 1 hour
-        val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
-                "where dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
-                "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
-        val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
-            .toSet()
+        val uploadsCompletedQuery = """
+            SELECT DISTINCT ${cPrefix}uploadId,
+                mv.content.filename AS filename
+            FROM $cName $cVar
+            LEFT JOIN $cName mv
+                ON ${cPrefix}uploadId = mv.uploadId
+                AND mv.stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}'
+            WHERE ${cPrefix}dataStreamId = '$dataStreamId'
+                AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
+                AND ${cPrefix}stageInfo.action = '${StageAction.UPLOAD_COMPLETED}'
+                AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+            """.trimIndent()
+
+        val uploadsCompleted = repository.reportsCollection.queryItems(
+            appendTimeRange(uploadsCompletedQuery, daysInterval),
+            UploadInfo::class.java
+        ).toSet()
 
         // then, get uploads that have been successfully delivered
-        val uploadsDeliveredQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
-                "where dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.FILE_DELIVERY}' " +
-                "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
-        val uploadsDelivered = repository.reportsCollection.queryItems(appendTimeRange(uploadsDeliveredQuery, daysInterval), UploadInfo::class.java)
-            .toSet()
+        val uploadsDeliveredQuery = """
+            SELECT DISTINCT ${cPrefix}uploadId,
+                mv.content.filename AS filename
+            FROM $cName $cVar
+            LEFT JOIN $cName mv
+                ON ${cPrefix}uploadId = mv.uploadId
+                AND mv.stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}'
+            WHERE ${cPrefix}dataStreamId = '$dataStreamId'
+                AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
+                AND ${cPrefix}stageInfo.action = '${StageAction.FILE_DELIVERY}'
+                AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+            """.trimIndent()
+
+        val uploadsDelivered = repository.reportsCollection.queryItems(
+            appendTimeRange(uploadsDeliveredQuery, daysInterval),
+            UploadInfo::class.java
+        ).toSet()
 
         // finally, take the difference to get uploads that haven't been delivered in over an hour
         return (uploadsCompleted - uploadsDelivered).toList()
