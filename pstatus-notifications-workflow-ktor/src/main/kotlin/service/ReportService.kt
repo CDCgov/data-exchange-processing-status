@@ -81,8 +81,8 @@ class ReportService: KoinComponent {
             LEFT JOIN $cName us
                 ON ${cPrefix}uploadId = us.uploadId
                 AND us.stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}'
-            WHERE dataStreamId = '$dataStreamId'
-                AND dataStreamRoute = '$dataStreamRoute'
+            WHERE ${cPrefix}dataStreamId = '$dataStreamId'
+                AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
                 AND ${cPrefix}stageInfo.${cElFunc("action")} IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}'${closeBkt}
                 AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
                 ${appendTimeRange(daysInterval)}
