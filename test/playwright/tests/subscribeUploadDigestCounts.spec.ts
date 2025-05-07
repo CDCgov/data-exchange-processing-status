@@ -194,7 +194,7 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
 
     test('unsubscribes from uploadDigestCounts webhook', async ({ gql }) => {
         const subscription = createSubscriptionInput({
-            webhookUrl: "http://testwebook:80",
+            webhookUrl: "https://testwebook:80",
         });
 
         const res = await gql.subscribeUploadDigestCounts({ subscription });
