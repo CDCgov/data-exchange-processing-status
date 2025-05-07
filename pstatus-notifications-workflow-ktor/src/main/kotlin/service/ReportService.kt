@@ -45,7 +45,12 @@ class ReportService: KoinComponent {
      * @param action String
      * @param daysInterval Int?
      */
-    fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: StageAction, daysInterval: Int?): Int {
+    fun countFailedReports(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        action: StageAction,
+        daysInterval: Int?
+    ): Int {
         val query = """
             SELECT VALUE COUNT(1)
             FROM $cName $cVar
@@ -69,34 +74,16 @@ class ReportService: KoinComponent {
      * @param dataStreamRoute String
      * @param daysInterval Int?
      */
-    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<UploadInfo> {
-        val delayedUploadsQuery = """
-            SELECT ${cPrefix}uploadId,
-                mv.content.filename AS filename,
-                us.stageInfo.start_processing_time AS uploadStartTime
-            FROM $cName $cVar
-            LEFT JOIN $cName mv
-                ON ${cPrefix}uploadId = mv.uploadId
-                AND mv.stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}'
-            LEFT JOIN $cName us
-                ON ${cPrefix}uploadId = us.uploadId
-                AND us.stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}'
-            WHERE ${cPrefix}dataStreamId = '$dataStreamId'
-                AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
-                AND ${cPrefix}stageInfo.${cElFunc("action")} IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}'${closeBkt}
-                AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
-                ${appendTimeRange(daysInterval)}
-            GROUP BY ${cPrefix}uploadId, mv.content.filename, us.stageInfo.start_processing_time
-            HAVING
-                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' THEN 1 END) > 0
-                AND
-                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' THEN 1 END) = 0
-            """.trimIndent()
-
-        return repository.reportsCollection.queryItems(
-            delayedUploadsQuery,
-            UploadInfo::class.java
-        )
+    fun getDelayedUploads(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        daysInterval: Int?
+    ): List<UploadInfo> {
+        val timeRangeSection = """
+            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+            ${appendTimeRange(daysInterval)}
+        """.trimIndent()
+        return runCommonQuery(dataStreamId, dataStreamRoute, timeRangeSection)
     }
 
     /**
@@ -108,8 +95,32 @@ class ReportService: KoinComponent {
      * @param dataStreamRoute The route of the data stream for which abandoned uploads are being queried.
      * @return A list of abandoned uploads represented by the UploadInfo data class.
      */
-    fun getAbandonedUploads(dataStreamId: String, dataStreamRoute: String): List<UploadInfo> {
-        val abandonedUploadsQuery = """
+    fun getAbandonedUploads(
+        dataStreamId: String,
+        dataStreamRoute: String
+    ): List<UploadInfo> {
+        val timeRangeSection = """
+            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneWeekAgo)}
+            AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneMonthAgo)}
+        """.trimIndent()
+        return runCommonQuery(dataStreamId, dataStreamRoute, timeRangeSection)
+    }
+
+    /**
+     * Executes a query to retrieve a list of uploads that meet specified conditions
+     * within a given data stream and time range.
+     *
+     * @param dataStreamId The unique identifier of the data stream for which the query is performed.
+     * @param dataStreamRoute The route of the data stream for which the query is performed.
+     * @param timeRangeSection A SQL fragment specifying the time range filter to apply to the query.
+     * @return A list of UploadInfo objects representing the uploads that satisfy the query conditions.
+     */
+    private fun runCommonQuery(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        timeRangeSection: String
+    ): List<UploadInfo> {
+        val query = """
             SELECT ${cPrefix}uploadId,
                 mv.content.filename AS filename,
                 us.stageInfo.start_processing_time AS uploadStartTime
@@ -123,17 +134,16 @@ class ReportService: KoinComponent {
             WHERE ${cPrefix}dataStreamId = '$dataStreamId'
                 AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
                 AND ${cPrefix}stageInfo.${cElFunc("action")} IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}'${closeBkt}
-                AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneWeekAgo)}
-                AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneMonthAgo)}
+                $timeRangeSection
             GROUP BY ${cPrefix}uploadId, mv.content.filename, us.stageInfo.start_processing_time
             HAVING
                 COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' THEN 1 END) > 0
                 AND
                 COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' THEN 1 END) = 0
-        """.trimIndent()
+            """.trimIndent()
 
         return repository.reportsCollection.queryItems(
-            abandonedUploadsQuery,
+            query,
             UploadInfo::class.java
         )
     }
