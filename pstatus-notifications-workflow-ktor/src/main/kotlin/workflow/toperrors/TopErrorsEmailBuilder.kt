@@ -86,6 +86,11 @@ class TopErrorsEmailBuilder(
                 }
                 br { }
                 h3 { +"Delayed Uploads" }
+                p {
+                    +"A "
+                    b { +"delayed upload" }
+                    +" is an upload that was initiated but has not completed in more than one hour."
+                }
                 if (delayedUploads.isEmpty()) {
                     p { +"No delayed uploads found." }
                 } else {
