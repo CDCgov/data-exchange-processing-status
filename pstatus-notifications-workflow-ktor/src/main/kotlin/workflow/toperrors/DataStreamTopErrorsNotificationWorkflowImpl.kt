@@ -47,6 +47,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
             val failedDeliveryCount = reportService.countFailedReports(dataStreamId, dataStreamRoute, StageAction.FILE_DELIVERY, dayInterval)
             val delayedUploads = reportService.getDelayedUploads(dataStreamId, dataStreamRoute, dayInterval)
             val delayedDeliveries = reportService.getDelayedDeliveries(dataStreamId, dataStreamRoute, dayInterval)
+            val abandonedUploads = reportService.getAbandonedUploads(dataStreamId, dataStreamRoute)
 
             val workflowId = Workflow.getInfo().workflowId
             val cronSchedule = Workflow.getInfo().cronSchedule
@@ -62,6 +63,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                         failedDeliveryCount,
                         delayedUploads,
                         delayedDeliveries,
+                        abandonedUploads,
                         dayInterval
                     ).build()
                     activities.sendEmail(it, "PHDO TOP ERRORS NOTIFICATION", body)
@@ -74,7 +76,7 @@ class DataStreamTopErrorsNotificationWorkflowImpl
                         WorkflowType.UPLOAD_ERROR_SUMMARY,
                         workflowSubscription,
                         DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
-                        UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries)
+                        UploadErrorSummary(failedMetadataVerifyCount, failedDeliveryCount, delayedUploads, delayedDeliveries, abandonedUploads)
                     )
                     activities.sendWebhook(it, payload)
                 }

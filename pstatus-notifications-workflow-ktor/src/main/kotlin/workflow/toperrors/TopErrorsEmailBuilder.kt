@@ -7,6 +7,9 @@ import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 class TopErrorsEmailBuilder(
@@ -18,8 +21,16 @@ class TopErrorsEmailBuilder(
     private val failedDeliveryCount: Int,
     private val delayedUploads: List<UploadInfo>,
     private val delayedDeliveries: List<UploadInfo>,
+    private val abandonedUploads: List<UploadInfo>,
     private val daysInterval: Int
 ) {
+    private val timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
+
+    private fun getTimestampDesc(timestamp: Instant?): String {
+        return runCatching {
+            timestampFormatter.format(timestamp)
+        }.getOrDefault("Unknown")
+    }
 
     /**
      * Builds the HTML string of the email body
@@ -72,39 +83,57 @@ class TopErrorsEmailBuilder(
                         td { +"$failedDeliveryCount" }
                     }
                     tr {
-                        td { +"Delayed Uploads" }
+                        td { +"Delayed Uploads [1]" }
                         td { +"${delayedUploads.size}" }
                     }
                     tr {
-                        td { +"Delayed Deliveries" }
+                        td { +"Delayed Deliveries [2]" }
                         td { +"${delayedDeliveries.size}" }
                     }
                     tr {
+                        td { +"Abandoned Uploads [3]" }
+                        td { +"${abandonedUploads.size}" }
+                    }
+                    tr {
                         td { strong { +"Total" } }
-                        td { strong { +"${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size}" } }
+                        td { strong { +"${failedMetadataValidationCount + failedDeliveryCount + delayedUploads.size + delayedDeliveries.size + abandonedUploads.size}" } }
+                    }
+                }
+                div {
+                    p {
+                        +"[1] A "
+                        b { +"delayed upload" }
+                        +" is an upload that was initiated but has not completed in more than one hour."
+                    }
+                    p {
+                        +"[2] A "
+                        b { +"delayed delivery" }
+                        +" is an upload that was completed but has not completed delivery in more than one hour since the upload started."
+                    }
+                    p {
+                        +"[3] An "
+                        b { +"abandoned upload" }
+                        +" is an upload that was initiated more than a week ago and has still not completed. Abandoned uploads that are more than a month old will not be shown."
                     }
                 }
                 br { }
                 h3 { +"Delayed Uploads" }
-                p {
-                    +"A "
-                    b { +"delayed upload" }
-                    +" is an upload that was initiated but has not completed in more than one hour."
-                }
                 if (delayedUploads.isEmpty()) {
                     p { +"No delayed uploads found." }
                 } else {
                     table(classes = "stylish-table") {
                         thead {
                             tr {
-                                th { +"Upload ID" }
                                 th { +"Filename" }
+                                th { +"Upload ID" }
+                                th { +"Upload Start Time" }
                             }
                         }
                         delayedUploads.forEach {
                             tr {
-                                td { +it.uploadId }
                                 td { +(it.filename ?: "Unknown") }
+                                td { +it.uploadId }
+                                td { +getTimestampDesc(it.uploadStartTime) }
                             }
                         }
                     }
@@ -119,12 +148,36 @@ class TopErrorsEmailBuilder(
                             tr {
                                 th { +"Upload ID" }
                                 th { +"Filename" }
+                                th { +"Upload Start Time" }
                             }
                         }
                         delayedDeliveries.forEach {
                             tr {
                                 td { +it.uploadId }
                                 td { +(it.filename ?: "Unknown") }
+                                td { +getTimestampDesc(it.uploadStartTime) }
+                            }
+                        }
+                    }
+                }
+                br { }
+                h3 { +"Abandoned Uploads" }
+                if (abandonedUploads.isEmpty()) {
+                    p { +"No abandoned uploads found." }
+                } else {
+                    table(classes = "stylish-table") {
+                        thead {
+                            tr {
+                                th { +"Filename" }
+                                th { +"Upload ID" }
+                                th { +"Upload Start Time" }
+                            }
+                        }
+                        abandonedUploads.forEach {
+                            tr {
+                                td { +(it.filename ?: "Unknown") }
+                                td { +it.uploadId }
+                                td { +getTimestampDesc(it.uploadStartTime) }
                             }
                         }
                     }
