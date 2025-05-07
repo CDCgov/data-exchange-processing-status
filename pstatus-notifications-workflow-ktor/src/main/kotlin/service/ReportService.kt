@@ -56,7 +56,10 @@ class ReportService: KoinComponent {
                 ${appendTimeRange(daysInterval)}
             """.trimIndent()
 
-        return repository.reportsCollection.queryItems(query, Int::class.java).firstOrNull() ?: 0
+        return repository.reportsCollection.queryItems(
+            query,
+            Int::class.java
+        ).firstOrNull() ?: 0
     }
 
     /**
@@ -77,8 +80,10 @@ class ReportService: KoinComponent {
                 AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
                 ${appendTimeRange(daysInterval)}
             """.trimIndent()
-        val uploadsStarted = repository.reportsCollection.queryItems(uploadsStartedQuery, UploadInfo::class.java)
-            .toSet()
+        val uploadsStarted = repository.reportsCollection.queryItems(
+            uploadsStartedQuery,
+            UploadInfo::class.java
+        ).toSet()
 
         // then, get uploads that have upload-completed reports older than 1 hour
         val uploadsCompletedQuery = """
@@ -90,8 +95,10 @@ class ReportService: KoinComponent {
                 AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
                 ${appendTimeRange(daysInterval)}
             """.trimIndent()
-        val uploadsCompleted = repository.reportsCollection.queryItems(uploadsCompletedQuery, UploadInfo::class.java)
-            .toSet()
+        val uploadsCompleted = repository.reportsCollection.queryItems(
+            uploadsCompletedQuery,
+            UploadInfo::class.java
+        ).toSet()
 
         // then take the difference of those to get uploads that don't have upload-completed
         return (uploadsStarted - uploadsCompleted).toList()
@@ -130,7 +137,10 @@ class ReportService: KoinComponent {
                 COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' THEN 1 END) = 0
         """.trimIndent()
 
-        return repository.reportsCollection.queryItems(abandonedUploadsQuery, UploadInfo::class.java)
+        return repository.reportsCollection.queryItems(
+            abandonedUploadsQuery,
+            UploadInfo::class.java
+        )
     }
 
     /**
@@ -180,10 +190,7 @@ class ReportService: KoinComponent {
      * @param daysInterval The number of days to define a relative date range. If null, no time range condition is appended.
      * @return A SQL clause string for filtering by the specified time range, or an empty string if no interval is provided.
      */
-    private fun appendTimeRange(daysInterval: Int?): String {
-        if (daysInterval != null) {
-            return "AND ${SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, null, null, cPrefix, timeFunc)}"
-        }
-        return ""
-    }
+    private fun appendTimeRange(daysInterval: Int?) = daysInterval?.let {
+        "AND ${SqlClauseBuilder.buildSqlClauseForDateRange(it, null, null, cPrefix, timeFunc)}"
+    } ?: ""
 }
