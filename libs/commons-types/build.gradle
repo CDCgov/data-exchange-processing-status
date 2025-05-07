@@ -28,6 +28,7 @@ dependencies {
 
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.1'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0'
+    implementation("org.ocpsoft.prettytime:prettytime:5.0.9.Final")
 
     // Needed for DynamoDB enhanced annotations
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.27.16'

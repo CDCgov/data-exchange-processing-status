@@ -5,6 +5,7 @@ import gov.cdc.ocio.processingnotifications.model.workflowFooter
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
+import gov.cdc.ocio.types.utils.TimeUtils
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import java.time.Instant
@@ -30,6 +31,12 @@ class TopErrorsEmailBuilder(
         return runCatching {
             timestampFormatter.format(timestamp)
         }.getOrDefault("Unknown")
+    }
+
+    private fun getElapsedTime(timestamp: Instant?): String {
+        if (timestamp == null) return "Unknown"
+        val secondsAgo = (System.currentTimeMillis() - timestamp.toEpochMilli()) / 1000
+        return TimeUtils.formatRelativeTime(secondsAgo)
     }
 
     /**
@@ -127,6 +134,7 @@ class TopErrorsEmailBuilder(
                                 th { +"Filename" }
                                 th { +"Upload ID" }
                                 th { +"Upload Start Time" }
+                                th { +"Elapsed Time" }
                             }
                         }
                         delayedUploads.forEach {
@@ -134,6 +142,7 @@ class TopErrorsEmailBuilder(
                                 td { +(it.filename ?: "Unknown") }
                                 td { +it.uploadId }
                                 td { +getTimestampDesc(it.uploadStartTime) }
+                                td { +getElapsedTime(it.uploadStartTime) }
                             }
                         }
                     }
@@ -149,6 +158,7 @@ class TopErrorsEmailBuilder(
                                 th { +"Upload ID" }
                                 th { +"Filename" }
                                 th { +"Upload Start Time" }
+                                th { +"Elapsed Time" }
                             }
                         }
                         delayedDeliveries.forEach {
@@ -156,6 +166,7 @@ class TopErrorsEmailBuilder(
                                 td { +it.uploadId }
                                 td { +(it.filename ?: "Unknown") }
                                 td { +getTimestampDesc(it.uploadStartTime) }
+                                td { +getElapsedTime(it.uploadStartTime) }
                             }
                         }
                     }
@@ -171,6 +182,7 @@ class TopErrorsEmailBuilder(
                                 th { +"Filename" }
                                 th { +"Upload ID" }
                                 th { +"Upload Start Time" }
+                                th { +"Elapsed Time" }
                             }
                         }
                         abandonedUploads.forEach {
@@ -178,6 +190,7 @@ class TopErrorsEmailBuilder(
                                 td { +(it.filename ?: "Unknown") }
                                 td { +it.uploadId }
                                 td { +getTimestampDesc(it.uploadStartTime) }
+                                td { +getElapsedTime(it.uploadStartTime) }
                             }
                         }
                     }
