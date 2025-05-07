@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { NotificationType, WorkflowSubscriptionInput } from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -232,6 +233,37 @@ function addSeconds(date: Date, seconds: number) {
     return newDate
 }
 
+export function createSubscriptionInput({
+    emailAddresses = [""],
+    cronSchedule = "0 0 1 12 *",
+    dataStreamIds = ["dextesting"],
+    dataStreamRoutes = ["testevent1"],
+    jurisdictions = ["test"],
+    notificationType = NotificationType.Email,
+    webhookUrl = "",
+    sinceDays = 1
+}: {
+    emailAddresses?: string[];
+    cronSchedule?: string;
+    dataStreamIds?: string[];
+    dataStreamRoutes?: string[];
+    jurisdictions?: string[];
+    notificationType?: NotificationType;
+    webhookUrl?: string;
+    sinceDays?: number;
+}): WorkflowSubscriptionInput {
+    return {
+        cronSchedule,
+        dataStreamIds,
+        dataStreamRoutes,
+        jurisdictions,
+        emailAddresses,
+        notificationType,
+        webhookUrl,
+        sinceDays,
+    };
+}
+
 const dataGenerator = {
     addSeconds,
     createMinimalReport,
@@ -246,7 +278,8 @@ const dataGenerator = {
     createContentUploadCompleted,
     createUploadReportStarted,
     createUploadReportStatus,
-    createUploadReportCompleted
-
+    createUploadReportCompleted,
+    createSubscriptionInput
 }
+
 export default dataGenerator;

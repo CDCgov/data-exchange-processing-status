@@ -1,43 +1,13 @@
 import { test, expect } from '@fixtures/gql';
-import { NotificationType, WorkflowSubscriptionInput } from '@gql';
+import { NotificationType } from '@gql';
 import { GraphQLError } from 'graphql';
+import { createSubscriptionInput } from '../fixtures/dataGenerator';
 
 const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
 const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://webhook:80";
 const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
 
 type GraphQLErrorResponse = { errors: GraphQLError[] };
-
-function createSubscriptionInput({
-    emailAddresses = [""],
-    cronSchedule = "0 0 1 12 *",
-    dataStreamIds = ["dextesting"],
-    dataStreamRoutes = ["testevent1"],
-    jurisdictions = ["test"],
-    notificationType = NotificationType.Email,
-    webhookUrl="",
-    sinceDays = 1
-}: {
-    emailAddresses?: string[];
-    cronSchedule?: string;
-    dataStreamIds?: string[];
-    dataStreamRoutes?: string[];
-    jurisdictions?: string[];
-    notificationType?: NotificationType;
-    webhookUrl?: string;
-    sinceDays?: number;
-}): WorkflowSubscriptionInput {
-    return {
-        cronSchedule,
-        dataStreamIds,
-        dataStreamRoutes,
-        jurisdictions,
-        emailAddresses,
-        notificationType,
-        webhookUrl,
-        sinceDays,
-    };
-}
 
 test.describe('GraphQL subscribeUploadDigestCounts', () => {
 
