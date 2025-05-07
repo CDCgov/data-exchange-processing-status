@@ -70,38 +70,33 @@ class ReportService: KoinComponent {
      * @param daysInterval Int?
      */
     fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<UploadInfo> {
-        // first, get uploads that have upload-started reports older than 1 hour
-        val uploadsStartedQuery = """
-            SELECT DISTINCT ${cPrefix}uploadId
+        val delayedUploadsQuery = """
+            SELECT ${cPrefix}uploadId,
+                mv.content.filename AS filename,
+                us.stageInfo.start_processing_time AS uploadStartTime
             FROM $cName $cVar
+            LEFT JOIN $cName mv
+                ON ${cPrefix}uploadId = mv.uploadId
+                AND mv.stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}'
+            LEFT JOIN $cName us
+                ON ${cPrefix}uploadId = us.uploadId
+                AND us.stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}'
             WHERE dataStreamId = '$dataStreamId'
                 AND dataStreamRoute = '$dataStreamRoute'
-                AND ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}'
+                AND ${cPrefix}stageInfo.${cElFunc("action")} IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}'${closeBkt}
                 AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
                 ${appendTimeRange(daysInterval)}
+            GROUP BY ${cPrefix}uploadId, mv.content.filename, us.stageInfo.start_processing_time
+            HAVING
+                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' THEN 1 END) > 0
+                AND
+                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' THEN 1 END) = 0
             """.trimIndent()
-        val uploadsStarted = repository.reportsCollection.queryItems(
-            uploadsStartedQuery,
-            UploadInfo::class.java
-        ).toSet()
 
-        // then, get uploads that have upload-completed reports older than 1 hour
-        val uploadsCompletedQuery = """
-            SELECT DISTINCT ${cPrefix}uploadId
-            FROM $cName $cVar
-            WHERE dataStreamId = '$dataStreamId'
-                AND dataStreamRoute = '$dataStreamRoute'
-                AND ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}'
-                AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
-                ${appendTimeRange(daysInterval)}
-            """.trimIndent()
-        val uploadsCompleted = repository.reportsCollection.queryItems(
-            uploadsCompletedQuery,
+        return repository.reportsCollection.queryItems(
+            delayedUploadsQuery,
             UploadInfo::class.java
-        ).toSet()
-
-        // then take the difference of those to get uploads that don't have upload-completed
-        return (uploadsStarted - uploadsCompleted).toList()
+        )
     }
 
     /**
@@ -191,6 +186,6 @@ class ReportService: KoinComponent {
      * @return A SQL clause string for filtering by the specified time range, or an empty string if no interval is provided.
      */
     private fun appendTimeRange(daysInterval: Int?) = daysInterval?.let {
-        "AND ${SqlClauseBuilder.buildSqlClauseForDateRange(it, null, null, cPrefix, timeFunc)}"
+        "AND ${SqlClauseBuilder.buildSqlClauseForDaysInterval(it, cPrefix, timeFunc)}"
     } ?: ""
 }

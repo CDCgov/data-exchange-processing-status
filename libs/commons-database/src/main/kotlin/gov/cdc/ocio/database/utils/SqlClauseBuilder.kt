@@ -41,17 +41,37 @@ object SqlClauseBuilder {
                 .withTimeAtStartOfDay()
                 .toDate()
                 .time / 1000
-            timeRangeSqlPortion.append("r.dexIngestDateTime >= ${timeFunc(dateStartEpochSecs)}")
+            timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= ${timeFunc(dateStartEpochSecs)}")
         } else {
-            dateStart?.run {
-                val dateStartEpochSecs = DateUtils.getEpochFromDateString(dateStart)
+            dateStart?.let {
+                val dateStartEpochSecs = DateUtils.getEpochFromDateString(it)
                 timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= ${timeFunc(dateStartEpochSecs)}")
             }
-            dateEnd?.run {
-                val dateEndEpochSecs = DateUtils.getEpochFromDateString(dateEnd)
-                timeRangeSqlPortion.append(" and ${cPrefix}dexIngestDateTime < ${timeFunc(dateEndEpochSecs)}")
+            dateEnd?.let {
+                val dateEndEpochSecs = DateUtils.getEpochFromDateString(it)
+                timeRangeSqlPortion.append(" AND ${cPrefix}dexIngestDateTime < ${timeFunc(dateEndEpochSecs)}")
             }
         }
         return timeRangeSqlPortion.toString()
     }
+
+    /**
+     * Builds an SQL clause for filtering results based on a relative date range defined by a days interval.
+     * Utilizes a custom time conversion function and column prefix for constructing the SQL clause.
+     *
+     * @param daysInterval The number of days for the relative date range.
+     *                     If not null, this is used to calculate the start date relative to the current time.
+     *                     If null, no SQL clause for a date range is constructed.
+     * @param cPrefix A prefix to be concatenated to the SQL column name for date filtering.
+     * @param timeFunc A function that converts epoch seconds to the desired SQL representation of the timestamp,
+     *                 used in constructing the SQL clause.
+     * @throws NumberFormatException If the provided days interval causes an invalid number conversion.
+     * @throws BadRequestException If there is an issue with constructing the SQL clause.
+     */
+    @Throws(NumberFormatException::class, BadRequestException::class)
+    fun buildSqlClauseForDaysInterval(
+        daysInterval: Int?,
+        cPrefix: String,
+        timeFunc: (Long) -> String
+    ) = buildSqlClauseForDateRange(daysInterval, null, null, cPrefix, timeFunc)
 }
