@@ -1,0 +1,253 @@
+name: pstatus-local
+
+services:
+  graphql:
+    image: pstatus-graphql-ktor:latest
+    ports:
+    - "127.0.0.1:8090:8080" # GraphQL listener port
+    environment:
+      SECURITY_ENABLED: false
+      MSG_SYSTEM: "rabbitmq"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VALIDATED_REPORT_QUEUE_NAME: "ValidatedReportQueue"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_VIRTUAL_HOST: "/"
+      FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+      REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+      PSTATUS_RULES_ENGINE_NOTIFICATIONS_BASE_URL: "http://notifications-rules-engine:8080"
+      PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: "http://notifications-workflow:8080"
+      SCHEMA_ADMIN_SECRET_TOKEN: "${SCHEMA_ADMIN_SECRET_TOKEN:-LET_ME_IN_PLS_THANKS}"
+    depends_on:
+      - couchbase
+    restart: "always"
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
+
+  report-sink:
+    image: pstatus-report-sink-ktor:latest
+    ports:
+    - "127.0.0.1:${SINK_PORT:-8080}:8080" # Rest API listener port
+    environment:
+      DATABASE: "couchbase"
+      COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
+      COUCHBASE_USERNAME: "admin"
+      COUCHBASE_PASSWORD: "password"
+      MSG_SYSTEM: "RABBITMQ"
+      RABBITMQ_EXCHANGE_TOPIC_NAME: "PSAPIExchange"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_REPORT_QUEUE_NAME: "PSAPIQueue"
+      RABBITMQ_VALIDATED_REPORT_QUEUE_NAME: "ValidatedReportQueue"
+      RABBITMQ_ROUTING_KEY: "psapi1234"
+      RABBITMQ_USERNAME: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_VIRTUAL_HOST: "/"
+      FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
+      REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+    depends_on:
+      - couchbase
+      - rabbitmq
+    restart: "always"
+    volumes:
+      - ./reports:/reports # Bind mount the report schemas folder
+
+  couchbase:
+    image: couchbase
+    ports:
+      - "8091-8096:8091-8096"
+      - "11210-11211:11210-11211"
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+    deploy:
+      resources:
+        limits:
+          memory: 4G # Set the memory limit here
+
+  couchbase-setup:
+    image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
+    depends_on:
+      - couchbase
+    restart: "no"
+    volumes:
+      - ./couchbase-init.sh:/scripts/couchbase-init.sh # Mount the setup script
+    entrypoint: ["bash", "-c", "/scripts/couchbase-init.sh"]
+
+  rabbitmq:
+    image: rabbitmq:management # docker image(with management plugin) to be used for rabbitmq service
+    ports:
+      - "5672:5672" # AMQP protocol port
+      - "15672:15672" # Management UI port
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+  postgresql:
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    volumes:
+      - /var/lib/postgresql/data
+
+  temporal:
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yml
+    image: temporalio/auto-setup:latest
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-admin-tools:
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:latest
+    stdin_open: true
+    tty: true
+  
+  notifications-workflow:
+    image: pstatus-notifications-workflow-ktor:latest
+    ports:
+      - 8000:8080
+    environment: 
+        COUCHBASE_CONNECTION_STRING: couchbase://couchbase
+        COUCHBASE_PASSWORD: password
+        COUCHBASE_USERNAME: admin
+        DATABASE: couchbase
+        EMAIL_PROTOCOL: ${EMAIL_PROTOCOL:-smtp}
+        SMTP_HOST: ${SMTP_HOST:-smtpgw.cdc.gov}
+        SMTP_PORT: ${SMTP_PORT:-25}
+        SMTP_AUTH: ${SMTP_AUTH:-false}
+        SMTP_USERNAME: ${SMTP_USERNAME:-}
+        SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+        TEMPORAL_SERVICE_TARGET: temporal:7233
+    depends_on:
+      - postgresql
+      - temporal
+
+  temporal-ui:
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:latest
+    ports:
+      - "80:8080"
+
+  notifications-rules-engine:
+    image: pstatus-notifications-rules-engine-ktor:latest
+    ports:
+      - 8001:8080
+    environment:
+      COUCHBASE_CONNECTION_STRING: couchbase://couchbase
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_USERNAME: admin
+      DATABASE: couchbase
+      MSG_SYSTEM: rabbitmq
+      EMAIL_DISPATCHER: ${EMAIL_PROTOCOL:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-smtpgw.cdc.gov}
+      SMTP_PORT: ${SMTP_PORT:-25}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5672
+      RABBITMQ_REPORT_QUEUE_NAME: ValidatedReportQueue
+      RABBITMQ_VIRTUAL_HOST: /
+    depends_on:
+      - rabbitmq
+      - couchbase
+
+  mailhog:
+      image: mailhog/mailhog:latest
+      ports:
+        - "1025:1025"  # SMTP port
+        - "8025:8025"  # Web UI
+
+  webhook:
+    image: "webhooksite/webhook.site"
+    command: php artisan queue:work --daemon --tries=3 --timeout=10
+    ports:
+      - "8084:80"
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+      - APP_URL=http://webhook:8084
+      - APP_LOG=errorlog
+      - DB_CONNECTION=sqlite
+      - REDIS_HOST=redis
+      - BROADCAST_DRIVER=redis
+      - CACHE_DRIVER=redis
+      - QUEUE_DRIVER=redis
+      - ECHO_HOST_MODE=path
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:alpine"
+
+  laravel-echo-server:
+    image: "webhooksite/laravel-echo-server"
+    environment:
+      - LARAVEL_ECHO_SERVER_AUTH_HOST=http://webhook
+      - LARAVEL_ECHO_SERVER_HOST=0.0.0.0
+      - LARAVEL_ECHO_SERVER_PORT=6001
+      - ECHO_REDIS_PORT=6379
+      - ECHO_REDIS_HOSTNAME=redis
+      - ECHO_PROTOCOL=http
+      - ECHO_ALLOW_CORS=true
+      - ECHO_ALLOW_ORIGIN=*
+      - ECHO_ALLOW_METHODS=*
+      - ECHO_ALLOW_HEADERS=*
+  
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.48.0-focal
+    volumes:
+      - ./test/playwright:/playwright
+    working_dir: /playwright
+    environment:
+      - BASEURL=http://graphql:8080/graphql
+    command: sh -c "npm run codegen && npm run test"
+    # command: tail -f /dev/null
+    depends_on:
+      - graphql
+      - report-sink
+      - couchbase
+      - rabbitmq
+      - notifications-workflow
+      - notifications-rules-engine
+      - temporal
+      - temporal-ui
+      - temporal-admin-tools
+      - webhook
+      - laravel-echo-server
+      - mailhog
+      - postgresql
+      - redis
