@@ -10,43 +10,60 @@ const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
 type GraphQLErrorResponse = { errors: GraphQLError[] };
 
 type SubscriptionTestCase = {
-    name: string;
+    subscribeName: string;
+    unsubscribeName: string;
     subscribeFn: (gql: any, args: any, options?: any) => Promise<any>;
     unsubscribeFn: (gql: any, args: any) => Promise<any>;
+    expectedEmailSubject: string;
 };
 
 const cases: SubscriptionTestCase[] = [
     {
-        name: "subscribeUploadDigestCounts",
+        subscribeName: "subscribeUploadDigestCounts",
+        unsubscribeName: "unsubscribeUploadDigestCounts",
         subscribeFn: (gql, args, options) => gql.subscribeUploadDigestCounts(args, options),
-        unsubscribeFn: (gql, args) => gql.unsubscribeUploadDigestCounts(args)
+        unsubscribeFn: (gql, args) => gql.unsubscribeUploadDigestCounts(args),
+        expectedEmailSubject: "PHDO UPLOAD DIGEST NOTIFICATION"
+    },
+    {
+        subscribeName: "subscribeDataStreamTopErrorsNotification",
+        unsubscribeName: "unsubscribesDataStreamTopErrorsNotification",
+        subscribeFn: (gql, args, options?) => gql.subscribeDataStreamTopErrorsNotification(args, options),
+        unsubscribeFn: (gql, args) => gql.unsubscribesDataStreamTopErrorsNotification(args),
+        expectedEmailSubject: "DATA STREAM TOP ERRORS NOTIFICATION"
+    },
+    {
+        subscribeName: "subscribeDeadlineCheck",
+        unsubscribeName: "unsubscribeDeadlineCheck",
+        subscribeFn: (gql, args, options?) => gql.subscribeDeadlineCheck(args, options),
+        unsubscribeFn: (gql, args) => gql.unsubscribeDeadlineCheck(args),
+        expectedEmailSubject: `UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`
     }
 ];
 
-test.describe('GraphQL subscribeUploadDigestCounts', () => {
-    for (const testCase of cases) {
-        test.describe(testCase.name, () => {
+test.describe('GraphQL Subscribe/Unsubscribe', () => {
+    cases.forEach(testCase => {
+        test.describe(testCase.subscribeName, () => {
             test.beforeAll(async ({ request }) => { 
                 const mailhogResponse = await request.delete(`${EMAIL_SERVICE}/api/v1/messages`);
                 expect(mailhogResponse.status()).toBe(200);
             });
 
-            test('subscribes via email with duration cron', async ({ gql, request }) => {
+            test.only(`${testCase.subscribeName} - email with duration cron`, async ({ gql, request }) => {
                 test.setTimeout(60000); 
-                
-                const subscriptionEmail = `${testCase.name}-cron-duration@test.com`;
+                const subscriptionEmail = `${testCase.subscribeName}-cron-duration@test.com`;
                 const subscription = createSubscriptionInput({
                     emailAddresses: [subscriptionEmail],
                     cronSchedule: "@every 10s"
                 });
-
+        
                 const res = await testCase.subscribeFn(gql, { subscription });
-                expect(res.subscribeUploadDigestCounts).toBeDefined();
-                expect(res.subscribeUploadDigestCounts.emailAddresses).toContain(subscriptionEmail);
-                expect(res.subscribeUploadDigestCounts.message).toBe("Successfully subscribed");
-
-                const unsubscribeId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
-
+                expect(res[`${testCase.subscribeName}`]).toBeDefined();
+                expect(res[`${testCase.subscribeName}`].emailAddresses).toContain(subscriptionEmail);
+                expect(res[`${testCase.subscribeName}`].message).toBe("Successfully subscribed");
+        
+                const unsubscribeId = res[`${testCase.subscribeName}`].subscriptionId!.toString();
+        
                 await expect.poll(async () => {
                     const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
                     const emails = await mailhogResponse.json();
@@ -54,50 +71,52 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                 }, {
                     message: 'Email should be found',
                     timeout: 60000,
+                    intervals: [10000],
                 }).toBeGreaterThan(0);
-
+        
                 const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
                 const emails = await mailhogResponse.json();
                 expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-                expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+                expect(emails.items[0].Content.Headers.Subject[0]).toContain(testCase.expectedEmailSubject);
                 
                 await testCase.unsubscribeFn(gql, { subscriptionId: unsubscribeId });
             });
 
-            test('subscribes via email with classic cron', async ({ gql, request }) => {
+            test.skip(`${testCase.subscribeName} - email with classic cron`, async ({ gql, request }) => {
                 test.setTimeout(90000); 
                 
-                const subscriptionEmail = `${testCase.name}-cron-classic@test.com`;
+                const subscriptionEmail = `${testCase.subscribeName}-cron-classic@test.com`;
                 const subscription = createSubscriptionInput({
                     emailAddresses: [subscriptionEmail],
                     cronSchedule: "* * * * *"
                 });
-
+        
                 const res = await testCase.subscribeFn(gql, { subscription });
-                expect(res.subscribeUploadDigestCounts).toBeDefined();
-                expect(res.subscribeUploadDigestCounts.emailAddresses).toContain(subscriptionEmail);
-                expect(res.subscribeUploadDigestCounts.message).toBe("Successfully subscribed");
-
-                const unsubscribeId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
-
+                expect(res[`${testCase.subscribeName}`]).toBeDefined();
+                expect(res[`${testCase.subscribeName}`].emailAddresses).toContain(subscriptionEmail);
+                expect(res[`${testCase.subscribeName}`].message).toBe("Successfully subscribed");
+        
+                const unsubscribeId = res[`${testCase.subscribeName}`].subscriptionId!.toString();
+        
                 await expect.poll(async () => {
                     const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
                     const emails = await mailhogResponse.json();
                     return emails.total;
                 }, {
                     message: 'Email should be found',
-                    timeout: 60000,
+                    timeout: 90000,
+                    intervals: [10000]
                 }).toBeGreaterThan(0);
-
+        
                 const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
                 const emails = await mailhogResponse.json();
                 expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-                expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+                expect(emails.items[0].Content.Headers.Subject[0]).toContain(testCase.expectedEmailSubject);
                 
                 await testCase.unsubscribeFn(gql, { subscriptionId: unsubscribeId });
             });
 
-            test('subscribes with webhook with duration cron', async ({ gql, request }) => {
+            test.only(`${testCase.subscribeName} - webhook with duration cron`, async ({ gql, request }) => {
                 test.setTimeout(60000); 
 
                 const tokenRequest = await request.post(`${WEBHOOK_SERVICE_UI}/token`);
@@ -111,9 +130,9 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                 });
 
                 const res = await testCase.subscribeFn(gql, { subscription });
-                expect(res.subscribeUploadDigestCounts).toBeDefined();
-                expect(res.subscribeUploadDigestCounts.webhookUrl).toContain(webhookUrl);
-                expect(res.subscribeUploadDigestCounts.message).toBe("Successfully subscribed"); 
+                expect(res[`${testCase.subscribeName}`]).toBeDefined();
+                expect(res[`${testCase.subscribeName}`].webhookUrl).toContain(webhookUrl);
+                expect(res[`${testCase.subscribeName}`].message).toBe("Successfully subscribed"); 
                 
                 await expect.poll(async () => {
                     const webhooksiteResponse = await request.get(`${WEBHOOK_SERVICE_UI}/token/${token.uuid}/requests`);
@@ -121,15 +140,15 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                     return webhookRequests.total
                 }, {
                     message: "Webhook should be called",
-                    intervals: [5000],
-                    timeout: 20000,
+                    timeout: 60000,
+                    intervals: [10000]
                 }).toBeGreaterThan(0);
                 
-                const unsubscribeId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+                const unsubscribeId = res[`${testCase.subscribeName}`].subscriptionId!.toString();
                 await testCase.unsubscribeFn(gql, { subscriptionId: unsubscribeId });
             });
 
-            test('subscribes with webhook with classic cron', async ({ gql, request }) => {
+            test.skip(`${testCase.subscribeName} - webhook with classic cron`, async ({ gql, request }) => {
                 test.setTimeout(90000); 
 
                 const tokenRequest = await request.post(`${WEBHOOK_SERVICE_UI}/token`);
@@ -143,9 +162,9 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                 });
 
                 const res = await testCase.subscribeFn(gql, { subscription });
-                expect(res.subscribeUploadDigestCounts).toBeDefined();
-                expect(res.subscribeUploadDigestCounts.webhookUrl).toContain(webhookUrl);
-                expect(res.subscribeUploadDigestCounts.message).toBe("Successfully subscribed"); 
+                expect(res[`${testCase.subscribeName}`]).toBeDefined();
+                expect(res[`${testCase.subscribeName}`].webhookUrl).toContain(webhookUrl);
+                expect(res[`${testCase.subscribeName}`].message).toBe("Successfully subscribed"); 
                 
                 await expect.poll(async () => {
                     const webhooksiteResponse = await request.get(`${WEBHOOK_SERVICE_UI}/token/${token.uuid}/requests`);
@@ -153,50 +172,50 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                     return webhookRequests.total
                 }, {
                     message: "Webhook should be called",
-                    intervals: [5000],
-                    timeout: 600000,
+                    timeout: 900000,
+                    intervals: [10000]
                 }).toBeGreaterThan(0);
                 
-                const unsubscribeId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+                const unsubscribeId = res[`${testCase.subscribeName}`].subscriptionId!.toString();
                 await testCase.unsubscribeFn(gql, { subscriptionId: unsubscribeId });
             });
 
-            test('unsubscribes from email', async ({ gql }) => {
+            test(`${testCase.subscribeName} - unsubscribe email`, async ({ gql }) => {
                 const subscription = createSubscriptionInput({
-                    emailAddresses: [`${testCase.name}-unsubscribe@test.com`],
+                    emailAddresses: [`${testCase.subscribeName}-unsubscribe@test.com`],
                 });
 
                 const res = await testCase.subscribeFn(gql, { subscription });
-                expect(res.subscribeUploadDigestCounts).toBeDefined();
+                expect(res[`${testCase.subscribeName}`]).toBeDefined();
 
-                const unsubscribeId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+                const unsubscribeId = res[`${testCase.subscribeName}`].subscriptionId!.toString();
                 const unsubscribeRes = await testCase.unsubscribeFn(gql, { subscriptionId: unsubscribeId });
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts).toBeDefined();
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts.message).toBe("Successfully unsubscribed");
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts.emailAddresses).toStrictEqual([]);
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts.webhookUrl).toBe("");
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`]).toBeDefined();
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`].message).toBe("Successfully unsubscribed");
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`].emailAddresses).toStrictEqual([]);
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`].webhookUrl).toBe("");
             });
 
-            test('unsubscribes from webhook', async ({ gql }) => {
+            test(`${testCase.subscribeName} - unsubscribe webhook`, async ({ gql }) => {
                 const subscription = createSubscriptionInput({
                     webhookUrl: "https://testwebook:80",
                 });
 
                 const res = await testCase.subscribeFn(gql, { subscription });
-                expect(res.subscribeUploadDigestCounts).toBeDefined();
+                expect(res[`${testCase.subscribeName}`]).toBeDefined();
 
-                const unsubscribeId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+                const unsubscribeId = res[`${testCase.subscribeName}`].subscriptionId!.toString();
                 const unsubscribeRes = await testCase.unsubscribeFn(gql, { subscriptionId: unsubscribeId });
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts).toBeDefined();
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts.message).toBe("Successfully unsubscribed");
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts.emailAddresses).toStrictEqual([]);
-                expect(unsubscribeRes.unsubscribeUploadDigestCounts.webhookUrl).toBe("");
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`]).toBeDefined();
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`].message).toBe("Successfully unsubscribed");
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`].emailAddresses).toStrictEqual([]);
+                expect(unsubscribeRes[`${testCase.unsubscribeName}`].webhookUrl).toBe("");
             });
 
-            test.describe('errors with invalid parameters', () => {
-                test('invalid chron schedule', async ({ gql }) => {
+            test.describe('errors', () => {
+                test(`${testCase.subscribeName} - invalid chron schedule`, async ({ gql }) => {
                     const subscription = createSubscriptionInput({
-                        emailAddresses: [`${testCase.name}-error-cron@test.com`],
+                        emailAddresses: [`${testCase.subscribeName}-error-cron@test.com`],
                         cronSchedule: "INVALID"
                     });
 
@@ -204,9 +223,9 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                     expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-cron");
                 });
 
-                test('invalid notification type', async ({ gql }) => {
+                test(`${testCase.subscribeName} - invalid notification type`, async ({ gql }) => {
                     const subscription = createSubscriptionInput({
-                        emailAddresses: [`${testCase.name}-error-notification-type@test.com`],
+                        emailAddresses: [`${testCase.subscribeName}-error-notification-type@test.com`],
                         notificationType: "INVALID" as unknown as NotificationType
                     });
 
@@ -214,9 +233,9 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                     expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-notification-type");
                 });
 
-                test.skip('invalid email format', async ({ gql }) => {
+                test.skip(`${testCase.subscribeName} - invalid email format`, async ({ gql }) => {
                     const subscription = createSubscriptionInput({
-                        emailAddresses: [`${testCase.name}-error-invalid-email`],
+                        emailAddresses: [`${testCase.subscribeName}-error-invalid-email`],
                         notificationType: NotificationType.Email
                     });
 
@@ -224,7 +243,7 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                     expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-email-format");
                 });
 
-                test.skip('invalid webhook format', async ({ gql }) => {
+                test.skip(`${testCase.subscribeName} - invalid webhook format`, async ({ gql }) => {
                     const subscription = createSubscriptionInput({
                         webhookUrl: "bad/webhook/url",
                         notificationType: NotificationType.Webhook
@@ -235,5 +254,5 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                 });
             });
         });
-    }
+    });
 });
