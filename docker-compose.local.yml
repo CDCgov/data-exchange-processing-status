@@ -5,6 +5,8 @@ services:
     image: pstatus-graphql-ktor:latest
     ports:
     - "127.0.0.1:8090:8080" # GraphQL listener port
+    networks:
+      - shared
     environment:
       SECURITY_ENABLED: false
       MSG_SYSTEM: "rabbitmq"
@@ -34,6 +36,8 @@ services:
     image: pstatus-report-sink-ktor:latest
     ports:
     - "127.0.0.1:${SINK_PORT:-8080}:8080" # Rest API listener port
+    networks:
+      - shared
     environment:
       DATABASE: "couchbase"
       COUCHBASE_CONNECTION_STRING: "couchbase://couchbase"
@@ -64,6 +68,8 @@ services:
     ports:
       - "8091-8096:8091-8096"
       - "11210-11211:11210-11211"
+    networks:
+      - shared
     environment:
       - COUCHBASE_ADMINISTRATOR_USERNAME=admin
       - COUCHBASE_ADMINISTRATOR_PASSWORD=password
@@ -74,6 +80,8 @@ services:
 
   couchbase-setup:
     image: couchbase # use the couchbase image, so we have the couchbase CLI tools preinstalled
+    networks:
+      - shared
     depends_on:
       - couchbase
     restart: "no"
@@ -86,6 +94,8 @@ services:
     ports:
       - "5672:5672" # AMQP protocol port
       - "15672:15672" # Management UI port
+    networks:
+      - shared
     volumes:
       - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
       - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
@@ -100,6 +110,8 @@ services:
     image: postgres:latest
     ports:
       - 5432:5432
+    networks:
+      - shared
     volumes:
       - /var/lib/postgresql/data
 
@@ -116,6 +128,8 @@ services:
     image: temporalio/auto-setup:latest
     ports:
       - 7233:7233
+    networks:
+      - shared
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
@@ -133,6 +147,8 @@ services:
     image: pstatus-notifications-workflow-ktor:latest
     ports:
       - 8000:8080
+    networks:
+      - shared
     environment: 
         COUCHBASE_CONNECTION_STRING: couchbase://couchbase
         COUCHBASE_PASSWORD: password
@@ -149,20 +165,22 @@ services:
       - postgresql
       - temporal
 
-  temporal-ui:
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    image: temporalio/ui:latest
-    ports:
-      - "80:8080"
+  # temporal-ui:
+  #   depends_on:
+  #     - temporal
+  #   environment:
+  #     - TEMPORAL_ADDRESS=temporal:7233
+  #     - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+  #   image: temporalio/ui:latest
+  #   ports:
+  #     - "80:8080"
 
   notifications-rules-engine:
     image: pstatus-notifications-rules-engine-ktor:latest
     ports:
       - 8001:8080
+    networks:
+      - shared
     environment:
       COUCHBASE_CONNECTION_STRING: couchbase://couchbase
       COUCHBASE_PASSWORD: password
@@ -190,12 +208,16 @@ services:
       ports:
         - "1025:1025"  # SMTP port
         - "8025:8025"  # Web UI
+      networks:
+        - shared
 
   webhook:
     image: "webhooksite/webhook.site"
     command: php artisan queue:work --daemon --tries=3 --timeout=10
     ports:
       - "8084:80"
+    networks:
+      - shared
     environment:
       - APP_ENV=dev
       - APP_DEBUG=true
@@ -212,6 +234,8 @@ services:
 
   redis:
     image: "redis:alpine"
+    networks:
+      - shared
 
   laravel-echo-server:
     image: "webhooksite/laravel-echo-server"
@@ -226,28 +250,8 @@ services:
       - ECHO_ALLOW_ORIGIN=*
       - ECHO_ALLOW_METHODS=*
       - ECHO_ALLOW_HEADERS=*
-  
-  playwright:
-    image: mcr.microsoft.com/playwright:v1.48.0-focal
-    volumes:
-      - ./test/playwright:/playwright
-    working_dir: /playwright
-    environment:
-      - BASEURL=http://graphql:8080/graphql
-    command: sh -c "npm run codegen && npm run test"
-    # command: tail -f /dev/null
-    depends_on:
-      - graphql
-      - report-sink
-      - couchbase
-      - rabbitmq
-      - notifications-workflow
-      - notifications-rules-engine
-      - temporal
-      - temporal-ui
-      - temporal-admin-tools
-      - webhook
-      - laravel-echo-server
-      - mailhog
-      - postgresql
-      - redis
+    networks:
+      - shared
+
+networks:
+  shared:
