@@ -18,6 +18,10 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+import io.opentelemetry.semconv.ServiceAttributes
 import io.temporal.client.WorkflowNotFoundException
 import io.temporal.client.WorkflowServiceException
 import org.koin.ktor.plugin.Koin
@@ -93,5 +97,15 @@ fun Application.module() {
         versionRoute()
     }
 
+    install(KtorServerTelemetry) {
+        val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
+            old.toBuilder()
+                .putAll(old.attributes)
+                .put(ServiceAttributes.SERVICE_NAME, "pstatus")
+                .build()
+        }
+        val otel: OpenTelemetry = builder.build().openTelemetrySdk
+        setOpenTelemetry(otel)
+    }
 }
 
