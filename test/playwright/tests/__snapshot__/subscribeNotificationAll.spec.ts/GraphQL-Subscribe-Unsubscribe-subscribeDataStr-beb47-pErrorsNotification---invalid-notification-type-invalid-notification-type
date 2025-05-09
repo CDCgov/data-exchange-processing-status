@@ -1,1 +1,0 @@
-[{"message":"Variable 'subscription' has an invalid value: Invalid input for enum 'NotificationType'. No value found for name 'INVALID'","locations":[{"line":1,"column":51}]}]
