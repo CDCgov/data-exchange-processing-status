@@ -18,7 +18,7 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
     
     test('unsubscribing from email subscription', async ({ gql }) => {
         const subscription = createSubscriptionInput({
-            emailAddresses: [`subscribeUploadDigestCounts-unsubscribe@test.com`],
+            emailAddresses: [`unsubscribeNotificationWorkflow-email@test.com`],
         });
 
         const res = await gql.subscribeUploadDigestCounts({ subscription });
@@ -31,6 +31,18 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         expect(unsubscribeRes.unsubscribeNotificationWorkflow).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
+
+        await expect(async () => {
+            const workflowsResponse = await gql.getAllWorkflows();
+            const runningWorkflows = workflowsResponse.getAllWorkflows.filter(workflow => 
+                workflow.workflowId === subscriptionId && 
+                workflow.status === "WORKFLOW_EXECUTION_STATUS_RUNNING"
+            )
+            await expect(runningWorkflows.length).toBe(0);
+        }).toPass({
+            intervals: [1000],
+            timeout: 5000,
+        });
     });
 
     test('unsubscribing from webhook subscription', async ({ gql }) => {
@@ -48,6 +60,51 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         expect(unsubscribeRes.unsubscribeNotificationWorkflow).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
+
+        await expect(async () => {
+            const workflowsResponse = await gql.getAllWorkflows();
+            const runningWorkflows = workflowsResponse.getAllWorkflows.filter(workflow => 
+                workflow.workflowId === subscriptionId && 
+                workflow.status === "WORKFLOW_EXECUTION_STATUS_RUNNING"
+            )
+            await expect(runningWorkflows.length).toBe(0);
+        }).toPass({
+            intervals: [1000],
+            timeout: 5000,
+        });
+    });
+
+    test('unsubscribing from datastream subscription', async ({ gql }) => {
+        const subscription = createSubscriptionInput({
+            emailAddresses: [`unsubscribeNotificationWorkflow-datastream@test.com`],
+            cronSchedule: "@every 10s",
+            dataStreamIds: ["dextesting"],
+            dataStreamRoutes: ["testevent1"],
+            jurisdictions: ["jurisdiction"]
+        });
+
+        const res = await gql.subscribeUploadDigestCounts({ subscription });
+        expect(res.subscribeUploadDigestCounts).toBeDefined();
+
+        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        subscriptions.push(subscriptionId);
+
+        const unsubscribeRes = await gql.unsubscribeNotificationWorkflow({ subscriptionId: subscriptionId });
+        expect(unsubscribeRes.unsubscribeNotificationWorkflow).toBeDefined();
+        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
+        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
+
+        await expect(async () => {
+            const workflowsResponse = await gql.getAllWorkflows();
+            const runningWorkflows = workflowsResponse.getAllWorkflows.filter(workflow => 
+                workflow.workflowId === subscriptionId && 
+                workflow.status === "WORKFLOW_EXECUTION_STATUS_RUNNING"
+            )
+            await expect(runningWorkflows.length).toBe(0);
+        }).toPass({
+            intervals: [1000],
+            timeout: 5000,
+        });
     });
 
     test.describe('unsubscribe errors', () => {
