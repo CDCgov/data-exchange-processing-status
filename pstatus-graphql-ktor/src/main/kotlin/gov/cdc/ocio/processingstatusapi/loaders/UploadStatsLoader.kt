@@ -1,10 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.utils.SqlClauseBuilder
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.query.*
-import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -24,6 +24,7 @@ class UploadStatsLoader: KoinComponent {
     private val openBkt = reportsCollection.openBracketChar
     private val closeBkt = reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val timeFunc = repository.reportsCollection.timeConversionForQuery
 
     @Throws(BadRequestException::class, ContentException::class)
     fun getUploadStats(
@@ -34,11 +35,12 @@ class UploadStatsLoader: KoinComponent {
         daysInterval: Int?
     ): UploadStats {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
+        val timeRangeWhereClause = SqlClauseBuilder.buildSqlClauseForDateRange(
             daysInterval,
             dateStart,
             dateEnd,
-            cPrefix
+            cPrefix,
+            timeFunc
         )
 
         val numUniqueUploadsQuery = (

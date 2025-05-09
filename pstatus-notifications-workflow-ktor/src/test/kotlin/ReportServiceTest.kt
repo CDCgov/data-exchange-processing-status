@@ -230,7 +230,7 @@ class ReportServiceTest : KoinTest {
         val delayedUploads = service.getDelayedUploads(ds, r, null)
 
         assertEquals(1, delayedUploads.size)
-        assertEquals(delayedUploads.first(), oldUploadStartedReport.uploadId)
+        assertEquals(delayedUploads.first().uploadId, oldUploadStartedReport.uploadId)
     }
 
     @Test
@@ -292,7 +292,7 @@ class ReportServiceTest : KoinTest {
         val delayedUploads = service.getDelayedUploads(ds, r, 1)
 
         assertEquals(1, delayedUploads.size)
-        assertEquals(delayedUploads.first(), oldUploadStartedReport.uploadId)
+        assertEquals(delayedUploads.first().uploadId, oldUploadStartedReport.uploadId)
     }
 
     @Test
@@ -397,7 +397,7 @@ class ReportServiceTest : KoinTest {
         val delayedUploads = service.getDelayedDeliveries(ds, r, null)
 
         assertEquals(1, delayedUploads.size)
-        assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first())
+        assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first().uploadId)
     }
 
     @Test
@@ -474,6 +474,6 @@ class ReportServiceTest : KoinTest {
         val delayedUploads = service.getDelayedDeliveries(ds, r, 1)
 
         assertEquals(1, delayedUploads.size)
-        assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first())
+        assertEquals(oldUndeliveredReport.uploadId, delayedUploads.first().uploadId)
     }
 }
