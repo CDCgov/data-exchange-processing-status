@@ -101,7 +101,7 @@ fun Application.module() {
         val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
             old.toBuilder()
                 .putAll(old.attributes)
-                .put(ServiceAttributes.SERVICE_NAME, "pstatus")
+                .put(ServiceAttributes.SERVICE_NAME, "pstatus") // TODO make into env var
                 .build()
         }
         val otel: OpenTelemetry = builder.build().openTelemetrySdk
