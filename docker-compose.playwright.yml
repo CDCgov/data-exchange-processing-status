@@ -1,3 +1,7 @@
+# Use this docker-compose file to run Playwright tests against the PS API services in a 
+# container. The services must first be run via the docker-compose.local.yml file in order 
+# to use the external network created by that file.
+
 services:
   playwright:
     image: mcr.microsoft.com/playwright:v1.48.0-focal

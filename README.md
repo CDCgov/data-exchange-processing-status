@@ -40,7 +40,7 @@ The following Quick Start will help you get up and running quickly to explore ba
 - **Docker**: See [instructions](https://docs.docker.com/desktop/) for downloading Docker Desktop for Windows, MacOS, and Linux.
 
 ### Docker Compose
-The PS API can be deployed locally using docker compose, which will create the PS API services and all its
+The PS API can be run locally using docker compose, which will create the PS API services and all its
 dependencies.  It will also set everything up for you so you can get started quickly.
 
 - Step 1: Clone the repo:
@@ -255,6 +255,10 @@ Additional details for automated testing can be found in the [playwright tests f
 ### Next Steps
 Please continue to explore in GraphQL for all the types of queries and mutations that can be done.  GraphQL provides a
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.
+
+### Running from Local Builds
+The main cocker compose file pulls the latest PS API images from Quay. In order to build and run images on your local machine you can run the `local-run.sh` script. This script uses the `./gradlew jibDockerBuild` command to build local images and `docker compose` to start the services. Note that the Dockerfile specified in this script (`docker-compose.local.yml`) excludes services such as temporal-ui, as it is designed to run only the components required for end-to-end tests.
+
 
 ## Public Domain Standard Notice
 This repository constitutes a work of the United States Government and is not
