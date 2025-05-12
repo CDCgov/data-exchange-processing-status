@@ -24,6 +24,22 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=grafana
     volumes:
       - ./configs/grafana/provisioning:/etc/grafana/provisioning
+  notifications-workflow:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
+      OTEL_METRICS_EXPORTER: none
+  notifications-rules-engine:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
+      OTEL_METRICS_EXPORTER: none
+  report-sink:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
+      OTEL_METRICS_EXPORTER: none
+  graphql:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
+      OTEL_METRICS_EXPORTER: none
 
 volumes:
   tempo-data:
