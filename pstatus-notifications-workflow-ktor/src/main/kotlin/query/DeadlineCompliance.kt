@@ -10,7 +10,7 @@ package gov.cdc.ocio.processingnotifications.query
  * @property missingJurisdictions A list of jurisdictions that did not produce any reports within the expected period.
  * @property lateJurisdictions A list of jurisdictions that submitted reports after the specified deadline.
  */
-data class DeadlineCheckResults(
+data class DeadlineCompliance(
     val missingJurisdictions: List<String>,
     val lateJurisdictions: List<String>
 )

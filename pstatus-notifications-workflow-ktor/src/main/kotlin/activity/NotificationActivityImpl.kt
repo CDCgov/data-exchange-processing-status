@@ -10,7 +10,7 @@ import org.koin.core.component.inject
 /**
  * Implementation class for sending email notifications for various notifications
  */
-class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
+abstract class NotificationActivitiesImpl : NotificationActivities, KoinComponent {
 
     private val notifications by inject<NotificationDispatcher>()
 

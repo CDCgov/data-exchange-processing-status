@@ -78,7 +78,7 @@ class DeadlineCheckQuery private constructor(
         return querySB.toString().trimIndent()
     }
 
-    fun run(): DeadlineCheckResults {
+    fun run(): DeadlineCompliance {
         val deadlineQueryResults = runQuery(DeadlineQueryResult::class.java)
         val foundJurisdictions = deadlineQueryResults.map { it.jurisdiction }
         val missingJurisdictions = expectedJurisdictions.filter { !foundJurisdictions.contains(it) }
@@ -86,7 +86,7 @@ class DeadlineCheckQuery private constructor(
         val lateJurisdictions = deadlineQueryResults.filter {
             it.earliestUpload.isAfter(deadline)
         }.map { it.jurisdiction }
-        return DeadlineCheckResults(
+        return DeadlineCompliance(
             missingJurisdictions,
             lateJurisdictions
         )

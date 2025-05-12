@@ -11,6 +11,9 @@ import io.temporal.activity.ActivityMethod
 interface NotificationActivities {
 
     @ActivityMethod
+    fun collectData(request: DataRequest): ResultWrapper<DataResponse>
+
+    @ActivityMethod
     fun sendEmail(emailAddresses: List<String>, subject: String, body: String)
 
     @ActivityMethod

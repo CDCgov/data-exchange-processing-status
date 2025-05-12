@@ -1,14 +1,16 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.NotificationActivitiesDeadlineCheckImpl
 import gov.cdc.ocio.processingnotifications.model.WorkflowTaskQueue
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.NotificationActivitiesUploadDigestCountsImpl
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.NotificationActivitiesTopErrorsImpl
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
@@ -17,10 +19,12 @@ import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+
 class NotificationSubscriptionService: KoinComponent {
+
     private val logger = KotlinLogging.logger {}
+
     private val workflowEngine by inject<WorkflowEngine>()
-    private val notificationActivitiesImpl = NotificationActivitiesImpl()
 
     fun subscribeTopErrors(subscription: WorkflowSubscriptionForDataStreams): WorkflowSubscriptionResult {
         val workflow = workflowEngine.setupWorkflow(
@@ -28,7 +32,7 @@ class NotificationSubscriptionService: KoinComponent {
             WorkflowTaskQueue.TOP_ERRORS.toString(),
             subscription.cronSchedule,
             DataStreamTopErrorsNotificationWorkflowImpl::class.java,
-            notificationActivitiesImpl,
+            NotificationActivitiesTopErrorsImpl(),
             DataStreamTopErrorsNotificationWorkflow::class.java
         )
 
@@ -48,7 +52,7 @@ class NotificationSubscriptionService: KoinComponent {
             WorkflowTaskQueue.UPLOAD_DIGEST.toString(),
             subscription.cronSchedule,
             UploadDigestCountsNotificationWorkflowImpl::class.java,
-            notificationActivitiesImpl,
+            NotificationActivitiesUploadDigestCountsImpl(),
             UploadDigestCountsNotificationWorkflow::class.java
         )
 
@@ -68,7 +72,7 @@ class NotificationSubscriptionService: KoinComponent {
             WorkflowTaskQueue.DEADLINE_CHECK.toString(),
             subscription.cronSchedule,
             DeadlineCheckNotificationWorkflowImpl::class.java,
-            notificationActivitiesImpl,
+            NotificationActivitiesDeadlineCheckImpl(),
             DeadlineCheckNotificationWorkflow::class.java
         )
 

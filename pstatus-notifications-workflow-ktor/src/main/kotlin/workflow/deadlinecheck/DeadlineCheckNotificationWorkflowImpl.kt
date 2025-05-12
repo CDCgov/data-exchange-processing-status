@@ -1,20 +1,13 @@
 package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 
-import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.DeadlineCheck
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
-import gov.cdc.ocio.processingnotifications.query.DeadlineCheckQuery
-import gov.cdc.ocio.processingnotifications.query.DeadlineCheckResults
-import gov.cdc.ocio.processingnotifications.query.UploadDigestCountsQuery
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
-import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.time.*
 import java.time.format.DateTimeFormatter
 
@@ -34,12 +27,9 @@ import java.time.format.DateTimeFormatter
  * - Identify jurisdictions with missing uploads.
  * - Send notifications using configured methods (email or webhook) when uploads are missing.
  */
-class DeadlineCheckNotificationWorkflowImpl
-    : DeadlineCheckNotificationWorkflow, KoinComponent {
+class DeadlineCheckNotificationWorkflowImpl : DeadlineCheckNotificationWorkflow {
 
     private val logger = KotlinLogging.logger {}
-
-    private val repository by inject<ProcessingStatusRepository>()
 
     private val activities = WorkflowActivity.newDefaultActivityStub()
 
@@ -66,9 +56,15 @@ class DeadlineCheckNotificationWorkflowImpl
         val triggeredAsString = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered))
 
         try {
-            // Logic to check if the upload occurred
-            val (deadlineCheckResults, jurisdictionCounts) = performaDeadlineCheck(
-                dataStreamId, dataStreamRoute, expectedJurisdictions, workflowSubscription.deadlineTime)
+            val deadlineCheckRequest = DeadlineCheckRequest(
+                dataStreamId,
+                dataStreamRoute,
+                expectedJurisdictions,
+                workflowSubscription.deadlineTime
+            )
+            val response = activities.collectData(deadlineCheckRequest).getOrThrow() as DeadlineCheckResponse
+            val deadlineCompliance = response.deadlineCompliance
+            val jurisdictionCounts = response.jurisdictionCounts
 
             when (workflowSubscription.notificationType) {
                 NotificationType.EMAIL -> emailAddresses?.let {
@@ -79,7 +75,7 @@ class DeadlineCheckNotificationWorkflowImpl
                         dataStreamId,
                         dataStreamRoute,
                         expectedJurisdictions,
-                        deadlineCheckResults,
+                        deadlineCompliance,
                         workflowSubscription.deadlineTime,
                         jurisdictionCounts
                     ).build()
@@ -99,7 +95,7 @@ class DeadlineCheckNotificationWorkflowImpl
                             dataStreamId,
                             dataStreamRoute,
                             expectedJurisdictions,
-                            deadlineCheckResults,
+                            deadlineCompliance,
                             DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(triggered)),
                             jurisdictionCounts
                         )
@@ -110,56 +106,6 @@ class DeadlineCheckNotificationWorkflowImpl
         } catch (e: Exception) {
             logger.error("Error occurred while checking for upload deadline: ${e.message}")
             throw Exception("Error occurred while checking for upload deadline")
-        }
-    }
-
-    /**
-     * Checks whether an upload has occurred within a specified time range for the given data stream and jurisdiction.
-     *
-     * The method generates a query to search for uploads in the database, using today's date and a specific
-     * start and end time range in UTC. If any matching results are found, the method returns true; otherwise, false.
-     * In case of any errors during execution, an exception is thrown.
-     *
-     * @param dataStreamId The identifier of the data stream to check for uploads.
-     * @param jurisdictions The jurisdictions to check for.
-     * @return True if an upload is found within the specified time range, otherwise false.
-     */
-    private fun performaDeadlineCheck(
-        dataStreamId: String,
-        dataStreamRoute: String,
-        jurisdictions: List<String>,
-        deadlineTime: LocalTime
-    ): Pair<DeadlineCheckResults, Map<String, JurisdictionFacts>> {
-
-        val deadlineCheckQuery = DeadlineCheckQuery.Builder(repository)
-            .withDataStreamId(dataStreamId)
-            .withDataStreamRoute(dataStreamRoute)
-            .withExpectedJurisdictions(jurisdictions)
-            .withDeadlineTime(deadlineTime)
-            .build()
-
-        val uploadDigestQuery = UploadDigestCountsQuery.Builder(repository)
-            .withDataStreamIds(listOf(dataStreamId))
-            .withDataStreamRoutes(listOf(dataStreamRoute))
-            .withUtcToRun(LocalDate.now())
-            .build()
-
-        try {
-            val deadlineCheckResults = deadlineCheckQuery.run()
-            logger.info("Missing jurisdictions: $deadlineCheckResults.missingJurisdictions, late jurisdictions: $deadlineCheckResults.lateJurisdictions")
-
-            val uploadDigestResults = uploadDigestQuery.run()
-            val jurisdictionCounts = mapOf<String, JurisdictionFacts>().toMutableMap()
-            uploadDigestResults.forEach {
-                jurisdictionCounts[it.jurisdiction] = JurisdictionFacts(it.completed, it.lastUploadCompletedTime)
-            }
-            return Pair(deadlineCheckResults, jurisdictionCounts)
-        } catch (ex: ActivityFailure) {
-            logger.error("Error while processing deadline check. The workflow may have been canceled. Error: ${ex.localizedMessage}")
-            throw ex
-        } catch (ex: Exception) {
-            logger.error("Error while processing deadline check: ${ex.localizedMessage}")
-            throw ex
         }
     }
 

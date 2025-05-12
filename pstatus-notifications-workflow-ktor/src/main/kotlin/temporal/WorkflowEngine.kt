@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingnotifications.temporal
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.google.protobuf.ByteString
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
@@ -35,6 +34,12 @@ import kotlinx.coroutines.runBlocking
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.NotificationActivitiesDeadlineCheckImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.NotificationActivitiesUploadDigestCountsImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.NotificationActivitiesTopErrorsImpl
 import io.temporal.client.WorkflowNotFoundException
 import io.temporal.common.converter.DefaultDataConverter
 import io.temporal.common.converter.JacksonJsonPayloadConverter
@@ -80,6 +85,12 @@ class WorkflowEngine(
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
+
+    private val workflowToActivitiesMap = mapOf(
+        DeadlineCheckNotificationWorkflowImpl::class.java to NotificationActivitiesDeadlineCheckImpl(),
+        UploadDigestCountsNotificationWorkflowImpl::class.java to NotificationActivitiesUploadDigestCountsImpl(),
+        DataStreamTopErrorsNotificationWorkflowImpl::class.java to NotificationActivitiesTopErrorsImpl()
+    )
 
     init {
         initializeTemporalClient()
@@ -369,8 +380,7 @@ class WorkflowEngine(
 
         // Register workflow and activities
         worker.registerWorkflowImplementationTypes(workflowImpl)
-        worker.registerActivitiesImplementations(NotificationActivitiesImpl())
-
+        worker.registerActivitiesImplementations(workflowToActivitiesMap[workflowImpl])
         // Start the worker
         factory.start()
 
