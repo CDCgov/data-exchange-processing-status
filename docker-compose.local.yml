@@ -165,16 +165,6 @@ services:
       - postgresql
       - temporal
 
-  # temporal-ui:
-  #   depends_on:
-  #     - temporal
-  #   environment:
-  #     - TEMPORAL_ADDRESS=temporal:7233
-  #     - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-  #   image: temporalio/ui:latest
-  #   ports:
-  #     - "80:8080"
-
   notifications-rules-engine:
     image: pstatus-notifications-rules-engine-ktor:latest
     ports:
