@@ -101,7 +101,7 @@ fun Application.module() {
         val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
             old.toBuilder()
                 .putAll(old.attributes)
-                .put(ServiceAttributes.SERVICE_NAME, "pstatus") // TODO make into env var
+                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-workflow")
                 .build()
         }
         val otel: OpenTelemetry = builder.build().openTelemetrySdk
