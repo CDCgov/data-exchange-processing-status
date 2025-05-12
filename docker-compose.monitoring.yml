@@ -13,6 +13,17 @@ services:
       - "4317:4317" # otlp grpc
       - "4318:4318" # otlp http
       - "9411:9411" # zipkin
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./configs/prometheus:/etc/prometheus
+      - prom-data:/prometheus
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -43,3 +54,4 @@ services:
 
 volumes:
   tempo-data:
+  prom-data:

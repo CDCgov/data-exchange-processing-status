@@ -18,3 +18,10 @@ datasources:
         datasourceUid: prometheus
       streamingEnabled:
         search: true
+  - name: Prometheus
+    uid: prometheus-datasource
+    type: prometheus
+    url: http://prometheus:9090
+    isDefault: false
+    access: proxy
+    editable: true
