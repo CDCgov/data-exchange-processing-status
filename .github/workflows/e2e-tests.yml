@@ -21,7 +21,7 @@ jobs:
 
       - name: Run Playwright Tests
         run: |
-          docker compose -f docker-compose.playwright.yml run --rm playwright
+          docker compose -f docker-compose.playwright.yml run --rm --quiet-pull playwright
 
       - name: Stop Services
         run: |
