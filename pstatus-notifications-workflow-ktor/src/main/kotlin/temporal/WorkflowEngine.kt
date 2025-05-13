@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingnotifications.temporal
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.google.protobuf.ByteString
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
@@ -35,6 +34,12 @@ import kotlinx.coroutines.runBlocking
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationActivitiesImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationActivitiesImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationActivitiesImpl
 import io.temporal.client.WorkflowNotFoundException
 import io.temporal.common.converter.DefaultDataConverter
 import io.temporal.common.converter.JacksonJsonPayloadConverter
@@ -80,6 +85,22 @@ class WorkflowEngine(
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
+
+    /**
+     * A map that associates workflow implementation classes to their corresponding activities implementation instances.
+     *
+     * This map is used to pair specific workflow implementations with their designated activity implementations.
+     * Each key in the map represents a workflow implementation class, while the corresponding value is an instance
+     * of the activities class that performs the required tasks for the workflow.
+     *
+     * The map is utilized within the `WorkflowEngine` class to dynamically configure and manage workflows alongside
+     * their associated activities during runtime.
+     */
+    private val workflowToActivitiesMap = mapOf(
+        DeadlineCheckNotificationWorkflowImpl::class.java to DeadlineCheckNotificationActivitiesImpl(),
+        UploadDigestCountsNotificationWorkflowImpl::class.java to UploadDigestCountsNotificationActivitiesImpl(),
+        TopErrorsNotificationWorkflowImpl::class.java to TopErrorsNotificationActivitiesImpl()
+    )
 
     init {
         initializeTemporalClient()
@@ -369,8 +390,7 @@ class WorkflowEngine(
 
         // Register workflow and activities
         worker.registerWorkflowImplementationTypes(workflowImpl)
-        worker.registerActivitiesImplementations(NotificationActivitiesImpl())
-
+        worker.registerActivitiesImplementations(workflowToActivitiesMap[workflowImpl])
         // Start the worker
         factory.start()
 

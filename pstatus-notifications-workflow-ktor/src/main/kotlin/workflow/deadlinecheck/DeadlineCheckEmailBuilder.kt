@@ -3,7 +3,7 @@ package gov.cdc.ocio.processingnotifications.workflow.deadlinecheck
 import gov.cdc.ocio.notificationdispatchers.email.EmailBuilder
 import gov.cdc.ocio.processingnotifications.model.workflowHeader
 import gov.cdc.ocio.processingnotifications.model.workflowFooter
-import gov.cdc.ocio.processingnotifications.query.DeadlineCheckResults
+import gov.cdc.ocio.processingnotifications.query.DeadlineCompliance
 import gov.cdc.ocio.processingnotifications.utils.CronUtils
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
@@ -28,7 +28,7 @@ data class JurisdictionFacts(val count: Int, val lastUpload: Instant?)
  * @property dataStreamId The identifier of the data stream associated with the deadline check.
  * @property dataStreamRoute The route related to the data stream.
  * @property expectedJurisdictions List of jurisdictions expected to participate in the upload.
- * @property deadlineCheckResults Results of the deadline check, containing information about missing and late jurisdictions.
+ * @property deadlineCompliance Results of the deadline check, containing information about missing and late jurisdictions.
  * @property deadlineTime The specific deadline time (HH:mm:ss) in UTC for uploads to be completed.
  * @property jurisdictionCounts Map of jurisdictions to their respective upload counts and last upload timestamps.
  */
@@ -39,11 +39,10 @@ class DeadlineCheckEmailBuilder(
     private val dataStreamId: String,
     private val dataStreamRoute: String,
     private val expectedJurisdictions: List<String>,
-    private val deadlineCheckResults: DeadlineCheckResults,
+    private val deadlineCompliance: DeadlineCompliance,
     private val deadlineTime: LocalTime,
     private val jurisdictionCounts: Map<String, JurisdictionFacts>
 ) {
-
     private val standardFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.of("UTC"))
     private val deadlineFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
@@ -51,8 +50,8 @@ class DeadlineCheckEmailBuilder(
         val cronScheduleDesc = CronUtils.description(cronSchedule)?.replaceFirstChar { it.uppercaseChar() } ?: "Unknown"
         val triggeredDesc = standardFormatter.format(Instant.ofEpochMilli(triggered))
         val expectedJurisdictionsDesc = expectedJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
-        val missingJurisdictionsDesc = deadlineCheckResults.missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
-        val lateJurisdictionsDesc = deadlineCheckResults.lateJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
+        val missingJurisdictionsDesc = deadlineCompliance.missingJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
+        val lateJurisdictionsDesc = deadlineCompliance.lateJurisdictions.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "None"
         val deadlineTimeDesc = deadlineFormatter.format(deadlineTime) + " UTC"
 
         val content = buildString {

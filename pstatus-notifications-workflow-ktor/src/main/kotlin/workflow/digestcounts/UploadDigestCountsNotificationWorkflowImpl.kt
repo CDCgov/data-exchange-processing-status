@@ -1,18 +1,14 @@
 package gov.cdc.ocio.processingnotifications.workflow.digestcounts
 
-import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingnotifications.model.UploadDigest
 import gov.cdc.ocio.processingnotifications.model.WebhookContent
 import gov.cdc.ocio.processingnotifications.model.WorkflowType
-import gov.cdc.ocio.processingnotifications.query.*
 import gov.cdc.ocio.processingnotifications.workflow.WorkflowActivity
 import gov.cdc.ocio.types.model.NotificationType
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.temporal.failure.ActivityFailure
 import io.temporal.workflow.Workflow
 import mu.KotlinLogging
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -27,12 +23,9 @@ import java.time.format.DateTimeFormatter
  * This class leverages Temporal Workflow functionality to process complex asynchronous workflows
  * and includes error handling to manage scenarios such as activity failures or data inconsistencies.
  */
-class UploadDigestCountsNotificationWorkflowImpl :
-    UploadDigestCountsNotificationWorkflow, KoinComponent {
+class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificationWorkflow {
 
     private val logger = KotlinLogging.logger {}
-
-    private val repository by inject<ProcessingStatusRepository>()
 
     private val activities = WorkflowActivity.newDefaultActivityStub()
 
@@ -52,80 +45,29 @@ class UploadDigestCountsNotificationWorkflowImpl :
         try {
             val utcDateToRun = LocalDate.now().minusDays(subscription.sinceDays.toLong())
 
-            // Upload digest query to get all the counts by data stream id, data stream route, and jurisdiction
-            val uploadDigestQuery = UploadDigestCountsQuery.Builder(repository)
-                .withDataStreamIds(subscription.dataStreamIds)
-                .withDataStreamRoutes(subscription.dataStreamRoutes)
-                .withJurisdictions(subscription.jurisdictions)
-                .withUtcToRun(utcDateToRun)
-                .build()
-            val uploadDigestResults = uploadDigestQuery.run()
-
-            // Aggregate the upload counts
-            val aggregatedCounts = aggregateUploadCounts(uploadDigestResults)
-
-            // Get the upload metrics
-            val uploadMetricsQuery = UploadMetricsQuery.Builder(repository)
-                .withDataStreamIds(subscription.dataStreamIds)
-                .withDataStreamRoutes(subscription.dataStreamRoutes)
-                .withJurisdictions(subscription.jurisdictions)
-                .withUtcToRun(utcDateToRun)
-                .build()
-            val uploadMetrics = uploadMetricsQuery.run()
-
-            // Get the upload and delivery durations
-            val uploadDurationsQuery = UploadDurationQuery.Builder(repository)
-                .withDataStreamIds(subscription.dataStreamIds)
-                .withDataStreamRoutes(subscription.dataStreamRoutes)
-                .withJurisdictions(subscription.jurisdictions)
-                .withUtcToRun(utcDateToRun)
-                .build()
-            val uploadDurations = uploadDurationsQuery.run()
+            val uploadDigestCountsRequest = UploadDigestCountsRequest(
+                subscription.dataStreamIds,
+                subscription.dataStreamRoutes,
+                subscription.jurisdictions,
+                subscription.sinceDays,
+                utcDateToRun
+            )
+            val response = activities.collectData(uploadDigestCountsRequest).getOrThrow() as UploadDigestCountsResponse
 
             // Finally, dispatch the notification
             dispatchNotification(
                 subscription,
                 utcDateToRun,
-                aggregatedCounts,
-                uploadMetrics,
-                uploadDurations
+                response.aggregatedCounts,
+                response.uploadMetrics,
+                response.uploadDurations
             )
-
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
         } catch (ex: Exception) {
             logger.error("Error while processing daily upload digest: ${ex.localizedMessage}")
             throw ex
         }
-    }
-
-    /**
-     *  DynamoDB does not support GROUP BY, so this function is used to aggregate the counts
-     *  Function that groups by jurisdictionId and dataStreamId to aggregate counts.
-     *
-     *  @param uploadCounts List<UploadDigestResponse>
-     *  @return UploadDigestCounts
-     */
-    private fun aggregateUploadCounts(
-        uploadCounts: List<UploadDigestResponse>
-    ): UploadDigestCounts {
-
-        val digest = uploadCounts.groupBy { it.dataStreamId }
-            .mapValues { (_, dataStreamCounts) ->
-                dataStreamCounts.groupBy { it.dataStreamRoute }
-                    .mapValues { (_, routeCounts) ->
-                        routeCounts.groupBy { it.jurisdiction }
-                            .mapValues { (_, jurisdictionCounts) ->
-                                Counts(
-                                    jurisdictionCounts.sumOf { it.started },
-                                    jurisdictionCounts.sumOf { it.completed },
-                                    jurisdictionCounts.sumOf { it.failedDelivery },
-                                    jurisdictionCounts.sumOf { it.delivered }
-                                )
-                            }
-                    }
-            }
-        return UploadDigestCounts(digest)
     }
 
     /**
