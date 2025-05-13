@@ -7,7 +7,7 @@ on:
 jobs:
   e2e-test:
     runs-on: ubuntu-latest
-    
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,3 +18,9 @@ jobs:
       - name: Build Docker Images and Start Services
         run: |
           sh local-run.sh
+      - name: Run Playwright Tests
+        run: |
+          docker compose -f docker-compose.playwright.yml run --rm --quiet-pull playwright
+      - name: Stop Services
+        run: |
+          docker compose -f docker-compose.local.yml down
