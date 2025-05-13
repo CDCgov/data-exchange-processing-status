@@ -19,8 +19,6 @@ import gov.cdc.ocio.processingnotifications.service.ReportService
  */
 class TopErrorsNotificationActivitiesImpl : NotificationActivitiesImpl() {
 
-    private val reportService = ReportService()
-
     /**
      * Collects data regarding the most significant errors and issues within a specified
      * time interval for a given data stream. This includes metrics like failed metadata verification,
@@ -38,6 +36,10 @@ class TopErrorsNotificationActivitiesImpl : NotificationActivitiesImpl() {
         val dataStreamId = uploadDigestCountsRequest.dataStreamId
         val dataStreamRoute = uploadDigestCountsRequest.dataStreamRoute
         val dayInterval = uploadDigestCountsRequest.dayInterval
+
+        // ReportService must be instantiated here otherwise "java.lang.IllegalStateException: KoinApplication has not been started"
+        // will be thrown during startup.
+        val reportService = ReportService()
 
         // Logic to determine the counts
         val failedMetadataVerifyCount = reportService.countFailedReports(
