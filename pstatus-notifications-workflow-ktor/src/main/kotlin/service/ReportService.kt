@@ -22,7 +22,6 @@ import java.time.temporal.ChronoUnit
  * @property cPrefix String
  * @property cElFunc String
  * @property timeFunc Long -> String
- * @property oneHourAgo Long
  */
 class ReportService: KoinComponent {
     private val repository by inject<ProcessingStatusRepository>()
@@ -33,9 +32,6 @@ class ReportService: KoinComponent {
     private val closeBkt = repository.reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
     private val timeFunc = repository.reportsCollection.timeConversionForQuery
-    private val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
-    private val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
-    private val oneMonthAgo = LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
 
     /**
      * Query the reports collection for number of failed reports of a given action.
@@ -79,11 +75,12 @@ class ReportService: KoinComponent {
         dataStreamRoute: String,
         daysInterval: Int?
     ): List<UploadInfo> {
+        val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
         val timeRangeSection = """
             AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
             ${appendTimeRange(daysInterval)}
         """.trimIndent()
-        return runCommonQuery(dataStreamId, dataStreamRoute, timeRangeSection)
+        return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
     }
 
     /**
@@ -99,23 +96,26 @@ class ReportService: KoinComponent {
         dataStreamId: String,
         dataStreamRoute: String
     ): List<UploadInfo> {
+        val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
+        val oneMonthAgo = LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
         val timeRangeSection = """
             AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneWeekAgo)}
             AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneMonthAgo)}
         """.trimIndent()
-        return runCommonQuery(dataStreamId, dataStreamRoute, timeRangeSection)
+        return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
     }
 
     /**
-     * Executes a query to retrieve a list of uploads that meet specified conditions
-     * within a given data stream and time range.
+     * Retrieves a list of pending uploads for a specified data stream and time range.
+     * Pending uploads are defined as those that have a report indicating the upload has started
+     * but no corresponding report indicating completion.
      *
-     * @param dataStreamId The unique identifier of the data stream for which the query is performed.
-     * @param dataStreamRoute The route of the data stream for which the query is performed.
-     * @param timeRangeSection A SQL fragment specifying the time range filter to apply to the query.
-     * @return A list of UploadInfo objects representing the uploads that satisfy the query conditions.
+     * @param dataStreamId The identifier of the data stream being queried.
+     * @param dataStreamRoute The route of the data stream being queried.
+     * @param timeRangeSection A SQL clause string for filtering results based on a specific time range.
+     * @return A list of pending uploads, represented by the UploadInfo data class, matching the given criteria.
      */
-    private fun runCommonQuery(
+    private fun getPendingUploads(
         dataStreamId: String,
         dataStreamRoute: String,
         timeRangeSection: String
@@ -160,6 +160,7 @@ class ReportService: KoinComponent {
         dataStreamRoute: String,
         daysInterval: Int?
     ): List<UploadInfo> {
+        val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
         val delayedDeliveriesQuery = """
             SELECT ${cPrefix}uploadId,
                 mv.content.filename AS filename,
