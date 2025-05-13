@@ -86,6 +86,16 @@ class WorkflowEngine(
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
 
+    /**
+     * A map that associates workflow implementation classes to their corresponding activities implementation instances.
+     *
+     * This map is used to pair specific workflow implementations with their designated activity implementations.
+     * Each key in the map represents a workflow implementation class, while the corresponding value is an instance
+     * of the activities class that performs the required tasks for the workflow.
+     *
+     * The map is utilized within the `WorkflowEngine` class to dynamically configure and manage workflows alongside
+     * their associated activities during runtime.
+     */
     private val workflowToActivitiesMap = mapOf(
         DeadlineCheckNotificationWorkflowImpl::class.java to NotificationActivitiesDeadlineCheckImpl(),
         UploadDigestCountsNotificationWorkflowImpl::class.java to NotificationActivitiesUploadDigestCountsImpl(),
