@@ -11,7 +11,7 @@ type GraphQLErrorResponse = { errors: GraphQLError[] };
 
 let subscriptions:string[] = []
 
-test.describe('GraphQL subscribeUploadDigestCounts', () => {
+test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
     test.setTimeout(90000); 
 
     test.beforeAll(async ({ request }) => { 
@@ -28,17 +28,17 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
     });
 
     test('subscribing via email with duration cron', async ({ gql, request }) => {
-        const subscriptionEmail = `subscribeUploadDigestCounts-cron-duration@test.com`;
+        const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-cron-duration@test.com`;
         const subscription = createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
         
-        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
         await expect.poll(async () => {
@@ -53,21 +53,21 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
     });
 
     test('subscribing via email with classic cron', async ({ gql, request }) => {        
-        const subscriptionEmail = `subscribeUploadDigestCounts-cron-classic@test.com`;
+        const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-cron-classic@test.com`;
         const subscription = createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "* * * * *"
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
 
-        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
         await expect.poll(async () => {
@@ -82,7 +82,7 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
     });
 
     test('subscribing via webhook with duration cron', async ({ gql, request }) => {
@@ -96,11 +96,11 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
 
-        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
         
         await expect.poll(async () => {
@@ -125,11 +125,11 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
 
-        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
         
         await expect.poll(async () => {
@@ -144,7 +144,7 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
     });
 
     test('subscribing to a specific data stream via email', async ({ gql, request }) => {
-        const subscriptionEmail = `subscribeUploadDigestCounts-datastream@test.com`;
+        const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream@test.com`;
         const subscription = createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "@every 10s",
@@ -153,11 +153,11 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             jurisdictions: ["jurisdiction"]
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
 
-        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
         
         await expect.poll(async () => {
@@ -172,22 +172,22 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
     });
 
     test('subscribing with multiple emails', async ({ gql, request }) => {
-        const subscriptionEmail1 = `subscribeUploadDigestCounts-multiple-emails-1@test.com`;
-        const subscriptionEmail2 = `subscribeUploadDigestCounts-multiple-emails-2@test.com`;
+        const subscriptionEmail1 = `subscribeDataStreamTopErrorsNotification-multiple-emails-1@test.com`;
+        const subscriptionEmail2 = `subscribeDataStreamTopErrorsNotification-multiple-emails-2@test.com`;
         const subscription = createSubscriptionInput({
             emailAddresses: [subscriptionEmail1, subscriptionEmail2],
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
         
-        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
         await expect.poll(async () => {
@@ -210,41 +210,41 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         
         const mailhogResponse1 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
         const emails1 = await mailhogResponse1.json();
-        expect(emails1.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+        expect(emails1.items[0].Content.Headers.Subject[0]).toContain(`DATA STREAM TOP ERRORS NOTIFICATION`);
 
         const mailhogResponse2 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
         const emails2 = await mailhogResponse2.json();
-        expect(emails2.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+        expect(emails2.items[0].Content.Headers.Subject[0]).toContain(`DATA STREAM TOP ERRORS NOTIFICATION`);
     });
 
     test.describe('subscribing errors', () => {
         test('invalid chron schedule', async ({ gql }) => {
             const subscription = createSubscriptionInput({
-                emailAddresses: [`subscribeUploadDigestCounts-error-cron@test.com`],
+                emailAddresses: [`subscribeDataStreamTopErrorsNotification-error-cron@test.com`],
                 cronSchedule: "INVALID"
             });
 
-            const res = await gql.subscribeUploadDigestCounts({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-cron");
         });
 
         test('invalid notification type', async ({ gql }) => {
             const subscription = createSubscriptionInput({
-                emailAddresses: [`subscribeUploadDigestCounts-error-notification-type@test.com`],
+                emailAddresses: [`subscribeDataStreamTopErrorsNotification-error-notification-type@test.com`],
                 notificationType: "INVALID" as unknown as NotificationType
             });
 
-            const res = await gql.subscribeUploadDigestCounts({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-notification-type");
         });
 
         test.skip('invalid email format', async ({ gql }) => {
             const subscription = createSubscriptionInput({
-                emailAddresses: [`subscribeUploadDigestCounts-error-invalid-email`],
+                emailAddresses: [`subscribeDataStreamTopErrorsNotification-error-invalid-email`],
                 notificationType: NotificationType.Email
             });
 
-            const res = await gql.subscribeUploadDigestCounts({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-email-format");
         });
 
@@ -254,7 +254,7 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
                 notificationType: NotificationType.Webhook
             });
 
-            const res = await gql.subscribeUploadDigestCounts({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-email-format");
         });
     });
