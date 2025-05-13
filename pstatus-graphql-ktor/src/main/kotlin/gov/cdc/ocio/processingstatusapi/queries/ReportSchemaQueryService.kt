@@ -2,7 +2,6 @@ package gov.cdc.ocio.processingstatusapi.queries
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
-import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.loaders.ReportSchemaLoader
 
 
