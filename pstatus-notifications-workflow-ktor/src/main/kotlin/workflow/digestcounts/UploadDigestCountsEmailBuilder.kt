@@ -98,7 +98,7 @@ class UploadDigestCountsEmailBuilder(
                 h3 { +"Overview" }
                 table {
                     tr {
-                        td { +"Workflow ID" }
+                        td { +"Subscription ID" }
                         td { strong { +workflowId } }
                     }
                     tr {

@@ -3,10 +3,10 @@ package gov.cdc.ocio.processingstatusapi.loaders
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportCounts
 import gov.cdc.ocio.database.models.dao.ReportDao
+import gov.cdc.ocio.database.utils.SqlClauseBuilder
 import gov.cdc.ocio.processingstatusapi.models.query.PageSummary
 import gov.cdc.ocio.processingstatusapi.models.reports.*
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
-import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -25,6 +25,7 @@ class ReportCountsLoader: KoinComponent {
     private val cName = reportsCollection.collectionNameForQuery
     private val cVar = reportsCollection.collectionVariable
     private val cPrefix = reportsCollection.collectionVariablePrefix
+    private val timeFunc = reportsCollection.timeConversionForQuery
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
 
     /**
@@ -113,11 +114,12 @@ class ReportCountsLoader: KoinComponent {
 
         val pageSizeAsInt = pageUtils.getPageSize(pageSize)
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
+        val timeRangeWhereClause = SqlClauseBuilder.buildSqlClauseForDateRange(
             daysInterval,
             dateStart,
             dateEnd,
-            cPrefix
+            cPrefix,
+            timeFunc
         )
 
         // Get the total matching upload ids
@@ -268,7 +270,7 @@ class ReportCountsLoader: KoinComponent {
     ): ProcessingCounts {
 
         val timeRangeWhereClause =
-            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
+            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix, timeFunc)
 
         // Get number completed uploading
         val numCompletedUploadingSqlQuery = (
@@ -348,7 +350,7 @@ class ReportCountsLoader: KoinComponent {
     ): List<StageCounts> {
 
         val timeRangeWhereClause =
-            SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix)
+            SqlClauseBuilder.buildSqlClauseForDateRange(daysInterval, dateStart, dateEnd, cPrefix, timeFunc)
 
         val rollupCountsQuery = (
                 "select "

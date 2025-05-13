@@ -2,12 +2,15 @@ package gov.cdc.ocio.processingnotifications.service
 
 import gov.cdc.ocio.database.models.StageAction
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.utils.SqlClauseBuilder
 import gov.cdc.ocio.processingnotifications.model.UploadInfo
-import gov.cdc.ocio.processingnotifications.utils.SqlClauseBuilder
 import gov.cdc.ocio.types.model.Status
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 
 /**
@@ -19,106 +22,181 @@ import java.time.Instant
  * @property cPrefix String
  * @property cElFunc String
  * @property timeFunc Long -> String
- * @property oneHourAgo Long
  */
 class ReportService: KoinComponent {
     private val repository by inject<ProcessingStatusRepository>()
     private val cName = repository.reportsCollection.collectionNameForQuery
     private val cVar = repository.reportsCollection.collectionVariable
     private val cPrefix = repository.reportsCollection.collectionVariablePrefix
+    private val openBkt = repository.reportsCollection.openBracketChar
+    private val closeBkt = repository.reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
     private val timeFunc = repository.reportsCollection.timeConversionForQuery
-    private val oneHourAgo = Instant.now().minusSeconds(3600).epochSecond
 
     /**
      * Query the reports collection for number of failed reports of a given action.
+     *
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param action String
      * @param daysInterval Int?
      */
-    fun countFailedReports(dataStreamId: String, dataStreamRoute: String, action: StageAction, daysInterval: Int?): Int {
-        val query = "select value count(1) from $cName $cVar " +
-                "where ${cPrefix}stageInfo.${cElFunc("status")} = '${Status.FAILURE}' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '$action' " +
-                "and dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute'"
+    fun countFailedReports(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        action: StageAction,
+        daysInterval: Int?
+    ): Int {
+        val query = """
+            SELECT VALUE COUNT(1)
+            FROM $cName $cVar
+            WHERE ${cPrefix}stageInfo.${cElFunc("status")} = '${Status.FAILURE}'
+                AND ${cPrefix}stageInfo.${cElFunc("action")} = '$action'
+                AND dataStreamId = '$dataStreamId'
+                AND dataStreamRoute = '$dataStreamRoute'
+                ${appendTimeRange(daysInterval)}
+            """.trimIndent()
 
-        return repository.reportsCollection.queryItems(appendTimeRange(query, daysInterval), Int::class.java).firstOrNull() ?: 0
+        return repository.reportsCollection.queryItems(
+            query,
+            Int::class.java
+        ).firstOrNull() ?: 0
     }
 
     /**
      * Query the reports collection for in progress uploads that started at least an hour ago.
+     *
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param daysInterval Int?
      */
-    fun getDelayedUploads(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<String> {
-        // first, get uploads that have upload-started reports older than 1 hour
-        val uploadsStartedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
-                "where dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' " +
-                "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
-        val uploadsStarted = repository.reportsCollection.queryItems(appendTimeRange(uploadsStartedQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
-            .toSet()
+    fun getDelayedUploads(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        daysInterval: Int?
+    ): List<UploadInfo> {
+        val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
+        val timeRangeSection = """
+            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+            ${appendTimeRange(daysInterval)}
+        """.trimIndent()
+        return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
+    }
 
-        // then, get uploads that have upload-completed reports older than 1 hour
-        val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
-                "where dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
-                "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
-        val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
-            .toSet()
+    /**
+     * Retrieves a list of abandoned uploads for a given data stream. Abandoned uploads are defined as uploads
+     * that have an "upload-started" report older than one week but no more than one month, without a corresponding
+     * "upload-completed" report in the same time range.
+     *
+     * @param dataStreamId The identifier of the data stream for which abandoned uploads are being queried.
+     * @param dataStreamRoute The route of the data stream for which abandoned uploads are being queried.
+     * @return A list of abandoned uploads represented by the UploadInfo data class.
+     */
+    fun getAbandonedUploads(
+        dataStreamId: String,
+        dataStreamRoute: String
+    ): List<UploadInfo> {
+        val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
+        val oneMonthAgo = LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
+        val timeRangeSection = """
+            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneWeekAgo)}
+            AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneMonthAgo)}
+        """.trimIndent()
+        return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
+    }
 
-        // then take the difference of those to get uploads that don't have upload-completed
-        return (uploadsStarted - uploadsCompleted).toList()
+    /**
+     * Retrieves a list of pending uploads for a specified data stream and time range.
+     * Pending uploads are defined as those that have a report indicating the upload has started
+     * but no corresponding report indicating completion.
+     *
+     * @param dataStreamId The identifier of the data stream being queried.
+     * @param dataStreamRoute The route of the data stream being queried.
+     * @param timeRangeSection A SQL clause string for filtering results based on a specific time range.
+     * @return A list of pending uploads, represented by the UploadInfo data class, matching the given criteria.
+     */
+    private fun getPendingUploads(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        timeRangeSection: String
+    ): List<UploadInfo> {
+        val query = """
+            SELECT ${cPrefix}uploadId,
+                mv.content.filename AS filename,
+                us.stageInfo.start_processing_time AS uploadStartTime
+            FROM $cName $cVar
+            LEFT JOIN $cName mv
+                ON ${cPrefix}uploadId = mv.uploadId
+                AND mv.stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}'
+            LEFT JOIN $cName us
+                ON ${cPrefix}uploadId = us.uploadId
+                AND us.stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}'
+            WHERE ${cPrefix}dataStreamId = '$dataStreamId'
+                AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
+                AND ${cPrefix}stageInfo.${cElFunc("action")} IN ${openBkt}'${StageAction.UPLOAD_STARTED}', '${StageAction.UPLOAD_COMPLETED}'${closeBkt}
+                $timeRangeSection
+            GROUP BY ${cPrefix}uploadId, mv.content.filename, us.stageInfo.start_processing_time
+            HAVING
+                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}' THEN 1 END) > 0
+                AND
+                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' THEN 1 END) = 0
+            """.trimIndent()
+
+        return repository.reportsCollection.queryItems(
+            query,
+            UploadInfo::class.java
+        )
     }
 
     /**
      * Query the reports collection for uploads that have completed but have not been delivered for at least an hour.
+     *
      * @param dataStreamId String
      * @param dataStreamRoute String
      * @param daysInterval Int?
      */
-    fun getDelayedDeliveries(dataStreamId: String, dataStreamRoute: String, daysInterval: Int?): List<String> {
-        // first, get completed uploads older than 1 hour
-        val uploadsCompletedQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
-                "where dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' " +
-                "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
-        val uploadsCompleted = repository.reportsCollection.queryItems(appendTimeRange(uploadsCompletedQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
-            .toSet()
+    fun getDelayedDeliveries(
+        dataStreamId: String,
+        dataStreamRoute: String,
+        daysInterval: Int?
+    ): List<UploadInfo> {
+        val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
+        val delayedDeliveriesQuery = """
+            SELECT ${cPrefix}uploadId,
+                mv.content.filename AS filename,
+                us.stageInfo.start_processing_time AS uploadStartTime
+            FROM $cName $cVar
+            LEFT JOIN $cName mv
+                ON ${cPrefix}uploadId = mv.uploadId
+                AND mv.stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}'
+            LEFT JOIN $cName us
+                ON ${cPrefix}uploadId = us.uploadId
+                AND us.stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STARTED}'
+            WHERE ${cPrefix}dataStreamId = '$dataStreamId'
+                AND ${cPrefix}dataStreamRoute = '$dataStreamRoute'
+                AND ${cPrefix}stageInfo.${cElFunc("action")} IN ${openBkt}'${StageAction.UPLOAD_COMPLETED}', '${StageAction.FILE_DELIVERY}'${closeBkt}
+                AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+                ${appendTimeRange(daysInterval)}
+            GROUP BY ${cPrefix}uploadId, mv.content.filename, us.stageInfo.start_processing_time
+            HAVING
+                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' THEN 1 END) > 0
+                AND
+                COUNT(CASE WHEN ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.FILE_DELIVERY}' THEN 1 END) = 0
+        """.trimIndent()
 
-        // then, get uploads that have been successfully delivered
-        val uploadsDeliveredQuery = "select distinct ${cPrefix}uploadId from $cName $cVar " +
-                "where dataStreamId = '$dataStreamId' " +
-                "and dataStreamRoute = '$dataStreamRoute' " +
-                "and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.FILE_DELIVERY}' " +
-                "and ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}"
-        val uploadsDelivered = repository.reportsCollection.queryItems(appendTimeRange(uploadsDeliveredQuery, daysInterval), UploadInfo::class.java)
-            .map { it.uploadId }
-            .toSet()
-
-        // finally, take the difference to get uploads that haven't been delivered in over an hour
-        return (uploadsCompleted - uploadsDelivered).toList()
+        return repository.reportsCollection.queryItems(
+            delayedDeliveriesQuery,
+            UploadInfo::class.java
+        )
     }
 
     /**
-     * Helper function for appending the time range to a sql++ query.
-     * @param query String
-     * @param daysInterval Int?
+     * Appends a SQL clause for filtering results based on a time range if a valid interval is provided.
+     *
+     * @param daysInterval The number of days to define a relative date range. If null, no time range condition is appended.
+     * @return A SQL clause string for filtering by the specified time range, or an empty string if no interval is provided.
      */
-    private fun appendTimeRange(query: String, daysInterval: Int?): String {
-        if (daysInterval != null) {
-            return "$query and ${SqlClauseBuilder().buildSqlClauseForDateRange(daysInterval, null, null, cPrefix)}"
-        }
-
-        return query
-    }
+    private fun appendTimeRange(daysInterval: Int?) = daysInterval?.let {
+        "AND ${SqlClauseBuilder.buildSqlClauseForDaysInterval(it, cPrefix, timeFunc)}"
+    } ?: ""
 }
