@@ -80,7 +80,7 @@ class ReportService: KoinComponent {
             AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
             ${appendTimeRange(daysInterval)}
         """.trimIndent()
-        return runCommonQuery(dataStreamId, dataStreamRoute, timeRangeSection)
+        return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
     }
 
     /**
@@ -102,19 +102,20 @@ class ReportService: KoinComponent {
             AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneWeekAgo)}
             AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneMonthAgo)}
         """.trimIndent()
-        return runCommonQuery(dataStreamId, dataStreamRoute, timeRangeSection)
+        return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
     }
 
     /**
-     * Executes a query to retrieve a list of uploads that meet specified conditions
-     * within a given data stream and time range.
+     * Retrieves a list of pending uploads for a specified data stream and time range.
+     * Pending uploads are defined as those that have a report indicating the upload has started
+     * but no corresponding report indicating completion.
      *
-     * @param dataStreamId The unique identifier of the data stream for which the query is performed.
-     * @param dataStreamRoute The route of the data stream for which the query is performed.
-     * @param timeRangeSection A SQL fragment specifying the time range filter to apply to the query.
-     * @return A list of UploadInfo objects representing the uploads that satisfy the query conditions.
+     * @param dataStreamId The identifier of the data stream being queried.
+     * @param dataStreamRoute The route of the data stream being queried.
+     * @param timeRangeSection A SQL clause string for filtering results based on a specific time range.
+     * @return A list of pending uploads, represented by the UploadInfo data class, matching the given criteria.
      */
-    private fun runCommonQuery(
+    private fun getPendingUploads(
         dataStreamId: String,
         dataStreamRoute: String,
         timeRangeSection: String
