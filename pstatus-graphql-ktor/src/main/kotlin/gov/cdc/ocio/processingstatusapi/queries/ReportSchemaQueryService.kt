@@ -2,6 +2,7 @@ package gov.cdc.ocio.processingstatusapi.queries
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
+import gov.cdc.ocio.processingstatusapi.exceptions.ResponseException
 import gov.cdc.ocio.processingstatusapi.loaders.ReportSchemaLoader
 
 
@@ -21,5 +22,9 @@ class ReportSchemaQueryService : Query {
 
     @GraphQLDescription("Provides the JSON content of report schema with the provided schema name and version.")
     @Suppress("unused")
-    fun schemaContent(schemaName: String, schemaVersion: String) = ReportSchemaLoader().schemaContent(schemaName, schemaVersion)
+    fun schemaContent(schemaName: String, schemaVersion: String): Map<String, Any> {
+        val content = ReportSchemaLoader().schemaContent(schemaName, schemaVersion)
+        return content
+    }
+
 }

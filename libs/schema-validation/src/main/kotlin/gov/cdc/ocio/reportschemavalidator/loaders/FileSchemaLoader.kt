@@ -1,6 +1,7 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import gov.cdc.ocio.reportschemavalidator.exceptions.SchemaNotFoundException
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
@@ -35,7 +36,7 @@ class FileSchemaLoader(
 
         val content = if (file.exists())
             file.inputStream().readAllBytes().decodeToString()
-        else null
+        else throw SchemaNotFoundException(file.path)
 
         return SchemaFile(
             fileName,
@@ -77,6 +78,7 @@ class FileSchemaLoader(
      */
     override fun getSchemaContent(schemaFilename: String): Map<String, Any> {
         val file = File("$schemaLocalSystemFilePath/$schemaFilename")
+
         file.inputStream().use { inputStream ->
             val jsonContent = inputStream.readAllBytes().decodeToString()
             return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)
