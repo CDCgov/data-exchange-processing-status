@@ -22,7 +22,6 @@ import java.time.temporal.ChronoUnit
  * @property cPrefix String
  * @property cElFunc String
  * @property timeFunc Long -> String
- * @property oneHourAgo Long
  */
 class ReportService: KoinComponent {
     private val repository by inject<ProcessingStatusRepository>()
@@ -33,9 +32,6 @@ class ReportService: KoinComponent {
     private val closeBkt = repository.reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
     private val timeFunc = repository.reportsCollection.timeConversionForQuery
-    private val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
-    private val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
-    private val oneMonthAgo = LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
 
     /**
      * Query the reports collection for number of failed reports of a given action.
@@ -79,6 +75,7 @@ class ReportService: KoinComponent {
         dataStreamRoute: String,
         daysInterval: Int?
     ): List<UploadInfo> {
+        val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
         val timeRangeSection = """
             AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
             ${appendTimeRange(daysInterval)}
@@ -99,6 +96,8 @@ class ReportService: KoinComponent {
         dataStreamId: String,
         dataStreamRoute: String
     ): List<UploadInfo> {
+        val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
+        val oneMonthAgo = LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
         val timeRangeSection = """
             AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneWeekAgo)}
             AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneMonthAgo)}
@@ -160,6 +159,7 @@ class ReportService: KoinComponent {
         dataStreamRoute: String,
         daysInterval: Int?
     ): List<UploadInfo> {
+        val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
         val delayedDeliveriesQuery = """
             SELECT ${cPrefix}uploadId,
                 mv.content.filename AS filename,
