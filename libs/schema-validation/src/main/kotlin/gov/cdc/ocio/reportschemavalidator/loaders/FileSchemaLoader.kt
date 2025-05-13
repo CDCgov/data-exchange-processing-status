@@ -33,10 +33,7 @@ class FileSchemaLoader(
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
         val file = File("$schemaLocalSystemFilePath/$fileName")
-
-        val content = if (file.exists())
-            file.inputStream().readAllBytes().decodeToString()
-        else throw SchemaNotFoundException(file.path)
+        val content = file.inputStream().readAllBytes().decodeToString()
 
         return SchemaFile(
             fileName,
