@@ -175,6 +175,48 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
     });
 
+    test('subscribing with multiple emails', async ({ gql, request }) => {
+        const subscriptionEmail1 = `subscribeUploadDigestCounts-multiple-emails-1@test.com`;
+        const subscriptionEmail2 = `subscribeUploadDigestCounts-multiple-emails-2@test.com`;
+        const subscription = createSubscriptionInput({
+            emailAddresses: [subscriptionEmail1, subscriptionEmail2],
+            cronSchedule: "@every 10s"
+        });
+
+        const res = await gql.subscribeUploadDigestCounts({ subscription });
+        expect(res.subscribeUploadDigestCounts).toBeDefined();
+        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
+        
+        const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
+        subscriptions.push(subscriptionId);
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'First subscribed email should be found',
+            timeout: 60000,
+        }).toBeGreaterThan(0);
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'Second subscribed email should be found',
+            timeout: 60000,
+        }).toBeGreaterThan(0);
+        
+        const mailhogResponse1 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
+        const emails1 = await mailhogResponse1.json();
+        expect(emails1.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+
+        const mailhogResponse2 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
+        const emails2 = await mailhogResponse2.json();
+        expect(emails2.items[0].Content.Headers.Subject[0]).toContain("PHDO UPLOAD DIGEST NOTIFICATION");
+    });
+
     test.describe('subscribing errors', () => {
         test('invalid chron schedule', async ({ gql }) => {
             const subscription = createSubscriptionInput({

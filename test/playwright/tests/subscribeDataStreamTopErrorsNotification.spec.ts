@@ -175,6 +175,48 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
     });
 
+    test('subscribing with multiple emails', async ({ gql, request }) => {
+        const subscriptionEmail1 = `subscribeDataStreamTopErrorsNotification-multiple-emails-1@test.com`;
+        const subscriptionEmail2 = `subscribeDataStreamTopErrorsNotification-multiple-emails-2@test.com`;
+        const subscription = createSubscriptionInput({
+            emailAddresses: [subscriptionEmail1, subscriptionEmail2],
+            cronSchedule: "@every 10s"
+        });
+
+        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
+        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
+        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
+        
+        const subscriptionId = res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString();
+        subscriptions.push(subscriptionId);
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'First subscribed email should be found',
+            timeout: 60000,
+        }).toBeGreaterThan(0);
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'Second subscribed email should be found',
+            timeout: 60000,
+        }).toBeGreaterThan(0);
+        
+        const mailhogResponse1 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
+        const emails1 = await mailhogResponse1.json();
+        expect(emails1.items[0].Content.Headers.Subject[0]).toContain(`DATA STREAM TOP ERRORS NOTIFICATION`);
+
+        const mailhogResponse2 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
+        const emails2 = await mailhogResponse2.json();
+        expect(emails2.items[0].Content.Headers.Subject[0]).toContain(`DATA STREAM TOP ERRORS NOTIFICATION`);
+    });
+
     test.describe('subscribing errors', () => {
         test('invalid chron schedule', async ({ gql }) => {
             const subscription = createSubscriptionInput({
