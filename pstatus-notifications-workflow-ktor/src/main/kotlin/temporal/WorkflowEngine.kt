@@ -35,11 +35,11 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.NotificationActivitiesDeadlineCheckImpl
-import gov.cdc.ocio.processingnotifications.workflow.digestcounts.NotificationActivitiesUploadDigestCountsImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationActivitiesImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.toperrors.NotificationActivitiesTopErrorsImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationActivitiesImpl
 import io.temporal.client.WorkflowNotFoundException
 import io.temporal.common.converter.DefaultDataConverter
 import io.temporal.common.converter.JacksonJsonPayloadConverter
@@ -97,9 +97,9 @@ class WorkflowEngine(
      * their associated activities during runtime.
      */
     private val workflowToActivitiesMap = mapOf(
-        DeadlineCheckNotificationWorkflowImpl::class.java to NotificationActivitiesDeadlineCheckImpl(),
-        UploadDigestCountsNotificationWorkflowImpl::class.java to NotificationActivitiesUploadDigestCountsImpl(),
-        DataStreamTopErrorsNotificationWorkflowImpl::class.java to NotificationActivitiesTopErrorsImpl()
+        DeadlineCheckNotificationWorkflowImpl::class.java to DeadlineCheckNotificationActivitiesImpl(),
+        UploadDigestCountsNotificationWorkflowImpl::class.java to UploadDigestCountsNotificationActivitiesImpl(),
+        TopErrorsNotificationWorkflowImpl::class.java to TopErrorsNotificationActivitiesImpl()
     )
 
     init {

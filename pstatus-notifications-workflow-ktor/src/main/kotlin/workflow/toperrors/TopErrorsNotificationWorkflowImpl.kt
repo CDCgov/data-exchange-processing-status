@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
  * through various notification mechanisms (e.g., email, webhook). It processes error types, tallies counts,
  * and formats output for notification.
  */
-class DataStreamTopErrorsNotificationWorkflowImpl : DataStreamTopErrorsNotificationWorkflow {
+class TopErrorsNotificationWorkflowImpl : TopErrorsNotificationWorkflow {
 
     private val logger = KotlinLogging.logger {}
 

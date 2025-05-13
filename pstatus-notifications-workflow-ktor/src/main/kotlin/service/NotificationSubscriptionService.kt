@@ -1,16 +1,16 @@
 package gov.cdc.ocio.processingnotifications.service
 
-import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.NotificationActivitiesDeadlineCheckImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.model.WorkflowTaskQueue
 import gov.cdc.ocio.processingnotifications.temporal.WorkflowEngine
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.digestcounts.NotificationActivitiesUploadDigestCountsImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflow
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflow
-import gov.cdc.ocio.processingnotifications.workflow.toperrors.DataStreamTopErrorsNotificationWorkflowImpl
-import gov.cdc.ocio.processingnotifications.workflow.toperrors.NotificationActivitiesTopErrorsImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationWorkflow
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationActivitiesImpl
 import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
 import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import gov.cdc.ocio.types.model.WorkflowSubscriptionResult
@@ -31,9 +31,9 @@ class NotificationSubscriptionService: KoinComponent {
             "Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.",
             WorkflowTaskQueue.TOP_ERRORS.toString(),
             subscription.cronSchedule,
-            DataStreamTopErrorsNotificationWorkflowImpl::class.java,
-            NotificationActivitiesTopErrorsImpl(),
-            DataStreamTopErrorsNotificationWorkflow::class.java
+            TopErrorsNotificationWorkflowImpl::class.java,
+            TopErrorsNotificationActivitiesImpl(),
+            TopErrorsNotificationWorkflow::class.java
         )
 
         val execution = WorkflowClient.start(
@@ -52,7 +52,7 @@ class NotificationSubscriptionService: KoinComponent {
             WorkflowTaskQueue.UPLOAD_DIGEST.toString(),
             subscription.cronSchedule,
             UploadDigestCountsNotificationWorkflowImpl::class.java,
-            NotificationActivitiesUploadDigestCountsImpl(),
+            UploadDigestCountsNotificationActivitiesImpl(),
             UploadDigestCountsNotificationWorkflow::class.java
         )
 
@@ -72,7 +72,7 @@ class NotificationSubscriptionService: KoinComponent {
             WorkflowTaskQueue.DEADLINE_CHECK.toString(),
             subscription.cronSchedule,
             DeadlineCheckNotificationWorkflowImpl::class.java,
-            NotificationActivitiesDeadlineCheckImpl(),
+            DeadlineCheckNotificationActivitiesImpl(),
             DeadlineCheckNotificationWorkflow::class.java
         )
 

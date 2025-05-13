@@ -8,7 +8,7 @@ import gov.cdc.ocio.processingnotifications.activity.ResultWrapper
 import gov.cdc.ocio.processingnotifications.service.ReportService
 
 
-class NotificationActivitiesTopErrorsImpl : NotificationActivitiesImpl() {
+class TopErrorsNotificationActivitiesImpl : NotificationActivitiesImpl() {
 
     override fun collectData(request: DataRequest): ResultWrapper<DataResponse> {
         val uploadDigestCountsRequest = request as TopErrorsRequest

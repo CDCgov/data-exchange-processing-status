@@ -12,7 +12,7 @@ import mu.KotlinLogging
 import org.koin.core.component.inject
 
 
-class NotificationActivitiesUploadDigestCountsImpl : NotificationActivitiesImpl() {
+class UploadDigestCountsNotificationActivitiesImpl : NotificationActivitiesImpl() {
 
     private val logger = KotlinLogging.logger {}
 

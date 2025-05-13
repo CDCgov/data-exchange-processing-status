@@ -15,7 +15,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 
-class NotificationActivitiesDeadlineCheckImpl : NotificationActivitiesImpl() {
+class DeadlineCheckNotificationActivitiesImpl : NotificationActivitiesImpl() {
 
     private val logger = KotlinLogging.logger {}
 
