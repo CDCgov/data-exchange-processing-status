@@ -15,6 +15,14 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 
+/**
+ * Implementation class for deadline compliance check notification activities.
+ *
+ * This class extends the functionalities of `NotificationActivitiesImpl`, focusing on the validation
+ * and reporting of deadline compliance for data streams associated with specific jurisdictions.
+ * It integrates with a processing status repository to retrieve relevant compliance and upload status data,
+ * ensuring accurate and timely validations.
+ */
 class DeadlineCheckNotificationActivitiesImpl : NotificationActivitiesImpl() {
 
     private val logger = KotlinLogging.logger {}

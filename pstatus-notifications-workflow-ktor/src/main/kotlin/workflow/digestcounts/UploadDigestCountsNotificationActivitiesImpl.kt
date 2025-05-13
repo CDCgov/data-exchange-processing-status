@@ -12,12 +12,34 @@ import mu.KotlinLogging
 import org.koin.core.component.inject
 
 
+/**
+ * Implementation class for handling notification activities related to upload digest counts.
+ *
+ * This class extends `NotificationActivitiesImpl` and provides specific functionality
+ * for collecting and processing data related to upload digest counts. It handles the aggregation
+ * of upload count data and executes queries to retrieve metrics and duration details necessary for notification processes.
+ *
+ * Key responsibilities:
+ * - Executes queries to fetch data related to upload digest counts based on specified parameters.
+ * - Aggregates data that is not inherently grouped, using helper functions.
+ * - Handles notification-related activities by leveraging capabilities from the base class.
+ */
 class UploadDigestCountsNotificationActivitiesImpl : NotificationActivitiesImpl() {
 
     private val logger = KotlinLogging.logger {}
 
     private val repository by inject<ProcessingStatusRepository>()
 
+    /**
+     * Collects data required for processing upload digest counts and generates a consolidated response.
+     *
+     * This method processes the given request by executing various queries to retrieve and aggregate
+     * upload digest counts, metrics, and durations for the specified parameters. The results are then
+     * wrapped in a `ResultWrapper` containing a `UploadDigestCountsResponse` instance.
+     *
+     * @param request The data processing request of type `DataRequest`. Must be an instance of `UploadDigestCountsRequest`.
+     * @return A `ResultWrapper` containing a `DataResponse` on success or failure details on error.
+     */
     override fun collectData(request: DataRequest): ResultWrapper<DataResponse> {
         val uploadDigestCountsRequest = request as UploadDigestCountsRequest
 
