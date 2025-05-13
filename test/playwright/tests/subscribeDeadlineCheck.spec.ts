@@ -53,7 +53,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`);
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`PHDO DEADLINE MISSED NOTIFICATION`);
     });
 
     test('subscribing via email with classic cron', async ({ gql, request }) => {        
@@ -82,7 +82,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`);
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`PHDO DEADLINE MISSED NOTIFICATION`);
     });
 
     test('subscribing via webhook with duration cron', async ({ gql, request }) => {
@@ -172,13 +172,55 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`);
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`PHDO DEADLINE MISSED NOTIFICATION`);
+    });
+
+    test('subscribing with multiple emails', async ({ gql, request }) => {
+        const subscriptionEmail1 = `subscribeDeadlineCheck-multiple-emails-1@test.com`;
+        const subscriptionEmail2 = `subscribeDeadlineCheck-multiple-emails-2@test.com`;
+        const subscription = createDeadlineSubscriptionInput({
+            emailAddresses: [subscriptionEmail1, subscriptionEmail2],
+            cronSchedule: "@every 10s"
+        });
+
+        const res = await gql.subscribeDeadlineCheck({ subscription });
+        expect(res.subscribeDeadlineCheck).toBeDefined();
+        expect(res.subscribeDeadlineCheck.subscriptionId).toBeDefined();
+        
+        const subscriptionId = res.subscribeDeadlineCheck.subscriptionId!.toString();
+        subscriptions.push(subscriptionId);
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'First subscribed email should be found',
+            timeout: 60000,
+        }).toBeGreaterThan(0);
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'Second subscribed email should be found',
+            timeout: 60000,
+        }).toBeGreaterThan(0);
+        
+        const mailhogResponse1 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
+        const emails1 = await mailhogResponse1.json();
+        expect(emails1.items[0].Content.Headers.Subject[0]).toContain(`PHDO DEADLINE MISSED NOTIFICATION`);
+
+        const mailhogResponse2 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
+        const emails2 = await mailhogResponse2.json();
+        expect(emails2.items[0].Content.Headers.Subject[0]).toContain(`PHDO DEADLINE MISSED NOTIFICATION`);
     });
 
     test.describe('subscribing errors', () => {
         test('invalid chron schedule', async ({ gql }) => {
             const subscription = createDeadlineSubscriptionInput({
-                emailAddresses: [`subscribeDataStreamTopErrorsNotification-error-cron@test.com`],
+                emailAddresses: [`subscribeDeadlineCheck-error-invalid-cron@test.com`],
                 cronSchedule: "INVALID"
             });
 
@@ -188,7 +230,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
 
         test('invalid notification type', async ({ gql }) => {
             const subscription = createDeadlineSubscriptionInput({
-                emailAddresses: [`subscribeDataStreamTopErrorsNotification-error-notification-type@test.com`],
+                emailAddresses: [`subscribeDeadlineCheck-error-invalid-notification-type@test.com`],
                 notificationType: "INVALID" as unknown as NotificationType
             });
 
@@ -198,7 +240,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
 
         test.skip('invalid email format', async ({ gql }) => {
             const subscription = createDeadlineSubscriptionInput({
-                emailAddresses: [`subscribeDataStreamTopErrorsNotification-error-invalid-email`],
+                emailAddresses: [`subscribeDeadlineCheck-error-invalid-email@test.com`],
                 notificationType: NotificationType.Email
             });
 
@@ -214,6 +256,16 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
 
             const res = await gql.subscribeDeadlineCheck({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-email-format");
+        });
+
+        test('invalid deadline value', async ({ gql }) => {
+            const subscription = createDeadlineSubscriptionInput({
+                emailAddresses: [`subscribeDeadlineCheck-error-invalid-deadline-type@test.com`],
+                deadlineTime: "INVALID"
+            });
+
+            const res = await gql.subscribeDeadlineCheck({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-notification-type");
         });
     });
 });
