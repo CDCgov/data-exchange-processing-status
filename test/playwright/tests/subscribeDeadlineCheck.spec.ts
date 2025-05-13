@@ -53,7 +53,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`);
     });
 
     test('subscribing via email with classic cron', async ({ gql, request }) => {        
@@ -82,7 +82,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`);
     });
 
     test('subscribing via webhook with duration cron', async ({ gql, request }) => {
@@ -172,7 +172,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`UPLOAD DEADLINE CHECK EXPIRED for test on ${new Date().toISOString().split('T')[0]}`);
     });
 
     test.describe('subscribing errors', () => {
