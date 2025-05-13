@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { NotificationType, WorkflowSubscriptionForDataStreamsInput} from '@gql';
+import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, WorkflowSubscriptionForDataStreamsInput} from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -263,6 +263,39 @@ export function createSubscriptionInput({
         sinceDays,
     };
 }
+
+export function createDeadlineSubscriptionInput({
+    emailAddresses = [],
+    cronSchedule = "0 0 1 12 *",
+    dataStreamId = "",
+    dataStreamRoute = "",
+    deadlineTime = "06:00:00",
+    expectedJurisdictions = [],
+    notificationType = NotificationType.Email,
+    webhookUrl = "",
+}: {
+    emailAddresses?: string[];
+    cronSchedule?: string;
+    dataStreamId?: string;
+    dataStreamRoute?: string;
+    deadlineTime?: string;
+    expectedJurisdictions?: string[];
+    notificationType?: NotificationType;
+    webhookUrl?: string;
+}): WorkflowSubscriptionDeadlineCheckInput {
+    return {
+        emailAddresses,
+        webhookUrl,
+        cronSchedule,
+        dataStreamId,
+        dataStreamRoute,
+        expectedJurisdictions,
+        deadlineTime,
+        notificationType,
+    };
+}
+
+
 
 const dataGenerator = {
     addSeconds,
