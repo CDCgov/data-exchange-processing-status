@@ -1,11 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.processingstatusapi.extensions.getRootCause
+import gov.cdc.ocio.types.extensions.getRootCause
 import graphql.GraphqlErrorBuilder
 import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.DataFetcherExceptionHandlerParameters
 import graphql.execution.DataFetcherExceptionHandlerResult
-import io.ktor.util.*
 import mu.KotlinLogging
 import java.util.concurrent.CompletableFuture
 

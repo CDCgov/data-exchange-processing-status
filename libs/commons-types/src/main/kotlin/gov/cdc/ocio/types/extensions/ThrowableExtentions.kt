@@ -1,4 +1,4 @@
-package gov.cdc.ocio.processingstatusapi.extensions
+package gov.cdc.ocio.types.extensions
 
 /**
  * Retrieves the root cause of this throwable by traversing the chain of causes.

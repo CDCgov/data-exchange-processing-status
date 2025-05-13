@@ -1,7 +1,6 @@
 package gov.cdc.ocio.reportschemavalidator.loaders
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import gov.cdc.ocio.reportschemavalidator.exceptions.SchemaNotFoundException
 import gov.cdc.ocio.reportschemavalidator.health.schemaLoadersystem.HealthCheckFileSystem
 import gov.cdc.ocio.reportschemavalidator.models.ReportSchemaMetadata
 import gov.cdc.ocio.reportschemavalidator.models.SchemaFile
