@@ -117,44 +117,45 @@ class ReportSchemaMutationService: KoinComponent {
     }
 
     /**
-     * Validates whether a given schema name is valid. A schema name
-     * is considered valid if it does not contain certain invalid characters
-     * (control characters, dots, forward slashes, or backslashes) or folder
-     * traversal patterns.
+     * Validates whether the provided schema name conforms to the expected naming constraints.
+     * A schema name is considered valid if it does not contain folder traversal patterns,
+     * control characters, dots, slashes, backslashes, or other invalid characters.
      *
-     * @param name The schema name to validate.
-     * @return True if the schema name is valid, false otherwise.
+     * @param name The schema name to validate as a [String].
+     * @return A [Boolean] indicating whether the schema name is valid. Returns `true` if the name
+     *         is valid, and `false` otherwise.
      */
     private fun isValidSchemaName(name: String): Boolean {
         // Reject empty strings and names with control chars, dots, slashes, or backslashes
-        val invalidChars = Regex("""[./\\\p{Cntrl}]""")
         if (hasFolderTraversal(name)) return false
+        val invalidChars = Regex("""[^\p{L}\p{N}\p{S}\p{P}&&[^.]]""")
         return !invalidChars.containsMatchIn(name)
     }
 
     /**
-     * Validates the given schema version string to ensure it does not contain
-     * invalid characters or folder traversal patterns.
+     * Validates whether a given schema version follows the expected versioning pattern.
+     * A schema version is considered valid if it adheres to a standard major.minor.patch format (e.g., "1.0.0"),
+     * and does not contain folder traversal patterns such as "..", forward slashes, or backslashes.
      *
-     * @param version The schema version string to validate.
-     * @return True if the schema version is valid, false otherwise.
+     * @param version The schema version to validate as a [String].
+     * @return A [Boolean] indicating whether the schema version is valid. Returns `true` if the version
+     *         is valid, and `false` otherwise.
      */
     private fun isValidSchemaVersion(version: String): Boolean {
-        // Disallow slashes, backslashes, control characters
-        val invalidChars = Regex("""[/\\\p{Cntrl}]""")
         if (hasFolderTraversal(version)) return false
-        return !invalidChars.containsMatchIn(version)
+        val versionRegex = Regex("""^\d+\.\d+\.\d+$""")
+        return versionRegex.containsMatchIn(version)
     }
 
     /**
-     * Checks if the provided string contains folder traversal patterns.
+     * Checks if the given string contains folder traversal patterns such as "..", ends with a dot,
+     * or includes directory separators like "/" or "\".
      *
-     * @param str The string to check for folder traversal.
-     *            This can include patterns such as "..", ".hidden", or paths indicating parent directory traversal.
-     * @return True if the string contains folder traversal sequences, false otherwise.
+     * @param str The string to check for folder traversal patterns.
+     * @return True if the string contains folder traversal patterns, false otherwise.
      */
     private fun hasFolderTraversal(str: String): Boolean {
         // Check for folder traversal attempts like ".." or ".hidden" at the beginning
-        return str == "." || str == ".." || str.startsWith("..") || str.contains("/../") || str.contains("\\..\\")
+        return str.contains("..") || str.endsWith(".") || str.contains("/") || str.contains("\\")
     }
 }
