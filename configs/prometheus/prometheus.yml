@@ -10,6 +10,6 @@ alerting:
       timeout: 10s
       api_version: v2
 scrape_configs:
-  - job_name: "tempo"
+  - job_name: "otel-col"
     static_configs:
-      - targets: ["tempo:3200"]
+      - targets: ["otelcol:8889"]

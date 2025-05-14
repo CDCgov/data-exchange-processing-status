@@ -10,8 +10,6 @@ services:
       - "14268:14268" # jaeger ingest
       - "3200:3200" # tempo
       - "9095:9095" # tempo grpc
-      - "4317:4317" # otlp grpc
-      - "4318:4318" # otlp http
       - "9411:9411" # zipkin
   prometheus:
     image: prom/prometheus
@@ -35,6 +33,19 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=grafana
     volumes:
       - ./configs/grafana/provisioning:/etc/grafana/provisioning
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otelcol
+    volumes:
+      - ./configs/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
   notifications-workflow:
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
