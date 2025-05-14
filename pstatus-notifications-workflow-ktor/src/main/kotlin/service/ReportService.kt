@@ -79,9 +79,10 @@ class ReportService: KoinComponent {
     ): List<UploadInfo> {
         val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
         val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
+        // Time range for delayed uploads are those that are older than an hour ago but not older than a week ago
         val timeRangeSection = """
-            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)} // older than an hour ago
-            AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneWeekAgo)} // but not older than a week ago
+            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+            AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneWeekAgo)}
             ${appendTimeRange(daysInterval)}
         """.trimIndent()
         return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)
