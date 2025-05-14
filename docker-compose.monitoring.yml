@@ -48,20 +48,16 @@ services:
       - 55679:55679 # zpages extension
   notifications-workflow:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
-      OTEL_METRICS_EXPORTER: none
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
   notifications-rules-engine:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
-      OTEL_METRICS_EXPORTER: none
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
   report-sink:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
-      OTEL_METRICS_EXPORTER: none
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
   graphql:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo
-      OTEL_METRICS_EXPORTER: none
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
 
 volumes:
   tempo-data:
