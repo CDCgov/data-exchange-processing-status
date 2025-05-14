@@ -64,11 +64,13 @@ class ReportService: KoinComponent {
     }
 
     /**
-     * Query the reports collection for in progress uploads that started at least an hour ago.
+     * Retrieves a list of delayed uploads for a specified data stream and time range.
+     * Delayed uploads are defined as uploads that were not completed within a specific time frame.
      *
-     * @param dataStreamId String
-     * @param dataStreamRoute String
-     * @param daysInterval Int?
+     * @param dataStreamId The identifier of the data stream being queried.
+     * @param dataStreamRoute The route of the data stream being queried.
+     * @param daysInterval The number of days to define an additional time range filter. If null, no extra filter is applied.
+     * @return A list of delayed uploads, represented by the UploadInfo data class, matching the given criteria.
      */
     fun getDelayedUploads(
         dataStreamId: String,
@@ -76,8 +78,10 @@ class ReportService: KoinComponent {
         daysInterval: Int?
     ): List<UploadInfo> {
         val oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS).epochSecond
+        val oneWeekAgo = LocalDate.now().minusWeeks(1).atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
         val timeRangeSection = """
-            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)}
+            AND ${cPrefix}dexIngestDateTime < ${timeFunc(oneHourAgo)} // older than an hour ago
+            AND ${cPrefix}dexIngestDateTime > ${timeFunc(oneWeekAgo)} // but not older than a week ago
             ${appendTimeRange(daysInterval)}
         """.trimIndent()
         return getPendingUploads(dataStreamId, dataStreamRoute, timeRangeSection)

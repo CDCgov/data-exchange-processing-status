@@ -110,7 +110,7 @@ class TopErrorsEmailBuilder(
                     p {
                         +"[1] A "
                         b { +"delayed upload" }
-                        +" is an upload that was initiated but has not completed in more than one hour."
+                        +" is an upload that was initiated but has not completed in more than one hour. Delayed uploads that are more than a week old will not be shown."
                     }
                     p {
                         +"[2] A "
