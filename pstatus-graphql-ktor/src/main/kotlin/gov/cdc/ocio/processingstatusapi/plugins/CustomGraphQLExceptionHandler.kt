@@ -1,12 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
+import gov.cdc.ocio.types.extensions.getRootCause
 import graphql.GraphqlErrorBuilder
 import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.DataFetcherExceptionHandlerParameters
 import graphql.execution.DataFetcherExceptionHandlerResult
 import mu.KotlinLogging
 import java.util.concurrent.CompletableFuture
-
 
 /**
  * Custom GraphQL exception handler.  Note that install(StatusPages) pattern normally used for this in ktor does not
@@ -22,7 +22,7 @@ class CustomGraphQLExceptionHandler : DataFetcherExceptionHandler {
         params: DataFetcherExceptionHandlerParameters
     ): CompletableFuture<DataFetcherExceptionHandlerResult> {
 
-        val exception = params.exception
+        val exception = params.exception.getRootCause()
         logger.error("GraphQL Error: ${exception.message}", exception)
 
         return CompletableFuture.supplyAsync {
