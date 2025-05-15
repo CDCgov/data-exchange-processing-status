@@ -106,7 +106,7 @@ class NotificationsRulesEngineMutationService(
         mvelCondition: String,
         emailAddresses: List<String>
     ): SubscriptionResult {
-        val url = rulesEngineServiceConnection.buildUrl("/subscribe/email")
+        val url = rulesEngineServiceConnection.buildUrl("subscribe/email")
 
         return runBlocking {
             val response = runCatching {
@@ -151,7 +151,7 @@ class NotificationsRulesEngineMutationService(
         mvelCondition: String,
         webhookUrl: String
     ): SubscriptionResult {
-        val url = rulesEngineServiceConnection.buildUrl("/subscribe/webhook")
+        val url = rulesEngineServiceConnection.buildUrl("subscribe/webhook")
 
         return runBlocking {
             val response = runCatching {

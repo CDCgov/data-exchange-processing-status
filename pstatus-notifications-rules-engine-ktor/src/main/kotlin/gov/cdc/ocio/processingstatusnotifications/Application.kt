@@ -11,12 +11,17 @@ import gov.cdc.ocio.processingstatusnotifications.subscription.DatabaseSubscript
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+import io.opentelemetry.semconv.ServiceAttributes
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
 import org.koin.dsl.module
@@ -79,5 +84,16 @@ fun Application.module() {
             val httpStatusCode = exceptionToHttpStatusCode[cause.javaClass] ?: HttpStatusCode.InternalServerError
             call.respond(httpStatusCode, mapOf("error" to errorMessage))
         }
+    }
+
+    install(KtorServerTelemetry) {
+        val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
+            old.toBuilder()
+                .putAll(old.attributes)
+                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-rules-engine")
+                .build()
+        }
+        val otel: OpenTelemetry = builder.build().openTelemetrySdk
+        setOpenTelemetry(otel)
     }
 }
