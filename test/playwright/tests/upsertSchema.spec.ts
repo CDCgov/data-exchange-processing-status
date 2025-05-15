@@ -124,124 +124,131 @@ test.describe("upsertSchema mutation", async () => {
 
     test.describe("validation failures", async () => {
 
-        const validationTests = [
+        const successValidationTests = [
             // Schema Name Tests
-            {
-                title: "schema name empty string",
-                schemaName: "",
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
-            },
-            {
-                title: "schema name with dot",
-                schemaName: "schema.2-with-dot", 
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
-            },
-            {
-                title: "schema name with spaces",
-                schemaName: "test schema name with spaces",
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
-            },
             {
                 title: "schema name with unicode characters",
                 schemaName: "schema-émoji-测试-схема",
-                schemaVersion: "1.0.0",
-                expectedResult: "Success"
+                schemaVersion: "1.0.0"
             },
             {
                 title: "schema name with special characters",
                 schemaName: "schema@test#special",
-                schemaVersion: "1.0.0",
-                expectedResult: "Success"
+                schemaVersion: "1.0.0"
             },
             {
                 title: "schema name with emoji characters",
                 schemaName: "schema-😊-test",
-                schemaVersion: "1.0.0",
-                expectedResult: "Success"
+                schemaVersion: "1.0.0"
+            }
+        ];
+
+        const failureValidationTests = [
+            // Schema Name Tests
+            {
+                title: "schema name empty string",
+                schemaName: "",
+                schemaVersion: "1.0.0"
+            },
+            {
+                title: "schema name with dot",
+                schemaName: "schema.2-with-dot",
+                schemaVersion: "1.0.0"
+            },
+            {
+                title: "schema name with spaces",
+                schemaName: "test schema name with spaces",
+                schemaVersion: "1.0.0"
             },
             {
                 title: "schema name with control characters",
                 schemaName: "schema\u0000test",
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
+                schemaVersion: "1.0.0"
             },
             {
                 title: "schema name with forward slash",
                 schemaName: "schema/test/name",
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
+                schemaVersion: "1.0.0"
             },
             {
                 title: "schema name with backslash",
                 schemaName: "schema\\test\\name",
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
+                schemaVersion: "1.0.0"
             },
             {
                 title: "schema name with path traversal attempt",
                 schemaName: "../schema",
-                schemaVersion: "1.0.0",
-                expectedResult: "Failure"
+                schemaVersion: "1.0.0"
             },
-            
+
             // Schema Version Tests
             {
-                title: "schema version empty string", 
+                title: "schema version empty string",
                 schemaName: "schema-version-empty-string",
-                schemaVersion: "",
-                expectedResult: "Failure"
+                schemaVersion: ""
             },
             {
-                title: "schema version multiple dots",
+                title: "schema version ends with dot",
                 schemaName: "test-schema-multi-version-dot",
-                schemaVersion: "1.0.",
-                expectedResult: "Failure"
+                schemaVersion: "1.0."
             },
             {
                 title: "schema version with spaces",
                 schemaName: "test-schema-version-spaces",
-                schemaVersion: "1 0 0",
-                expectedResult: "Failure"
-            },
-            {
-                title: "schema version with unicode characters",
-                schemaName: "test-schema-unicode-version",
-                schemaVersion: "1.0.测试",
-                expectedResult: "Failure"
+                schemaVersion: "1 0 0"
             },
             {
                 title: "schema version with forward slash",
                 schemaName: "test-schema-version-slash",
-                schemaVersion: "1/0/0",
-                expectedResult: "Failure"
+                schemaVersion: "1/0/0"
             },
             {
                 title: "schema version with backslash",
                 schemaName: "test-schema-version-backslash",
-                schemaVersion: "1\\0\\0",
-                expectedResult: "Failure"
+                schemaVersion: "1\\0\\0"
             },
+            {
+                title: "schema version with invalid punctuation",
+                schemaName: "test-schema-invalid-punctuation",
+                schemaVersion: "1.0.\u200B"
+            },
+            {
+                title: "schema version with emoji characters",
+                schemaName: "test-schema-emoji-version",
+                schemaVersion: "1.0.⛔"
+            },
+            {
+                title: "schema version with text",
+                schemaName: "test-schema-emoji-version",
+                schemaVersion: "a.b.c"
+            },
+            {
+                title: "schema version with too many dots",
+                schemaName: "test-schema-too-many-dots-version",
+                schemaVersion: "1.2.3.4"
+            },
+            {
+                title: "schema version with too few dots",
+                schemaName: "test-schema-too-few-dots-version",
+                schemaVersion: "1.2"
+            }
         ];
 
-
-        validationTests.forEach(({title, schemaName, schemaVersion, expectedResult}) => {
+        successValidationTests.forEach(({title, schemaName, schemaVersion, expectedResult}) => {
             test(`should return ${expectedResult} creating a schema - ${title}`, async ({ gql }) => {
                 const schema = createSchema({
                     schemaName: schemaName,
                     schemaVersion: schemaVersion,
                     title: title
-                }); 
+                });
 
                 const response = await gql.upsertSchema({
                     schemaName: schema.schemaName,
                     schemaVersion: schema.schemaVersion,
                     content: schema.content
-                    
-                })
-                expect(response.upsertSchema.result).toBe(expectedResult)
+                });
+
+                expect(response.upsertSchema.result).toBe('Success')
 
                 const getSchemaResponse = await gql.schemaContent({
                     schemaName: schema.schemaName,
@@ -249,6 +256,31 @@ test.describe("upsertSchema mutation", async () => {
                 })
 
                 expect(getSchemaResponse.schemaContent).toBeDefined()
+            })
+        })
+
+        failureValidationTests.forEach(({title, schemaName, schemaVersion, expectedResult}) => {
+            test(`should return ${expectedResult} creating a schema - ${title}`, async ({ gql }) => {
+                const schema = createSchema({
+                    schemaName: schemaName,
+                    schemaVersion: schemaVersion,
+                    title: title
+                });
+
+                const response = await gql.upsertSchema({
+                    schemaName: schema.schemaName,
+                    schemaVersion: schema.schemaVersion,
+                    content: schema.content
+                }, { failOnEmptyData: false });
+
+                expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-upsert-failed");
+
+                const getSchemaResponse = await gql.schemaContent({
+                    schemaName: schema.schemaName,
+                    schemaVersion: schema.schemaVersion
+                }, { failOnEmptyData: false })
+
+                expect(JSON.stringify(getSchemaResponse.errors)).toMatchSnapshot("schema-get-content-failed");
             })
         })
     })

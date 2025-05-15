@@ -1,0 +1,1 @@
+[{"message":"Schema version is required.","locations":[],"path":["upsertSchema"],"extensions":{"classification":"IllegalArgumentException"}}]

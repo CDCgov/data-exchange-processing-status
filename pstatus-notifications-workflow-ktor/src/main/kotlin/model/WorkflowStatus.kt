@@ -1,7 +1,5 @@
 package gov.cdc.ocio.processingnotifications.model
 
-import java.time.OffsetDateTime
-
 
 /**
  * Model for the workflow status.
@@ -27,18 +25,3 @@ data class WorkflowStatus(
     val workflowImplClassName: String?
 )
 
-/**
- * Raw cron schedule and its human-readable form.
- *
- * @property cron String?
- * @property description String?
- * @property lastRun OffsetDateTime?
- * @property nextExecution String?
- * @constructor
- */
-data class CronSchedule(
-    val cron: String?,
-    val description: String?,
-    val lastRun: OffsetDateTime?,
-    val nextExecution: String?
-)
