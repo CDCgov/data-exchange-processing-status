@@ -275,12 +275,12 @@ test.describe("upsertSchema mutation", async () => {
 
                 expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-upsert-failed");
 
-//                 const getSchemaResponse = await gql.schemaContent({
-//                     schemaName: schema.schemaName,
-//                     schemaVersion: schema.schemaVersion
-//                 })
-//
-//                 expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-get-content-failed");
+                const getSchemaResponse = await gql.schemaContent({
+                    schemaName: schema.schemaName,
+                    schemaVersion: schema.schemaVersion
+                }, { failOnEmptyData: false })
+
+                expect(JSON.stringify(getSchemaResponse.errors)).toMatchSnapshot("schema-get-content-failed");
             })
         })
     })
