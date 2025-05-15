@@ -1,1 +1,1 @@
-[{"message":"reports/test-schema-emoji-version.1.0.⛔.schema.json (No such file or directory)","locations":[],"path":["schemaContent"],"extensions":{"classification":"FileNotFoundException"}}]
+[{"message":"/reports/test-schema-emoji-version.1.0.⛔.schema.json (No such file or directory)","locations":[],"path":["schemaContent"],"extensions":{"classification":"FileNotFoundException"}}]
