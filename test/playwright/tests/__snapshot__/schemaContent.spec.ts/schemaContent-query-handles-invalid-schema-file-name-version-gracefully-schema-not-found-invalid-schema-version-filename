@@ -1,1 +1,1 @@
-[{"message":"./reports/base.999.schema.json (No such file or directory)","locations":[],"path":["schemaContentFromFilename"],"extensions":{"classification":"FileNotFoundException"}}]
+[{"message":"/reports/base.999.schema.json (No such file or directory)","locations":[],"path":["schemaContentFromFilename"],"extensions":{"classification":"FileNotFoundException"}}]
