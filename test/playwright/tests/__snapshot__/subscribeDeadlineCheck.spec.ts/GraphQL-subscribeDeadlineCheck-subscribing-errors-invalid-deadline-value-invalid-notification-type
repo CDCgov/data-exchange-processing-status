@@ -1,0 +1,1 @@
+[{"message":"Variable 'subscription' has an invalid value: Invalid local time value : 'INVALID'. because of : 'Text 'INVALID' could not be parsed at index 0'","locations":[{"line":1,"column":33}]}]
