@@ -252,6 +252,36 @@ When using the mock webhook setup with webhook.site, the following settings are 
 
 Additional details for automated testing can be found in the [playwright tests folder](./test/playwright/README.md).
 
+### Observability
+The following microservices within the PS API system are capable of emitting metrics and traces in OpenTelemetry format
+(OTLP):
+- report-sink
+- graphql
+- notifications-rules-engine
+- notifications-workflow
+
+This telemetry can be enabled and emitted by setting the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable for each microservice.
+This endpoint should be something that is capable of accepting data in OTLP format over HTTP and GRPC.  For local development
+convenience and to mimic the production environment, the `docker-compose.monitoring.yml` file has been created to orchestrate an
+OpenTelemetry Collector service for ingesting the emitted telemetry, as well as a Tempo service for storing traces and a
+Prometheus service for scraping and storing metrics.
+
+Follow these steps for setting up and running the monitoring stack locally:
+1. Run the PS API microservices in a container either using the gradle jib or running
+   `podman compose -f docker-compose.yml -f docker-compose.notifications.yml -f docker-compose.monitoring.yml up -d`
+2. If using the jib, you'll need to start the monitoring containers separately.  This can be done by running
+   `podman compose -f docker-compose.monitoring.yml up -d`.
+3. If using the full compose command and not the jib and making local changes, you need to stop the core services and
+   run them locally with gradle.
+4. If running locally with gradle, specify the following environment variable: `OTEL_EXPORTER_OTLP_ENDPOINT = http://localhost:4317`
+5. Perform some PS API actions such as querying the graphql endpoint for reports, or subscribing to a workflow notification
+6. Open grafana at http://localhost:3000 and login with the default username (admin) and password (grafana). Then, navigate to the explore page
+7. Select prometheus or tempo as data sources and observe traces and metrics flowing through.  Metrics from the 
+microservices should contain the respected service name, such as `pstatus-notifications-workflow`.  You should see traces
+like this:
+![PS API Grafana](./resources/ps-api-grafana.png)
+8. You can also see the raw prometheus metrics that the opentelemetry collector exposes at http://localhost:8889/metrics
+
 ### Next Steps
 Please continue to explore in GraphQL for all the types of queries and mutations that can be done.  GraphQL provides a
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.
