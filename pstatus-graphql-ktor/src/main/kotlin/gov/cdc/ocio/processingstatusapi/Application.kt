@@ -14,8 +14,13 @@ import graphql.scalars.ExtendedScalars
 import graphql.schema.idl.RuntimeWiring
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v3_0.KtorServerTelemetry
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+import io.opentelemetry.semconv.ServiceAttributes
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
 
@@ -69,4 +74,15 @@ fun Application.module() {
 
     // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
+
+    install(KtorServerTelemetry) {
+        val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
+            old.toBuilder()
+                .putAll(old.attributes)
+                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-graphql")
+                .build()
+        }
+        val otel: OpenTelemetry = builder.build().openTelemetrySdk
+        setOpenTelemetry(otel)
+    }
 }

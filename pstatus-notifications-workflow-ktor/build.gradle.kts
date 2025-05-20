@@ -65,6 +65,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion")
     implementation("commons-io:commons-io:2.15.1")
     implementation("org.knowm.xchart:xchart:3.8.8")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-2.0:2.15.0-alpha")
+    implementation("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.49.0")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.49.0")
+    implementation("io.opentelemetry.semconv:opentelemetry-semconv:1.30.1-alpha")
 
     testImplementation("io.insert-koin:koin-test:3.5.6")
     testImplementation("io.insert-koin:koin-test-junit5:4.0.4")

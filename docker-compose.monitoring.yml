@@ -1,0 +1,64 @@
+services:
+  tempo:
+    image: grafana/tempo
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./configs/tempo.yaml:/etc/tempo.yaml
+      - tempo-data:/var/tempo
+    ports:
+      - "14268:14268" # jaeger ingest
+      - "3200:3200" # tempo
+      - "9095:9095" # tempo grpc
+      - "9411:9411" # zipkin
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./configs/prometheus:/etc/prometheus
+      - prom-data:/prometheus
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otelcol
+    volumes:
+      - ./configs/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
+  notifications-workflow:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+  notifications-rules-engine:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+  report-sink:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+  graphql:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+
+volumes:
+  tempo-data:
+  prom-data:
