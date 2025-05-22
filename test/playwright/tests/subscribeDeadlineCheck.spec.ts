@@ -267,5 +267,27 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
             const res = await gql.subscribeDeadlineCheck({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-notification-type");
         });
+
+        test.skip('invalid webhook subscription with no url', async ({ gql }) => {
+            const subscription = createDeadlineSubscriptionInput({
+                notificationType: NotificationType.Webhook,
+                webhookUrl: null,
+                emailAddresses: ["subscribeDeadlineCheck-error-invalid-webhook-subscription-with-no-url@test.com"]
+            });
+            
+            const res = await gql.subscribeDeadlineCheck({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-webhook-subscription-with-no-url");
+        });
+
+        test.skip('invalid email subscription with no emails', async ({ gql }) => {
+            const subscription = createDeadlineSubscriptionInput({
+                notificationType: NotificationType.Email,
+                emailAddresses: [],
+                webhookUrl: WEBHOOK_SERVICE
+            });
+            
+            const res = await gql.subscribeDeadlineCheck({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-email-subscription-with-no-emails");
+        }); 
     });
 });

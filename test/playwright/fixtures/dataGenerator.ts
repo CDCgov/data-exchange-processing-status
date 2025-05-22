@@ -242,16 +242,8 @@ export function createSubscriptionInput({
     notificationType = NotificationType.Email,
     webhookUrl = "",
     sinceDays = 1
-}: {
-    emailAddresses?: string[];
-    cronSchedule?: string;
-    dataStreamIds?: string[];
-    dataStreamRoutes?: string[];
-    jurisdictions?: string[];
-    notificationType?: NotificationType;
-    webhookUrl?: string;
-    sinceDays?: number;
-}): Partial<WorkflowSubscriptionForDataStreamsInput> {
+}: Partial<WorkflowSubscriptionForDataStreamsInput>
+): WorkflowSubscriptionForDataStreamsInput {
     return {
         cronSchedule,
         dataStreamIds,
@@ -273,16 +265,8 @@ export function createDeadlineSubscriptionInput({
     expectedJurisdictions = [],
     notificationType = NotificationType.Email,
     webhookUrl = "",
-}: {
-    emailAddresses?: string[];
-    cronSchedule?: string;
-    dataStreamId?: string;
-    dataStreamRoute?: string;
-    deadlineTime?: string;
-    expectedJurisdictions?: string[];
-    notificationType?: NotificationType;
-    webhookUrl?: string;
-}): Partial<WorkflowSubscriptionDeadlineCheckInput> {  
+}: Partial<WorkflowSubscriptionDeadlineCheckInput>
+): WorkflowSubscriptionDeadlineCheckInput {  
     return {
         emailAddresses,
         webhookUrl,
