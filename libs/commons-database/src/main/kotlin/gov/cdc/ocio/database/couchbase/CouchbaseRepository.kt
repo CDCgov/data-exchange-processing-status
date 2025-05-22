@@ -56,9 +56,9 @@ class CouchbaseRepository(
     private val logger = KotlinLogging.logger {}
 
     // Connect without customizing the cluster environment
-    private var cluster: Cluster //= Cluster.connect(connectionString, username, password)
+    private var cluster: Cluster
 
-    private val processingStatusBucket: Bucket// = cluster.bucket(bucketName)
+    private val processingStatusBucket: Bucket
 
     private val scope: Scope
 
