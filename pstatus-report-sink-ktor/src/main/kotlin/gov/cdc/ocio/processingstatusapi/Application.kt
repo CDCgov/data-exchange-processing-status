@@ -16,6 +16,7 @@ import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
@@ -75,21 +76,22 @@ fun Application.module() {
 
     createMessageSystemPlugin(messageSystemType, messageProcessor)
 
+    val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
+        old.toBuilder()
+            .putAll(old.attributes)
+            .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-report-sink")
+            .build()
+    }
+    val otel: OpenTelemetry = builder.build().openTelemetrySdk
+    GlobalOpenTelemetry.set(otel)
+    install(KtorServerTelemetry) {
+        setOpenTelemetry(otel)
+    }
+
     install(Koin) {
         loadKoinModules(environment)
     }
     install(ContentNegotiation) {
         jackson()
-    }
-
-    install(KtorServerTelemetry) {
-        val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
-            old.toBuilder()
-                .putAll(old.attributes)
-                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-report-sink")
-                .build()
-        }
-        val otel: OpenTelemetry = builder.build().openTelemetrySdk
-        setOpenTelemetry(otel)
     }
 }

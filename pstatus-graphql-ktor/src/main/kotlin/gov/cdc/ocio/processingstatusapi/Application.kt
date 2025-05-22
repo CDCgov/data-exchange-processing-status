@@ -17,6 +17,7 @@ import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v3_0.KtorServerTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
@@ -58,6 +59,18 @@ fun Application.module() {
     // Set the environment variable dynamically for Logback
     System.setProperty("ENVIRONMENT", environment.config.property("ktor.logback.environment").getString())
 
+    val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
+        old.toBuilder()
+            .putAll(old.attributes)
+            .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-graphql")
+            .build()
+    }
+    val otel: OpenTelemetry = builder.build().openTelemetrySdk
+    GlobalOpenTelemetry.set(otel)
+    install(KtorServerTelemetry) {
+        setOpenTelemetry(otel)
+    }
+
     install(Koin) {
         loadKoinModules(environment)
     }
@@ -74,15 +87,4 @@ fun Application.module() {
 
     // See https://opensource.expediagroup.com/graphql-kotlin/docs/schema-generator/writing-schemas/scalars
     RuntimeWiring.newRuntimeWiring().scalar(ExtendedScalars.Date)
-
-    install(KtorServerTelemetry) {
-        val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
-            old.toBuilder()
-                .putAll(old.attributes)
-                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-graphql")
-                .build()
-        }
-        val otel: OpenTelemetry = builder.build().openTelemetrySdk
-        setOpenTelemetry(otel)
-    }
 }

@@ -18,6 +18,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
@@ -54,6 +55,18 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
+        old.toBuilder()
+            .putAll(old.attributes)
+            .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-workflow")
+            .build()
+    }
+    val otel: OpenTelemetry = builder.build().openTelemetrySdk
+    GlobalOpenTelemetry.set(otel)
+    install(KtorServerTelemetry) {
+        setOpenTelemetry(otel)
+    }
+
     install(Koin) {
         loadKoinModules(environment)
     }
@@ -95,17 +108,6 @@ fun Application.module() {
         getWorkflowsRoute()
         healthCheckRoute()
         versionRoute()
-    }
-
-    install(KtorServerTelemetry) {
-        val builder = AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { old, _ ->
-            old.toBuilder()
-                .putAll(old.attributes)
-                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-workflow")
-                .build()
-        }
-        val otel: OpenTelemetry = builder.build().openTelemetrySdk
-        setOpenTelemetry(otel)
     }
 }
 
