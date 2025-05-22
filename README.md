@@ -261,8 +261,10 @@ The following microservices within the PS API system are capable of emitting met
 - notifications-workflow
 
 This telemetry can be enabled and emitted by setting the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable for each microservice.
-This endpoint should be something that is capable of accepting data in OTLP format over HTTP and GRPC.  For local development
-convenience and to mimic the production environment, the `docker-compose.monitoring.yml` file has been created to orchestrate an
+This endpoint should be something that is capable of accepting data in OTLP format over HTTP and GRPC.  Additionally, you
+can optionally set the `OTEL_SERVICE_NAME` enviornment variable to set a unique name for the service attribute that gets appended
+to the otel data.
+For local development convenience and to mimic the production environment, the `docker-compose.monitoring.yml` file has been created to orchestrate an
 OpenTelemetry Collector service for ingesting the emitted telemetry, as well as a Tempo service for storing traces and a
 Prometheus service for scraping and storing metrics.
 
