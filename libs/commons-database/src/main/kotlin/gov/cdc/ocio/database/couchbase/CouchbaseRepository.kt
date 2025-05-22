@@ -6,7 +6,6 @@ import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
 import com.couchbase.client.java.ClusterOptions
 import com.couchbase.client.java.Scope
-import com.couchbase.client.java.manager.collection.CollectionSpec
 import com.couchbase.client.java.manager.collection.CreateCollectionSettings
 import com.couchbase.client.metrics.opentelemetry.OpenTelemetryMeter
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
@@ -15,7 +14,6 @@ import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.model.Notification
 import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.api.OpenTelemetry
 import mu.KotlinLogging
 import java.time.Duration
 
