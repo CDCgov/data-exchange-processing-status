@@ -1,16 +1,21 @@
 package gov.cdc.ocio.database.couchbase
 
 import com.couchbase.client.core.error.CollectionExistsException
+import com.couchbase.client.java.Bucket
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
+import com.couchbase.client.java.ClusterOptions
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.manager.collection.CollectionSpec
 import com.couchbase.client.java.manager.collection.CreateCollectionSettings
+import com.couchbase.client.metrics.opentelemetry.OpenTelemetryMeter
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import gov.cdc.ocio.types.model.Notification
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.OpenTelemetry
 import mu.KotlinLogging
 import java.time.Duration
 
@@ -53,9 +58,9 @@ class CouchbaseRepository(
     private val logger = KotlinLogging.logger {}
 
     // Connect without customizing the cluster environment
-    private var cluster = Cluster.connect(connectionString, username, password)
+    private var cluster: Cluster //= Cluster.connect(connectionString, username, password)
 
-    private val processingStatusBucket = cluster.bucket(bucketName)
+    private val processingStatusBucket: Bucket// = cluster.bucket(bucketName)
 
     private val scope: Scope
 
@@ -72,6 +77,14 @@ class CouchbaseRepository(
         result.onFailure {
             logger.error("Failed to establish an initial connection to Couchbase!")
         }
+
+        val otel = GlobalOpenTelemetry.get()
+
+        cluster = Cluster.connect(connectionString, ClusterOptions.clusterOptions(username, password).environment { env ->
+            env.meter(OpenTelemetryMeter.wrap(otel.meterProvider))
+        })
+
+        processingStatusBucket = cluster.bucket(bucketName)
 
         scope = processingStatusBucket.scope(scopeName)
 

@@ -10,6 +10,7 @@ import gov.cdc.ocio.database.dynamo.DynamoRepository
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import io.ktor.server.application.*
 import io.ktor.server.config.*
+import io.opentelemetry.api.OpenTelemetry
 import mu.KotlinLogging
 import org.koin.core.module.Module
 import org.koin.dsl.module
