@@ -36,6 +36,9 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib
     container_name: otelcol
+    networks:
+      - core-services
+      - temporal-network
     volumes:
       - ./configs/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
     ports:
@@ -48,17 +51,22 @@ services:
       - 55679:55679 # zpages extension
   notifications-workflow:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
   notifications-rules-engine:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
   report-sink:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
   graphql:
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
-
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
 volumes:
   tempo-data:
   prom-data:
+
+networks:
+  core-services:
+    external: true
+  temporal-network:
+    external: true
