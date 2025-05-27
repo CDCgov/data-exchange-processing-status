@@ -10,6 +10,7 @@ services:
     networks:
       - temporal-network
       - mock-network
+      - core-services
   webhook:
     container_name: webhook-site
     image: "webhooksite/webhook.site"
@@ -32,6 +33,7 @@ services:
     networks:
       - temporal-network
       - mock-network
+      - core-services
   redis:
     container_name: "webhook-redis"
     image: "redis:alpine"
@@ -54,10 +56,12 @@ services:
     networks:
       - temporal-network
       - mock-network
-
+      - core-services
 networks:
   mock-network:
     driver: bridge
     name: mock-network
   temporal-network:
     external: true 
+  core-services:
+    external: true
