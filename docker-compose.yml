@@ -26,6 +26,7 @@ services:
       PSTATUS_RULES_ENGINE_NOTIFICATIONS_BASE_URL: "http://notifications-rules-engine:8080"
       PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: "http://notifications-workflow:8080"
       SCHEMA_ADMIN_SECRET_TOKEN: "${SCHEMA_ADMIN_SECRET_TOKEN:-LET_ME_IN_PLS_THANKS}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
     depends_on:
       - couchbase
     restart: "always"
@@ -56,6 +57,7 @@ services:
       FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
       REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
     depends_on:
       - couchbase
       - rabbitmq

@@ -35,7 +35,7 @@
       }
     },
     {
-      "name": "PSAPIValidation",
+      "name": "ValidatedReportQueue",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
