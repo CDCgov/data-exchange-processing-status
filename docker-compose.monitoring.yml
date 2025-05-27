@@ -49,18 +49,6 @@ services:
       - 4317:4317 # OTLP gRPC receiver
       - 4318:4318 # OTLP http receiver
       - 55679:55679 # zpages extension
-  notifications-workflow:
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
-  notifications-rules-engine:
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
-  report-sink:
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
-  graphql:
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
 volumes:
   tempo-data:
   prom-data:

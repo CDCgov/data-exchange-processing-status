@@ -79,6 +79,7 @@ services:
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       TEMPORAL_SERVICE_TARGET: temporal:7233
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
     depends_on:
       - postgresql
       - temporal
@@ -108,6 +109,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_REPORT_QUEUE_NAME: ValidatedReportQueue
       RABBITMQ_VIRTUAL_HOST: /
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
 
 networks:
   temporal-network:
