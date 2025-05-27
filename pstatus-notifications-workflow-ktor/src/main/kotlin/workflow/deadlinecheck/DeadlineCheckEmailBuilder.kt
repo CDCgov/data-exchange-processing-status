@@ -13,8 +13,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
-data class JurisdictionFacts(val count: Int, val lastUpload: Instant?)
-
 /**
  * Responsible for constructing email notifications regarding upload deadline checks.
  *

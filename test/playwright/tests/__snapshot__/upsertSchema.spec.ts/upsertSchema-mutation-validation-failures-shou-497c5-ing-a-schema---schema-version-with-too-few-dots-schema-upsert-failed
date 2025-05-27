@@ -1,0 +1,1 @@
+[{"message":"Schema version contains invalid characters.","locations":[],"path":["upsertSchema"],"extensions":{"classification":"IllegalArgumentException"}}]
