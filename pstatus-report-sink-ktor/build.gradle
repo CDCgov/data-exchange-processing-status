@@ -102,6 +102,9 @@ test {
 }
 
 jib {
+    container {
+        workingDirectory = '/app'
+    }
     from {
         auth {
             username = System.getenv("DOCKERHUB_USERNAME") ?: ""
