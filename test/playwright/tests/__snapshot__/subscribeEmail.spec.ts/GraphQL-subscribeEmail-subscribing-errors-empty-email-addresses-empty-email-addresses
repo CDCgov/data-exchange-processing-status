@@ -1,0 +1,1 @@
+[{"message":"Required field emailAddresses can not be empty","locations":[],"path":["subscribeEmail"],"extensions":{"classification":"BadRequestException"}}]
