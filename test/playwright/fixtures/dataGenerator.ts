@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, WorkflowSubscriptionForDataStreamsInput} from '@gql';
+import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput} from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -255,6 +255,30 @@ export function createSubscriptionInput({
         sinceDays,
     };
 }
+export function createEmailSubscriptionInput({
+    dataStreamId = "dextesting",
+    dataStreamRoute = "testevent1", 
+    jurisdiction = "jurisdiction",
+    ruleDescription = "New Rule Description",
+    mvelCondition = "",
+    emailAddresses = []
+}: {
+    dataStreamId?: string;
+    dataStreamRoute?: string;
+    jurisdiction?: string;
+    ruleDescription?: string;
+    mvelCondition?: string;
+    emailAddresses?: string[];
+}) {
+    return {
+        dataStreamId,
+        dataStreamRoute,
+        jurisdiction, 
+        ruleDescription,
+        mvelCondition,
+        emailAddresses,
+    };
+}
 
 export function createDeadlineSubscriptionInput({
     emailAddresses = [],
@@ -294,7 +318,8 @@ const dataGenerator = {
     createUploadReportStarted,
     createUploadReportStatus,
     createUploadReportCompleted,
-    createSubscriptionInput
+    createSubscriptionInput,
+    createEmailSubscriptionInput,
 }
 
 export default dataGenerator;
