@@ -22,7 +22,7 @@ services:
       COUCHBASE_USERNAME: "admin"
       COUCHBASE_PASSWORD: "password"
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
-      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "reports"
       PSTATUS_RULES_ENGINE_NOTIFICATIONS_BASE_URL: "http://notifications-rules-engine:8080"
       PSTATUS_WORKFLOW_NOTIFICATIONS_BASE_URL: "http://notifications-workflow:8080"
       SCHEMA_ADMIN_SECRET_TOKEN: "${SCHEMA_ADMIN_SECRET_TOKEN:-LET_ME_IN_PLS_THANKS}"
@@ -31,7 +31,7 @@ services:
       - couchbase
     restart: "always"
     volumes:
-      - ./reports:/reports # Bind mount the report schemas folder
+      - ./reports:/app/reports # Bind mount the report schemas folder
 
   report-sink:
     image: quay.io/us-cdcgov/phdo/pstatus-report-sink:latest
@@ -56,14 +56,14 @@ services:
       RABBITMQ_VIRTUAL_HOST: "/"
       FORWARD_VALIDATED_REPORTS: "${FORWARD_VALIDATED_REPORTS:-false}"
       REPORT_SCHEMA_LOADER_SYSTEM: "file_system"
-      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "/reports"
+      REPORT_SCHEMA_LOCAL_FILE_SYSTEM_PATH: "reports"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
     depends_on:
       - couchbase
       - rabbitmq
     restart: "always"
     volumes:
-      - ./reports:/reports # Bind mount the report schemas folder
+      - ./reports:/app/reports # Bind mount the report schemas folder
 
   couchbase:
     image: couchbase
