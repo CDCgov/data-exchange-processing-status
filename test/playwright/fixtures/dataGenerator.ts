@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput} from '@gql';
+import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput, SubscribeEmailMutationVariables} from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -255,21 +255,16 @@ export function createSubscriptionInput({
         sinceDays,
     };
 }
+
 export function createEmailSubscriptionInput({
     dataStreamId = "dextesting",
     dataStreamRoute = "testevent1", 
     jurisdiction = "jurisdiction",
     ruleDescription = "New Rule Description",
-    mvelCondition = "",
+    mvelCondition = "true",
     emailAddresses = []
-}: {
-    dataStreamId?: string;
-    dataStreamRoute?: string;
-    jurisdiction?: string;
-    ruleDescription?: string;
-    mvelCondition?: string;
-    emailAddresses?: string[];
-}) {
+}: Partial<SubscribeEmailMutationVariables>
+): SubscribeEmailMutationVariables {
     return {
         dataStreamId,
         dataStreamRoute,
@@ -303,6 +298,36 @@ export function createDeadlineSubscriptionInput({
     };
 }
 
+export function createRandomSchema() { 
+ return {
+    schemaName: `${faker.word.noun()}-${faker.word.verb()}`,
+    schemaVersion: "1.0.0", 
+    content: {
+        schema: "https://json-schema.org/draft-07/schema",
+        id: "https://github.com/cdcent/data-exchange-messages/reports/matt",
+        title: `${faker.word.adjective()} ${faker.word.noun()} ${faker.word.verb()}ing ${faker.word.noun()}`,
+        type: "object",
+        required: [
+            "property1",
+            "property2"
+        ],
+        properties: {
+            property1: {
+                type: "string"
+            },
+            property2: {
+                type: "string",
+                enum: [
+                    "SUCCESS",
+                    "FAILURE"
+                ]
+            }
+        },
+        defs: {}
+    }
+ }
+}
+
 const dataGenerator = {
     addSeconds,
     createMinimalReport,
@@ -320,6 +345,7 @@ const dataGenerator = {
     createUploadReportCompleted,
     createSubscriptionInput,
     createEmailSubscriptionInput,
+    createDeadlineSubscriptionInput,
 }
 
 export default dataGenerator;
