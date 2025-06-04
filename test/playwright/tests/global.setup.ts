@@ -87,9 +87,8 @@ setup('global setup - clear subscriptions', async ({ gql }) => {
 setup('global setup - clear workflow subscriptions', async ({ gql }) => {
     const workflowSubscriptionsResponse = await gql.getAllWorkflows();
     workflowSubscriptionsResponse.getAllWorkflows.forEach(async (workflow) => {
-        console.log("Unsubscribing from workflow: ", workflow.workflowId);
         await gql.unsubscribeNotificationWorkflow({subscriptionId: workflow.workflowId});
     });
-    
+
 });
 
