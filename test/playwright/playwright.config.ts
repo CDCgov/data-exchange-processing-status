@@ -43,10 +43,15 @@ export default defineConfig({
   // Configure projects for major browsers.
   projects: [
     {
+      name: 'Global Setup',
+      testMatch: /global\.setup\.ts/,
+    },
+    {
       name: 'GQL',
-          use: { 
-            baseURL: process.env.BASEURL
+      use: { 
+        baseURL: process.env.BASEURL
       },
+      dependencies: ['Global Setup'],
     },
   ],
 

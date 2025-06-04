@@ -10,11 +10,6 @@ let subscriptions:string[] = []
 
 test.describe('GraphQL subscribeEmail', () => {
 
-    test.beforeAll(async ({ request }) => { 
-        const mailhogResponse = await request.delete(`${EMAIL_SERVICE}/api/v1/messages`);
-        expect(mailhogResponse.status()).toBe(200);
-    });
-
     test.afterEach(async ({ gql }) => { 
         subscriptions.forEach(async (subscriptionId) => {
             const response = await gql.unsubscribe({ subscriptionId: subscriptionId });
