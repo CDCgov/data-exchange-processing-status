@@ -45,6 +45,9 @@ export default defineConfig({
     {
       name: 'Global Setup',
       testMatch: /global\.setup\.ts/,
+      use: { 
+        baseURL: process.env.BASEURL
+      },
     },
     {
       name: 'GQL',
