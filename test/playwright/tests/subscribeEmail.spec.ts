@@ -229,3 +229,71 @@ test.describe('GraphQL subscribeEmail', () => {
 
     });
 });
+
+
+// This test is flaky and only sometimes passes and sometimes fails.
+// The invalid subscription MUST be looked at before the other subscriptions to demonstrate
+// the issue but it is not always the first subscription to be inspected by the rules engine.
+// There is no good way to guarantee the order of subscriptions in the rules engine.
+// When this test runs it should be run as: test.describe.serial
+test.describe.skip('GraphQL subscribeEmail Catastrophic Failures', () => {
+    test('gets email even with an invalid mvel condition', async ({ gql, request }) => {
+        const subscriptionEmail = "subscribeEmail-major-mvel-failure@test.com"
+        const report = createUploadReportStarted()
+
+        const subscription = createEmailSubscriptionInput({
+            emailAddresses: [subscriptionEmail],
+            dataStreamId: report.data_stream_id,
+            dataStreamRoute: report.data_stream_route,
+            jurisdiction: report.jurisdiction,
+            ruleDescription: "Data Stream Rule Description",
+            mvelCondition: `true`,
+        });
+
+        // This subscription is a bad rule, but the email for valid subscriptions should still be sent
+        const invalidSubscription = createEmailSubscriptionInput({
+            ...subscription,
+            dataStreamId: "a",
+            dataStreamRoute: "a",
+            jurisdiction: "a",
+            ruleDescription: "1 - Invalid Data Stream Rule Description",
+            mvelCondition: `&&`,
+        });
+
+        const invalidRes = await gql.subscribeEmail(invalidSubscription);   
+        expect(invalidRes.subscribeEmail).toBeDefined();
+        expect(invalidRes.subscribeEmail.subscriptionId).toBeDefined();
+
+        const invalidSubscriptionId = invalidRes.subscribeEmail.subscriptionId!.toString();
+        subscriptions.push(invalidSubscriptionId);
+
+        const res = await gql.subscribeEmail(subscription);
+
+        expect(res.subscribeEmail).toBeDefined();
+        expect(res.subscribeEmail.subscriptionId).toBeDefined();
+        
+        const subscriptionId = res.subscribeEmail.subscriptionId!.toString();
+        subscriptions.push(subscriptionId);
+        
+        const reportRes = await gql.upsertReport({
+            action: "replace",
+            report: report,
+        });
+        expect(reportRes.upsertReport).toBeDefined();
+        expect(reportRes.upsertReport.reportId).toBeDefined();
+
+        await expect.poll(async () => {
+            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
+            const emails = await mailhogResponse.json();
+            return emails.total;
+        }, {
+            message: 'Email should be found',
+            timeout: 10000,
+        }).toBeGreaterThan(0);
+
+        const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscription.emailAddresses[0]);
+        const emails = await mailhogResponse.json();
+        expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`Triggered: ${subscription.ruleDescription}`);
+    })
+});
