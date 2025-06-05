@@ -1,0 +1,1 @@
+[{"message":"INVALID_ARGUMENT: invalid CronSchedule.","locations":[],"path":["subscribeDataStreamTopErrorsNotification"],"extensions":{"classification":"BadRequestException"}}]

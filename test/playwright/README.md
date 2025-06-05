@@ -16,6 +16,8 @@ The primary technologies and tools used in this project are:
   - [gqlg](https://www.npmjs.com/package/gqlg) - Generates queries from fetched GraphQL schemas.
   - [graphql-codegen](https://www.npmjs.com/package/@graphql-codegen/cli) - Generates TypeScript interfaces for queries for use in Playwright.
 - [TypeScript](https://www.typescriptlang.org/) - Typed superset of JavaScript for better maintainability.
+- [MailHog](https://github.com/mailhog/MailHog) - Local smtp mock email server
+- [webhook.site](https://github.com/webhooksite/webhook.site) - Webhook listener for testing
 
 ## Setup and Installation
 
@@ -24,15 +26,44 @@ The primary technologies and tools used in this project are:
    npm install
    ```
 ### Configuring the environment
-Configure where to get the schema from
--  Edit the `package.json` `generate:schema` script to point to the environment where you want to get the schemas from
 
-Configure where to point the tests
-- Edit the `playwright.config.ts` file and update the `baseURL` in the project to define the URL where tests should be run against
+A default `.env` file is provided in `/test/playwright` with the following configuration parameters for use with the default settings when running locally in a docker container (as detailed below)
+
+| Parameter | Description | Default Value |
+|-----------|-------------|---------------|
+| `ENV` | Environment name for test execution | `local` |
+| `BASEURL` | GraphQL endpoint URL | `http://127.0.0.1:8090/graphql` |
+| `EMAILURL` | Email service URL for notifications | `http://127.0.0.1:8025` |
+| `WEBHOOKURL` | Webhook service URL | `http://webhook:80` |
+| `WEBHOOKAPI` | Webhook API endpoint | `http://localhost:8084` |
+| `NODE_TLS_REJECT_UNAUTHORIZED` | SSL/TLS verification setting | `0` |
+| `GRAPHQL_AUTH_TOKEN` | Authentication token for GraphQL requests | `LET_ME_IN_PLS_THANKS` |
+
+To configure the test environment:
+
+**Schema Source Configuration**:
+   - Edit the BASEURL in the `.env` file to point to your test environment
+
+### Setting up local docker configuration
+
+1. Run the base Processing Status API (from project base directory)
+```bash
+docker compose up -d
+```
+
+2. Run the Processing Status Notitfications API (with mock services .env) (from project base directory)
+```bash
+docker compose -f docker-compose.notifications.yml --env-file mock-email.env up -d
+```
+
+3. Run the Mock Services for Tests (from project base directory)
+```bash
+docker compose -f docker-compose.test-mocks.yml up -d
+```
 
 ## Usage
 
-To use this project, follow these steps:
+To setup and run the tests: 
 
 1. **Run the code generation script**:
    This script will generate the required GraphQL schema, operations, and TypeScript types.
@@ -46,15 +77,10 @@ To use this project, follow these steps:
    npm run test
    ```
 
-## Scripts
-
-List key npm scripts and their descriptions:
+## NPM Scripts
 
 | Script                        | Description                                                         |
 |-------------------------------|---------------------------------------------------------------------|
-| `npm run generate:schema`     | Fetch the GraphQL schema from the endpoint and save it locally.     |
-| `npm run generate:operations` | Generate GraphQL queries and mutations from the schema.             |
-| `npm run generate:types`      | Generate TypeScript types for the GraphQL schema.                   |
 | `npm run codegen`             | Run all code generation scripts (schema, operations, and types).    |
 | `npm run test`                | Run all Playwright tests.                                           |
 

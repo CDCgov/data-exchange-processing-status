@@ -8,9 +8,9 @@ import gov.cdc.ocio.processingstatusapi.models.query.UploadStatus
 import gov.cdc.ocio.processingstatusapi.models.query.UploadsStatus
 import gov.cdc.ocio.database.models.dao.ReportDao
 import gov.cdc.ocio.processingstatusapi.models.query.UploadCounts
-import gov.cdc.ocio.processingstatusapi.utils.DateUtils
 import gov.cdc.ocio.processingstatusapi.utils.PageUtils
 import gov.cdc.ocio.processingstatusapi.utils.SortUtils
+import gov.cdc.ocio.types.utils.DateUtils
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -81,11 +81,11 @@ class UploadStatusLoader: KoinComponent {
         }
 
         dateStart?.run {
-            val dateStartEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateStart, "date_start"))
+            val dateStartEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateStart))
             sqlQuery.append(" and ${cPrefix}dexIngestDateTime >= $dateStartEpochMillis")
         }
         dateEnd?.run {
-            val dateEndEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateEnd, "date_end"))
+            val dateEndEpochMillis = timeFunc(DateUtils.getEpochFromDateString(dateEnd))
             sqlQuery.append(" and ${cPrefix}dexIngestDateTime < $dateEndEpochMillis")
         }
 

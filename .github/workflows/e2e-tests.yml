@@ -1,0 +1,26 @@
+name: CI - Playwright Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: latest
+      - name: Build Docker Images and Start Services
+        run: |
+          sh local-run.sh
+      - name: Run Playwright Tests
+        run: |
+          docker compose -f docker-compose.playwright.yml run --rm --quiet-pull playwright
+      - name: Stop Services
+        run: |
+          docker compose -f docker-compose.local.yml down

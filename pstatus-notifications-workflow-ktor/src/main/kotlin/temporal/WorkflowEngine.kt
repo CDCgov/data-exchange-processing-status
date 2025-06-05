@@ -1,7 +1,7 @@
 package gov.cdc.ocio.processingnotifications.temporal
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.google.protobuf.ByteString
-import gov.cdc.ocio.processingnotifications.activity.NotificationActivitiesImpl
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
 import gov.cdc.ocio.processingnotifications.model.CronSchedule
 import gov.cdc.ocio.processingnotifications.model.WorkflowStatus
@@ -31,24 +31,28 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.deadlinecheck.DeadlineCheckNotificationActivitiesImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationActivitiesImpl
+import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationWorkflowImpl
+import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationActivitiesImpl
+import io.temporal.client.WorkflowNotFoundException
+import io.temporal.common.converter.DefaultDataConverter
+import io.temporal.common.converter.JacksonJsonPayloadConverter
 
 
 /**
- * Workflow engine class which creates a grpC client instance of the temporal server
- * using which it registers the workflow and the activity implementation
- * Also,using the workflow options the client creates a new workflow stub
- * Note: CRON expression is used to set the schedule
+ * WorkflowEngine is responsible for setting up, managing, and monitoring workflows using
+ * Temporal framework. It provides functionalities to initialize Temporal clients,
+ * schedule workflows, manage workflow execution, monitor worker status, and retrieve
+ * workflow information.
  *
- * @property temporalConfig TemporalConfig
- * @property logger KLogger
- * @property serviceOptions (WorkflowServiceStubsOptions..WorkflowServiceStubsOptions?)
- * @property clientOptions (WorkflowClientOptions..WorkflowClientOptions?)
- * @property service WorkflowServiceStubs
- * @property client WorkflowClient
- * @property factory WorkerFactory
- * @property scheduler [@EnhancedForWarnings(ScheduledExecutorService)] (ScheduledExecutorService..ScheduledExecutorService?)
- * @property healthCheckSystem HealthCheckTemporalServer
- * @constructor
+ * @constructor Creates a new instance of WorkflowEngine with the specified Temporal configuration.
+ * @param temporalConfig The Temporal configuration required to set up the client and server connection.
  */
 class WorkflowEngine(
     private val temporalConfig: TemporalConfig
@@ -56,12 +60,22 @@ class WorkflowEngine(
 
     private val logger = KotlinLogging.logger {}
 
+    private val jacksonObjectMapper = jacksonObjectMapper()
+        .registerModule(JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+    private val payloadConverter = JacksonJsonPayloadConverter(jacksonObjectMapper)
+
+    private val dataConverter = DefaultDataConverter(payloadConverter)
+
     private val serviceOptions = WorkflowServiceStubsOptions.newBuilder()
         .setTarget(temporalConfig.serviceTarget)
         .build()
 
     private val clientOptions = WorkflowClientOptions.newBuilder()
         .setNamespace(temporalConfig.namespace)
+        .setDataConverter(dataConverter)
         .build()
 
     private lateinit var service: WorkflowServiceStubs
@@ -71,6 +85,22 @@ class WorkflowEngine(
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     private val healthCheckSystem = HealthCheckTemporalServer(temporalConfig)
+
+    /**
+     * A map that associates workflow implementation classes to their corresponding activities implementation instances.
+     *
+     * This map is used to pair specific workflow implementations with their designated activity implementations.
+     * Each key in the map represents a workflow implementation class, while the corresponding value is an instance
+     * of the activities class that performs the required tasks for the workflow.
+     *
+     * The map is utilized within the `WorkflowEngine` class to dynamically configure and manage workflows alongside
+     * their associated activities during runtime.
+     */
+    private val workflowToActivitiesMap = mapOf(
+        DeadlineCheckNotificationWorkflowImpl::class.java to DeadlineCheckNotificationActivitiesImpl(),
+        UploadDigestCountsNotificationWorkflowImpl::class.java to UploadDigestCountsNotificationActivitiesImpl(),
+        TopErrorsNotificationWorkflowImpl::class.java to TopErrorsNotificationActivitiesImpl()
+    )
 
     init {
         initializeTemporalClient()
@@ -146,6 +176,7 @@ class WorkflowEngine(
      *
      * @param workflowId String
      */
+    @Throws(WorkflowNotFoundException::class)
     fun cancelWorkflow(workflowId: String) {
         try {
             // Retrieve the workflow by its ID
@@ -157,7 +188,7 @@ class WorkflowEngine(
         } catch (ex: Exception) {
             val message = "Error while canceling the workflow: ${ex.message}"
             logger.error(message)
-            throw Exception(message)
+            throw ex
         }
     }
 
@@ -359,8 +390,7 @@ class WorkflowEngine(
 
         // Register workflow and activities
         worker.registerWorkflowImplementationTypes(workflowImpl)
-        worker.registerActivitiesImplementations(NotificationActivitiesImpl())
-
+        worker.registerActivitiesImplementations(workflowToActivitiesMap[workflowImpl])
         // Start the worker
         factory.start()
 

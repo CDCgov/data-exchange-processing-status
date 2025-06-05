@@ -70,33 +70,33 @@ test.describe("schemaContent query", async () => {
         const response = await gql.schemaContent({
             schemaName: 'non-existent-schema',
             schemaVersion: '1.0.0'
-        });
+        }, { failOnEmptyData: false });
 
-        expect(response.schemaContent).toBeNull();
+        expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-name");
     });
 
     test('handles invalid schema version gracefully', async ({ gql }) => {
         const response = await gql.schemaContent({
             schemaName: 'base',
             schemaVersion: '999.999.999'
-        });
+        }, { failOnEmptyData: false });
 
-        expect(response.schemaContent).toBeNull();
+        expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-version");
     });
 
     test('handles invalid schema file name gracefully', async ({ gql }) => {
         const response = await gql.schemaContentFromFilename({
             schemaFilename: 'non-existent-schema.1.0.0.schema.json'
-        });
+        }, { failOnEmptyData: false });
 
-        expect(response.schemaContentFromFilename).toBeNull();
+        expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-name-filename");
     });
 
     test('handles invalid schema file name version gracefully', async ({ gql }) => {
         const response = await gql.schemaContentFromFilename({
             schemaFilename: 'base.999.schema.json'
-        });
+        }, { failOnEmptyData: false });
 
-        expect(response.schemaContentFromFilename).toBeNull();
+        expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-version-filename");
     });
 });

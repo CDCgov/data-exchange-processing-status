@@ -1,7 +1,9 @@
 package gov.cdc.ocio.processingnotifications
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import gov.cdc.ocio.database.telemetry.Otel
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
 import gov.cdc.ocio.notificationdispatchers.NotificationDispatcherKoinCreator
 import gov.cdc.ocio.processingnotifications.config.TemporalConfig
@@ -17,10 +19,18 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+import io.opentelemetry.sdk.metrics.InstrumentSelector
+import io.opentelemetry.sdk.metrics.InstrumentType
+import io.opentelemetry.semconv.ServiceAttributes
+import io.temporal.client.WorkflowNotFoundException
 import io.temporal.client.WorkflowServiceException
+import org.koin.ktor.plugin.Koin
 import org.koin.core.KoinApplication
 import org.koin.dsl.module
-import org.koin.ktor.plugin.Koin
 
 
 fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinApplication {
@@ -48,23 +58,43 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    val builder = AutoConfiguredOpenTelemetrySdk.builder()
+        .setResultAsGlobal()
+        .addResourceCustomizer { old, _ ->
+        old.toBuilder()
+            .putAll(old.attributes)
+            .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-workflow")
+            .build()
+    }
+        .addMeterProviderCustomizer { old, _ ->
+            old.registerView(
+                InstrumentSelector.builder().setType(InstrumentType.HISTOGRAM).build(), Otel.getDefaultHistogramView())
+        }
+    val otel: OpenTelemetry = builder.build().openTelemetrySdk
+    install(KtorServerTelemetry) {
+        setOpenTelemetry(otel)
+    }
+
     install(Koin) {
         loadKoinModules(environment)
     }
+
     install(ContentNegotiation) {
         jackson {
             registerModule(JavaTimeModule())
-
             // Serialize OffsetDateTime as ISO-8601
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
     }
+
     install(StatusPages) {
         // Map exceptions to HTTP status codes that will be returned
         val exceptionToHttpStatusCode = mapOf<Class<out Throwable>, HttpStatusCode>(
             IllegalArgumentException::class.java to HttpStatusCode.BadRequest,
             StatusRuntimeException::class.java to HttpStatusCode.InternalServerError,
             WorkflowServiceException::class.java to HttpStatusCode.BadRequest,
+            WorkflowNotFoundException::class.java to HttpStatusCode.NotFound,
             IllegalStateException::class.java to HttpStatusCode.InternalServerError,
         )
 
@@ -80,15 +110,12 @@ fun Application.module() {
     }
     routing {
         subscribeDeadlineCheckRoute()
-        unsubscribeDeadlineCheck()
         subscribeDataStreamTopErrorsNotification()
-        unsubscribesDataStreamTopErrorsNotification()
         subscribeUploadDigestCountsRoute()
-        unsubscribeUploadDigestCountsRoute()
+        unsubscribe()
         getWorkflowsRoute()
         healthCheckRoute()
         versionRoute()
     }
-
 }
 

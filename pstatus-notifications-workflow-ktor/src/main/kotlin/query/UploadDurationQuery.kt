@@ -16,7 +16,7 @@ class UploadDurationQuery private constructor(
     dataStreamRoutes: List<String>,
     jurisdictions: List<String>,
     utcDateToRun: LocalDate
-): UtcTimeToRunReportQuery("upload duration", repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
+): UtcTimeToRunReportQuery(repository, dataStreamIds, dataStreamRoutes, jurisdictions, utcDateToRun) {
 
     class Builder(
         repository: ProcessingStatusRepository

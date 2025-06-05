@@ -40,6 +40,12 @@ if [ ! -e "/home/couchbase_initialized" ] ; then
     http://couchbase:8091/pools/default/buckets/ProcessingStatus/scopes/data/collections \
     -d name=Reports-DeadLetter
 
+  # Add a collection under the scope
+  echo "Adding collection 'NotificationSubscriptions' under scope 'data'..."
+  curl -s -u admin:password -X POST \
+    http://couchbase:8091/pools/default/buckets/ProcessingStatus/scopes/data/collections \
+    -d name=NotificationSubscriptions
+
   # Done
   echo "Couchbase Server initialized."
   echo "Initialized" > /home/couchbase_initialized

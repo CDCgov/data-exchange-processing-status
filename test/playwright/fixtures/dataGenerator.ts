@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput, SubscribeEmailMutationVariables} from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -232,6 +233,101 @@ function addSeconds(date: Date, seconds: number) {
     return newDate
 }
 
+export function createSubscriptionInput({
+    emailAddresses = [],
+    cronSchedule = "0 0 1 12 *",
+    dataStreamIds = [],
+    dataStreamRoutes = [],
+    jurisdictions = [],
+    notificationType = NotificationType.Email,
+    webhookUrl = "",
+    sinceDays = 1
+}: Partial<WorkflowSubscriptionForDataStreamsInput>
+): WorkflowSubscriptionForDataStreamsInput {
+    return {
+        cronSchedule,
+        dataStreamIds,
+        dataStreamRoutes,
+        jurisdictions,
+        emailAddresses,
+        notificationType,
+        webhookUrl,
+        sinceDays,
+    };
+}
+
+export function createEmailSubscriptionInput({
+    dataStreamId = "dextesting",
+    dataStreamRoute = "testevent1", 
+    jurisdiction = "jurisdiction",
+    ruleDescription = "New Rule Description",
+    mvelCondition = "true",
+    emailAddresses = []
+}: Partial<SubscribeEmailMutationVariables>
+): SubscribeEmailMutationVariables {
+    return {
+        dataStreamId,
+        dataStreamRoute,
+        jurisdiction, 
+        ruleDescription,
+        mvelCondition,
+        emailAddresses,
+    };
+}
+
+export function createDeadlineSubscriptionInput({
+    emailAddresses = [],
+    cronSchedule = "0 0 1 12 *",
+    dataStreamId = "",
+    dataStreamRoute = "",
+    deadlineTime = "06:00:00",
+    expectedJurisdictions = [],
+    notificationType = NotificationType.Email,
+    webhookUrl = "",
+}: Partial<WorkflowSubscriptionDeadlineCheckInput>
+): WorkflowSubscriptionDeadlineCheckInput {  
+    return {
+        emailAddresses,
+        webhookUrl,
+        cronSchedule,
+        dataStreamId,
+        dataStreamRoute,
+        expectedJurisdictions,
+        deadlineTime,
+        notificationType,
+    };
+}
+
+export function createRandomSchema() { 
+ return {
+    schemaName: `${faker.word.noun()}-${faker.word.verb()}`,
+    schemaVersion: "1.0.0", 
+    content: {
+        schema: "https://json-schema.org/draft-07/schema",
+        id: "https://github.com/cdcent/data-exchange-messages/reports/matt",
+        title: `${faker.word.adjective()} ${faker.word.noun()} ${faker.word.verb()}ing ${faker.word.noun()}`,
+        type: "object",
+        required: [
+            "property1",
+            "property2"
+        ],
+        properties: {
+            property1: {
+                type: "string"
+            },
+            property2: {
+                type: "string",
+                enum: [
+                    "SUCCESS",
+                    "FAILURE"
+                ]
+            }
+        },
+        defs: {}
+    }
+ }
+}
+
 const dataGenerator = {
     addSeconds,
     createMinimalReport,
@@ -246,7 +342,10 @@ const dataGenerator = {
     createContentUploadCompleted,
     createUploadReportStarted,
     createUploadReportStatus,
-    createUploadReportCompleted
-
+    createUploadReportCompleted,
+    createSubscriptionInput,
+    createEmailSubscriptionInput,
+    createDeadlineSubscriptionInput,
 }
+
 export default dataGenerator;

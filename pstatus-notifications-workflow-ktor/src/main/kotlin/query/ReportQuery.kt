@@ -2,8 +2,6 @@ package gov.cdc.ocio.processingnotifications.query
 
 import gov.cdc.ocio.database.QueryBuilder
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
-import gov.cdc.ocio.types.InstantRange
-import java.time.LocalDate
 
 
 /**
@@ -12,7 +10,6 @@ import java.time.LocalDate
  * @constructor
  */
 abstract class ReportQuery(
-    private val name: String,
     repository: ProcessingStatusRepository,
     private val dataStreamIds: List<String>,
     private val dataStreamRoutes: List<String>,
@@ -74,46 +71,35 @@ abstract class ReportQuery(
     }
 
     /**
-     * Use this to append the where class that filters by the data stream ids, data stream routes, jurisdictions,
-     * and date provided.
+     * Constructs a where clause for a SQL query based on the provided class fields and their values.
+     * The where clause will include conditions for `dataStreamIds`, `dataStreamRoutes`, and `jurisdictions`
+     * if the respective collections are not empty.
      *
-     * @param utcDateToRun LocalDate
-     * @return String
+     * @param prefix A string to prefix the where clause. Defaults to "WHERE".
+     * @return A SQL where clause as a string. Returns an empty string if no conditions are generated.
      */
-    protected fun whereClause(
-        utcDateToRun: LocalDate
-    ): String {
-        val instantRange = InstantRange.fromLocalDate(utcDateToRun)
-        val startTime = timeFunc(instantRange.start.epochSecond)
-        val endTime = timeFunc(instantRange.endInclusive.epochSecond)
-
-        val jurisdictionIdsList = listForQuery(jurisdictions)
+    protected open fun whereClause(prefix: String = "WHERE"): String {
         val dataStreamIdsList = listForQuery(dataStreamIds)
         val dataStreamRoutesList = listForQuery(dataStreamRoutes)
+        val jurisdictionIdsList = listForQuery(jurisdictions)
 
-        val querySB = StringBuilder()
+        val clauses = mutableListOf<String>()
 
-        if (dataStreamIds.isNotEmpty())
-            querySB.append("""
-                AND ${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}
-                """)
+        if (dataStreamIds.isNotEmpty()) {
+            clauses.add("${cPrefix}dataStreamId IN ${openBkt}$dataStreamIdsList${closeBkt}")
+        }
 
-        if (dataStreamRoutesList.isNotEmpty())
-            querySB.append("""
-                AND ${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}
-                """)
+        if (dataStreamRoutesList.isNotEmpty()) {
+            clauses.add("${cPrefix}dataStreamRoute IN ${openBkt}$dataStreamRoutesList${closeBkt}")
+        }
 
-        if (jurisdictionIdsList.isNotEmpty())
-            querySB.append("""
-                AND ${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}
-                """)
+        if (jurisdictionIdsList.isNotEmpty()) {
+            clauses.add("${cPrefix}jurisdiction IN ${openBkt}$jurisdictionIdsList${closeBkt}")
+        }
 
-        querySB.append("""
-                AND ${cPrefix}dexIngestDateTime >= $startTime
-                AND ${cPrefix}dexIngestDateTime < $endTime
-                """)
+        if (clauses.isEmpty()) return ""
 
-        return querySB.toString().trimIndent()
+        return "$prefix ${clauses.joinToString(" AND ")} " // add space at the end in case other clauses follow
     }
 
     /**
@@ -125,10 +111,10 @@ abstract class ReportQuery(
     protected fun<T> runQuery(classType: Class<T>?): List<T> {
         return runCatching {
             val query = buildSql()
-            logger.info("Executing query '$name'")
+            logger.info("Executing query '${javaClass.simpleName}'")
             return@runCatching collection.queryItems(query, classType)
         }.getOrElse {
-            logger.error("Error occurred while running query '$name': ${it.localizedMessage}")
+            logger.error("Error occurred while running query '${javaClass.simpleName}': ${it.localizedMessage}")
             throw it
         }
     }
