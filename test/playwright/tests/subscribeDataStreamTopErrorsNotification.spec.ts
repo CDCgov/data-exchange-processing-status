@@ -14,11 +14,6 @@ let subscriptions:string[] = []
 test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
     test.setTimeout(90000); 
 
-    test.beforeAll(async ({ request }) => { 
-        const mailhogResponse = await request.delete(`${EMAIL_SERVICE}/api/v1/messages`);
-        expect(mailhogResponse.status()).toBe(200);
-    });
-
     test.afterEach(async ({ gql }) => { 
         subscriptions.forEach(async (subscriptionId) => {
             const response = await gql.unsubscribeNotificationWorkflow({ subscriptionId: subscriptionId });
