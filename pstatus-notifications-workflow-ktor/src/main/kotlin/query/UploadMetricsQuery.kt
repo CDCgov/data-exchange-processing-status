@@ -28,9 +28,7 @@ class UploadMetricsQuery private constructor(
     }
 
     override fun buildSql(): String {
-        val querySB = StringBuilder()
-
-        querySB.append("""
+        return """
             SELECT 
                 -- Upload minimum delta
                 MIN(upload_delta) AS minUploadDeltaInMillis,
@@ -108,16 +106,10 @@ class UploadMetricsQuery private constructor(
             
                 FROM $collectionName $cVar
                 WHERE ${cPrefix}stageInfo.action IN ${openBkt}'${StageAction.METADATA_VERIFY}', '${StageAction.UPLOAD_COMPLETED}', '${StageAction.UPLOAD_STATUS}', '${StageAction.FILE_DELIVERY}'${closeBkt}
-            """)
-
-        querySB.append(whereClause(utcDateToRun))
-
-        querySB.append("""
+                    ${whereClause(utcDateToRun, prefix = "AND")}
                 GROUP BY ${cPrefix}uploadId
             ) AS upload_metrics;
-        """)
-
-        return querySB.toString().trimIndent()
+        """.trimIndent()
     }
 
     fun run() = runQuery(UploadMetrics::class.java).first()

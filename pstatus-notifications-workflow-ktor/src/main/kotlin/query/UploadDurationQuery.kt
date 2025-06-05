@@ -27,9 +27,7 @@ class UploadDurationQuery private constructor(
     }
 
     override fun buildSql(): String {
-        val querySB = StringBuilder()
-
-        querySB.append("""
+        return """
             SELECT RAW ARRAY_AGG(duration) 
             FROM (
                 SELECT 
@@ -39,17 +37,11 @@ class UploadDurationQuery private constructor(
                     AS duration
                 FROM $collectionName $cVar
                 WHERE ${cPrefix}stageInfo.action IN ['${StageAction.METADATA_VERIFY}', '${StageAction.FILE_DELIVERY}']
-                """)
-
-        querySB.append(whereClause(utcDateToRun))
-
-        querySB.append("""
+                    ${whereClause(utcDateToRun, prefix = "AND")}
                 GROUP BY ${cPrefix}uploadId
             ) subquery
             WHERE duration IS NOT NULL;
-        """)
-
-        return querySB.toString().trimIndent()
+        """.trimIndent()
     }
 
     /**
