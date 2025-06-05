@@ -49,8 +49,8 @@ test.describe("removeSchema mutation", async () => {
         const checkResponse = await gql.schemaContent({
             schemaName: schema.schemaName,
             schemaVersion: schema.version
-        });
-        expect(checkResponse.schemaContent).toEqual({ "failure": "fromJson(...) must not be null" });
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+        expect(JSON.stringify(checkResponse.errors)).toMatchSnapshot("remove-schema-success");
     });
 
     test("should handle removal of non-existent schema gracefully", async ({ gql }) => {

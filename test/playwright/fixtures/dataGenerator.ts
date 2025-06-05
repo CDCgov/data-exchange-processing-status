@@ -236,9 +236,9 @@ function addSeconds(date: Date, seconds: number) {
 export function createSubscriptionInput({
     emailAddresses = [],
     cronSchedule = "0 0 1 12 *",
-    dataStreamIds = [],
-    dataStreamRoutes = [],
-    jurisdictions = [],
+    dataStreamIds = ["dextesting"],
+    dataStreamRoutes = ["testevent1"],
+    jurisdictions = ["jurisdiction"],
     notificationType = NotificationType.Email,
     webhookUrl = "",
     sinceDays = 1
@@ -278,8 +278,8 @@ export function createEmailSubscriptionInput({
 export function createDeadlineSubscriptionInput({
     emailAddresses = [],
     cronSchedule = "0 0 1 12 *",
-    dataStreamId = "",
-    dataStreamRoute = "",
+    dataStreamId = "dextesting",
+    dataStreamRoute = "testevent1",
     deadlineTime = "06:00:00",
     expectedJurisdictions = [],
     notificationType = NotificationType.Email,
