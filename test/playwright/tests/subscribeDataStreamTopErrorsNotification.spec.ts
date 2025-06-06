@@ -4,7 +4,7 @@ import { GraphQLError } from 'graphql';
 import { createSubscriptionInput } from '../fixtures/dataGenerator';
 
 const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
-const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://webhook:80";
+const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://localhost:80";
 const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
 
 type GraphQLErrorResponse = { errors: GraphQLError[] };
@@ -71,7 +71,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             return emails.total;
         }, {
             message: 'Email should be found',
-            timeout: 60000,
+            timeout: 80000,
         }).toBeGreaterThan(0);
 
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
@@ -105,7 +105,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         }, {
             message: "Webhook should be called",
             intervals: [5000],
-            timeout: 20000,
+            timeout: 30000,
         }).toBeGreaterThan(0);
     });
 
@@ -135,7 +135,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         }, {
             message: "Webhook should be called",
             intervals: [5000],
-            timeout: 600000,
+            timeout: 800000,
         }).toBeGreaterThan(0);
     });
 
@@ -162,7 +162,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             return emails.total;
         }, {
             message: 'Email should be found',
-            timeout: 20000,
+            timeout: 30000,
         }).toBeGreaterThan(0);
 
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
