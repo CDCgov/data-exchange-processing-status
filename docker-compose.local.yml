@@ -211,7 +211,7 @@ services:
     environment:
       - APP_ENV=dev
       - APP_DEBUG=true
-      - APP_URL=http://webhook:8084
+      - APP_URL=http://webhook:80
       - APP_LOG=errorlog
       - DB_CONNECTION=sqlite
       - REDIS_HOST=redis

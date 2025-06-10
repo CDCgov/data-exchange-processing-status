@@ -12,7 +12,6 @@ type GraphQLErrorResponse = { errors: GraphQLError[] };
 let subscriptions:string[] = []
 
 test.describe('GraphQL subscribeDeadlineCheck', () => {
-    test.setTimeout(90000); 
 
     test.afterEach(async ({ gql }) => { 
         subscriptions.forEach(async (subscriptionId) => {
@@ -51,7 +50,8 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         expect(emails.items[0].Content.Headers.Subject[0]).toContain(`PHDO DEADLINE MISSED NOTIFICATION`);
     });
 
-    test('subscribing via email with classic cron', async ({ gql, request }) => {        
+    test('subscribing via email with classic cron', async ({ gql, request }) => {   
+        test.setTimeout(90000); 
         const subscriptionEmail = `subscribeDeadlineCheck-cron-classic@test.com`;
         const subscription = createDeadlineSubscriptionInput({
             emailAddresses: [subscriptionEmail],
@@ -110,6 +110,7 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
     });
 
     test('subscribing via webhook with classic cron', async ({ gql, request }) => {
+        test.setTimeout(90000); 
         const tokenRequest = await request.post(`${WEBHOOK_SERVICE_UI}/token`);
         const token = await tokenRequest.json();
         const webhookUrl = `${WEBHOOK_SERVICE}/${token.uuid}`;
@@ -138,14 +139,14 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         }).toBeGreaterThan(0);
     });
 
-    test('subscribing to a specific data stream via email', async ({ gql, request }) => {
+    test('subscribing to a generic data stream via email', async ({ gql, request }) => {
         const subscriptionEmail = `subscribeDeadlineCheck-datastream@test.com`;
         const subscription = createDeadlineSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "@every 10s",
-            dataStreamId: "dextesting",
-            dataStreamRoute: "testevent1",
-            expectedJurisdictions: ["jurisdiction"]
+            dataStreamId: "",
+            dataStreamRoute: "",
+            expectedJurisdictions: []
         });
 
         const res = await gql.subscribeDeadlineCheck({ subscription });

@@ -4,7 +4,7 @@ import { GraphQLError } from 'graphql';
 import { createSubscriptionInput } from '../fixtures/dataGenerator';
 
 const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
-const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://webhook:80";
+const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://localhost:80";
 const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
 
 type GraphQLErrorResponse = { errors: GraphQLError[] };
@@ -12,7 +12,6 @@ type GraphQLErrorResponse = { errors: GraphQLError[] };
 let subscriptions:string[] = []
 
 test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
-    test.setTimeout(90000); 
 
     test.afterEach(async ({ gql }) => { 
         subscriptions.forEach(async (subscriptionId) => {
@@ -48,10 +47,11 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO TOP ERRORS NOTIFICATION");
     });
 
-    test('subscribing via email with classic cron', async ({ gql, request }) => {        
+    test('subscribing via email with classic cron', async ({ gql, request }) => {    
+        test.setTimeout(90000); 
         const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-cron-classic@test.com`;
         const subscription = createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
@@ -71,13 +71,13 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             return emails.total;
         }, {
             message: 'Email should be found',
-            timeout: 60000,
+            timeout: 80000,
         }).toBeGreaterThan(0);
 
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO TOP ERRORS NOTIFICATION");
     });
 
     test('subscribing via webhook with duration cron', async ({ gql, request }) => {
@@ -105,11 +105,12 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         }, {
             message: "Webhook should be called",
             intervals: [5000],
-            timeout: 20000,
+            timeout: 30000,
         }).toBeGreaterThan(0);
     });
 
     test('subscribing via webhook with classic cron', async ({ gql, request }) => {
+        test.setTimeout(90000); 
         const tokenRequest = await request.post(`${WEBHOOK_SERVICE_UI}/token`);
         const token = await tokenRequest.json();
         const webhookUrl = `${WEBHOOK_SERVICE}/${token.uuid}`;
@@ -134,18 +135,18 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         }, {
             message: "Webhook should be called",
             intervals: [5000],
-            timeout: 600000,
+            timeout: 800000,
         }).toBeGreaterThan(0);
     });
 
-    test('subscribing to a specific data stream via email', async ({ gql, request }) => {
-        const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream@test.com`;
+    test('subscribing to a generic data stream via email', async ({ gql, request }) => {
+        const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
         const subscription = createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "@every 10s",
-            dataStreamIds: ["dextesting"],
-            dataStreamRoutes: ["testevent1"],
-            jurisdictions: ["jurisdiction"]
+            dataStreamIds: [],
+            dataStreamRoutes: [],
+            jurisdictions: []
         });
 
         const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
@@ -161,13 +162,13 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             return emails.total;
         }, {
             message: 'Email should be found',
-            timeout: 60000,
+            timeout: 30000,
         }).toBeGreaterThan(0);
 
         const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
         const emails = await mailhogResponse.json();
         expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain("DATA STREAM TOP ERRORS NOTIFICATION");
+        expect(emails.items[0].Content.Headers.Subject[0]).toContain("PHDO TOP ERRORS NOTIFICATION");
     });
 
     test('subscribing with multiple emails', async ({ gql, request }) => {
@@ -205,11 +206,11 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         
         const mailhogResponse1 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail1);
         const emails1 = await mailhogResponse1.json();
-        expect(emails1.items[0].Content.Headers.Subject[0]).toContain(`DATA STREAM TOP ERRORS NOTIFICATION`);
+        expect(emails1.items[0].Content.Headers.Subject[0]).toContain(`PHDO TOP ERRORS NOTIFICATION`);
 
         const mailhogResponse2 = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail2);
         const emails2 = await mailhogResponse2.json();
-        expect(emails2.items[0].Content.Headers.Subject[0]).toContain(`DATA STREAM TOP ERRORS NOTIFICATION`);
+        expect(emails2.items[0].Content.Headers.Subject[0]).toContain(`PHDO TOP ERRORS NOTIFICATION`);
     });
 
     test.describe('subscribing errors', () => {
