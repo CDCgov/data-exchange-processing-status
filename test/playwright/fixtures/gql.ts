@@ -23,7 +23,7 @@ type WorkerFixtures = {
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
     apiContext: [
-        async ({ }, use) => {
+        async ({ }, use) => { // NOSONAR
             const apiContext = await request.newContext({
                 baseURL: process.env.BASEURL,
                 extraHTTPHeaders: {
@@ -34,12 +34,12 @@ export const test = baseTest.extend<{}, WorkerFixtures>({
         }, { scope: 'worker' }
     ],
     gql: [
-        async ({ apiContext }, use) => { // NOSONAR
+        async ({ apiContext }, use) => { 
             await use(getClient(apiContext, options));
         }, { auto: false, scope: 'worker' }
     ],
     dataGenerator: [
-        async ({ }, use) => {
+        async ({ }, use) => { // NOSONAR
             await use(dataGenerator);
         }, { auto: false, scope: 'worker' }
     ],
@@ -50,7 +50,7 @@ export const test = baseTest.extend<{}, WorkerFixtures>({
         }, { auto: false, scope: 'worker' }
     ],
     schemaHelper: [
-        async ({gql}, use) => {
+        async ({ gql }, use) => {
             await use(new SchemaHelper(gql));
         }, { auto: false, scope: 'worker' }
     ]

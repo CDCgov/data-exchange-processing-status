@@ -2,9 +2,9 @@ import { APIRequestContext, expect } from '@playwright/test';
 import { GqlAPI } from '@gql';
 import { UploadReport } from './dataGenerator';
 
-const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
-const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://webhook:80";
-const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
+const EMAIL_SERVICE = process.env.EMAILURL ?? "http://localhost:8025";
+const WEBHOOK_SERVICE = process.env.WEBHOOKURL ?? "http://webhook:80";
+const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI ?? "http://localhost:8084";
 
 
 export class NotificationHelper {
