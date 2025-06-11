@@ -1,7 +1,5 @@
 import { test, expect } from '@fixtures/gql';
 import { GraphQLError } from 'graphql';
-import { createMinimalReport, createRandomSchema, createUploadReportStarted, createWebhookSubscriptionInput, UploadReport } from '../fixtures/dataGenerator';
-import { APIRequestContext, GqlAPI } from '@gql';
 
 const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://localhost:8084";
 const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
@@ -13,10 +11,10 @@ let subscriptions:string[] = []
 test.describe('GraphQL subscribeWebhook', () => {
     let webhookUrl: string;
     let token: { uuid: string };
-    test.beforeEach(async ({ request }) => {
-        const tokenRequest = await request.post(`${WEBHOOK_SERVICE_UI}/token`);
-        token = await tokenRequest.json();
-        webhookUrl = `${WEBHOOK_SERVICE}/${token.uuid}`;
+    test.beforeEach(async ({ notificationHelper }) => {
+        const result = await notificationHelper.getNewWebhook();
+        token = result.token;
+        webhookUrl = result.webhookUrl;
     });
 
     test.afterEach(async ({ gql }) => { 
@@ -27,8 +25,8 @@ test.describe('GraphQL subscribeWebhook', () => {
         subscriptions = [];
     });
 
-    test('create subscription to a generic rule', async ({ gql }) => {
-        const subscription = createWebhookSubscriptionInput({
+    test('create subscription to a generic rule', async ({ gql, dataGenerator }) => {
+        const subscription = dataGenerator.createWebhookSubscriptionInput({
             dataStreamId: "TestDataStream",
             dataStreamRoute: "TestStreamRoute",
             jurisdiction: "TestJurisdiction",
@@ -45,10 +43,10 @@ test.describe('GraphQL subscribeWebhook', () => {
         subscriptions.push(subscriptionId);
     });
 
-    test('data stream subscription with generic rule should trigger a webhook call', async ({ gql, request }) => {   
-        const report = createUploadReportStarted()
+    test('data stream subscription with generic rule should trigger a webhook call', async ({ gql, dataGenerator, notificationHelper }) => {   
+        const report = dataGenerator.createUploadReportStarted()
 
-        const subscription = createWebhookSubscriptionInput({
+        const subscription = dataGenerator.createWebhookSubscriptionInput({
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
             jurisdiction: report.jurisdiction,
@@ -64,15 +62,15 @@ test.describe('GraphQL subscribeWebhook', () => {
         const subscriptionId = res.subscribeWebhook.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
         
-        await upsertCustomReport(gql, report);
-        await validateWebookIsCalledForToken(request, token);
+        await notificationHelper.upsertCustomReport(report);
+        await notificationHelper.validateWebhookIsCalledForToken(token);
         
     });
 
-    test('data stream subscription with specific rule should trigger a webhook call', async ({ gql, request }) => {   
-        const report = createUploadReportStarted()
+    test('data stream subscription with specific rule should trigger a webhook call', async ({ gql, dataGenerator, notificationHelper }) => {   
+        const report = dataGenerator.createUploadReportStarted()
 
-        const subscription = createWebhookSubscriptionInput({
+        const subscription = dataGenerator.createWebhookSubscriptionInput({
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
             jurisdiction: report.jurisdiction,
@@ -88,17 +86,17 @@ test.describe('GraphQL subscribeWebhook', () => {
         const subscriptionId = res.subscribeWebhook.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
         
-        await upsertCustomReport(gql, report);
-        await validateWebookIsCalledForToken(request, token);
+        await notificationHelper.upsertCustomReport(report);
+        await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
-    test('custom schema and data stream subscription should trigger a webhook call', async ({ gql, request }) => {   
-        const schema = createRandomSchema()
+    test('custom schema and data stream subscription should trigger a webhook call', async ({ gql, dataGenerator, notificationHelper }) => {   
+        const schema = dataGenerator.createRandomSchema()
         const schemaRes = await gql.upsertSchema(schema);
         expect(schemaRes.upsertSchema).toBeDefined();
 
         const report = {
-            ...createMinimalReport(),
+            ...dataGenerator.createMinimalReport(),
             data_stream_id: "customtestingid",
             data_stream_route: "customtestingroute", 
             jurisdiction: "customtestingjurisdiction",
@@ -111,7 +109,7 @@ test.describe('GraphQL subscribeWebhook', () => {
             }
         }
 
-        const subscription = createWebhookSubscriptionInput({
+        const subscription = dataGenerator.createWebhookSubscriptionInput({
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
             jurisdiction: report.jurisdiction,
@@ -126,13 +124,13 @@ test.describe('GraphQL subscribeWebhook', () => {
         const subscriptionId = res.subscribeWebhook.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
-        await upsertCustomReport(gql, report);
-        await validateWebookIsCalledForToken(request, token);
+        await notificationHelper.upsertCustomReport(report);
+        await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
     test.describe('subscribing errors', () => {
-        test('blank mvel condition', async ({ gql }) => {
-            const subscription = createWebhookSubscriptionInput({
+        test('blank mvel condition', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createWebhookSubscriptionInput({
                 mvelCondition: "",
             });
 
@@ -140,8 +138,8 @@ test.describe('GraphQL subscribeWebhook', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("blank-mvel");
         });
 
-        test('empty data stream id', async ({ gql }) => {
-            const subscription = createWebhookSubscriptionInput({
+        test('empty data stream id', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createWebhookSubscriptionInput({
                 dataStreamId: "",
             });
 
@@ -149,8 +147,8 @@ test.describe('GraphQL subscribeWebhook', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("empty-data-stream-id");
         });
 
-        test('empty data stream route', async ({ gql }) => {    
-            const subscription = createWebhookSubscriptionInput({
+        test('empty data stream route', async ({ gql, dataGenerator }) => {    
+            const subscription = dataGenerator.createWebhookSubscriptionInput({
                 dataStreamRoute: "",
             });
 
@@ -158,8 +156,8 @@ test.describe('GraphQL subscribeWebhook', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("empty-data-stream-route");
         });
 
-        test('empty webhook url', async ({ gql }) => {
-            const subscription = createWebhookSubscriptionInput({
+        test('empty webhook url', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createWebhookSubscriptionInput({
                 webhookUrl: "",
             });
 
@@ -169,25 +167,4 @@ test.describe('GraphQL subscribeWebhook', () => {
 
     });
 });
-
-async function upsertCustomReport(gql: GqlAPI, report: UploadReport | any) {
-    const reportRes = await gql.upsertReport({
-        action: "replace",
-        report: report,
-    });
-    expect(reportRes.upsertReport).toBeDefined();
-    expect(reportRes.upsertReport.reportId).toBeDefined();
-}
-
-async function validateWebookIsCalledForToken(request: APIRequestContext, token: { uuid: string; }) {
-    await expect.poll(async () => {
-        const webhooksiteResponse = await request.get(`${WEBHOOK_SERVICE_UI}/token/${token.uuid}/requests`);
-        const webhookRequests = await webhooksiteResponse.json();
-        return webhookRequests.total;
-    }, {
-        message: "Webhook should be called",
-        intervals: [1000, 2000, 5000],
-        timeout: 30000,
-    }).toBeGreaterThan(0);
-}
 

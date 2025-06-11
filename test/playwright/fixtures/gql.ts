@@ -1,8 +1,13 @@
 import { test as baseTest, expect, request, APIRequestContext } from '@playwright/test';
 import { getClient, RequesterOptions} from '@gql';
 import dotenv from 'dotenv';
+import dataGenerator from './dataGenerator';
+import { NotificationHelper } from './notificationHelper';
+import { GraphQLError } from 'graphql';
 
 export { expect };
+export type GraphQLErrorResponse = { errors: GraphQLError[] };
+
 dotenv.config({ path: '../.env' });
 const options: RequesterOptions = {
     gqlEndpoint: '/graphql', 
@@ -10,6 +15,8 @@ const options: RequesterOptions = {
 type WorkerFixtures = {
     apiContext: APIRequestContext;
     gql: ReturnType<typeof getClient>;
+    dataGenerator: typeof dataGenerator;
+    notificationHelper: NotificationHelper;
 };
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
@@ -27,6 +34,17 @@ export const test = baseTest.extend<{}, WorkerFixtures>({
     gql: [
         async ({ apiContext }, use) => { // NOSONAR
             await use(getClient(apiContext, options));
+        }, { auto: false, scope: 'worker' }
+    ],
+    dataGenerator: [
+        async ({ }, use) => {
+            await use(dataGenerator);
+        }, { auto: false, scope: 'worker' }
+    ],
+    notificationHelper: [
+        async ({ gql, apiContext }, use) => {
+            const notificationHelper = new NotificationHelper(gql, apiContext);
+            await use(notificationHelper);
         }, { auto: false, scope: 'worker' }
     ]
 });

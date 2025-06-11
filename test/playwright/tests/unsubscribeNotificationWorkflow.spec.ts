@@ -1,23 +1,16 @@
-import { test, expect } from '@fixtures/gql';
-import { GraphQLError } from 'graphql';
-import { createSubscriptionInput } from '../fixtures/dataGenerator';
-
-type GraphQLErrorResponse = { errors: GraphQLError[] };
+import { test, expect, GraphQLErrorResponse} from '@fixtures/gql';
 
 let subscriptions:string[] = []
 
 test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
 
-    test.afterEach(async ({ gql }) => { 
-        subscriptions.forEach(async (subscriptionId) => {
-            const response = await gql.unsubscribeNotificationWorkflow({ subscriptionId: subscriptionId });
-            expect(response.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
-        });
+    test.afterEach(async ({ notificationHelper }) => { 
+        await notificationHelper.subscriptionNotificationWorkflowCleanup(subscriptions);
         subscriptions = [];
     });
     
-    test('unsubscribing from email subscription', async ({ gql }) => {
-        const subscription = createSubscriptionInput({
+    test('unsubscribing from email subscription', async ({ gql, dataGenerator, notificationHelper }) => {
+        const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [`unsubscribeNotificationWorkflow-email@test.com`],
         });
 
@@ -32,21 +25,11 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
 
-        await expect(async () => {
-            const workflowsResponse = await gql.getAllWorkflows();
-            const runningWorkflows = workflowsResponse.getAllWorkflows.filter(workflow => 
-                workflow.workflowId === subscriptionId && 
-                workflow.status === "WORKFLOW_EXECUTION_STATUS_RUNNING"
-            )
-            await expect(runningWorkflows.length).toBe(0);
-        }).toPass({
-            intervals: [1000],
-            timeout: 5000,
-        });
+        await notificationHelper.validateWorkflowIsNotRunning(subscriptionId);
     });
 
-    test('unsubscribing from webhook subscription', async ({ gql }) => {
-        const subscription = createSubscriptionInput({
+    test('unsubscribing from webhook subscription', async ({ gql, dataGenerator, notificationHelper }) => {
+        const subscription = dataGenerator.createSubscriptionInput({
             webhookUrl: "https://testwebook:80",
         });
 
@@ -61,21 +44,11 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
 
-        await expect(async () => {
-            const workflowsResponse = await gql.getAllWorkflows();
-            const runningWorkflows = workflowsResponse.getAllWorkflows.filter(workflow => 
-                workflow.workflowId === subscriptionId && 
-                workflow.status === "WORKFLOW_EXECUTION_STATUS_RUNNING"
-            )
-            await expect(runningWorkflows.length).toBe(0);
-        }).toPass({
-            intervals: [1000],
-            timeout: 5000,
-        });
+        await notificationHelper.validateWorkflowIsNotRunning(subscriptionId);
     });
 
-    test('unsubscribing from datastream subscription', async ({ gql }) => {
-        const subscription = createSubscriptionInput({
+    test('unsubscribing from datastream subscription', async ({ gql, dataGenerator, notificationHelper }) => {
+        const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [`unsubscribeNotificationWorkflow-datastream@test.com`],
             cronSchedule: "@every 10s",
             dataStreamIds: ["dextesting"],
@@ -94,17 +67,7 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
         expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
 
-        await expect(async () => {
-            const workflowsResponse = await gql.getAllWorkflows();
-            const runningWorkflows = workflowsResponse.getAllWorkflows.filter(workflow => 
-                workflow.workflowId === subscriptionId && 
-                workflow.status === "WORKFLOW_EXECUTION_STATUS_RUNNING"
-            )
-            await expect(runningWorkflows.length).toBe(0);
-        }).toPass({
-            intervals: [1000],
-            timeout: 5000,
-        });
+        await notificationHelper.validateWorkflowIsNotRunning(subscriptionId);
     });
 
     test.describe('unsubscribe errors', () => {
