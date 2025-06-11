@@ -1,10 +1,4 @@
-import { test, expect } from '@fixtures/gql';
-import { GraphQLError } from 'graphql';
-
-const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://localhost:8084";
-const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
-
-type GraphQLErrorResponse = { errors: GraphQLError[] };
+import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
 
 let subscriptions:string[] = []
 

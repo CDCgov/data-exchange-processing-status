@@ -2,9 +2,10 @@ import { APIRequestContext, expect } from '@playwright/test';
 import { GqlAPI } from '@gql';
 import { UploadReport } from './dataGenerator';
 
-const WEBHOOK_SERVICE_UI = process.env.WEBHOOK_SERVICE_UI || 'http://localhost:8084';
-const WEBHOOK_SERVICE = process.env.WEBHOOK_SERVICE || "http://webhook:80";
 const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
+const WEBHOOK_SERVICE = process.env.WEBHOOKURL || "http://webhook:80";
+const WEBHOOK_SERVICE_UI = process.env.WEBHOOKAPI || "http://localhost:8084";
+
 
 export class NotificationHelper {
     constructor(private readonly gql: GqlAPI, private readonly request: APIRequestContext) {}
@@ -24,7 +25,7 @@ export class NotificationHelper {
             const webhookRequests = await webhooksiteResponse.json();
             return webhookRequests.total;
         }, {
-            message: "Webhook should be called",
+            message: `Webhook should be called`,
             intervals: [1000, 2000, 5000],
             timeout: 30000,
         }).toBeGreaterThan(0);
