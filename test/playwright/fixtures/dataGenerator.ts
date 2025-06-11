@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput, SubscribeEmailMutationVariables} from '@gql';
+import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput, SubscribeEmailMutationVariables, SubscribeWebhookMutationVariables} from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -272,6 +272,25 @@ export function createEmailSubscriptionInput({
         ruleDescription,
         mvelCondition,
         emailAddresses,
+    };
+}
+
+export function createWebhookSubscriptionInput({
+    dataStreamId = "dextesting",
+    dataStreamRoute = "testevent1",
+    jurisdiction = "jurisdiction",
+    ruleDescription = "New Rule Description (webhook)",
+    mvelCondition = "true",
+    webhookUrl = "",
+}: Partial<SubscribeWebhookMutationVariables>
+): SubscribeWebhookMutationVariables {
+    return {
+        dataStreamId,
+        dataStreamRoute,
+        jurisdiction,
+        ruleDescription,
+        mvelCondition,
+        webhookUrl,
     };
 }
 
