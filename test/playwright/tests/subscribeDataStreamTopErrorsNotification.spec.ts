@@ -9,7 +9,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.subscriptionNotificationWorkflowCleanup(subscriptions);
     });
 
-    test('subscribing via email with duration cron', async ({ gql, notificationHelper, dataGenerator }) => {  
+    test('subscribing via email with duration cron', async ({ notificationHelper, dataGenerator }) => {  
         const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-cron-duration@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
@@ -22,7 +22,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
     });
 
-    test('subscribing via email with classic cron', async ({ gql, notificationHelper, dataGenerator }) => {    
+    test('subscribing via email with classic cron', async ({ notificationHelper, dataGenerator }) => {    
         test.setTimeout(90000); 
         const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-cron-classic@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
@@ -36,7 +36,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
     });
 
-    test('subscribing via webhook with duration cron', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing via webhook with duration cron', async ({ notificationHelper, dataGenerator }) => {
         const { token, webhookUrl } = await notificationHelper.getNewWebhook();
 
         const subscription = dataGenerator.createSubscriptionInput({
@@ -51,7 +51,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
-    test('subscribing via webhook with classic cron', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing via webhook with classic cron', async ({ notificationHelper, dataGenerator }) => {
         test.setTimeout(90000); 
         const { token, webhookUrl } = await notificationHelper.getNewWebhook();
         const subscription = dataGenerator.createSubscriptionInput({
@@ -63,10 +63,10 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
         subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
-        await notificationHelper.validateWebhookIsCalledForToken(token);
+        await notificationHelper.validateWebhookIsCalledForToken(token, { timeout: 70_000 });
     });
 
-    test('subscribing to a generic data stream via email', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing to a generic data stream via email', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
@@ -82,7 +82,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
     });
 
-    test('subscribing with multiple emails', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing with multiple emails', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail1 = `subscribeDataStreamTopErrorsNotification-multiple-emails-1@test.com`;
         const subscriptionEmail2 = `subscribeDataStreamTopErrorsNotification-multiple-emails-2@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({

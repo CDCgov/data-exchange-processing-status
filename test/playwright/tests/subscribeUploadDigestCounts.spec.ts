@@ -1,6 +1,5 @@
-import { test, expect } from '@fixtures/gql';
+import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
 import { NotificationType } from '@gql';
-import { GraphQLErrorResponse } from '@fixtures/gql';
 
 let subscriptions:string[] = []
 
@@ -66,7 +65,7 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
         subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
-        await notificationHelper.validateWebhookIsCalledForToken(token);
+        await notificationHelper.validateWebhookIsCalledForToken(token, { timeout: 70_000 });
     });
 
     test('subscribing to a generic data stream via email', async ({ notificationHelper, dataGenerator }) => {
