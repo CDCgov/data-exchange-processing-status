@@ -10,23 +10,20 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
         subscriptions = [];
     });
 
-    test('subscribing via email with duration cron', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing via email with duration cron', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail = `subscribeDeadlineCheck-cron-duration@test.com`;
         const subscription = dataGenerator.createDeadlineSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeDeadlineCheck({ subscription });
-        expect(res.subscribeDeadlineCheck).toBeDefined();
-        expect(res.subscribeDeadlineCheck.subscriptionId).toBeDefined();
-        
-        subscriptions.push(res.subscribeDeadlineCheck.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDeadlineCheckAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO DEADLINE MISSED NOTIFICATION");
     });
 
-    test('subscribing via email with classic cron', async ({ gql, notificationHelper, dataGenerator }) => {   
+    test('subscribing via email with classic cron', async ({ notificationHelper, dataGenerator }) => {   
         test.setTimeout(90000); 
         const subscriptionEmail = `subscribeDeadlineCheck-cron-classic@test.com`;
         const subscription = dataGenerator.createDeadlineSubscriptionInput({
@@ -34,15 +31,13 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
             cronSchedule: "* * * * *"
         });
 
-        const res = await gql.subscribeDeadlineCheck({ subscription });
-        expect(res.subscribeDeadlineCheck).toBeDefined();
-        expect(res.subscribeDeadlineCheck.subscriptionId).toBeDefined();
+        const subscriptionResponse = await notificationHelper.subscribeDeadlineCheckAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
-        subscriptions.push(res.subscribeDeadlineCheck.subscriptionId!.toString())
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO DEADLINE MISSED NOTIFICATION");
     });
 
-    test('subscribing via webhook with duration cron', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing via webhook with duration cron', async ({ notificationHelper, dataGenerator }) => {
         const { token, webhookUrl } = await notificationHelper.getNewWebhook();
 
         const subscription = dataGenerator.createDeadlineSubscriptionInput({
@@ -51,15 +46,13 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeDeadlineCheck({ subscription });
-        expect(res.subscribeDeadlineCheck).toBeDefined();
-        expect(res.subscribeDeadlineCheck.subscriptionId).toBeDefined();
+        const subscriptionResponse = await notificationHelper.subscribeDeadlineCheckAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
-        subscriptions.push(res.subscribeDeadlineCheck.subscriptionId!.toString())
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
-    test('subscribing via webhook with classic cron', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing via webhook with classic cron', async ({ notificationHelper, dataGenerator }) => {
         test.setTimeout(90000); 
         const { token, webhookUrl } = await notificationHelper.getNewWebhook();
 
@@ -69,12 +62,10 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeDeadlineCheck({ subscription });
-        expect(res.subscribeDeadlineCheck).toBeDefined();
-        expect(res.subscribeDeadlineCheck.subscriptionId).toBeDefined();
+        const subscriptionResponse = await notificationHelper.subscribeDeadlineCheckAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
-        subscriptions.push(res.subscribeDeadlineCheck.subscriptionId!.toString())
-        await notificationHelper.validateWebhookIsCalledForToken(token);
+        await notificationHelper.validateWebhookIsCalledForToken(token, { timeout: 70_000 });
     });
 
     test('subscribing to a generic data stream via email', async ({ gql, notificationHelper, dataGenerator }) => {
@@ -103,11 +94,9 @@ test.describe('GraphQL subscribeDeadlineCheck', () => {
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeDeadlineCheck({ subscription });
-        expect(res.subscribeDeadlineCheck).toBeDefined();
-        expect(res.subscribeDeadlineCheck.subscriptionId).toBeDefined();
-        
-        subscriptions.push(res.subscribeDeadlineCheck.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDeadlineCheckAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
+
         await notificationHelper.validateEmailIsSent(subscriptionEmail1, "PHDO DEADLINE MISSED NOTIFICATION");
         await notificationHelper.validateEmailIsSent(subscriptionEmail2, "PHDO DEADLINE MISSED NOTIFICATION");
     });

@@ -1,6 +1,5 @@
 import { test, expect } from '@fixtures/gql';
 import { NotificationType } from '@gql';
-import { GraphQLError } from 'graphql';
 import { GraphQLErrorResponse } from '@fixtures/gql';
 
 let subscriptions:string[] = []
@@ -12,22 +11,20 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
         subscriptions = [];
     });
 
-    test('subscribing via email with duration cron', async ({ gql, request, notificationHelper, dataGenerator }) => {
+    test('subscribing via email with duration cron', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail = `subscribeUploadDigestCounts-cron-duration@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();        
-        subscriptions.push(res.subscribeUploadDigestCounts.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO UPLOAD DIGEST NOTIFICATION");
     });
 
-    test('subscribing via email with classic cron', async ({ gql, request, notificationHelper, dataGenerator }) => {     
+    test('subscribing via email with classic cron', async ({ notificationHelper, dataGenerator }) => {     
         test.setTimeout(90000); 
         const subscriptionEmail = `subscribeUploadDigestCounts-cron-classic@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
@@ -35,16 +32,13 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             cronSchedule: "* * * * *"
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeUploadDigestCounts.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO UPLOAD DIGEST NOTIFICATION");
     });
 
-    test('subscribing via webhook with duration cron', async ({ gql, request, notificationHelper, dataGenerator }) => {
+    test('subscribing via webhook with duration cron', async ({ notificationHelper, dataGenerator }) => {
         const { token, webhookUrl } = await notificationHelper.getNewWebhook();
 
         const subscription = dataGenerator.createSubscriptionInput({
@@ -53,16 +47,13 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeUploadDigestCounts.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
-    test('subscribing via webhook with classic cron', async ({ gql, request, notificationHelper, dataGenerator }) => {
+    test('subscribing via webhook with classic cron', async ({ notificationHelper, dataGenerator }) => {
         test.setTimeout(90000); 
         const { token, webhookUrl } = await notificationHelper.getNewWebhook();
 
@@ -72,16 +63,13 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeUploadDigestCounts.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
-    test('subscribing to a generic data stream via email', async ({ gql, notificationHelper, dataGenerator }) => {
+    test('subscribing to a generic data stream via email', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail = `subscribeUploadDigestCounts-datastream@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
@@ -91,16 +79,13 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             jurisdictions: []
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeUploadDigestCounts.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO UPLOAD DIGEST NOTIFICATION");
     });
 
-    test('subscribing with multiple emails', async ({ gql, request, notificationHelper, dataGenerator }) => {
+    test('subscribing with multiple emails', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail1 = `subscribeUploadDigestCounts-multiple-emails-1@test.com`;
         const subscriptionEmail2 = `subscribeUploadDigestCounts-multiple-emails-2@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
@@ -108,11 +93,8 @@ test.describe('GraphQL subscribeUploadDigestCounts', () => {
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeUploadDigestCounts({ subscription });
-        expect(res.subscribeUploadDigestCounts).toBeDefined();
-        expect(res.subscribeUploadDigestCounts.subscriptionId).toBeDefined();
-        
-        subscriptions.push(res.subscribeUploadDigestCounts.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeUploadDigestCountsAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
         await notificationHelper.validateEmailIsSent(subscriptionEmail1, "PHDO UPLOAD DIGEST NOTIFICATION");
         await notificationHelper.validateEmailIsSent(subscriptionEmail2, "PHDO UPLOAD DIGEST NOTIFICATION");

@@ -16,11 +16,8 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
-        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
-        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
-        
-        subscriptions.push(res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
     });
@@ -33,11 +30,8 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             cronSchedule: "* * * * *"
         });
 
-        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
-        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
-        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
     });
@@ -51,11 +45,8 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
-        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
-        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
@@ -69,11 +60,8 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             notificationType: NotificationType.Webhook
         });
 
-        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
-        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
-        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
@@ -88,11 +76,8 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             jurisdictions: []
         });
 
-        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
-        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
-        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
-
-        subscriptions.push(res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
         
         await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
     });
@@ -105,11 +90,8 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             cronSchedule: "@every 10s"
         });
 
-        const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription });
-        expect(res.subscribeDataStreamTopErrorsNotification).toBeDefined();
-        expect(res.subscribeDataStreamTopErrorsNotification.subscriptionId).toBeDefined();
-        
-        subscriptions.push(res.subscribeDataStreamTopErrorsNotification.subscriptionId!.toString())
+        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
+        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
 
         await notificationHelper.validateEmailIsSent(subscriptionEmail1, "PHDO TOP ERRORS NOTIFICATION");
         await notificationHelper.validateEmailIsSent(subscriptionEmail2, "PHDO TOP ERRORS NOTIFICATION");

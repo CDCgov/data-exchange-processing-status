@@ -20,11 +20,7 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
-        const unsubscribeRes = await gql.unsubscribeNotificationWorkflow({ subscriptionId: subscriptionId });
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow).toBeDefined();
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
-
+        await notificationHelper.unsubscribeNotificationWorkflowAndValidate(subscriptionId);
         await notificationHelper.validateWorkflowIsNotRunning(subscriptionId);
     });
 
@@ -39,11 +35,7 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
-        const unsubscribeRes = await gql.unsubscribeNotificationWorkflow({ subscriptionId: subscriptionId });
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow).toBeDefined();
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
-
+        await notificationHelper.unsubscribeNotificationWorkflowAndValidate(subscriptionId);
         await notificationHelper.validateWorkflowIsNotRunning(subscriptionId);
     });
 
@@ -62,11 +54,7 @@ test.describe('GraphQL unsubscribeNotificationWorkflow', () => {
         const subscriptionId = res.subscribeUploadDigestCounts.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
-        const unsubscribeRes = await gql.unsubscribeNotificationWorkflow({ subscriptionId: subscriptionId });
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow).toBeDefined();
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBeDefined();
-        expect(unsubscribeRes.unsubscribeNotificationWorkflow.subscriptionId).toBe(subscriptionId);
-
+        await notificationHelper.unsubscribeNotificationWorkflowAndValidate(subscriptionId);
         await notificationHelper.validateWorkflowIsNotRunning(subscriptionId);
     });
 
