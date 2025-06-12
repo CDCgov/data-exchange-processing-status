@@ -1,37 +1,11 @@
-import { test, expect } from '@fixtures/gql';
+import { test, expect, GraphQLErrorResponse} from '@fixtures/gql';
 import { APIRequestContext, request } from '@playwright/test';
 import { getSdk } from '@gql';
 import { getSdkRequester } from 'playwright-graphql';
 
-// Helper function to create a base schema with customizable parameters
-const createSchema = ({
-    schemaName = "test-schema-basic",
-    schemaVersion = "1.0.0",
-    title = "Test Schema Basic",
-    properties = {
-        id: { type: "string" },
-        name: { type: "string" }
-    },
-    required = ["id", "name"]
-} = {}) => {
-    return {
-        schemaName,
-        schemaVersion,
-        content: {
-            title,
-            schema: "http://json-schema.org/draft-07/schema#",
-            id: "https://github.com/cdcent/data-exchange-messages/reports/test",
-            type: "object",
-            required,
-            properties,
-            defs: {}
-        }
-    };
-};
-
 test.describe("upsertSchema mutation", async () => { 
-    test("should create a new schema", async ({ gql }) => {
-        const schema = createSchema();
+    test("should create a new schema", async ({ gql, schemaHelper }) => {
+        const schema = schemaHelper.createSchema();
         
         const response = await gql.upsertSchema({
             schemaName: schema.schemaName,
@@ -41,18 +15,13 @@ test.describe("upsertSchema mutation", async () => {
         expect(response.upsertSchema.result).toBe("Success")
     })  
 
-    test("should update a schema when content is updated", async ({ gql }) => {
-        const initialSchema = createSchema({
+    test("should update a schema when content is updated", async ({ gql, schemaHelper }) => {
+        const initialSchema = schemaHelper.createSchema({
             schemaName: "test-schema-basic-update",
             title: "Test Schema Basic Update"
         });
 
-        const response = await gql.upsertSchema({
-            schemaName: initialSchema.schemaName,
-            schemaVersion: initialSchema.schemaVersion,
-            content: initialSchema.content
-        })
-        expect(response.upsertSchema.result).toBe("Success")
+        await schemaHelper.upsertAndValidate(initialSchema);
 
         const updatedSchema = {
             schemaName: initialSchema.schemaName,
@@ -68,28 +37,18 @@ test.describe("upsertSchema mutation", async () => {
             }
         }
 
-        const updateResponse = await gql.upsertSchema({
-            schemaName: updatedSchema.schemaName,
-            schemaVersion: updatedSchema.schemaVersion,
-            content: updatedSchema.content
-        })
-        expect(updateResponse.upsertSchema.result).toBe("Success")
+        await schemaHelper.upsertAndValidate(updatedSchema);
 
-        const schemaContentResponse = await gql.schemaContent({
-            schemaName: updatedSchema.schemaName,
-            schemaVersion: updatedSchema.schemaVersion
-        })    
-
-        expect(schemaContentResponse.schemaContent.properties.description).toBeDefined()
+        const schemaContentResponse = await schemaHelper.validateSchemaContentResponse(updatedSchema);
         expect(schemaContentResponse.schemaContent.properties.description).toStrictEqual({type: "string"})
     })
     
-    test("should not create a schema when a token is not provided", async ({ }) => {
+    test("should not create a schema when a token is not provided", async ({ schemaHelper }) => {
         const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
 
         const noTokenGQL = getClient(await request.newContext())
 
-        const schema = createSchema({
+        const schema = schemaHelper.createSchema({
             schemaName: "test-schema-basic-no-token"
         });
         
@@ -100,7 +59,7 @@ test.describe("upsertSchema mutation", async () => {
         })).rejects.toThrow(/Unauthorized: Missing or invalid bearer token/)
     })
 
-    test("should not create a schema when a provided token is incorrect", async ({ }) => {
+    test("should not create a schema when a provided token is incorrect", async ({ schemaHelper }) => {
         const getClient = (apiContext: APIRequestContext) => getSdk(getSdkRequester(apiContext, { gqlEndpoint: '/graphql' }));
 
         const badOption = {
@@ -111,7 +70,7 @@ test.describe("upsertSchema mutation", async () => {
 
         const badTokenGQL = getClient(await request.newContext(badOption))
 
-        const schema = createSchema({
+        const schema = schemaHelper.createSchema({
             schemaName: "test-schema-basic-no-token"
         });
         
@@ -234,34 +193,21 @@ test.describe("upsertSchema mutation", async () => {
             }
         ];
 
-        successValidationTests.forEach(({title, schemaName, schemaVersion, expectedResult}) => {
-            test(`should return ${expectedResult} creating a schema - ${title}`, async ({ gql }) => {
-                const schema = createSchema({
+        successValidationTests.forEach(({title, schemaName, schemaVersion}) => {
+            test(`should return Success when creating a schema - ${title}`, async ({ gql, schemaHelper }) => {
+                const schema = schemaHelper.createSchema({
                     schemaName: schemaName,
                     schemaVersion: schemaVersion,
                     title: title
                 });
-
-                const response = await gql.upsertSchema({
-                    schemaName: schema.schemaName,
-                    schemaVersion: schema.schemaVersion,
-                    content: schema.content
-                });
-
-                expect(response.upsertSchema.result).toBe('Success')
-
-                const getSchemaResponse = await gql.schemaContent({
-                    schemaName: schema.schemaName,
-                    schemaVersion: schema.schemaVersion
-                })
-
-                expect(getSchemaResponse.schemaContent).toBeDefined()
+                await schemaHelper.upsertAndValidate(schema);
+                await schemaHelper.validateSchemaContentResponse(schema);
             })
         })
 
-        failureValidationTests.forEach(({title, schemaName, schemaVersion, expectedResult}) => {
-            test(`should return ${expectedResult} creating a schema - ${title}`, async ({ gql }) => {
-                const schema = createSchema({
+        failureValidationTests.forEach(({title, schemaName, schemaVersion}) => {
+            test(`should return error when creating a schema - ${title}`, async ({ gql, schemaHelper }) => {
+                const schema = schemaHelper.createSchema({
                     schemaName: schemaName,
                     schemaVersion: schemaVersion,
                     title: title
@@ -271,14 +217,14 @@ test.describe("upsertSchema mutation", async () => {
                     schemaName: schema.schemaName,
                     schemaVersion: schema.schemaVersion,
                     content: schema.content
-                }, { failOnEmptyData: false });
+                }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
                 expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-upsert-failed");
 
                 const getSchemaResponse = await gql.schemaContent({
                     schemaName: schema.schemaName,
                     schemaVersion: schema.schemaVersion
-                }, { failOnEmptyData: false })
+                }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
                 expect(JSON.stringify(getSchemaResponse.errors)).toMatchSnapshot("schema-get-content-failed");
             })

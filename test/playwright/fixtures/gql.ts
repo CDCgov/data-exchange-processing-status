@@ -1,8 +1,14 @@
 import { test as baseTest, expect, request, APIRequestContext } from '@playwright/test';
 import { getClient, RequesterOptions} from '@gql';
 import dotenv from 'dotenv';
+import dataGenerator from './dataGenerator';
+import { NotificationHelper } from './notificationHelper';
+import { GraphQLError } from 'graphql';
+import { SchemaHelper } from './schemaHelper';
 
 export { expect };
+export type GraphQLErrorResponse = { errors: GraphQLError[] };
+
 dotenv.config({ path: '../.env' });
 const options: RequesterOptions = {
     gqlEndpoint: '/graphql', 
@@ -10,11 +16,14 @@ const options: RequesterOptions = {
 type WorkerFixtures = {
     apiContext: APIRequestContext;
     gql: ReturnType<typeof getClient>;
+    dataGenerator: typeof dataGenerator;
+    notificationHelper: NotificationHelper;
+    schemaHelper: SchemaHelper;
 };
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
     apiContext: [
-        async ({ }, use) => {
+        async ({ }, use) => { // NOSONAR
             const apiContext = await request.newContext({
                 baseURL: process.env.BASEURL,
                 extraHTTPHeaders: {
@@ -25,8 +34,24 @@ export const test = baseTest.extend<{}, WorkerFixtures>({
         }, { scope: 'worker' }
     ],
     gql: [
-        async ({ apiContext }, use) => { // NOSONAR
+        async ({ apiContext }, use) => { 
             await use(getClient(apiContext, options));
+        }, { auto: false, scope: 'worker' }
+    ],
+    dataGenerator: [
+        async ({ }, use) => { // NOSONAR
+            await use(dataGenerator);
+        }, { auto: false, scope: 'worker' }
+    ],
+    notificationHelper: [
+        async ({ gql, apiContext }, use) => {
+            const notificationHelper = new NotificationHelper(gql, apiContext);
+            await use(notificationHelper);
+        }, { auto: false, scope: 'worker' }
+    ],
+    schemaHelper: [
+        async ({ gql }, use) => {
+            await use(new SchemaHelper(gql));
         }, { auto: false, scope: 'worker' }
     ]
 });

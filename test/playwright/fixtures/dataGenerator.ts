@@ -365,6 +365,8 @@ const dataGenerator = {
     createSubscriptionInput,
     createEmailSubscriptionInput,
     createDeadlineSubscriptionInput,
+    createWebhookSubscriptionInput,
+    createRandomSchema,
 }
 
 export default dataGenerator;

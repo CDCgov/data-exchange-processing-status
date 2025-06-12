@@ -1,4 +1,5 @@
 import { test as setup, expect } from '@fixtures/gql';
+import { GetAllSubscriptionsQuery, GetAllWorkflowsQuery, ListReportSchemasQuery } from '@gql';
 
 const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
 
@@ -7,9 +8,19 @@ setup('global setup - clear email queue', async ({ request }) => {
     expect(mailhogResponse.status()).toBe(200);
 });
 
-setup('global setup - clear schema listing', async ({ gql, request }) => {
-    const schemasResponse = await gql.listReportSchemas();
-    expect(schemasResponse.listReportSchemas).toBeDefined();
+setup('global setup - clear schema listing', async ({ gql }) => {
+    let schemasResponse: ListReportSchemasQuery | undefined;
+    await expect(async () => {
+        const res = await gql.listReportSchemas();
+        expect(res.listReportSchemas).toBeDefined();
+        schemasResponse = res;
+    }).toPass({
+        intervals: [1_000, 5_000],
+        timeout: 20_000,
+    });
+    if (!schemasResponse) {
+        throw new Error('Failed to get schemas');
+    }
 
     const baseSchemas = [
         {
@@ -77,18 +88,44 @@ setup('global setup - clear schema listing', async ({ gql, request }) => {
 });
 
 setup('global setup - clear subscriptions', async ({ gql }) => {
-    const subscriptionsResponse = await gql.getAllSubscriptions();
-    expect(subscriptionsResponse.getAllSubscriptions).toBeDefined();
-    subscriptionsResponse.getAllSubscriptions.forEach(async (subscription) => {
+    let subscriptionsResponse: GetAllSubscriptionsQuery | undefined;
+    
+    await expect(async () => {
+        const res = await gql.getAllSubscriptions();
+        expect(res.getAllSubscriptions).toBeDefined();
+        subscriptionsResponse = res;
+    }).toPass({
+        intervals: [1_000, 5_000],
+        timeout: 20_000,
+    });
+
+    if (!subscriptionsResponse) {
+        throw new Error('Failed to get subscriptions');
+    }
+
+    subscriptionsResponse?.getAllSubscriptions.forEach(async (subscription) => {
         await gql.unsubscribe({ subscriptionId: subscription.subscriptionId });
     });
 });
 
 setup('global setup - clear workflow subscriptions', async ({ gql }) => {
-    const workflowSubscriptionsResponse = await gql.getAllWorkflows();
-    workflowSubscriptionsResponse.getAllWorkflows.forEach(async (workflow) => {
-        await gql.unsubscribeNotificationWorkflow({subscriptionId: workflow.workflowId});
+    let workflowSubscriptionsResponse: GetAllWorkflowsQuery | undefined;
+    
+    await expect(async () => {
+        const res = await gql.getAllWorkflows();
+        expect(res.getAllWorkflows).toBeDefined();
+        workflowSubscriptionsResponse = res;
+    }).toPass({
+        intervals: [1_000, 5_000],
+        timeout: 20_000,
     });
 
+    if (!workflowSubscriptionsResponse) {
+        throw new Error('Failed to get workflow subscriptions');
+    }
+
+    workflowSubscriptionsResponse.getAllWorkflows.forEach(async (workflow: { workflowId: string }) => {
+        await gql.unsubscribeNotificationWorkflow({subscriptionId: workflow.workflowId});
+    });
 });
 

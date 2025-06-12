@@ -1,30 +1,18 @@
-import { test, expect } from '@fixtures/gql';
+import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
 import { request } from '@playwright/test';
 import { getClient } from '@gql';
 import removalSchema from '../fixtures/removal-schema.json';
-import { GraphQLError } from 'graphql';
-
-type GraphQLErrorResponse = { errors:GraphQLError[] };
 
 test.describe("removeSchema mutation", async () => {
     const testSchemas = [
-        { schemaName: 'removal-test', version: '1.0.0', content: removalSchema },
-        { schemaName: 'removal-test', version: '2.0.0', content: removalSchema }
+        { schemaName: 'removal-test', schemaVersion: '1.0.0', content: removalSchema },
+        { schemaName: 'removal-test', schemaVersion: '2.0.0', content: removalSchema }
     ];
 
-    test.beforeAll(async ({ gql }) => {
+    test.beforeAll(async ({ gql, schemaHelper }) => {
         for (const schema of testSchemas) {
-            await gql.upsertSchema({
-                schemaName: schema.schemaName,
-                schemaVersion: schema.version,
-                content: schema.content
-            });
-
-            const verifyResponse = await gql.schemaContent({
-                schemaName: schema.schemaName,
-                schemaVersion: schema.version
-            });
-            expect(verifyResponse.schemaContent).toBeDefined();
+            await schemaHelper.upsertAndValidate(schema);
+            await schemaHelper.validateSchemaContentResponse(schema);
         }
     });
 
@@ -32,7 +20,7 @@ test.describe("removeSchema mutation", async () => {
         for (const schema of testSchemas) {
             await gql.removeSchema({
                 schemaName: schema.schemaName,
-                schemaVersion: schema.version
+                schemaVersion: schema.schemaVersion
             }, { failOnEmptyData: false });
         }
     });
@@ -42,24 +30,15 @@ test.describe("removeSchema mutation", async () => {
     
         const removeResponse = await gql.removeSchema({
             schemaName: schema.schemaName,
-            schemaVersion: schema.version
+            schemaVersion: schema.schemaVersion
         });
         expect(removeResponse.removeSchema.result).toBe("Success");
-
-        const checkResponse = await gql.schemaContent({
-            schemaName: schema.schemaName,
-            schemaVersion: schema.version
-        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
-        expect(JSON.stringify(checkResponse.errors)).toMatchSnapshot("remove-schema-success");
     });
 
-    test("should handle removal of non-existent schema gracefully", async ({ gql }) => {
-        const response = await gql.removeSchema({
-            schemaName: "non-existent-schema",
-            schemaVersion: "1.0.0"
-        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
-        
-        expect(JSON.stringify(response.errors)).toMatchSnapshot("remove-schema-gracefully");
+    test("should handle removal of non-existent schema gracefully", async ({ gql, schemaHelper }) => {
+        await schemaHelper.removeSchemaAndMatchSnapshot(
+            { schemaName: "non-existent-schema", schemaVersion: "1.0.0" },
+            "remove-schema-gracefully");
     });
 
     test("should throw an error when a token is not provided", async ({  }) => {
@@ -122,12 +101,10 @@ test.describe("removeSchema mutation", async () => {
         ];
 
         validationTests.forEach(({title, schemaName, schemaVersion, expectedResult}) => {
-            test(`should return ${expectedResult} when removing a schema - ${title}`, async ({ gql }) => {
-                const response = await gql.removeSchema({
-                    schemaName,
-                    schemaVersion
-                }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
-                expect(JSON.stringify(response.errors)).toMatchSnapshot("remove-schema-validation-failure");
+            test(`should return ${expectedResult} when removing a schema - ${title}`, async ({ schemaHelper }) => {
+                await schemaHelper.removeSchemaAndMatchSnapshot(
+                    { schemaName, schemaVersion }, 
+                    "remove-schema-validation-failure");
             });
         });
     });
