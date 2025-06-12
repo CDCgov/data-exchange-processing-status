@@ -2,6 +2,8 @@ services:
   tempo:
     image: grafana/tempo
     container_name: tempo
+    networks:
+      - observability
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
       - ./configs/tempo.yaml:/etc/tempo.yaml
@@ -14,6 +16,8 @@ services:
   prometheus:
     image: prom/prometheus
     container_name: prometheus
+    networks:
+      - observability
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
@@ -25,6 +29,8 @@ services:
   grafana:
     image: grafana/grafana
     container_name: grafana
+    networks:
+      - observability
     ports:
       - 3000:3000
     restart: unless-stopped
@@ -37,6 +43,7 @@ services:
     image: otel/opentelemetry-collector-contrib
     container_name: otelcol
     networks:
+      - observability
       - core-services
       - temporal-network
     volumes:
@@ -54,6 +61,9 @@ volumes:
   prom-data:
 
 networks:
+  observability:
+    driver: bridge
+    name: observability
   core-services:
     external: true
   temporal-network:
