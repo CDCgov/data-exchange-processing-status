@@ -17,14 +17,10 @@ import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-import io.opentelemetry.sdk.metrics.Aggregation
 import io.opentelemetry.sdk.metrics.InstrumentSelector
 import io.opentelemetry.sdk.metrics.InstrumentType
-import io.opentelemetry.sdk.metrics.View
 import io.opentelemetry.semconv.ServiceAttributes
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
@@ -93,7 +89,7 @@ fun Application.module() {
             old.registerView(
                 InstrumentSelector.builder().setType(InstrumentType.HISTOGRAM).build(), Otel.getDefaultHistogramView())
         }
-    val otel: OpenTelemetry = builder.build().openTelemetrySdk
+    val otel = builder.build().openTelemetrySdk
     install(KtorServerTelemetry) {
         setOpenTelemetry(otel)
     }
