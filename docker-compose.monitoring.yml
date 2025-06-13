@@ -18,6 +18,7 @@ services:
     container_name: prometheus
     networks:
       - observability
+      - core-services
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:

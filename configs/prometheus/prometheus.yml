@@ -13,3 +13,13 @@ scrape_configs:
   - job_name: "otel-col"
     static_configs:
       - targets: ["otelcol:8889"]
+  - job_name: "couchbase-otel-col"
+    metrics_path: /metrics
+    static_configs:
+      - targets: [ "couchbase:8091" ]
+    basic_auth:
+      username: "admin"
+      password: "password"
+    scheme: http
+#    scrape_timeout: 5s
+    fallback_scrape_protocol: PrometheusText1.0.0
