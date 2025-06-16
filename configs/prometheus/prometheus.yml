@@ -21,5 +21,4 @@ scrape_configs:
       username: "admin"
       password: "password"
     scheme: http
-#    scrape_timeout: 5s
     fallback_scrape_protocol: PrometheusText1.0.0
