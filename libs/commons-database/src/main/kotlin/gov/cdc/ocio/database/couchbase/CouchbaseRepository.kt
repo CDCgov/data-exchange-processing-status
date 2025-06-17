@@ -9,6 +9,7 @@ import com.couchbase.client.java.Scope
 import com.couchbase.client.java.manager.collection.CreateCollectionSettings
 import com.couchbase.client.metrics.opentelemetry.OpenTelemetryMeter
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
+import gov.cdc.ocio.database.persistence.CollectionDataFetcher
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
@@ -93,27 +94,30 @@ class CouchbaseRepository(
         notificationSubscriptionsCouchbaseCollection = scope.collection(notificationSubscriptionsCollectionName)
     }
 
-    override var reportsCollection =
+    override var reportsCollection = CollectionDataFetcher(
         CouchbaseCollection(
             reportsCollectionName,
             scope,
             reportsCouchbaseCollection
         ) as Collection
+    )
 
-    override var reportsDeadLetterCollection =
+    override var reportsDeadLetterCollection = CollectionDataFetcher(
         CouchbaseCollection(
             reportsDeadLetterCollectionName,
             scope,
             reportsDeadLetterCouchbaseCollection
         ) as Collection
+    )
 
-    override var notificationSubscriptionsCollection =
+    override var notificationSubscriptionsCollection = CollectionDataFetcher(
         CouchbaseCollection(
             notificationSubscriptionsCollectionName,
             scope,
             notificationSubscriptionsCouchbaseCollection,
             typeAdapters = mapOf(Notification::class.java to NotificationTypeAdapter())
         ) as Collection
+    )
 
     override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
 

@@ -19,13 +19,13 @@ abstract class ProcessingStatusRepository {
     val system = "Database"
 
     // Common interface for the reports collection
-    open lateinit var reportsCollection: Collection
+    open lateinit var reportsCollection: CollectionDataFetcher
 
     // Common interface for the reports deadletter collection
-    open lateinit var reportsDeadLetterCollection: Collection
+    open lateinit var reportsDeadLetterCollection: CollectionDataFetcher
 
     // Common interface for the notification subscriptions collection
-    open lateinit var notificationSubscriptionsCollection: Collection
+    open lateinit var notificationSubscriptionsCollection: CollectionDataFetcher
 
     abstract var healthCheckSystem: HealthCheckSystem
 
