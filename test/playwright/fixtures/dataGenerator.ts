@@ -106,7 +106,8 @@ export function createUploadReportStarted(report?: UploadReport): UploadReport {
     
     const newReport: UploadReport = {
         ...report,
-        content: createContentUploadStarted()
+        content: createContentUploadStarted(),
+        stage_info: createStageInfoStarted()
     }
     return newReport
 }
@@ -124,7 +125,8 @@ export function createUploadReportCompleted(report?: UploadReport): UploadReport
     report = report || createUploadReport()
     const newReport: UploadReport = {
         ...report,
-        content: createContentUploadCompleted()
+        content: createContentUploadCompleted(),
+        stage_info: createStageInfoCompleted()
     }
     return newReport
 }
@@ -151,6 +153,33 @@ export function createStageInfo(date: Date = new Date()) {
 
     return stage_info
 }
+
+export function createStageInfoStarted(date: Date = new Date()) {
+    const stage_info =  {
+        service: "UPLOAD API",
+        action: "upload-started",
+        version: "0.0.49-SNAPSHOT",
+        status: Status.SUCCESS,
+        start_processing_time: getFormattedDate(addSeconds(date, 10)),
+        end_processing_time: getFormattedDate(addSeconds(date, 20))
+    }
+
+    return stage_info
+}
+
+export function createStageInfoCompleted(date: Date = new Date()) {
+    const stage_info =  {
+        service: "UPLOAD API",
+        action: "upload-completed",
+        version: "0.0.49-SNAPSHOT",
+        status: Status.SUCCESS,
+        start_processing_time: getFormattedDate(addSeconds(date, 10)),
+        end_processing_time: getFormattedDate(addSeconds(date, 20))
+    }
+
+    return stage_info
+}
+
 
 export function createStageInfoWithWarning(date: Date = new Date()) {
     const stage_info_warn = {
