@@ -2,7 +2,7 @@ import { test as base } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { GraphQLErrorResponse } from '@fixtures/gql';
 import dataGenerator, { UploadReport } from './dataGenerator';
-import { GetSubmissionDetailsQuery } from '@gql';
+import { GetSubmissionDetailsQuery, SortOrder } from '@gql';
 
 export class ReportHelper {
     constructor(private readonly gql: any) {}
@@ -106,6 +106,29 @@ export class ReportHelper {
             expect.soft(responseReport).toHaveProperty(mapping.response)
             expect.soft(responseValue, `Field ${mapping.response} does not match ${mapping.report}`).toBe(finalTestValue)
         })
+    }
+
+    async getSubmissionDetailsAndValidate(
+        uploadId: string,
+        sortedBy: string,
+        sortOrder: SortOrder,
+        expectedReportCount: number
+    ): Promise<GetSubmissionDetailsQuery> {
+        let submissionDetailsResult: GetSubmissionDetailsQuery;
+        await expect(async () => {
+            submissionDetailsResult = await this.gql.getSubmissionDetails({
+                uploadId,
+                reportsSortedBy: sortedBy,
+                sortOrder
+            })
+            expect(submissionDetailsResult.getSubmissionDetails).toBeDefined()
+            expect(submissionDetailsResult.getSubmissionDetails.reports).toHaveLength(expectedReportCount)
+            
+        }).toPass({
+            intervals: [1_000, 2_000, 5_000],
+        })
+
+        return submissionDetailsResult!;
     }
 }
 
