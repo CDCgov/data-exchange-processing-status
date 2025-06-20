@@ -1,6 +1,4 @@
-import { test as base } from '@playwright/test';
 import { expect } from '@playwright/test';
-import { GraphQLErrorResponse } from '@fixtures/gql';
 import dataGenerator, { UploadReport } from './dataGenerator';
 import { GetSubmissionDetailsQuery, SortOrder } from '@gql';
 
@@ -8,7 +6,7 @@ export class ReportHelper {
     constructor(private readonly gql: any) {}
   
     async createUploadCompleteReport(baseReport?: UploadReport) {
-        const report = await dataGenerator.createUploadReportCompleted(baseReport)
+        const report = dataGenerator.createUploadReportCompleted(baseReport)
         const createReportResult = await this.gql.upsertReport({
             action: "create",
             report: report
@@ -18,7 +16,7 @@ export class ReportHelper {
     }
 
     async createUploadStartedReport() {
-        const report = await dataGenerator.createUploadReportStarted()
+        const report = dataGenerator.createUploadReportStarted()
         const createReportResult = await this.gql.upsertReport({
             action: "create",
             report: report

@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/gql';
-const environmentName = process.env.ENV || 'local';
+const environmentName = process.env.ENV ?? 'local';
 
 test.describe("listReportSchemas query", async () => {
   const expectedSchemas = [

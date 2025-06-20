@@ -142,16 +142,7 @@ export function createMessageMetadata() : MessageMetadata {
 }
 
 export function createStageInfo(date: Date = new Date()) {
-    const stage_info =  {
-        service: "UPLOAD API",
-        action: "upload-completed",
-        version: "0.0.49-SNAPSHOT",
-        status: Status.SUCCESS,
-        start_processing_time: getFormattedDate(addSeconds(date, 10)),
-        end_processing_time: getFormattedDate(addSeconds(date, 20))
-    }
-
-    return stage_info
+    return createStageInfoStarted(date)
 }
 
 export function createStageInfoStarted(date: Date = new Date()) {
