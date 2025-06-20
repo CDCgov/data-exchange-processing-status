@@ -1,7 +1,7 @@
 import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
 import complexSchema from '../fixtures/complex-schema.json';
 
-const environmentName = process.env.ENV || 'local';
+const environmentName = process.env.ENV ?? 'local';
 
 test.describe("schemaContent query", async () => {
     test.beforeAll(async ({ gql }) => {
@@ -60,7 +60,7 @@ test.describe("schemaContent query", async () => {
         expect(typeof response.schemaContent).toBe('object');
     });
 
-    test(`by schema file name validates the response structure for environment: ${process.env.ENV || 'local'}`, async ({ gql }) => {
+    test(`by schema file name validates the response structure for environment: ${environmentName}`, async ({ gql }) => {
         const response = await gql.schemaContentFromFilename({
             schemaFilename: 'base.1.0.0.schema.json'
         });
