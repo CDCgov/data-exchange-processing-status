@@ -31,7 +31,7 @@ test.describe('GraphQL getSubscription', () => {
         const res = await gql.subscribeEmail(subscription);
         expect(res.subscribeEmail).toBeDefined();
         expect(res.subscribeEmail?.subscriptionId).toBeDefined();
-        subscriptions.push(res.subscribeEmail?.subscriptionId!)
+        subscriptions.push(res.subscribeEmail.subscriptionId!)
 
         const getSubscriptionResult = await gql.getSubscription({
             subscriptionId: res.subscribeEmail?.subscriptionId!
@@ -64,7 +64,7 @@ test.describe('GraphQL getSubscription', () => {
         const res = await gql.subscribeWebhook(subscription);
         expect(res.subscribeWebhook).toBeDefined();
         expect(res.subscribeWebhook?.subscriptionId).toBeDefined();
-        subscriptions.push(res.subscribeWebhook?.subscriptionId!)
+        subscriptions.push(res.subscribeWebhook.subscriptionId!)
 
         const getSubscriptionResult = await gql.getSubscription({
             subscriptionId: res.subscribeWebhook?.subscriptionId!
