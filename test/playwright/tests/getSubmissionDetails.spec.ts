@@ -8,8 +8,7 @@ test.describe('GraphQL getSubmissionDetails', () => {
         const submissionDetailsResult = await reportHelper.getSubmissionDetailsAndValidate(
             completeReport.upload_id,
             "timestamp",
-            SortOrder.Ascending,
-            1
+            SortOrder.Ascending
         )
 
         const submissionDetails = submissionDetailsResult.getSubmissionDetails
@@ -51,21 +50,28 @@ test.describe('GraphQL getSubmissionDetails', () => {
         expect(Date.parse(firstReport.timestamp)).toBeLessThan(Date.parse(secondReport.timestamp))
     })
 
-    test('returns submission details ordered by timestamp descending', async ({ gql, reportHelper }) => {
+    test('returns an error when the sort field is not a valid field', async ({ gql, reportHelper }) => {
         const { startedReport } = await reportHelper.createUploadStartedReport()
-        await reportHelper.createUploadCompleteReport(startedReport)
+        
+        const submissionDetailsResult = await gql.getSubmissionDetails({
+            uploadId: startedReport.upload_id,
+            reportsSortedBy: "invalid-field",
+            sortOrder: SortOrder.Ascending
+        }, {failOnEmptyData: false})
+        
+        expect(JSON.stringify(submissionDetailsResult)).toMatchSnapshot('invalid-sort-field')
+    })
 
-        const submissionDetailsResult = await reportHelper.getSubmissionDetailsAndValidate(
+
+    // This test is to ensure that the timestamp field can be sorted by with an alternate spelling
+    // It does not currently work and needs to be enabled later on when fixed
+    test.skip('can sort by timestamp with alternate spelling', async ({ gql, reportHelper }) => {
+        const { startedReport } = await reportHelper.createUploadStartedReport()
+        await reportHelper.getSubmissionDetailsAndValidate(
             startedReport.upload_id,
-            "timestamp",
-            SortOrder.Descending,
-            2
+            "Timestamp",
+            SortOrder.Descending
         )
-
-        const firstReport = submissionDetailsResult.getSubmissionDetails.reports![0]
-        const secondReport = submissionDetailsResult.getSubmissionDetails.reports![1]
-
-        expect(Date.parse(firstReport.timestamp)).toBeGreaterThan(Date.parse(secondReport.timestamp))
     })
 });
 

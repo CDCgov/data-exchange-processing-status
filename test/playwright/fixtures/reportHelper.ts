@@ -112,7 +112,7 @@ export class ReportHelper {
         uploadId: string,
         sortedBy: string,
         sortOrder: SortOrder,
-        expectedReportCount: number
+        expectedReportCount: number = 1
     ): Promise<GetSubmissionDetailsQuery> {
         let submissionDetailsResult: GetSubmissionDetailsQuery;
         await expect(async () => {
