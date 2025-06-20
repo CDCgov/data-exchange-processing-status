@@ -8,9 +8,7 @@ services:
       - "1025:1025"  # SMTP port
       - "8025:8025"  # Web UI
     networks:
-      - temporal-network
-      - mock-network
-      - core-services
+      - shared
   webhook:
     container_name: webhook-site
     image: "webhooksite/webhook.site"
@@ -31,14 +29,12 @@ services:
     depends_on:
       - redis
     networks:
-      - temporal-network
-      - mock-network
-      - core-services
+      - shared
   redis:
     container_name: "webhook-redis"
     image: "redis:alpine"
     networks:
-      - mock-network
+      - shared
   laravel-echo-server:
     container_name: "laravel-echo-server"
     image: "webhooksite/laravel-echo-server"
@@ -54,14 +50,7 @@ services:
       - ECHO_ALLOW_METHODS=*
       - ECHO_ALLOW_HEADERS=*
     networks:
-      - temporal-network
-      - mock-network
-      - core-services
+      - shared
 networks:
-  mock-network:
-    driver: bridge
-    name: mock-network
-  temporal-network:
-    external: true 
-  core-services:
+  shared:
     external: true

@@ -1,3 +1,7 @@
+# This dcocker compose file runs only the required services for running playwright tests against
+# the PS API services. This file runs the locally built services. To build and run these services
+# you can use the local-build.sh script.
+
 name: pstatus-local
 
 services:
@@ -245,3 +249,4 @@ services:
 
 networks:
   shared:
+    name: shared
