@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/gql';
+const environmentName = process.env.ENV ?? 'local';
 
 test.describe("listReportSchemas query", async () => {
   const expectedSchemas = [
@@ -13,7 +14,7 @@ test.describe("listReportSchemas query", async () => {
   ];
     
   expectedSchemas.forEach(expectedSchema => {
-    test(`matches snapshot for schema ${expectedSchema.schemaName}/${expectedSchema.version} in ${process.env.ENV}`, async ({ gql }, testInfo) => {
+    test(`matches snapshot for schema ${expectedSchema.schemaName}/${expectedSchema.version} in ${environmentName}`, async ({ gql }, testInfo) => {
       const response = await gql.listReportSchemas();
       
       expect(response.listReportSchemas.length).toBeGreaterThan(0);
@@ -26,7 +27,7 @@ test.describe("listReportSchemas query", async () => {
     });
   });
 
-  test(`validates the response structure for environment: ${process.env.ENV}`, async ({ gql }) => {
+  test(`validates the response structure for environment: ${environmentName}`, async ({ gql }) => {
     const response = await gql.listReportSchemas();
     
     expect(Array.isArray(response.listReportSchemas)).toBe(true);

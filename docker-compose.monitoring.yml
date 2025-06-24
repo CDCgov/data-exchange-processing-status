@@ -44,9 +44,8 @@ services:
     image: otel/opentelemetry-collector-contrib
     container_name: otelcol
     networks:
-      - observability
-      - core-services
-      - temporal-network
+      - default
+      - shared
     volumes:
       - ./configs/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
     ports:
@@ -62,10 +61,5 @@ volumes:
   prom-data:
 
 networks:
-  observability:
-    driver: bridge
-    name: observability
-  core-services:
-    external: true
-  temporal-network:
+  shared:
     external: true

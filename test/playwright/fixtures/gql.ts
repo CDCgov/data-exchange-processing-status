@@ -1,12 +1,12 @@
-import { test as baseTest, expect, request, APIRequestContext } from '@playwright/test';
+import { test as baseTest, expect as baseExpect, request, APIRequestContext } from '@playwright/test';
 import { getClient, RequesterOptions} from '@gql';
 import dotenv from 'dotenv';
 import dataGenerator from './dataGenerator';
 import { NotificationHelper } from './notificationHelper';
 import { GraphQLError } from 'graphql';
 import { SchemaHelper } from './schemaHelper';
+import { ReportHelper } from './reportHelper';
 
-export { expect };
 export type GraphQLErrorResponse = { errors: GraphQLError[] };
 
 dotenv.config({ path: '../.env' });
@@ -19,6 +19,7 @@ type WorkerFixtures = {
     dataGenerator: typeof dataGenerator;
     notificationHelper: NotificationHelper;
     schemaHelper: SchemaHelper;
+    reportHelper: ReportHelper;
 };
 
 export const test = baseTest.extend<{}, WorkerFixtures>({
@@ -53,5 +54,40 @@ export const test = baseTest.extend<{}, WorkerFixtures>({
         async ({ gql }, use) => {
             await use(new SchemaHelper(gql));
         }, { auto: false, scope: 'worker' }
+    ],
+    reportHelper: [
+        async ({ gql }, use) => {
+            await use(new ReportHelper(gql));
+        }, { auto: false, scope: 'worker' }
     ]
 });
+
+export const expect = baseExpect.extend({
+    toBeRecentInSeconds: (received: any, threshold: number = 30) => {
+        try {
+            const now = new Date()
+            const receivedDate: Date = new Date(received)
+            const diff = now.getTime() - receivedDate.getTime()
+            const diffInSeconds = diff / (1000)
+            const pass =  diffInSeconds < threshold
+
+            if (pass) {
+                return {
+                    message: () => `passed`,
+                    pass: true
+                }
+            } else {
+                return {
+                    message: () => `expected ${received} to be recent to now ${now} within ${threshold} seconds.  Diff: ${diffInSeconds} seconds`,
+                    pass: false
+                } 
+            }
+        } catch (error) {
+            return {
+                message: () => `Exception thrown`,
+                matcherResult: error,
+                pass: false
+            }
+        }
+    }
+})

@@ -40,8 +40,7 @@ The following Quick Start will help you get up and running quickly to explore ba
 - **Docker**: See [instructions](https://docs.docker.com/desktop/) for downloading Docker Desktop for Windows, MacOS, and Linux.
 
 ### Docker Compose
-The PS API can be run locally using docker compose, which will create the PS API services and all its
-dependencies.  It will also set everything up for you so you can get started quickly.
+The PS API services can be run using docker compose, which will create the core services and all its dependencies.  It will also set everything up for you so you can get started quickly. The docker compose files are configured to pull the PS API images Quay. In order to run the services from locally built images reference the [Running from Local Builds](#running-from-local-builds) section.
 
 - Step 1: Clone the repo:
   ```shell
@@ -206,7 +205,7 @@ The PS API Notifications services can be deployed along with the core services u
 
 - Step 2: Run docker compose with the notifications file specified to launch
   ```shell
-  docker compose -f docker-compose.notifications.yml up –d
+  docker compose -f docker-compose.notifications.yml up -d
   ```
     You should see the following:
     ```
@@ -262,7 +261,7 @@ The following microservices within the PS API system are capable of emitting met
 
 This telemetry can be enabled and emitted by setting the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable for each microservice.
 This endpoint should be something that is capable of accepting data in OTLP format over HTTP and GRPC.  Additionally, you
-can optionally set the `OTEL_SERVICE_NAME` enviornment variable to set a unique name for the service attribute that gets appended
+can optionally set the `OTEL_SERVICE_NAME` environment variable to set a unique name for the service attribute that gets appended
 to the otel data.
 For local development convenience and to mimic the production environment, the `docker-compose.monitoring.yml` file has been created to orchestrate an
 OpenTelemetry Collector service for ingesting the emitted telemetry, as well as a Tempo service for storing traces and a
@@ -289,7 +288,7 @@ Please continue to explore in GraphQL for all the types of queries and mutations
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.
 
 ### Running from Local Builds
-The main cocker compose file pulls the latest PS API images from Quay. In order to build and run images on your local machine you can run the `local-run.sh` script. This script uses the `./gradlew jibDockerBuild` command to build local images and `docker compose` to start the services. Note that the Dockerfile specified in this script (`docker-compose.local.yml`) excludes services such as temporal-ui, as it is designed to run only the components required for end-to-end tests.
+The main docker compose file pulls the latest PS API images from Quay. In order to build and run images on your local machine you can run the `local-run.sh` script. This script uses the `./gradlew jibDockerBuild` command to build local images and `docker compose` to start the services. Note that the Dockerfile specified in this script (`docker-compose.ci.yml`) excludes services such as temporal-ui, as it is designed to run only the components required for end-to-end tests.
 
 
 ## Public Domain Standard Notice
