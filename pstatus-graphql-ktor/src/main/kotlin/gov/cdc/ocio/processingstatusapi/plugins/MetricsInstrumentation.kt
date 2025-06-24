@@ -31,7 +31,8 @@ class MetricsInstrumentation(
      * Begins the validation process for a GraphQL instrumentation, processes the provided operation definition,
      * updates relevant metrics, and returns a no-op instrumentation context for validation errors.
      *
-     * @param parameters the parameters containing the GraphQL request document and associated information, or null if unavailable.
+     * @param parameters the parameters containing the GraphQL request document and associated information, or null
+     * if unavailable.
      * @param state the state shared across different phases of instrumentation, or null if not provided.
      * @return an instance of InstrumentationContext that tracks the validation process for a list of validation errors.
      */
@@ -64,8 +65,29 @@ class MetricsInstrumentation(
 
         // Return a no-op context
         return object : InstrumentationContext<List<ValidationError>> {
-            override fun onDispatched() {}
-            override fun onCompleted(result: List<ValidationError>?, t: Throwable?) {}
+            /**
+             * Handles the dispatching phase of the instrumentation process.
+             *
+             * This method is invoked when an operation or event reaches the dispatched
+             * state within the GraphQL instrumentation pipeline. Typically, this method
+             * can be used to perform actions or update metrics right after an operation
+             * is dispatched, without waiting for its completion.
+             *
+             * The default implementation is empty.
+             */
+            override fun onDispatched() { /* no-op */ }
+
+            /**
+             * Invoked when the process involving the list of validation errors is completed. This method handles
+             * the post-completion behavior within the GraphQL instrumentation pipeline. It can be used to perform
+             * logging, error handling, or updating relevant metrics after the validation process concludes.
+             *
+             * @param result an optional list of validation errors generated during the validation process, or null if
+             * no errors occurred.
+             * @param t an optional throwable representing any exception that might have occurred during the process,
+             * or null if no exception occurred.
+             */
+            override fun onCompleted(result: List<ValidationError>?, t: Throwable?) { /* no-op */ }
         }
     }
 }
