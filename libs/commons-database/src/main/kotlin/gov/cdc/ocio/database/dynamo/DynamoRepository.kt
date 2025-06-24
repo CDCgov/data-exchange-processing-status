@@ -5,6 +5,7 @@ import gov.cdc.ocio.database.health.HealthCheckDynamoDb
 import gov.cdc.ocio.database.persistence.Collection
 import gov.cdc.ocio.database.models.Report
 import gov.cdc.ocio.database.models.ReportDeadLetter
+import gov.cdc.ocio.database.persistence.CollectionDataFetcher
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.health.HealthCheckSystem
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -48,27 +49,32 @@ class DynamoRepository(
 
     private val notificationSubscriptionsTableName = "$tablePrefix-notification-subscriptions".lowercase()
 
-    override var reportsCollection =
+    override var reportsCollection = CollectionDataFetcher(
         DynamoCollection(
             ddbClient,
             ddbEnhancedClient,
             reportsTableName,
             Report::class.java
         ) as Collection
+    )
 
-    override var reportsDeadLetterCollection = DynamoCollection(
-        ddbClient,
-        ddbEnhancedClient,
-        reportsDeadLetterTableName,
-        ReportDeadLetter::class.java
-    ) as Collection
+    override var reportsDeadLetterCollection = CollectionDataFetcher(
+        DynamoCollection(
+            ddbClient,
+            ddbEnhancedClient,
+            reportsDeadLetterTableName,
+            ReportDeadLetter::class.java
+        ) as Collection
+    )
 
-    override var notificationSubscriptionsCollection = DynamoCollection(
-        ddbClient,
-        ddbEnhancedClient,
-        notificationSubscriptionsTableName,
-        Any::class.java // TODO(This needs to be replaced!)
-    ) as Collection
+    override var notificationSubscriptionsCollection = CollectionDataFetcher(
+        DynamoCollection(
+            ddbClient,
+            ddbEnhancedClient,
+            notificationSubscriptionsTableName,
+            Any::class.java // TODO(This needs to be replaced!)
+        ) as Collection
+    )
 
     /**
      * Dynamodb implementation of converting the content map to a JsonNode.
