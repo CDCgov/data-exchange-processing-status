@@ -3,7 +3,7 @@ services:
     image: grafana/tempo
     container_name: tempo
     networks:
-      - observability
+      - shared
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
       - ./configs/tempo.yaml:/etc/tempo.yaml
@@ -17,8 +17,7 @@ services:
     image: prom/prometheus
     container_name: prometheus
     networks:
-      - observability
-      - core-services
+      - shared
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
@@ -31,7 +30,7 @@ services:
     image: grafana/grafana
     container_name: grafana
     networks:
-      - observability
+      - shared
     ports:
       - 3000:3000
     restart: unless-stopped
