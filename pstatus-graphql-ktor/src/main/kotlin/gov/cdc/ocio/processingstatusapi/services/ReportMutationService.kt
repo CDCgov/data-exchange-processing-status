@@ -185,7 +185,7 @@ class ReportMutationService: KoinComponent {
             if (validationResult.status) {
                 // The report input comes in from graphql as snake case, but all the models are set up for camel case.
                 val camelCaseKeyMap = mapKeysToCamelCase(input).toMutableMap()
-                // Rename known Report keys that don't quiet match in case.
+                // Rename known Report keys that don't quite match in case.
                 camelCaseKeyMap.renameKey(oldKey = "dexIngestDatetime", newKey = "dexIngestDateTime")
                 val reportJson = gson.toJson(camelCaseKeyMap)
                 val report = gson.fromJson(reportJson, Report::class.java)
