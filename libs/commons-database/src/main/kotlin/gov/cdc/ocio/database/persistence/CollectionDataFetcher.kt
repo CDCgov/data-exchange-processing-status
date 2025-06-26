@@ -138,4 +138,10 @@ class CollectionDataFetcher(
     override val collectionNameForQuery = delegate.collectionNameForQuery
 
     override val collectionElementForQuery = delegate.collectionElementForQuery
+
+    override val openBracketChar = delegate.openBracketChar
+
+    override val closeBracketChar = delegate.closeBracketChar
+
+    override val timeConversionForQuery = delegate.timeConversionForQuery
 }
