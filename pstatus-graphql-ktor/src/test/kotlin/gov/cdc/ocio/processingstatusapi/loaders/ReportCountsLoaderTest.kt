@@ -1,10 +1,10 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
 import data.UploadsStatusDataGenerator
-import gov.cdc.ocio.database.cosmos.CosmosCollection
 import gov.cdc.ocio.database.cosmos.CosmosRepository
 import gov.cdc.ocio.processingstatusapi.models.ReportCounts
 import gov.cdc.ocio.database.models.dao.ReportDao
+import gov.cdc.ocio.database.persistence.CollectionDataFetcher
 import gov.cdc.ocio.processingstatusapi.models.reports.StageCounts
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +23,7 @@ import kotlin.test.assertNotNull
 class ReportCountsLoaderTest {
 
     private val mockCosmosRepository: CosmosRepository = mockk()
-    private val mockReportsCollection: CosmosCollection = mockk()
+    private val mockReportsCollection: CollectionDataFetcher = mockk()
     private val mockReportCountsLoader: ReportCountsLoader = mockk()
 
     private val testModule = module {
