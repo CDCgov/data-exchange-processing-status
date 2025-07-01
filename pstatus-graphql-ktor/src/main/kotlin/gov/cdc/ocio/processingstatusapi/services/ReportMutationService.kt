@@ -24,6 +24,7 @@ import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.MessageProcessorConfig
+import gov.cdc.ocio.types.extensions.renameKey
 import io.ktor.server.application.*
 import mu.KLogger
 import mu.KotlinLogging
@@ -183,7 +184,9 @@ class ReportMutationService: KoinComponent {
             // if status is successful, will persist report to Reports container, otherwise to dlq container
             if (validationResult.status) {
                 // The report input comes in from graphql as snake case, but all the models are set up for camel case.
-                val camelCaseKeyMap = mapKeysToCamelCase(input)
+                val camelCaseKeyMap = mapKeysToCamelCase(input).toMutableMap()
+                // Rename known Report keys that don't quite match in case.
+                camelCaseKeyMap.renameKey(oldKey = "dexIngestDatetime", newKey = "dexIngestDateTime")
                 val reportJson = gson.toJson(camelCaseKeyMap)
                 val report = gson.fromJson(reportJson, Report::class.java)
                 return ValidatedReportResult(

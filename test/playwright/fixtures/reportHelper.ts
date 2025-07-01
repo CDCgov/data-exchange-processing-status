@@ -62,10 +62,10 @@ export class ReportHelper {
             { response: 'senderId', report: 'sender_id' },
             { response: 'dataProducerId', report: 'data_producer_id' },
             { response: 'contentType', report: 'content_type' },
-            { response: 'dexIngestDateTime', report: 'dex_ingest_date_time',
-                transform: (value: string) => null  // does not populate in response
-             },
-            { response: 'messageMetadata.messageUUID', report: 'message_metadata.message_uuid', 
+            { response: 'dexIngestDateTime', report: 'dex_ingest_datetime',
+                transform: (value: string) => new Date(value).toISOString()
+            },
+            { response: 'messageMetadata.messageUUID', report: 'message_metadata.message_uuid',
                 transform: (value: string) => null  // does not populate in response
             },
             { response: 'messageMetadata.messageHash', report: 'message_metadata.message_hash', 
@@ -83,12 +83,12 @@ export class ReportHelper {
             { response: 'stageInfo.status', report: 'stage_info.status' },
             { response: 'stageInfo.version', report: 'stage_info.version' },
             //{ response: 'stageInfo.issues', report: 'stage_info.issues' },
-            { response: 'stageInfo.startProcessingTime', report: 'stage_info.start_processing_time', 
-                transform: (value: string) => null  // does not populate in response
+            { response: 'stageInfo.startProcessingTime', report: 'stage_info.start_processing_time',
+                transform: (value: string) => new Date(value).toISOString()
             },
-            { response: 'stageInfo.endProcessingTime', report: 'stage_info.end_processing_time', 
-                transform: (value: string) => null  // does not populate in response
-             },
+            { response: 'stageInfo.endProcessingTime', report: 'stage_info.end_processing_time',
+                transform: (value: string) => new Date(value).toISOString()
+            },
             { response: 'content.contentSchemaName', report: 'content.content_schema_name' },
             { response: 'content.contentSchemaVersion', report: 'content.content_schema_version' },
             { response: 'content.status', report: 'content.status' },
