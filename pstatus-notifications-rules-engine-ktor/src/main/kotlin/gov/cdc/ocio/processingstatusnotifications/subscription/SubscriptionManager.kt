@@ -45,7 +45,7 @@ class SubscriptionManager : KoinComponent {
         // Syntax and type checking for the MVEL expression
         val validator = MvelValidator()
         val result = validator.validate(mvelCondition)
-        if (!result.isValid) throw IllegalArgumentException("Invalid MVEL expression: ${result.errorMessage}")
+        require(result.isValid) { "Invalid MVEL expression: ${result.errorMessage}" }
 
         val existingSubscriptionId = cachedSubscriptionLoader.findSubscriptionId(subscription)
         return if (existingSubscriptionId != null)
