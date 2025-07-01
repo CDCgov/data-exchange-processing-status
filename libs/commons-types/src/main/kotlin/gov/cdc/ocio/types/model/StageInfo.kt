@@ -1,7 +1,5 @@
 package gov.cdc.ocio.types.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.gson.annotations.SerializedName
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import java.time.Instant
 
@@ -30,11 +28,7 @@ class StageInfo {
 
     var issues: List<Issue>? = null
 
-    @SerializedName("start_processing_time")
-    @JsonProperty("start_processing_time")
     var startProcessingTime: Instant? = null
 
-    @SerializedName("end_processing_time")
-    @JsonProperty("end_processing_time")
     var endProcessingTime: Instant? = null
 }

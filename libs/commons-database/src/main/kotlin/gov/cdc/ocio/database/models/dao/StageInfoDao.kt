@@ -1,6 +1,5 @@
 package gov.cdc.ocio.database.models.dao
 
-import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
 import gov.cdc.ocio.types.model.Issue
 import gov.cdc.ocio.types.model.Status
@@ -39,12 +38,9 @@ data class StageInfoDao(
     @JsonProperty("issues")
     var issues: List<Issue>? = null,
 
-    @SerializedName("start_processing_time")
-    @JsonProperty("start_processing_time")
     @JsonDeserialize(using = EpochToInstantConverter::class)
     var startProcessingTime:  Instant? = null,
-    @SerializedName("end_processing_time")
-    @JsonProperty("end_processing_time")
+
     @JsonDeserialize(using = EpochToInstantConverter::class)
     var endProcessingTime:  Instant? = null
 )
