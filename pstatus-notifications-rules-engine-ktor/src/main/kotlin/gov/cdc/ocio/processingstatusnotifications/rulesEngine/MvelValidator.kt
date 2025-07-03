@@ -3,9 +3,9 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
 import gov.cdc.ocio.types.model.MessageMetadata
 import gov.cdc.ocio.types.model.StageInfo
 import gov.cdc.ocio.types.model.Status
+import mu.KotlinLogging
 import org.mvel2.MVEL
 import org.mvel2.ParserContext
-
 
 /**
  * A utility class for validating MVEL expressions in a strongly-typed context. This class enables safe evaluation of
@@ -25,6 +25,8 @@ import org.mvel2.ParserContext
 class MvelValidator(
     private val contextVars: Map<String, Class<*>> = defaultContext
 ) {
+
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Creates a strongly-typed parser context for validating MVEL expressions. The parser context is initialized
@@ -51,7 +53,9 @@ class MvelValidator(
     fun validate(expression: String): MvelValidationResult {
         return try {
             val parserContext = createParserContext()
-            MVEL.analysisCompile(expression, parserContext)
+            val cleanedExpression = MvelExpressionCleaner.removeContentClauses(expression)
+            logger.info("Cleaned expression: $cleanedExpression")
+            MVEL.analysisCompile(cleanedExpression, parserContext)
             MvelValidationResult(true)
         } catch (ex: Exception) {
             MvelValidationResult(false, ex.message)
