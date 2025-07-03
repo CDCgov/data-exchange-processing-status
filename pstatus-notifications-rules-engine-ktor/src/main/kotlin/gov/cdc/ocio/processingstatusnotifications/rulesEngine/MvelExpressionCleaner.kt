@@ -5,17 +5,18 @@ package gov.cdc.ocio.processingstatusnotifications.rulesEngine
  * Its primary purpose is to remove clauses containing "content." and reconstruct the expression
  * appropriately, while respecting the correct usage of logical operators and parentheses.
  */
+import java.util.regex.Pattern
+
 object MvelExpressionCleaner {
 
-    // Helper to check if a token is a boolean operator
     private fun isOperator(token: String) = token == "&&" || token == "||"
 
     /**
      * Tokenizes an MVEL expression, respecting parentheses and top-level logical operators.
      * Tokens can be clauses, operators (&&, ||), or parenthesized sub-expressions.
      *
-     * @param expr The logical expression to tokenize as a string.
-     * @return A list of string tokens derived from the input expression.
+     * @param expr String
+     * @return List<String>
      */
     private fun tokenize(expr: String): List<String> {
         val tokens = mutableListOf<String>()
@@ -81,16 +82,36 @@ object MvelExpressionCleaner {
     }
 
     /**
-     * Recursively strips clauses containing "content." from a list of tokens.
+     * Checks if a clause string contains the specified field name using dot or bracket notation.
+     * Examples: "fieldName.property", "fieldName['property']", "fieldName[0]"
+     *
+     * @param clause String
+     * @param fieldName String
+     * @return Boolean
+     */
+    private fun doesClauseContainField(
+        clause: String,
+        fieldName: String
+    ): Boolean {
+        val pattern = Pattern.compile(
+            "\\b$fieldName\\s*\\.\\s*|\\b$fieldName\\s*\\[", // Matches "fieldName." or "fieldName ["
+            Pattern.CASE_INSENSITIVE
+        )
+        return pattern.matcher(clause).find()
+    }
+
+    /**
+     * Recursively strips clauses containing the specified field name from a list of tokens.
      * It rebuilds the expression with correct operator placement.
      *
-     * @param tokens A list of token strings representing parts of an expression.
-     *               Tokens may represent clauses, operators, or parenthesized groups.
-     * @return A reconstructed string expression with unwanted parts removed,
-     *         redundant operators cleaned up, and valid clauses retained. If all tokens are removed,
-     *         returns an empty string.
+     * @param tokens List<String>
+     * @param fieldNameToRemove String
+     * @return String
      */
-    private fun stripContentPartsAndReconstruct(tokens: List<String>): String {
+    private fun stripContentPartsAndReconstruct(
+        tokens: List<String>,
+        fieldNameToRemove: String
+    ): String {
         if (tokens.isEmpty()) {
             return ""
         }
@@ -103,15 +124,16 @@ object MvelExpressionCleaner {
                 // If it's a parenthesized group, recurse and add the cleaned inner part
                 token.startsWith("(") && token.endsWith(")") -> {
                     val inner = token.substring(1, token.length - 1)
-                    val cleanedInner = removeContentClauses(inner).trim()
+                    // Recursive call needs to pass the field name
+                    val cleanedInner = removeClauses(inner, fieldNameToRemove).trim()
                     if (cleanedInner.isNotBlank()) {
                         // If inner becomes empty, remove the whole parenthesis.
                         // If it becomes "true", keep "(true)" as it's valid MVEL.
                         filteredTokens.add("($cleanedInner)")
                     }
                 }
-                // If it's a clause containing "content.", skip it
-                token.contains("content.", ignoreCase = true) -> {
+                // If it's a clause containing the specified field, skip it
+                doesClauseContainField(token, fieldNameToRemove) -> {
                     // Do nothing, effectively removing this token
                 }
                 // If it's an operator, add it. Operators will be cleaned up in reconstruction.
@@ -165,22 +187,24 @@ object MvelExpressionCleaner {
     }
 
     /**
-     * Removes clauses containing "content." from the given MVEL expression and reconstructs the cleaned expression.
-     * If the resulting expression becomes empty and originally contained "content." clauses,
-     * the function defaults to returning "true".
+     * Main function to remove clauses containing the specified field name from an MVEL expression.
      *
-     * @param expression The MVEL expression as a string, which may contain clauses, logical operators, and parentheses.
-     * @return The cleaned expression string with all "content." clauses removed, or "true" if the resulting expression
-     *         is empty and originally contained "content.".
+     * @param expression The MVEL expression string.
+     * @param fieldNameToRemove The name of the field to look for (e.g., "content", "data").
+     * Defaults to "content".
+     * @return The modified expression string with clauses containing the field removed.
      */
-    fun removeContentClauses(expression: String): String {
+    fun removeClauses(
+        expression: String,
+        fieldNameToRemove: String = "content"
+    ): String {
         val tokens = tokenize(expression)
-        val cleanedExpression = stripContentPartsAndReconstruct(tokens)
+        val cleanedExpression = stripContentPartsAndReconstruct(tokens, fieldNameToRemove)
 
-        // If the expression becomes empty after cleaning and it originally contained "content.",
-        // you might want to default it to "true" or "" based on your application's logic.
-        // Returning "true" is common if the expression is for a conditional check.
-        return if (cleanedExpression.isBlank() && expression.contains("content.", ignoreCase = true)) {
+        // If the expression becomes empty after cleaning and it originally contained the field,
+        // default it to "true" (common for boolean expressions) or "" based on your logic.
+        // Use the general fieldNameToRemove to check for original presence.
+        return if (cleanedExpression.isBlank() && doesClauseContainField(expression, fieldNameToRemove)) {
             "true"
         } else {
             cleanedExpression

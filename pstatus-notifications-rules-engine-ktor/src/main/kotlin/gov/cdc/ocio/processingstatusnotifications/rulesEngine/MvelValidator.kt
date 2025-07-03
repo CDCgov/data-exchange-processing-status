@@ -53,7 +53,7 @@ class MvelValidator(
     fun validate(expression: String): MvelValidationResult {
         return try {
             val parserContext = createParserContext()
-            val cleanedExpression = MvelExpressionCleaner.removeContentClauses(expression)
+            val cleanedExpression = MvelExpressionCleaner.removeClauses(expression)
             logger.info("Cleaned expression: $cleanedExpression")
             MVEL.analysisCompile(cleanedExpression, parserContext)
             MvelValidationResult(true)
