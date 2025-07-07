@@ -11,7 +11,7 @@ import kotlin.time.measureTimedValue
  * @constructor Creates an instance of CollectionDataFetcher with a delegate Collection.
  * @param delegate The underlying collection implementation that this class wraps.
  */
-class CollectionDataFetcher(
+open class CollectionDataFetcher(
     private val delegate: Collection
 ) : Collection {
 

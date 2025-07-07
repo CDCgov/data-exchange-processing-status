@@ -33,7 +33,7 @@ class SubscriptionManagerTest {
                 }
             )
         }
-        every { processingStatusRepoMock.notificationSubscriptionsCollection } returns MockCollection()
+        every { processingStatusRepoMock.notificationSubscriptionsCollection } returns MockCollectionDataFetcher()
         every { processingStatusRepoMock.healthCheckSystem } returns MockHealthCheckSystem("Database", "Mock DB")
         subscriptionManager = SubscriptionManager()
     }
