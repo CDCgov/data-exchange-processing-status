@@ -26,6 +26,7 @@ import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.MessageProcessorConfig
 import gov.cdc.ocio.types.extensions.renameKey
 import io.ktor.server.application.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import mu.KLogger
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -83,6 +84,16 @@ class ReportMutationService: KoinComponent {
 
     private val messageProcessorConfig by inject<MessageProcessorConfig>()
 
+    private val meter = GlobalOpenTelemetry.get().getMeter("graphql")
+
+    private val validReportCount = meter.counterBuilder("valid_report_count")
+        .setDescription("Count of valid reports")
+        .build()
+
+    private val invalidReportCount = meter.counterBuilder("invalid_report_count")
+        .setDescription("Count of invalid reports")
+        .build()
+
     /**
      * Upsert a report based on the provided input and action.
      *
@@ -119,6 +130,9 @@ class ReportMutationService: KoinComponent {
                 Action.REPLACE -> reportManager.replaceReport(validatedReport)
             }
 
+            // Increment the otel valid report count
+            validReportCount.add(1)
+
             // Forward the validated report if enabled
             if (messageProcessorConfig.forwardValidatedReports) {
                 // The forwarded messages need to remain snake case for downstream processing.
@@ -132,6 +146,11 @@ class ReportMutationService: KoinComponent {
                 reportId = validatedReport.reportId ?: "unknown",
                 schemaFileNames = validationResult.validationSchemaResult?.schemaFileNames
             )
+        }
+
+        result.onFailure {
+            // Increment the otel invalid report count
+            invalidReportCount.add(1)
         }
 
         when (val exception = result.exceptionOrNull()) {
