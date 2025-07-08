@@ -1,5 +1,6 @@
 package gov.cdc.ocio.messagesystem.utils
 
+import gov.cdc.ocio.messagesystem.MessageProcessorDecorator
 import gov.cdc.ocio.messagesystem.MessageProcessorInterface
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.config.AWSSQSServiceConfiguration
@@ -74,13 +75,13 @@ fun Application.createMessageSystemPlugin(
 
     when (messageSystemType) {
         MessageSystemType.AZURE_SERVICE_BUS -> {
-            serviceBusModule(messageProcessorImpl)
+            serviceBusModule(MessageProcessorDecorator(messageSystemType.name, messageProcessorImpl))
         }
         MessageSystemType.RABBITMQ -> {
-            rabbitMQModule(messageProcessorImpl)
+            rabbitMQModule(MessageProcessorDecorator(messageSystemType.name, messageProcessorImpl))
         }
         MessageSystemType.AWS -> {
-            awsSQSModule(messageProcessorImpl)
+            awsSQSModule(MessageProcessorDecorator(messageSystemType.name, messageProcessorImpl))
         }
         else -> {
             logger.error("Invalid message system configuration")
