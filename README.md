@@ -290,6 +290,23 @@ complete list in the documentation that is grabbed via "introspection" from the 
 ### Running from Local Builds
 The main docker compose file pulls the latest PS API images from Quay. In order to build and run images on your local machine you can run the `local-run.sh` script. This script uses the `./gradlew jibDockerBuild` command to build local images and `docker compose` to start the services. Note that the Dockerfile specified in this script (`docker-compose.ci.yml`) excludes services such as temporal-ui, as it is designed to run only the components required for end-to-end tests.
 
+## Future Enhancements
+### Security
+- Add OAuth 2.0 to all services to secure the API.
+- Add support for fine-grained access control in the GraphQL service. For example, most users can only access a particular data stream ID and route combination. Attempts to access any other data should be denied. Further, within this data stream most users will be restricted to accessing data only in their jurisdiction. This is currently only partially implemented. 
+- Update the schema management GraphQL mutations to require administrative scope to add, remove, or updates report schemas.
+### Tracing
+- Add Open Telemetry tracing to all services.
+- Add Tempo based tracing to the Processing Status Grafana dashboards.
+- Consider using the Upload ID from the Upload API for the trace ID which would allow for end-to-end tracing.
+### Metrics
+- Add metrics to the notifications services, namely the rules engine and workflow service.
+### Performance
+- Use the tracing and metrics telemetry to determine bottlenecks.
+- The Couchbase database writes and queries as well as the report-sink message processing are the most time critical.
+### Notifications
+- Add support for running a script in the rules-engine.
+- Add ability to run a script with business logic in the notification system.
 
 ## Public Domain Standard Notice
 This repository constitutes a work of the United States Government and is not
