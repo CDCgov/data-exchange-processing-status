@@ -1,0 +1,1 @@
+{"getUploadStats":{"badMetadataCount":0,"completedUploadsCount":3,"duplicateFilenames":[{"filename":null,"totalCount":3}],"pendingUploads":{"pendingUploads":[],"totalCount":0},"undeliveredUploads":{"totalCount":0,"undeliveredUploads":[]},"uniqueUploadIdsCount":3,"uploadsWithStatusCount":3}}

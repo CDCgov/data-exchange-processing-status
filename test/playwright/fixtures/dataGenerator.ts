@@ -16,7 +16,7 @@ export type UploadReport = {
     data?: object,
     jurisdiction?: string
     data_producer_id?: string,
-    content: ContentUploadCompleted|ContentUploadStarted|ContentUploadStatus|ContentUploadMetadataVerify
+    content: ContentUploadCompleted|ContentUploadStarted|ContentUploadStatus|ContentUploadMetadataVerify|ContentBlobFileCopy
 
 }
 
@@ -46,6 +46,14 @@ export type ContentUploadMetadataVerify = {
     content_schema_version: string
     filename: string
     metadata: object
+}
+
+export type ContentBlobFileCopy = {
+    content_schema_name: string
+    content_schema_version: string
+    file_source_blob_url: string
+    file_destination_blob_url: string
+    timestamp?: string
 }
 
 enum Aggregation {SINGLE="SINGLE", BATCH="BATCH"}
@@ -113,8 +121,14 @@ export function createUploadReportStarted(report?: UploadReport): UploadReport {
     report = report || createUploadReport()
     const newReport: UploadReport = {
         ...report,
-        content: createContentUploadStarted(),
-        stage_info: createStageInfoStarted()
+        content: {
+            ...createContentUploadStarted(),
+            ...report.content
+        },
+        stage_info: {
+            ...createStageInfoStarted(),
+            ...report.stage_info
+        }
     }
     return newReport
 }
@@ -139,16 +153,31 @@ export function createUploadReportCompleted(report?: UploadReport): UploadReport
     return newReport
 }
 
-export function createUploadMetadataVerifyReport(report?: UploadReport): UploadReport {
-    report = report || createUploadReport()
+export function createUploadMetadataVerifyReport(report?: Partial<UploadReport>): UploadReport {
+    const baseReport = report ? { ...createUploadReport(), ...report } : createUploadReport()
     const newReport: UploadReport = {
-        ...report,
-        content: createContentUploadMetadataVerify(report),
-        stage_info: createStageInfoMetadataVerify()
+        ...baseReport,
+        content: {
+            ...createContentUploadMetadataVerify(baseReport),
+            ...baseReport.content
+        },
+        stage_info: {
+            ...createStageInfoMetadataVerify(),
+        }
+            
     }
     return newReport
 }
 
+export function createUploadMetadataVerifyReportWithIssue(report?: UploadReport): UploadReport {
+    report = report || createUploadReport()
+    const newReport: UploadReport = {
+        ...report,
+        content: createContentUploadMetadataVerify(report),
+        stage_info: createStageInfoMetadataVerifyWithIssue()
+    }
+    return newReport
+}
 export function createMessageMetadata() : MessageMetadata {    
     const messageMetadata: MessageMetadata = {
         message_uuid: faker.string.uuid(),
@@ -207,6 +236,38 @@ export function createStageInfoMetadataVerify(date: Date = new Date(), overrides
     const defaultStageInfo = {
         service: "UPLOAD API",
         action: "metadata-verify",
+        version: "0.0.49-SNAPSHOT",
+        status: Status.SUCCESS,
+        start_processing_time: getFormattedDate(addSeconds(date, 10)),
+        end_processing_time: getFormattedDate(addSeconds(date, 20))
+    }
+
+    return { ...defaultStageInfo, ...overrides }
+}
+
+export function createStageInfoMetadataVerifyWithIssue(date: Date = new Date(), overrides?: Partial<StageInfo>): StageInfo {
+    const defaultStageInfo: StageInfo = {
+        service: "UPLOAD API",
+        action: "metadata-verify",
+        version: "0.0.49-SNAPSHOT",
+        status: Status.SUCCESS,
+        start_processing_time: getFormattedDate(addSeconds(date, 10)),
+        end_processing_time: getFormattedDate(addSeconds(date, 20)),
+        issues: [
+            {
+                level: "ERROR",
+                message: "Error message"
+            }
+        ]
+    }
+
+    return { ...defaultStageInfo, ...overrides }
+}
+
+export function createStageInfoBlobFileCopy(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
+        service: "UPLOAD API",
+        action: "blob-file-copy",
         version: "0.0.49-SNAPSHOT",
         status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
@@ -285,6 +346,26 @@ export function createContentUploadMetadataVerify(report?: UploadReport): Conten
         }
     }
     return content
+}
+
+export function createContentBlobFileCopy(): ContentBlobFileCopy {
+    const content: ContentBlobFileCopy = {
+        content_schema_name: "blob-file-copy",
+        content_schema_version: "1.0.0",
+        file_source_blob_url: faker.system.filePath(),
+        file_destination_blob_url: faker.system.filePath()
+    }
+    return content
+}
+
+export function createBlobFileCopyReport(report?: UploadReport): UploadReport {
+    report = report || createUploadReport()
+    const newReport: UploadReport = {
+        ...report,
+        content: createContentBlobFileCopy(),
+        stage_info: createStageInfoBlobFileCopy()
+    }
+    return newReport
 }
 
 
@@ -461,10 +542,16 @@ const dataGenerator = {
     createMessageMetadata,
     createContentUploadStarted,
     createContentUploadCompleted,
+    createContentUploadStatus,
+    createContentUploadMetadataVerify,
+    createContentBlobFileCopy,
     createUploadReportStarted,
     createUploadReportStatus,
     createUploadReportCompleted,
     createUploadMetadataVerifyReport,
+    createUploadMetadataVerifyReportWithIssue,
+    createBlobFileCopyReport,
+    createStageInfoBlobFileCopy,
     createSubscriptionInput,
     createEmailSubscriptionInput,
     createDeadlineSubscriptionInput,

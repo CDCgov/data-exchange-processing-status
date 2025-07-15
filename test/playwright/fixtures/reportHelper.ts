@@ -36,14 +36,85 @@ export class ReportHelper {
         return { statusReport: report, createStatusReportResult: createReportResult }
     }
 
-    async createUploadMetadataVerifyReport(baseReport?: UploadReport) {
-        const report = dataGenerator.createUploadMetadataVerifyReport(baseReport)
+    async createUploadMetadataVerifyReport(baseReport?: Partial<UploadReport>) {
+        const report = dataGenerator.createUploadMetadataVerifyReport(baseReport ? dataGenerator.createUploadMetadataVerifyReport(baseReport) : undefined)
         const createReportResult = await this.gql.upsertReport({
             action: "create",
             report: report
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
         return { metadataVerifyReport: report, createMetadataVerifyReportResult: createReportResult }
+    }
+
+    async createUploadMetadataVerifyReportWithIssues(baseReport?: Partial<UploadReport>) {
+        const report = dataGenerator.createUploadMetadataVerifyReportWithIssue(baseReport ? dataGenerator.createUploadReport(baseReport) : undefined)
+        const createReportResult = await this.gql.upsertReport({
+            action: "create",
+            report: report
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+        return { metadataVerifyReport: report, createMetadataVerifyReportResult: createReportResult }
+    }
+
+    async createBlobFileCopyReport(baseReport?: UploadReport) {
+        const report = dataGenerator.createBlobFileCopyReport(baseReport)
+        const createReportResult = await this.gql.upsertReport({
+            action: "create",
+            report: report
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+        return { blobFileCopyReport: report, createBlobFileCopyReportResult: createReportResult }
+    }
+
+    async createFullPendingUpload(baseReport?: Partial<UploadReport>) { 
+        const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
+        const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
+        const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
+        return {
+            startedReport,
+            statusReport,
+            metadataVerifyReport,
+            createStartedReportResult,
+            createStatusReportResult,
+            createMetadataVerifyReportResult,
+        }
+    }
+
+    async createFullCompleteUpload(baseReport?: Partial<UploadReport>) {
+        const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
+        const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
+        const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
+        const { completeReport, createCompleteReportResult } = await this.createUploadCompleteReport(startedReport)
+        const { blobFileCopyReport, createBlobFileCopyReportResult } = await this.createBlobFileCopyReport(startedReport)
+        return {
+            startedReport,
+            statusReport,
+            metadataVerifyReport,
+            completeReport,
+            blobFileCopyReport,
+            createStartedReportResult,
+            createStatusReportResult,
+            createMetadataVerifyReportResult,
+            createCompleteReportResult,
+            createBlobFileCopyReportResult,
+        }
+    }
+
+    async createFullUndeliveredUpload(baseReport?: Partial<UploadReport>) {
+        const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
+        const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
+        const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
+        const { completeReport, createCompleteReportResult } = await this.createUploadCompleteReport(startedReport)
+        return {
+            startedReport,
+            statusReport,
+            metadataVerifyReport,
+            completeReport,
+            createStartedReportResult,
+            createStatusReportResult,
+            createMetadataVerifyReportResult,
+            createCompleteReportResult,
+        }
     }
 
     validateSubmissionDetailFields(submissionDetails: GetSubmissionDetailsQuery['getSubmissionDetails'], report: any) {
@@ -125,6 +196,51 @@ export class ReportHelper {
             expect.soft(responseReport).toHaveProperty(mapping.response)
             expect.soft(responseValue, `Field ${mapping.response} does not match ${mapping.report}`).toBe(finalTestValue)
         })
+    }
+
+    async validatePendingUploadsBlock(pendingUploads: any, metadataVerifyReports: any[]) {
+
+        this.validateUploadListBlock(pendingUploads.pendingUploads)
+
+        const actualPendingUploadFiles = this.getUploadFilesFromListBlock(pendingUploads.pendingUploads)      
+        const originalUploadFiles = this.getUploadFilesFromMetadataVerifyReports(metadataVerifyReports)
+        
+        expect(actualPendingUploadFiles.length).toBe(originalUploadFiles.length);
+        expect(actualPendingUploadFiles).toEqual(originalUploadFiles);
+    }
+
+    async validateUndeliveredUploadsBlock(undeliveredUploads: any, metadataVerifyReports: any[]) {  
+        this.validateUploadListBlock(undeliveredUploads.undeliveredUploads)
+        const actualUndeliveredUploadFiles = this.getUploadFilesFromListBlock(undeliveredUploads.undeliveredUploads)
+        const originalUploadFiles = this.getUploadFilesFromMetadataVerifyReports(metadataVerifyReports)
+        
+        expect(actualUndeliveredUploadFiles.length).toBe(originalUploadFiles.length);
+        expect(actualUndeliveredUploadFiles).toEqual(originalUploadFiles);
+    }
+
+    async validateUploadListBlock(uploadList: any) {
+        uploadList.forEach((upload: any) => {
+            expect(upload).toHaveProperty("uploadId");
+            expect(upload).toHaveProperty("filename");
+        });
+    }
+
+    private getUploadFilesFromListBlock(uploadList: any): { uploadId: string; filename: string; }[] {
+        const uploadFiles = uploadList.map((upload: { uploadId: any; filename: any; }) => ({
+            uploadId: upload.uploadId,
+            filename: upload.filename
+         }));
+        uploadFiles.sort((a: { uploadId: any; }, b: { uploadId: any; }) => (a.uploadId || '').localeCompare(b.uploadId || ''));
+        return uploadFiles;
+    }
+    private getUploadFilesFromMetadataVerifyReports(metadataVerifyReports: any): { uploadId: string; filename: string; }[] {
+        const uploadFiles =  metadataVerifyReports.map((report: { upload_id: any; content: { filename: any; }; }) => ({
+            uploadId: report.upload_id,
+            filename: report.content.filename
+        }));
+        
+        uploadFiles.sort((a: { uploadId: any; }, b: { uploadId: any; }) => (a.uploadId || '').localeCompare(b.uploadId || ''));
+        return uploadFiles;
     }
 
     async getSubmissionDetailsAndValidate(
