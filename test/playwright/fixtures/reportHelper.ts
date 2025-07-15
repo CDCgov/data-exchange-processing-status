@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import dataGenerator, { UploadReport } from './dataGenerator';
 import { GetSubmissionDetailsQuery, SortOrder } from '@gql';
+import { base } from '@faker-js/faker/.';
 
 export class ReportHelper {
     constructor(private readonly gql: any) {}
@@ -15,14 +16,34 @@ export class ReportHelper {
         return { completeReport: report, createCompleteReportResult: createReportResult }
     }
 
-    async createUploadStartedReport() {
-        const report = dataGenerator.createUploadReportStarted()
+    async createUploadStartedReport(baseReport?: Partial<UploadReport>) {
+        const report = dataGenerator.createUploadReportStarted(baseReport ? dataGenerator.createUploadReport(baseReport) : undefined)
         const createReportResult = await this.gql.upsertReport({
             action: "create",
             report: report
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
         return { startedReport: report, createStartedReportResult: createReportResult }
+    }
+
+    async createUploadStatusReport(baseReport?: UploadReport) {
+        const report = dataGenerator.createUploadReportStatus(baseReport)
+        const createReportResult = await this.gql.upsertReport({
+            action: "create",
+            report: report
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+        return { statusReport: report, createStatusReportResult: createReportResult }
+    }
+
+    async createUploadMetadataVerifyReport(baseReport?: UploadReport) {
+        const report = dataGenerator.createUploadMetadataVerifyReport(baseReport)
+        const createReportResult = await this.gql.upsertReport({
+            action: "create",
+            report: report
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+        return { metadataVerifyReport: report, createMetadataVerifyReportResult: createReportResult }
     }
 
     validateSubmissionDetailFields(submissionDetails: GetSubmissionDetailsQuery['getSubmissionDetails'], report: any) {

@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, SubscriptionRule, WorkflowSubscriptionForDataStreamsInput, SubscribeEmailMutationVariables, SubscribeWebhookMutationVariables} from '@gql';
+import { NotificationType, WorkflowSubscriptionDeadlineCheckInput, WorkflowSubscriptionForDataStreamsInput, SubscribeEmailMutationVariables, SubscribeWebhookMutationVariables} from '@gql';
 
 export type UploadReport = {
     report_schema_version: string,
@@ -16,7 +16,7 @@ export type UploadReport = {
     data?: object,
     jurisdiction?: string
     data_producer_id?: string,
-    content: ContentUploadCompleted|ContentUploadStarted|ContentUploadStatus
+    content: ContentUploadCompleted|ContentUploadStarted|ContentUploadStatus|ContentUploadMetadataVerify
 
 }
 
@@ -40,6 +40,14 @@ export type ContentUploadStatus = {
     size: number
     filename: string
 }
+
+export type ContentUploadMetadataVerify = {
+    content_schema_name: string
+    content_schema_version: string
+    filename: string
+    metadata: object
+}
+
 enum Aggregation {SINGLE="SINGLE", BATCH="BATCH"}
 enum Status {SUCCESS="SUCCESS", FAILURE="FAILURE"}
 type MessageMetadata = {
@@ -77,10 +85,10 @@ export function createMinimalReport() {
     return newReport
 }
 
-export function createUploadReport(): UploadReport {
+export function createUploadReport(overrides?: Partial<UploadReport>): UploadReport {
     const dexIngestDateTime = randomTime(new Date())
 
-    let newReport: UploadReport = {
+    const defaultReport: UploadReport = {
         report_schema_version: "1.0.0",
         upload_id: faker.string.uuid(),
         user_id: faker.internet.username(),
@@ -89,21 +97,20 @@ export function createUploadReport(): UploadReport {
         jurisdiction: faker.string.alpha({length: 3, casing: 'upper' }),
         sender_id: `${faker.word.adjective()}-${faker.word.noun()}`,
         data_producer_id: `${faker.word.adjective()}-${faker.word.noun()}`,
-        dex_ingest_datetime: getFormattedDate(dexIngestDateTime),
-        message_metadata: createMessageMetadata(),
+        dex_ingest_datetime: getFormattedDexIngestDateTime(dexIngestDateTime),
         tags: { tag_field1: `${faker.word.noun()}.${faker.string.nanoid()}` },
         data: { data_field1: `${faker.word.noun()}.${faker.string.nanoid()}` },
         content_type: "application/json",
+        message_metadata: createMessageMetadata(),
         content: createContentUploadStarted(),
         stage_info: createStageInfo(dexIngestDateTime),
     }
-    return newReport
+
+    return { ...defaultReport, ...overrides }
 }
 
 export function createUploadReportStarted(report?: UploadReport): UploadReport {
     report = report || createUploadReport()
-
-    
     const newReport: UploadReport = {
         ...report,
         content: createContentUploadStarted(),
@@ -116,7 +123,8 @@ export function createUploadReportStatus(report?: UploadReport): UploadReport {
     report = report || createUploadReport()
     const newReport: UploadReport = {
         ...report,
-        content: createContentUploadStatus()
+        content: createContentUploadStatus(),
+        stage_info: createStageInfoStatus()
     }
     return newReport
 }
@@ -131,22 +139,33 @@ export function createUploadReportCompleted(report?: UploadReport): UploadReport
     return newReport
 }
 
+export function createUploadMetadataVerifyReport(report?: UploadReport): UploadReport {
+    report = report || createUploadReport()
+    const newReport: UploadReport = {
+        ...report,
+        content: createContentUploadMetadataVerify(report),
+        stage_info: createStageInfoMetadataVerify()
+    }
+    return newReport
+}
+
 export function createMessageMetadata() : MessageMetadata {    
     const messageMetadata: MessageMetadata = {
         message_uuid: faker.string.uuid(),
-        message_hash: 'messagehash',
+        message_hash: faker.string.hexadecimal({ length: 32, prefix: "", casing: "lower" }),
         aggregation: Aggregation.SINGLE,
         message_index: 1
     }
     return messageMetadata
 }
 
-export function createStageInfo(date: Date = new Date()) {
-    return createStageInfoStarted(date)
+export function createStageInfo(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = createStageInfoStarted(date)
+    return { ...defaultStageInfo, ...overrides }
 }
 
-export function createStageInfoStarted(date: Date = new Date()) {
-    const stage_info =  {
+export function createStageInfoStarted(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
         service: "UPLOAD API",
         action: "upload-started",
         version: "0.0.49-SNAPSHOT",
@@ -155,11 +174,24 @@ export function createStageInfoStarted(date: Date = new Date()) {
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return stage_info
+    return { ...defaultStageInfo, ...overrides }
 }
 
-export function createStageInfoCompleted(date: Date = new Date()) {
-    const stage_info =  {
+export function createStageInfoStatus(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
+        service: "UPLOAD API",
+        action: "upload-status",
+        version: "0.0.49-SNAPSHOT",
+        status: Status.SUCCESS,
+        start_processing_time: getFormattedDate(addSeconds(date, 10)),
+        end_processing_time: getFormattedDate(addSeconds(date, 20))
+    }
+
+    return { ...defaultStageInfo, ...overrides }
+}
+
+export function createStageInfoCompleted(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
         service: "UPLOAD API",
         action: "upload-completed",
         version: "0.0.49-SNAPSHOT",
@@ -168,12 +200,25 @@ export function createStageInfoCompleted(date: Date = new Date()) {
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return stage_info
+    return { ...defaultStageInfo, ...overrides }
+}
+
+export function createStageInfoMetadataVerify(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
+        service: "UPLOAD API",
+        action: "metadata-verify",
+        version: "0.0.49-SNAPSHOT",
+        status: Status.SUCCESS,
+        start_processing_time: getFormattedDate(addSeconds(date, 10)),
+        end_processing_time: getFormattedDate(addSeconds(date, 20))
+    }
+
+    return { ...defaultStageInfo, ...overrides }
 }
 
 
-export function createStageInfoWithWarning(date: Date = new Date()) {
-    const stage_info_warn = {
+export function createStageInfoWithWarning(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
         ...createStageInfo(date),
         issues: [
             {
@@ -182,11 +227,11 @@ export function createStageInfoWithWarning(date: Date = new Date()) {
             }
         ]
     }
-    return stage_info_warn
+    return { ...defaultStageInfo, ...overrides }
 }
 
-export function createStageInfoWithError(date: Date = new Date()) {
-    const stage_info_error = {
+export function createStageInfoWithError(date: Date = new Date(), overrides?: Partial<StageInfo>) {
+    const defaultStageInfo = {
         ...createStageInfo(date),
         issues: [
             {
@@ -195,7 +240,7 @@ export function createStageInfoWithError(date: Date = new Date()) {
             }
         ]
     }
-    return stage_info_error
+    return { ...defaultStageInfo, ...overrides }
 }
 
 export function createContentUploadStarted(): ContentUploadStarted {
@@ -229,7 +274,21 @@ export function createContentUploadCompleted():ContentUploadCompleted {
     return content
 }
 
-function getFormattedDate(date: Date = new Date()): string {
+export function createContentUploadMetadataVerify(report?: UploadReport): ContentUploadMetadataVerify {
+    const content: ContentUploadMetadataVerify = {
+        content_schema_name: "metadata-verify",
+        content_schema_version: "1.0.0",
+        filename: faker.system.commonFileName('csv'),
+        metadata: {
+            "key1": "value1",
+            "key2": "value2"
+        }
+    }
+    return content
+}
+
+
+export function  getFormattedDate(date: Date = new Date()): string {
     // Get timezone offset in minutes and convert to hours:minutes format
     const offset = -date.getTimezoneOffset();
     const sign = offset >= 0 ? "+" : "-";
@@ -238,6 +297,10 @@ function getFormattedDate(date: Date = new Date()): string {
     // Format the date as required
     return date.toISOString().replace("Z", "") + `${sign}${pad(offset / 60)}:${pad(offset % 60)}`;
 }
+
+export function getFormattedDexIngestDateTime(date: Date): string {
+    return date.toISOString().replace(/\.\d{3}Z$/, 'Z')
+};
   
 function randomTime(date: Date) {
     let randomTime = faker.date.anytime()
@@ -250,6 +313,12 @@ function randomTime(date: Date) {
 function addSeconds(date: Date, seconds: number) {
     const newDate = new Date(date)
     newDate.setSeconds(date.getSeconds() + seconds)
+    return newDate
+}
+
+export function addDays(date: Date, days: number) {
+    const newDate = new Date(date)
+    newDate.setDate(date.getDate() + days)
     return newDate
 }
 
@@ -367,11 +436,24 @@ export function createRandomSchema() {
  }
 }
 
+export function formatDateCompactUTC(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+}
+
 const dataGenerator = {
     addSeconds,
+    addDays,
     createMinimalReport,
     randomTime,
     getFormattedDate,
+    getFormattedDexIngestDateTime,
+    formatDateCompactUTC,
     createUploadReport,
     createStageInfo,   
     createStageInfoWithWarning,
@@ -382,6 +464,7 @@ const dataGenerator = {
     createUploadReportStarted,
     createUploadReportStatus,
     createUploadReportCompleted,
+    createUploadMetadataVerifyReport,
     createSubscriptionInput,
     createEmailSubscriptionInput,
     createDeadlineSubscriptionInput,
