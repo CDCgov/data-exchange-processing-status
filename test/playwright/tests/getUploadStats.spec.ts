@@ -218,10 +218,11 @@ test.describe('GraphQL getUploadStats', () => {
 
     // TODO: This test is not working as expected. Filename is not returned correctly and is always null.
     test.skip('returns stats for duplicate filenames ', async ({ gql, reportHelper }) => {
-        const numReports = 3;
+        const numReports = 2;
         const metadataVerifyReports: any[] = [];
         const baseReport: any = dataGenerator.createUploadReportStarted()
         const expectedFilename = "test.txt"
+        const expectedFilename2 = "test2.txt"
 
         for (let i = 0; i < numReports; i++) {
             const { metadataVerifyReport } = await reportHelper.createUploadMetadataVerifyReport({
@@ -236,6 +237,24 @@ test.describe('GraphQL getUploadStats', () => {
                 }
             });
             metadataVerifyReports.push(metadataVerifyReport);
+            console.log(JSON.stringify(metadataVerifyReport, null, 2))
+        }
+
+
+        for (let i = 0; i < numReports; i++) {
+            const { metadataVerifyReport } = await reportHelper.createUploadMetadataVerifyReport({
+                data_stream_id: baseReport.data_stream_id,
+                data_stream_route: baseReport.data_stream_route,
+                content: {
+                    ...baseReport.content,
+                    metadata: {
+                        ...baseReport.content.metadata,
+                        received_filename: expectedFilename2
+                    }
+                }
+            });
+            metadataVerifyReports.push(metadataVerifyReport);
+            console.log(JSON.stringify(metadataVerifyReport, null, 2))
         }
 
         const initialReport = metadataVerifyReports[0];
@@ -243,9 +262,10 @@ test.describe('GraphQL getUploadStats', () => {
         const result = await gql.getUploadStats({
             dataStreamId: initialReport.data_stream_id,
             dataStreamRoute: initialReport.data_stream_route,
-            daysInterval: 0
+            daysInterval: 3
         });
 
+        console.log(JSON.stringify(result, null, 2))
         expect(result.getUploadStats.duplicateFilenames.length).toBe(1);
         expect(result.getUploadStats.duplicateFilenames[0].totalCount).toBe(numReports);
         expect(result.getUploadStats.duplicateFilenames[0].filename).toBe(expectedFilename);
