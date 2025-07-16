@@ -76,7 +76,7 @@ class UploadStatsLoader: KoinComponent {
 
         val duplicateFilenameCountQuery = (
                 "select * from "
-                        + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
+                        + "(select ${cPrefix}content.metadata.received_filename as filename, count(1) as totalCount "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
                         + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
