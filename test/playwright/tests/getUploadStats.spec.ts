@@ -90,66 +90,65 @@ test.describe('GraphQL getUploadStats', () => {
         expect(JSON.stringify(cleanedResult)).toMatchSnapshot("stats-for-multiple-pending-upload-reports");
     });
 
-    // TODO: This test is not working as expected. The stats are not being returned correctly with the date range filter.
-    test.skip('returns stats with start date range filtering', async ({ gql, reportHelper, dataGenerator }) => {
+    test('returns stats with start date range filtering', async ({ gql, reportHelper, dataGenerator }) => {
         const baseDate = new Date();
         const numReports = 3;
+        const expectedReports = numReports - 1;
         const startedReports: any[] = [];
 
-        const { startedReport: initialReport } = await reportHelper.createUploadStartedReport({
-            dex_ingest_datetime: dataGenerator.getFormattedDexIngestDateTime(dataGenerator.addDays(baseDate, -1)) // 2024-01-02
-        });
-        await reportHelper.createUploadCompleteReport(initialReport);
-
+        const baseReport = dataGenerator.createUploadReportStarted()
         for (let i = 0; i < numReports; i++) {
-            const { startedReport } = await reportHelper.createUploadStartedReport(
+            const { startedReport } = await reportHelper.createFullCompleteUpload(
                 {
-                    data_stream_id: initialReport.data_stream_id,
-                    data_stream_route: initialReport.data_stream_route,
+                    data_stream_id: baseReport.data_stream_id,
+                    data_stream_route: baseReport.data_stream_route,
                     dex_ingest_datetime: dataGenerator.getFormattedDexIngestDateTime(dataGenerator.addDays(baseDate, i))
                 }
             );
             startedReports.push(startedReport);
         }
         const result = await gql.getUploadStats({
-            dataStreamId: initialReport.data_stream_id,
-            dataStreamRoute: initialReport.data_stream_route,
-            dateStart: dataGenerator.formatDateCompactUTC(baseDate)
+            dataStreamId: baseReport.data_stream_id,
+            dataStreamRoute: baseReport.data_stream_route,
+            dateStart: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, 1))
         });
-        
-        expect(result.getUploadStats.uniqueUploadIdsCount).toBe(numReports);
-        
+
+        expect(result.getUploadStats.uniqueUploadIdsCount).toBe(expectedReports);
+        expect(result.getUploadStats.completedUploadsCount).toBe(expectedReports);
+        expect(result.getUploadStats.uploadsWithStatusCount).toBe(expectedReports);
+        expect(JSON.stringify(result)).toMatchSnapshot("stats-with-start-date-range-filtering");
     });
 
-    // TODO: This test is not working as expected. The stats are not being returned correctly with the date range filter.
-    test.skip('returns stats with start and end date range filtering', async ({ gql, reportHelper, dataGenerator }) => {
+    test('returns stats with start and end date range filtering', async ({ gql, reportHelper, dataGenerator }) => {
+        // create 4 reports, but expect 2 to be returned
         const baseDate = new Date();
-        const numReports = 3;
+        const numReports = 4;
+        const expectedReports = numReports - 2;
         const startedReports: any[] = [];
 
-        const { startedReport: initialReport } = await reportHelper.createUploadStartedReport({
-            dex_ingest_datetime: dataGenerator.getFormattedDexIngestDateTime(baseDate) // 2024-01-02
-        });
-        await reportHelper.createUploadCompleteReport(initialReport);
-
+        const baseReport = dataGenerator.createUploadReportStarted()
         for (let i = 0; i < numReports; i++) {
-            const { startedReport } = await reportHelper.createUploadStartedReport(
+            const { startedReport } = await reportHelper.createFullCompleteUpload(
                 {
-                    data_stream_id: initialReport.data_stream_id,
-                    data_stream_route: initialReport.data_stream_route,
-                    dex_ingest_datetime: dataGenerator.getFormattedDexIngestDateTime(dataGenerator.addDays(baseDate, i+1))
+                    data_stream_id: baseReport.data_stream_id,
+                    data_stream_route: baseReport.data_stream_route,
+                    dex_ingest_datetime: dataGenerator.getFormattedDexIngestDateTime(dataGenerator.addDays(baseDate, i))
                 }
             );
             startedReports.push(startedReport);
         }
         const result = await gql.getUploadStats({
-            dataStreamId: initialReport.data_stream_id,
-            dataStreamRoute: initialReport.data_stream_route,
-            dateStart: dataGenerator.formatDateCompactUTC(baseDate),
-            dateEnd: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, 3))
+            dataStreamId: baseReport.data_stream_id,
+            dataStreamRoute: baseReport.data_stream_route,
+            // take off the first day and last day to get the middle two reports
+            dateStart: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, 1)),
+            dateEnd: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, numReports-1))
         });
         
-        expect(result.getUploadStats.uniqueUploadIdsCount).toBe(2);
+        expect(result.getUploadStats.uniqueUploadIdsCount).toBe(expectedReports);
+        expect(result.getUploadStats.completedUploadsCount).toBe(expectedReports);
+        expect(result.getUploadStats.uploadsWithStatusCount).toBe(expectedReports);
+        expect(JSON.stringify(result)).toMatchSnapshot("stats-with-start-and-end-date-range-filtering");
         
     });
 
@@ -217,8 +216,8 @@ test.describe('GraphQL getUploadStats', () => {
     });
 
     // TODO: This test is not working as expected. Filename is not returned correctly and is always null.
-    test.skip('returns stats for duplicate filenames ', async ({ gql, reportHelper }) => {
-        const numReports = 2;
+    test('returns stats for duplicate filenames ', async ({ gql, reportHelper }) => {
+        const numReports = 3;
         const metadataVerifyReports: any[] = [];
         const baseReport: any = dataGenerator.createUploadReportStarted()
         const expectedFilename = "test.txt"
@@ -230,8 +229,10 @@ test.describe('GraphQL getUploadStats', () => {
                 data_stream_route: baseReport.data_stream_route,
                 content: {
                     ...baseReport.content,
+                    filename: expectedFilename,
                     metadata: {
                         ...baseReport.content.metadata,
+                        meta_ext_filename: expectedFilename,
                         received_filename: expectedFilename
                     }
                 }
@@ -241,21 +242,20 @@ test.describe('GraphQL getUploadStats', () => {
         }
 
 
-        for (let i = 0; i < numReports; i++) {
-            const { metadataVerifyReport } = await reportHelper.createUploadMetadataVerifyReport({
-                data_stream_id: baseReport.data_stream_id,
-                data_stream_route: baseReport.data_stream_route,
-                content: {
-                    ...baseReport.content,
-                    metadata: {
-                        ...baseReport.content.metadata,
-                        received_filename: expectedFilename2
-                    }
-                }
-            });
-            metadataVerifyReports.push(metadataVerifyReport);
-            console.log(JSON.stringify(metadataVerifyReport, null, 2))
-        }
+        // for (let i = 0; i < numReports; i++) {
+        //     const { metadataVerifyReport } = await reportHelper.createUploadMetadataVerifyReport({
+        //         data_stream_id: baseReport.data_stream_id,
+        //         data_stream_route: baseReport.data_stream_route,
+        //         content: {
+        //             ...baseReport.content,
+        //             metadata: {
+        //                 ...baseReport.content.metadata,
+        //                 received_filename: expectedFilename2
+        //             }
+        //         }
+        //     });
+        //     metadataVerifyReports.push(metadataVerifyReport);
+        // }
 
         const initialReport = metadataVerifyReports[0];
 

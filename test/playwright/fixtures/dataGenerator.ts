@@ -159,7 +159,6 @@ export function createUploadMetadataVerifyReport(report?: Partial<UploadReport>)
         ...baseReport,
         content: {
             ...createContentUploadMetadataVerify(baseReport),
-            ...baseReport.content
         },
         stage_info: {
             ...createStageInfoMetadataVerify(),
@@ -341,8 +340,7 @@ export function createContentUploadMetadataVerify(report?: UploadReport): Conten
         content_schema_version: "1.0.0",
         filename: faker.system.commonFileName('csv'),
         metadata: {
-            "key1": "value1",
-            "key2": "value2"
+            ...(report?.content && 'metadata' in report.content ? report.content.metadata : {})
         }
     }
     return content
