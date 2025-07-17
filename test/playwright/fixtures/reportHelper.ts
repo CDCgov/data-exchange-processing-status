@@ -46,6 +46,17 @@ export class ReportHelper {
         return { metadataVerifyReport: report, createMetadataVerifyReportResult: createReportResult }
     }
 
+    async createUploadMetadataVerifyReports(baseReport?: Partial<UploadReport>, numReports: number = 1) {
+        const reports = []
+        const createReportResults = []
+        for (let i = 0; i < numReports; i++) {
+            const { metadataVerifyReport, createMetadataVerifyReportResult }  = await this.createUploadMetadataVerifyReport(baseReport)
+            reports.push(metadataVerifyReport)
+            createReportResults.push(createMetadataVerifyReportResult)
+        }
+        return { metadataVerifyReports: reports, createMetadataVerifyReportResults: createReportResults }
+    }
+
     async createUploadMetadataVerifyReportWithIssues(baseReport?: Partial<UploadReport>) {
         const report = dataGenerator.createUploadMetadataVerifyReportWithIssue(baseReport ? dataGenerator.createUploadReport(baseReport) : undefined)
         const createReportResult = await this.gql.upsertReport({
@@ -54,6 +65,17 @@ export class ReportHelper {
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
         return { metadataVerifyReport: report, createMetadataVerifyReportResult: createReportResult }
+    }
+
+    async createUploadMetadataVerifyReportsWithIssues(baseReport?: Partial<UploadReport>, numReports: number = 1) {
+        const reports = []
+        const createReportResults = []
+        for (let i = 0; i < numReports; i++) {
+            const { metadataVerifyReport, createMetadataVerifyReportResult }  = await this.createUploadMetadataVerifyReportWithIssues(baseReport)
+            reports.push(metadataVerifyReport)
+            createReportResults.push(createMetadataVerifyReportResult)
+        }   
+        return { metadataVerifyReports: reports, createMetadataVerifyReportResults: createReportResults }
     }
 
     async createBlobFileCopyReport(baseReport?: UploadReport) {
@@ -80,6 +102,34 @@ export class ReportHelper {
         }
     }
 
+    async createFullPendingUploads(baseReport?: Partial<UploadReport>, numReports: number = 1) {
+        const startedReports: any[] = []
+        const statusReports: any[] = []
+        const metadataVerifyReports: any[] = []
+        const createStartedReportResults: any[] = []
+        const createStatusReportResults: any[] = []
+        const createMetadataVerifyReportResults: any[] = []
+        for (let i = 0; i < numReports; i++) {
+            const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
+            const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
+            const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
+            startedReports.push(startedReport)
+            statusReports.push(statusReport)
+            metadataVerifyReports.push(metadataVerifyReport)
+            createStartedReportResults.push(createStartedReportResult)
+            createStatusReportResults.push(createStatusReportResult)
+            createMetadataVerifyReportResults.push(createMetadataVerifyReportResult)
+        }
+        return {
+            startedReports,
+            statusReports,
+            metadataVerifyReports,
+            createStartedReportResults,
+            createStatusReportResults,
+            createMetadataVerifyReportResults,
+        }
+    }
+
     async createFullCompleteUpload(baseReport?: Partial<UploadReport>) {
         const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
         const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
@@ -97,6 +147,48 @@ export class ReportHelper {
             createMetadataVerifyReportResult,
             createCompleteReportResult,
             createBlobFileCopyReportResult,
+        }
+    }
+    async createFullCompleteUploads(baseReport?: Partial<UploadReport>, numReports: number = 1) {
+        const startedReports: any[] = []
+        const statusReports: any[] = []
+        const metadataVerifyReports: any[] = []
+        const completeReports: any[] = []
+        const blobFileCopyReports: any[] = []
+        const createStartedReportResults: any[] = []
+        const createStatusReportResults: any[] = []
+        const createMetadataVerifyReportResults: any[] = []
+        const createCompleteReportResults: any[] = []
+        const createBlobFileCopyReportResults: any[] = []
+
+        for (let i = 0; i < numReports; i++) {
+            const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
+            const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
+            const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
+            const { completeReport, createCompleteReportResult } = await this.createUploadCompleteReport(startedReport)
+            const { blobFileCopyReport, createBlobFileCopyReportResult } = await this.createBlobFileCopyReport(startedReport)
+            startedReports.push(startedReport)
+            statusReports.push(statusReport)
+            metadataVerifyReports.push(metadataVerifyReport)
+            completeReports.push(completeReport)
+            blobFileCopyReports.push(blobFileCopyReport)
+            createStartedReportResults.push(createStartedReportResult)
+            createStatusReportResults.push(createStatusReportResult)
+            createMetadataVerifyReportResults.push(createMetadataVerifyReportResult)
+            createCompleteReportResults.push(createCompleteReportResult)
+            createBlobFileCopyReportResults.push(createBlobFileCopyReportResult)
+        }
+        return {
+            startedReports,
+            statusReports,
+            metadataVerifyReports,
+            completeReports,
+            blobFileCopyReports,
+            createStartedReportResults,
+            createStatusReportResults,
+            createMetadataVerifyReportResults,
+            createCompleteReportResults,
+            createBlobFileCopyReportResults,
         }
     }
 
@@ -218,10 +310,26 @@ export class ReportHelper {
         expect(actualUndeliveredUploadFiles).toEqual(originalUploadFiles);
     }
 
+    async validateDuplicateFilenamesBlock(actualDuplicateFilenames: any, metadataVerifyReports: any[]) {
+        this.validateDuplicateFilesBlock(actualDuplicateFilenames)
+        const actualDuplicateUploadFilesSorted = actualDuplicateFilenames.sort((a: any, b: any) => a.filename.localeCompare(b.filename))
+        const originalDuplicateFiles = this.getReceivedFilenamesWithCounts(metadataVerifyReports)
+        
+        expect(actualDuplicateUploadFilesSorted.length).toBe(originalDuplicateFiles.length);
+        expect(actualDuplicateUploadFilesSorted).toEqual(originalDuplicateFiles);
+    }
+
     async validateUploadListBlock(uploadList: any) {
         uploadList.forEach((upload: any) => {
             expect(upload).toHaveProperty("uploadId");
             expect(upload).toHaveProperty("filename");
+        });
+    }
+
+    async validateDuplicateFilesBlock(duplicateFiles: any) {
+        duplicateFiles.forEach((duplicate: any) => {
+            expect(duplicate).toHaveProperty("filename");
+            expect(duplicate).toHaveProperty("totalCount");
         });
     }
 
@@ -233,6 +341,7 @@ export class ReportHelper {
         uploadFiles.sort((a: { uploadId: any; }, b: { uploadId: any; }) => (a.uploadId || '').localeCompare(b.uploadId || ''));
         return uploadFiles;
     }
+
     private getUploadFilesFromMetadataVerifyReports(metadataVerifyReports: any): { uploadId: string; filename: string; }[] {
         const uploadFiles =  metadataVerifyReports.map((report: { upload_id: any; content: { filename: any; }; }) => ({
             uploadId: report.upload_id,
@@ -241,6 +350,19 @@ export class ReportHelper {
         
         uploadFiles.sort((a: { uploadId: any; }, b: { uploadId: any; }) => (a.uploadId || '').localeCompare(b.uploadId || ''));
         return uploadFiles;
+    }
+
+    private getReceivedFilenamesWithCounts(metadataVerifyReports: any[]): { filename: string; totalCount: number }[] {
+        const counts: Record<string, number> = {};
+        metadataVerifyReports.forEach(report => {
+            const filename = report.content?.metadata?.received_filename;
+            if (filename) {
+                counts[filename] = (counts[filename] || 0) + 1;
+            }
+        });
+        return Object.entries(counts)
+            .map(([filename, totalCount]) => ({ filename, totalCount }))
+            .sort((a, b) => a.filename.localeCompare(b.filename));
     }
 
     async getSubmissionDetailsAndValidate(
@@ -264,6 +386,66 @@ export class ReportHelper {
         })
 
         return submissionDetailsResult!;
+    }
+
+    /**
+     * Cleans only the pendingUploads block by emptying its pendingUploads array.
+     * @param {any} stats - The stats object
+     * @returns {any} - A copy with cleaned pendingUploads
+     */
+    cleanPendingUploads(stats: any) {
+        if (!stats || typeof stats !== 'object') return stats;
+        return {
+            ...stats,
+            pendingUploads: stats.pendingUploads
+                ? { ...stats.pendingUploads, pendingUploads: [] }
+                : stats.pendingUploads,
+        };
+    }
+
+    /**
+     * Cleans only the undeliveredUploads block by emptying its undeliveredUploads array.
+     * @param {any} stats - The stats object
+     * @returns {any} - A copy with cleaned undeliveredUploads
+     */
+    cleanUndeliveredUploads(stats: any) {
+        if (!stats || typeof stats !== 'object') return stats;
+        return {
+            ...stats,
+            undeliveredUploads: stats.undeliveredUploads
+                ? { ...stats.undeliveredUploads, undeliveredUploads: [] }
+                : stats.undeliveredUploads,
+        };
+    }
+
+    /**
+     * Cleans only the duplicateFilenames block by emptying the array.
+     * @param {any} stats - The stats object
+     * @returns {any} - A copy with cleaned duplicateFilenames
+     */
+    cleanDuplicateFilenames(stats: any) {
+        if (!stats || typeof stats !== 'object') return stats;
+        return {
+            ...stats,
+            duplicateFilenames: Array.isArray(stats.duplicateFilenames)
+                ? []
+                : stats.duplicateFilenames,
+        };
+    }
+
+    /**
+     * Cleans the getUploadStats result for snapshotting by emptying the arrays in
+     * pendingUploads, undeliveredUploads, and duplicateFilenames blocks.
+     *
+     * @param {any} stats - The getUploadStats object to clean
+     * @returns {any} - A cleaned copy suitable for snapshot comparison
+     */
+    cleanUploadStatsForSnapshot(stats: any) {
+        if (!stats || typeof stats !== 'object') return stats;
+        let cleaned = this.cleanPendingUploads(stats);
+        cleaned = this.cleanUndeliveredUploads(cleaned);
+        cleaned = this.cleanDuplicateFilenames(cleaned);
+        return cleaned;
     }
 }
 

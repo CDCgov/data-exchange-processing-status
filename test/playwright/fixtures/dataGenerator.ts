@@ -335,11 +335,13 @@ export function createContentUploadCompleted():ContentUploadCompleted {
 }
 
 export function createContentUploadMetadataVerify(report?: UploadReport): ContentUploadMetadataVerify {
+    const filename = faker.system.commonFileName('csv')
     const content: ContentUploadMetadataVerify = {
         content_schema_name: "metadata-verify",
         content_schema_version: "1.0.0",
-        filename: faker.system.commonFileName('csv'),
+        filename: filename,
         metadata: {
+            received_filename: filename,
             ...(report?.content && 'metadata' in report.content ? report.content.metadata : {})
         }
     }
