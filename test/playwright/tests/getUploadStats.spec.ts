@@ -120,18 +120,16 @@ test.describe('GraphQL getUploadStats', () => {
         const baseDate = new Date();
         const numReports = 4;
         const expectedReports = numReports - 2;
-        const startedReports: any[] = [];
         const baseReport = dataGenerator.createUploadReportStarted()
 
         for (let i = 0; i < numReports; i++) {
-            const { startedReport } = await reportHelper.createFullCompleteUpload(
+            await reportHelper.createFullCompleteUpload(
                 {
                     data_stream_id: baseReport.data_stream_id,
                     data_stream_route: baseReport.data_stream_route,
                     dex_ingest_datetime: dataGenerator.getFormattedDexIngestDateTime(dataGenerator.addDays(baseDate, i))
                 }
             );
-            startedReports.push(startedReport);
         }
         const result = await gql.getUploadStats({
             dataStreamId: baseReport.data_stream_id,

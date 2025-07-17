@@ -1,7 +1,6 @@
 import { expect } from '@playwright/test';
 import dataGenerator, { UploadReport } from './dataGenerator';
 import { GetSubmissionDetailsQuery, SortOrder } from '@gql';
-import { base } from '@faker-js/faker/.';
 
 export class ReportHelper {
     constructor(private readonly gql: any) {}
