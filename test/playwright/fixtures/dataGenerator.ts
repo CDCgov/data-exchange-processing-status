@@ -87,6 +87,13 @@ const minimalReport = {
     }
 }
 
+const defaultStageInfo = {
+    service: "UPLOAD API",
+    action: "blob-file-copy",
+    version: "0.0.49-SNAPSHOT",
+    status: Status.SUCCESS,
+}
+
 export function createMinimalReport() {
     let newReport = { ...minimalReport }
     newReport.upload_id = faker.string.uuid()
@@ -188,68 +195,59 @@ export function createMessageMetadata() : MessageMetadata {
 }
 
 export function createStageInfo(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = createStageInfoStarted(date)
-    return { ...defaultStageInfo, ...overrides }
+    const stageInfo = createStageInfoStarted(date)
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoStarted(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
-        service: "UPLOAD API",
+    const stageInfo = {
+        ...defaultStageInfo,
         action: "upload-started",
-        version: "0.0.49-SNAPSHOT",
-        status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoStatus(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
-        service: "UPLOAD API",
+    const stageInfo = {
+        ...defaultStageInfo,
         action: "upload-status",
-        version: "0.0.49-SNAPSHOT",
         status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoCompleted(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
-        service: "UPLOAD API",
+    const stageInfo = {
+        ...defaultStageInfo,
         action: "upload-completed",
-        version: "0.0.49-SNAPSHOT",
-        status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoMetadataVerify(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
-        service: "UPLOAD API",
+    const stageInfo = {
+        ...defaultStageInfo,
         action: "metadata-verify",
-        version: "0.0.49-SNAPSHOT",
-        status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoMetadataVerifyWithIssue(date: Date = new Date(), overrides?: Partial<StageInfo>): StageInfo {
-    const defaultStageInfo: StageInfo = {
-        service: "UPLOAD API",
+    const stageInfo: StageInfo = {
+        ...defaultStageInfo,
         action: "metadata-verify",
-        version: "0.0.49-SNAPSHOT",
-        status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
         end_processing_time: getFormattedDate(addSeconds(date, 20)),
         issues: [
@@ -260,25 +258,23 @@ export function createStageInfoMetadataVerifyWithIssue(date: Date = new Date(), 
         ]
     }
 
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoBlobFileCopy(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
-        service: "UPLOAD API",
+    const stageInfo = {
+        ...defaultStageInfo,
         action: "blob-file-copy",
-        version: "0.0.49-SNAPSHOT",
-        status: Status.SUCCESS,
         start_processing_time: getFormattedDate(addSeconds(date, 10)),
         end_processing_time: getFormattedDate(addSeconds(date, 20))
     }
 
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 
 export function createStageInfoWithWarning(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
+    const stageInfo = {
         ...createStageInfo(date),
         issues: [
             {
@@ -287,11 +283,11 @@ export function createStageInfoWithWarning(date: Date = new Date(), overrides?: 
             }
         ]
     }
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createStageInfoWithError(date: Date = new Date(), overrides?: Partial<StageInfo>) {
-    const defaultStageInfo = {
+    const stageInfo = {
         ...createStageInfo(date),
         issues: [
             {
@@ -300,7 +296,7 @@ export function createStageInfoWithError(date: Date = new Date(), overrides?: Pa
             }
         ]
     }
-    return { ...defaultStageInfo, ...overrides }
+    return { ...stageInfo, ...overrides }
 }
 
 export function createContentUploadStarted(): ContentUploadStarted {
@@ -552,6 +548,7 @@ const dataGenerator = {
     createUploadMetadataVerifyReportWithIssue,
     createBlobFileCopyReport,
     createStageInfoBlobFileCopy,
+    createStageInfoStarted,
     createSubscriptionInput,
     createEmailSubscriptionInput,
     createDeadlineSubscriptionInput,

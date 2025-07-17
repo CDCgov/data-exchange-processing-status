@@ -15,6 +15,16 @@ export class ReportHelper {
         return { completeReport: report, createCompleteReportResult: createReportResult }
     }
 
+    async replaceUploadCompleteReport(baseReport?: UploadReport) {
+        const report = dataGenerator.createUploadReportCompleted(baseReport)
+        const createReportResult = await this.gql.upsertReport({
+            action: "replace",
+            report: report
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+        return { completeReport: report, createCompleteReportResult: createReportResult }
+    }
+
     async createUploadStartedReport(baseReport?: Partial<UploadReport>) {
         const report = dataGenerator.createUploadReportStarted(baseReport ? dataGenerator.createUploadReport(baseReport) : undefined)
         const createReportResult = await this.gql.upsertReport({
@@ -272,8 +282,8 @@ export class ReportHelper {
             { response: 'stageInfo.endProcessingTime', report: 'stage_info.end_processing_time',
                 transform: (value: string) => new Date(value).toISOString()
             },
-            { response: 'content.contentSchemaName', report: 'content.content_schema_name' },
-            { response: 'content.contentSchemaVersion', report: 'content.content_schema_version' },
+            { response: 'content.content_schema_name', report: 'content.content_schema_name' },
+            { response: 'content.content_schema_version', report: 'content.content_schema_version' },
             { response: 'content.status', report: 'content.status' },
             { response: 'data.dataField1', report: 'data.data_field1' },
             { response: 'tags.tagField1', report: 'tags.tag_field1' },

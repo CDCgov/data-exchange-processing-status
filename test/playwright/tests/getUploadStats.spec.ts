@@ -36,6 +36,22 @@ test.describe('GraphQL getUploadStats', () => {
         expect(JSON.stringify(result.getUploadStats)).toMatchSnapshot("multiple-completed-upload-reports");
     });
 
+    test('returns stats for completed upload reports with replace', async ({ gql, reportHelper }) => {
+        const { startedReport } = await reportHelper.createUploadStartedReport();
+        await reportHelper.replaceUploadCompleteReport(startedReport);
+        await reportHelper.replaceUploadCompleteReport(startedReport);
+        await reportHelper.replaceUploadCompleteReport(startedReport);
+
+        const result = await gql.getUploadStats({
+            dataStreamId: startedReport.data_stream_id,
+            dataStreamRoute: startedReport.data_stream_route,
+            daysInterval: 1
+        })
+ 
+        expect(result.getUploadStats.completedUploadsCount).toBe(1);
+        expect(JSON.stringify(result.getUploadStats)).toMatchSnapshot("completed-upload-reports-with-replace");
+    });
+
     test('returns stats for multiple unique upload reports for the same data stream and route', async ({ gql, reportHelper }) => {
         const { startedReport } = await reportHelper.createUploadStartedReport();
         await reportHelper.createUploadStartedReport({data_stream_id: startedReport.data_stream_id, data_stream_route: startedReport.data_stream_route});
@@ -303,6 +319,5 @@ test.describe('GraphQL getUploadStats', () => {
         
         await expect(JSON.stringify(result.errors)).toMatchSnapshot("error-invalid-date-end-parameter");
     });
-
 
 });

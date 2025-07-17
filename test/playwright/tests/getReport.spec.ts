@@ -26,7 +26,7 @@ test.describe('GraphQL getReports', () => {
             intervals: [1_000, 2_000, 5_000],
          })
 
-        await reportResult!.getReports.forEach(report => {
+         await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, typicalReport)
             validateNonRequiredFields(report, typicalReport)
             validateContentInfo(report, typicalReport)            
@@ -339,8 +339,8 @@ function validateStageInfo(report: any, uploadReport: any) {
 }
 
 function validateContentInfo(report: any, uploadReport: any) {
-    expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
-    expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
+    expect(report.content.content_schema_name).toEqual(uploadReport.content.content_schema_name)
+    expect(report.content.content_schema_version).toEqual(uploadReport.content.content_schema_version)
     if (uploadReport.content.content_schema_name === "upload-started" || "upload-completed") {
         expect(report.content.status).toEqual(uploadReport.content.status)
     }
