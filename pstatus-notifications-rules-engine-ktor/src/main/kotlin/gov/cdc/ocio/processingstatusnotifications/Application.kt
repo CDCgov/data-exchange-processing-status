@@ -62,14 +62,16 @@ fun Application.module() {
         versionRoute()
     }
 
+    createMessageSystemPlugin(MessageSystemType.getFromAppEnv(environment), MessageProcessor())
+
     val builder = AutoConfiguredOpenTelemetrySdk.builder()
         .setResultAsGlobal()
         .addResourceCustomizer { old, _ ->
-            old.toBuilder()
-                .putAll(old.attributes)
-                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-rules-engine")
-                .build()
-        }
+        old.toBuilder()
+            .putAll(old.attributes)
+            .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-notifications-rules-engine")
+            .build()
+    }
         .addMeterProviderCustomizer { old, _ ->
             old.registerView(
                 InstrumentSelector.builder().setType(InstrumentType.HISTOGRAM).build(), Otel.getDefaultHistogramView())
@@ -78,8 +80,6 @@ fun Application.module() {
     install(KtorServerTelemetry) {
         setOpenTelemetry(otel)
     }
-
-    createMessageSystemPlugin(MessageSystemType.getFromAppEnv(environment), MessageProcessor())
 
     install(Koin) {
         loadKoinModules(environment)

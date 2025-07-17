@@ -203,7 +203,7 @@ class ReportMutationService: KoinComponent {
             // if status is successful, will persist report to Reports container, otherwise to dlq container
             if (validationResult.status) {
                 // The report input comes in from graphql as snake case, but all the models are set up for camel case.
-                val camelCaseKeyMap = mapKeysToCamelCase(input, ignore = listOf("content")).toMutableMap()
+                val camelCaseKeyMap = mapKeysToCamelCase(input).toMutableMap()
                 // Rename known Report keys that don't quite match in case.
                 camelCaseKeyMap.renameKey(oldKey = "dexIngestDatetime", newKey = "dexIngestDateTime")
                 val reportJson = gson.toJson(camelCaseKeyMap)
@@ -225,43 +225,28 @@ class ReportMutationService: KoinComponent {
     }
 
     /**
-     * Recursively transforms the keys of a map from snake_case to camelCase.
-     * Keys present in the `ignore` parameter are excluded from the transformation.
+     * Re-map the keys of the provided map from snake case to camel case.
      *
-     * @param map The input map whose keys are to be converted, or null if no map needs processing.
-     * @param ignore Vararg of keys that should be excluded from the transformation.
-     * @return A new map with keys transformed to camelCase, keeping the original values intact. Nested maps will also
-     * have their keys transformed recursively.
+     * @param map Map<String, Any?>?
+     * @return Map<String, Any?>
      */
-    private fun mapKeysToCamelCase(
-        map: Map<String, Any?>?,
-        ignore: List<String>,
-        parentPath: String = ""
-    ): Map<String, Any?> {
-        val sourceMap = map ?: return emptyMap()
-        val ignoredPaths = ignore.toSet()
+    private fun mapKeysToCamelCase(map: Map<String, Any?>?): Map<String, Any?> {
+        val newMap = mutableMapOf<String, Any?>()
 
-        val result = mutableMapOf<String, Any?>()
+        if (map != null) {
+            for ((key, value) in map) {
+                val newKey = key.snakeToCamelCase() // Example transformation, adjust as needed
 
-        for ((key, value) in sourceMap) {
-            val fullPath = if (parentPath.isEmpty()) key else "$parentPath.$key"
-
-            val shouldIgnore = ignoredPaths.any { fullPath == it || fullPath.startsWith("$it.") }
-
-            val newKey = if (shouldIgnore) key else key.snakeToCamelCase()
-
-            val newValue = when (value) {
-                is Map<*, *> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    mapKeysToCamelCase(value as Map<String, Any?>, ignore, parentPath = fullPath)
+                val newValue = when (value) {
+                    is Map<*, *> -> mapKeysToCamelCase(value as Map<String, Any?>) // Recursively convert nested maps
+                    else -> value
                 }
-                else -> value
-            }
 
-            result[newKey] = newValue
+                newMap[newKey] = newValue
+            }
         }
 
-        return result
+        return newMap
     }
 
     /**

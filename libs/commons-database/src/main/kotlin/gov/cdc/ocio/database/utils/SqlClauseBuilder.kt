@@ -44,11 +44,11 @@ object SqlClauseBuilder {
             timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= ${timeFunc(dateStartEpochSecs)}")
         } else {
             dateStart?.let {
-                val dateStartEpochSecs = DateUtils.getEpochFromDateString(it) / 1000
+                val dateStartEpochSecs = DateUtils.getEpochFromDateString(it)
                 timeRangeSqlPortion.append("${cPrefix}dexIngestDateTime >= ${timeFunc(dateStartEpochSecs)}")
             }
             dateEnd?.let {
-                val dateEndEpochSecs = DateUtils.getEpochFromDateString(it) / 1000
+                val dateEndEpochSecs = DateUtils.getEpochFromDateString(it)
                 timeRangeSqlPortion.append(" AND ${cPrefix}dexIngestDateTime < ${timeFunc(dateEndEpochSecs)}")
             }
         }
