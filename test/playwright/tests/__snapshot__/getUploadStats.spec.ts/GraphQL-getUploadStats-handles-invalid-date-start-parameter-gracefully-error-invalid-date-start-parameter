@@ -1,0 +1,1 @@
+[{"message":"Failed to parse 2024-01-01 as a date. Format should be: yyyyMMdd'T'HHmmss'Z'.","locations":[],"path":["getUploadStats"],"extensions":{"classification":"IllegalArgumentException"}}]
