@@ -1,4 +1,5 @@
 import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
+import { GetUploadsQuery } from '@gql';
 
 test.describe('GraphQL getUploads', () => {
     test('returns empty stats for a non-existing data stream and route', async ({ gql }) => {
@@ -12,13 +13,7 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         })
         
-        expect(getUploadResponse.getUploads.items).toEqual([])
-        expect(getUploadResponse.getUploads.summary.jurisdictions).toEqual([])
-        expect(getUploadResponse.getUploads.summary.numberOfPages).toEqual(0)
-        expect(getUploadResponse.getUploads.summary.pageNumber).toEqual(expectedPageNumber)
-        expect(getUploadResponse.getUploads.summary.pageSize).toEqual(expectedPageSize)
-        expect(getUploadResponse.getUploads.summary.senderIds).toEqual([])
-        expect(getUploadResponse.getUploads.summary.totalItems).toEqual(0)  
+        expectEmptyUploadsResponse(getUploadResponse, expectedPageSize, expectedPageNumber)
     })
 
     // multiple uploads for the same data stream and route
@@ -43,9 +38,8 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         })
 
-        expect(getUploadResponse.getUploads.summary.totalItems).toEqual(startedReports.length)
-        expect(getUploadResponse.getUploads.items.length).toEqual(startedReports.length)
-        expect(getUploadResponse.getUploads.summary.jurisdictions).toEqual([expectedJurisdiction])
+        expectUploadsCount(getUploadResponse, startedReports.length);
+        expectJurisdictions(getUploadResponse, [expectedJurisdiction]);
     })
 
     test('returns multiple uploads for the same data stream and route and different jurisdictions', async ({ gql, reportHelper, dataGenerator }) => {
@@ -67,9 +61,8 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         })
         
-        expect(getUploadResponse.getUploads.summary.totalItems).toEqual(startedReports.length)
-        expect(getUploadResponse.getUploads.items.length).toEqual(startedReports.length)
-        expect(getUploadResponse.getUploads.summary.jurisdictions.sort()).toEqual(expectedJurisdictions)
+        expectUploadsCount(getUploadResponse, startedReports.length);
+        expectJurisdictions(getUploadResponse, expectedJurisdictions);
     })  
 
     test('paginates items when there are more items than the page size', async ({ gql, reportHelper, dataGenerator }) => {
@@ -103,44 +96,39 @@ test.describe('GraphQL getUploads', () => {
         expect(getUploadsResponsePage2.getUploads.summary.totalItems).toEqual(totalItems)
     })
 
-    test('items are sorted by status when specified', async ({ gql, reportHelper, dataGenerator }) => {
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
+    const sortOrders = [
+        { sortOrder: "ASC", expectedFirst: "UploadComplete", expectedSecond: "Uploading" },
+        { sortOrder: "DESC", expectedFirst: "Uploading", expectedSecond: "UploadComplete" },
+    ];
 
-        const baseReport = await dataGenerator.createUploadReportStarted();
-        await reportHelper.createFullPendingUpload({
-            data_stream_id: baseReport.data_stream_id,
-            data_stream_route: baseReport.data_stream_route,
-        })
+    sortOrders.forEach(({ sortOrder, expectedFirst, expectedSecond }) => {
+        test(`items are sorted by status (${sortOrder})`, async ({ gql, reportHelper, dataGenerator }) => {
+            const expectedPageSize = 5
+            const expectedPageNumber = 1
 
-        await reportHelper.createFullCompleteUpload({
-            data_stream_id: baseReport.data_stream_id,
-            data_stream_route: baseReport.data_stream_route,
-        })
+            const baseReport = await dataGenerator.createUploadReportStarted();
+            await reportHelper.createFullPendingUpload({
+                data_stream_id: baseReport.data_stream_id,
+                data_stream_route: baseReport.data_stream_route,
+            })
 
-        const getUploadsResponseAscending = await gql.getUploads({
-            dataStreamId: baseReport.data_stream_id,
-            dataStreamRoute: baseReport.data_stream_route,
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber,
-            sortBy: "status",
-            sortOrder: "ASC"
-        })
-        expect(getUploadsResponseAscending.getUploads.items[0].status).toEqual("UploadComplete")
-        expect(getUploadsResponseAscending.getUploads.items[1].status).toEqual("Uploading")
+            await reportHelper.createFullCompleteUpload({
+                data_stream_id: baseReport.data_stream_id,
+                data_stream_route: baseReport.data_stream_route,
+            })
 
-        const getUploadsResponseDescending = await gql.getUploads({
-            dataStreamId: baseReport.data_stream_id,
-            dataStreamRoute: baseReport.data_stream_route,
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber,
-            sortBy: "status",
-            sortOrder: "DESC"
-        })
-        expect(getUploadsResponseDescending.getUploads.items[0].status).toEqual("Uploading")
-        expect(getUploadsResponseDescending.getUploads.items[1].status).toEqual("UploadComplete")
-
-    })
+            const getUploadsResponse = await gql.getUploads({
+                dataStreamId: baseReport.data_stream_id,
+                dataStreamRoute: baseReport.data_stream_route,
+                pageSize: expectedPageSize,
+                pageNumber: expectedPageNumber,
+                sortBy: "status",
+                sortOrder,
+            });
+            expect(getUploadsResponse.getUploads.items[0].status).toEqual(expectedFirst);
+            expect(getUploadsResponse.getUploads.items[1].status).toEqual(expectedSecond);
+        });
+    });
 
     test('items are filtered by filename when specified', async ({ gql, reportHelper, dataGenerator }) => {
         const expectedPageSize = 5
@@ -162,8 +150,7 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         })
 
-        expect(getUploadsResponse.getUploads.items.length).toEqual(1)
-        expect(getUploadsResponse.getUploads.items[0].fileName).toEqual(expectedFilename)
+        expectSingleUploadWithFilename(getUploadsResponse, expectedFilename);
     })
 
     test('items are filtered by start date range', async ({ gql, reportHelper, dataGenerator }) => {
@@ -197,9 +184,7 @@ test.describe('GraphQL getUploads', () => {
         const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort();
         const actualUploadIds = result.getUploads.items.map(item => item.uploadId).sort();
 
-        expect(result.getUploads.items.length).toEqual(expectedReports)
-        expect(result.getUploads.summary.totalItems).toEqual(expectedReports)
-        expect(actualUploadIds).toStrictEqual(expectedUploadIds)
+        expectUploadsByIds(result, expectedUploadIds);
     });
 
     test('items are filtered by end date range', async ({ gql, reportHelper, dataGenerator }) => {
@@ -233,9 +218,7 @@ test.describe('GraphQL getUploads', () => {
         const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort();
         const actualUploadIds = result.getUploads.items.map(item => item.uploadId).sort();
 
-        expect(result.getUploads.items.length).toEqual(expectedReports)
-        expect(result.getUploads.summary.totalItems).toEqual(expectedReports)
-        expect(actualUploadIds).toStrictEqual(expectedUploadIds)
+        expectUploadsByIds(result, expectedUploadIds);
     });
 
     test('items are filtered by start and end date range', async ({ gql, reportHelper, dataGenerator }) => {
@@ -270,36 +253,27 @@ test.describe('GraphQL getUploads', () => {
         const expectedUploadIds = uploadStartedReports.slice(1, -1).map(report => report.upload_id).sort();
         const actualUploadIds = result.getUploads.items.map(item => item.uploadId).sort();
 
-        expect(result.getUploads.items.length).toEqual(expectedReports)
-        expect(result.getUploads.summary.totalItems).toEqual(expectedReports)
-        expect(actualUploadIds).toStrictEqual(expectedUploadIds)
+        expectUploadsByIds(result, expectedUploadIds);
     });
 
-    test('errors when date start is invalid', async ({ gql }) => {
-        const result = await gql.getUploads({
-            dataStreamId: "test-data-stream-id",
-            dataStreamRoute: "test-data-stream-route",
-            dateStart: "invalid",
-            pageSize: 5,
-            pageNumber: 1
-        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
+    const errorCases = [
+        { name: "invalid dateStart", args: { dateStart: "invalid" }, snapshot: "invalid-date-start" },
+        { name: "invalid dateEnd", args: { dateEnd: "invalid" }, snapshot: "invalid-date-end" },
+    ];
 
-        expect(result.errors).toBeDefined()
-        expect(JSON.stringify(result)).toMatchSnapshot("invalid-date-start")
-    })
+    errorCases.forEach(({ name, args, snapshot }) => {
+        test(`errors when ${name}`, async ({ gql }) => {
+            const result = await gql.getUploads({
+                dataStreamId: "test-data-stream-id",
+                dataStreamRoute: "test-data-stream-route",
+                pageSize: 5,
+                pageNumber: 1,
+                ...args,
+            }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
-    test('errors when date end is invalid', async ({ gql }) => {
-        const result = await gql.getUploads({
-            dataStreamId: "test-data-stream-id",
-            dataStreamRoute: "test-data-stream-route",
-            dateEnd: "invalid",
-            pageSize: 5,
-            pageNumber: 1
-        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
-
-        expect(result.errors).toBeDefined()
-        expect(JSON.stringify(result)).toMatchSnapshot("invalid-date-end")
-    })
+            expectGraphQLErrorResponse(result, snapshot);
+        });
+    });
 
     test('errors when page number is invalid for a real data stream and route', async ({ gql, reportHelper }) => {
         // this should not be necessary, but it's needed to make the page number error happen
@@ -312,8 +286,7 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: 0
         }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
-        expect(result.errors).toBeDefined()
-        expect(JSON.stringify(result)).toMatchSnapshot("invalid-page-number")
+        expectGraphQLErrorResponse(result, "invalid-page-number")
     })
 
     test('errors when page number is invalid for nonexistent data stream and route', async ({ gql }) => {
@@ -324,7 +297,43 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: 0
         }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
-        expect(result.errors).toBeDefined()
-        expect(JSON.stringify(result)).toMatchSnapshot("invalid-page-number-no-datastream-route")
+        expectGraphQLErrorResponse(result, "invalid-page-number-no-datastream-route")
     })
 })
+
+
+function expectEmptyUploadsResponse(response: GetUploadsQuery, expectedPageSize: number, expectedPageNumber: number) {
+    expect(response.getUploads.items).toEqual([]);
+    expect(response.getUploads.summary.jurisdictions).toEqual([]);
+    expect(response.getUploads.summary.numberOfPages).toEqual(0);
+    expect(response.getUploads.summary.pageNumber).toEqual(expectedPageNumber);
+    expect(response.getUploads.summary.pageSize).toEqual(expectedPageSize);
+    expect(response.getUploads.summary.senderIds).toEqual([]);
+    expect(response.getUploads.summary.totalItems).toEqual(0);
+  }
+
+function expectUploadsCount(response: GetUploadsQuery, expectedCount: number) {
+    expect(response.getUploads.summary.totalItems).toEqual(expectedCount);
+    expect(response.getUploads.items.length).toEqual(expectedCount);
+}
+
+function expectJurisdictions(response: GetUploadsQuery, expectedJurisdictions: string[]) {
+    expect(response.getUploads.summary.jurisdictions.sort()).toEqual(expectedJurisdictions.sort());
+}
+
+function expectSingleUploadWithFilename(response: GetUploadsQuery, expectedFilename: string) {
+    expect(response.getUploads.items.length).toEqual(1);
+    expect(response.getUploads.items[0].fileName).toEqual(expectedFilename);
+}
+
+function expectUploadsByIds(response: GetUploadsQuery, expectedIds: string[]) {
+    const actualIds = response.getUploads.items.map(item => item.uploadId).sort();
+    expect(response.getUploads.items.length).toEqual(expectedIds.length);
+    expect(response.getUploads.summary.totalItems).toEqual(expectedIds.length);
+    expect(actualIds).toStrictEqual(expectedIds.sort());
+}
+
+function expectGraphQLErrorResponse(result: GraphQLErrorResponse, snapshotName: string) {
+    expect(result.errors).toBeDefined();
+    expect(JSON.stringify(result)).toMatchSnapshot(snapshotName);
+}
