@@ -280,8 +280,8 @@ function expectUploadsCount(response: GetUploadsQuery, expectedCount: number) {
 }
 
 function expectJurisdictions(response: GetUploadsQuery, expectedJurisdictions: string[]) {
-    const actualJurisdictions = response.getUploads.summary.jurisdictions.toSorted((a, b) => a.localeCompare(b));
-    const sortedExpectedJurisdictions = expectedJurisdictions.toSorted((a, b) => a.localeCompare(b));
+    const actualJurisdictions = (response.getUploads.summary.jurisdictions ?? []).slice().sort((a, b) => a.localeCompare(b));
+    const sortedExpectedJurisdictions = (expectedJurisdictions ?? []).slice().sort((a, b) => a.localeCompare(b));
     expect(actualJurisdictions).toEqual(sortedExpectedJurisdictions);
 }
 
@@ -293,8 +293,8 @@ function expectSingleUploadWithFilename(response: GetUploadsQuery, expectedFilen
 function expectUploadsByIds(response: GetUploadsQuery, expectedIds: string[]) {
     expect(response.getUploads.items.length).toEqual(expectedIds.length);
     expect(response.getUploads.summary.totalItems).toEqual(expectedIds.length);
-    const actualIds = response.getUploads.items.map(item => item.uploadId ?? '').toSorted((a, b) => a.localeCompare(b));
-    const sortedExpectedIds = expectedIds.toSorted((a, b) => a.localeCompare(b));
+    const actualIds = response.getUploads.items.map(item => item.uploadId ?? '').slice().sort((a, b) => a.localeCompare(b));
+    const sortedExpectedIds = (expectedIds ?? []).slice().sort((a, b) => a.localeCompare(b));
     expect(actualIds).toEqual(sortedExpectedIds);
 }
 
