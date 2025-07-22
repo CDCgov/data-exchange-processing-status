@@ -150,6 +150,20 @@ export function createUploadReportStatus(report?: UploadReport): UploadReport {
     return newReport
 }
 
+export function createUploadReportStatusCompleted(report?: UploadReport): UploadReport {
+    report = report || createUploadReport()
+    const content = createContentUploadStatus()
+    content.offset = content.size
+    const newReport: UploadReport = {
+        ...report,
+        content: {
+            ...content,
+        },
+        stage_info: createStageInfoStatus()
+    }
+    return newReport
+}
+
 export function createUploadReportCompleted(report?: UploadReport): UploadReport {
     report = report || createUploadReport()
     const newReport: UploadReport = {
@@ -316,7 +330,7 @@ export function createContentUploadStatus(): ContentUploadStatus {
         tguid: faker.string.uuid(),
         offset: 0,
         size: 1024,
-        filename: "playwright-test-file"
+        filename: faker.system.commonFileName('file')
     }
     return content
 }
@@ -543,6 +557,7 @@ const dataGenerator = {
     createContentBlobFileCopy,
     createUploadReportStarted,
     createUploadReportStatus,
+    createUploadReportStatusCompleted,
     createUploadReportCompleted,
     createUploadMetadataVerifyReport,
     createUploadMetadataVerifyReportWithIssue,
