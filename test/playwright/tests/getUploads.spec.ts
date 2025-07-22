@@ -3,49 +3,38 @@ import { GetUploadsQuery } from '@gql';
 
 test.describe('GraphQL getUploads', () => {
     test('returns empty stats for a non-existing data stream and route', async ({ gql }) => {
-        const expectedPageSize = 5
-        const expectedPageNumber = 0
-
         const getUploadResponse = await gql.getUploads({
             dataStreamId: "XXX",
             dataStreamRoute: "XXX",
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 0
         })
         
-        expectEmptyUploadsResponse(getUploadResponse, expectedPageSize, expectedPageNumber)
+        expectEmptyUploadsResponse(getUploadResponse)
     })
 
-    // multiple uploads for the same data stream and route
     test('returns multiple uploads for the same data stream and route and jurisdiction', async ({ gql, reportHelper, dataGenerator }) => {
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
-        const expectedJurisdiction = "TEST"
-
+        const expectedJurisdictions = ["TEST"]
         const baseReport = await dataGenerator.createUploadReportStarted();
 
         const { startedReports } = await reportHelper.createFullCompleteUploads({
             data_stream_id: baseReport.data_stream_id,
             data_stream_route: baseReport.data_stream_route,
-            jurisdiction: expectedJurisdiction
+            jurisdiction: expectedJurisdictions[0]
         }, 3)
 
-      
         const getUploadResponse = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 1
         })
 
         expectUploadsCount(getUploadResponse, startedReports.length);
-        expectJurisdictions(getUploadResponse, [expectedJurisdiction]);
+        expectJurisdictions(getUploadResponse, expectedJurisdictions);
     })
 
     test('returns multiple uploads for the same data stream and route and different jurisdictions', async ({ gql, reportHelper, dataGenerator }) => {
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
-
         const baseReport = await dataGenerator.createUploadReportStarted();
 
         const { startedReports } = await reportHelper.createFullCompleteUploads({
@@ -53,12 +42,12 @@ test.describe('GraphQL getUploads', () => {
             data_stream_route: baseReport.data_stream_route,
         }, 3)
 
-        const expectedJurisdictions = startedReports.map(report => report.jurisdiction).toSorted((a, b) => a.localeCompare(b))
+        const expectedJurisdictions = startedReports.map(report => report.jurisdiction)
         const getUploadResponse = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 1
         })
         
         expectUploadsCount(getUploadResponse, startedReports.length);
@@ -103,9 +92,6 @@ test.describe('GraphQL getUploads', () => {
 
     sortOrders.forEach(({ sortOrder, expectedFirst, expectedSecond }) => {
         test(`items are sorted by status (${sortOrder})`, async ({ gql, reportHelper, dataGenerator }) => {
-            const expectedPageSize = 5
-            const expectedPageNumber = 1
-
             const baseReport = await dataGenerator.createUploadReportStarted();
             await reportHelper.createFullPendingUpload({
                 data_stream_id: baseReport.data_stream_id,
@@ -120,8 +106,8 @@ test.describe('GraphQL getUploads', () => {
             const getUploadsResponse = await gql.getUploads({
                 dataStreamId: baseReport.data_stream_id,
                 dataStreamRoute: baseReport.data_stream_route,
-                pageSize: expectedPageSize,
-                pageNumber: expectedPageNumber,
+                pageSize: 5,
+                pageNumber: 1,
                 sortBy: "status",
                 sortOrder,
             });
@@ -131,8 +117,6 @@ test.describe('GraphQL getUploads', () => {
     });
 
     test('items are filtered by filename when specified', async ({ gql, reportHelper, dataGenerator }) => {
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
         const baseReport = await dataGenerator.createUploadReportStatus();
 
         const { statusReports } = await reportHelper.createFullCompleteUploads({
@@ -146,8 +130,8 @@ test.describe('GraphQL getUploads', () => {
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
             fileName: expectedFilename,
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 1
         })
 
         expectSingleUploadWithFilename(getUploadsResponse, expectedFilename);
@@ -156,9 +140,6 @@ test.describe('GraphQL getUploads', () => {
     test('items are filtered by start date range', async ({ gql, reportHelper, dataGenerator }) => {
         const baseDate = new Date();
         const numReports = 4;
-        const expectedReports = numReports - 1;
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
         const baseReport = dataGenerator.createUploadReportStarted()
 
         const uploadStartedReports = []
@@ -177,11 +158,12 @@ test.describe('GraphQL getUploads', () => {
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
             dateStart: dataGenerator.formatDateCompactUTC(baseDate),
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 1
         });
 
         const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort((a, b) => a.localeCompare(b));
+        console.log(expectedUploadIds)
 
         expectUploadsByIds(result, expectedUploadIds);
     });
@@ -189,8 +171,6 @@ test.describe('GraphQL getUploads', () => {
     test('items are filtered by end date range', async ({ gql, reportHelper, dataGenerator }) => {
         const baseDate = new Date();
         const numReports = 4;
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
         const baseReport = dataGenerator.createUploadReportStarted()
 
         const uploadStartedReports = []
@@ -209,8 +189,8 @@ test.describe('GraphQL getUploads', () => {
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
             dateEnd: dataGenerator.formatDateCompactUTC(baseDate),
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 1
         });
 
         const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort((a, b) => a.localeCompare(b));
@@ -220,8 +200,6 @@ test.describe('GraphQL getUploads', () => {
     test('items are filtered by start and end date range', async ({ gql, reportHelper, dataGenerator }) => {
         const baseDate = new Date();
         const numReports = 4;
-        const expectedPageSize = 5
-        const expectedPageNumber = 1
         const baseReport = dataGenerator.createUploadReportStarted()
 
         const uploadStartedReports = []
@@ -241,8 +219,8 @@ test.describe('GraphQL getUploads', () => {
             dataStreamRoute: baseReport.data_stream_route,
             dateStart: dataGenerator.formatDateCompactUTC(baseDate),
             dateEnd: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, numReports-1)),
-            pageSize: expectedPageSize,
-            pageNumber: expectedPageNumber
+            pageSize: 5,
+            pageNumber: 1
         });
 
         const expectedUploadIds = uploadStartedReports.slice(1, -1).map(report => report.upload_id).sort((a, b) => a.localeCompare(b));
@@ -294,15 +272,8 @@ test.describe('GraphQL getUploads', () => {
     })
 })
 
-
-function expectEmptyUploadsResponse(response: GetUploadsQuery, expectedPageSize: number, expectedPageNumber: number) {
-    expect(response.getUploads.items).toEqual([]);
-    expect(response.getUploads.summary.jurisdictions).toEqual([]);
-    expect(response.getUploads.summary.numberOfPages).toEqual(0);
-    expect(response.getUploads.summary.pageNumber).toEqual(expectedPageNumber);
-    expect(response.getUploads.summary.pageSize).toEqual(expectedPageSize);
-    expect(response.getUploads.summary.senderIds).toEqual([]);
-    expect(response.getUploads.summary.totalItems).toEqual(0);
+function expectEmptyUploadsResponse(response: GetUploadsQuery) {
+    expect(JSON.stringify(response.getUploads)).toMatchSnapshot("empty-uploads-response")
   }
 
 function expectUploadsCount(response: GetUploadsQuery, expectedCount: number) {
@@ -311,9 +282,8 @@ function expectUploadsCount(response: GetUploadsQuery, expectedCount: number) {
 }
 
 function expectJurisdictions(response: GetUploadsQuery, expectedJurisdictions: string[]) {
-    const sortedActualJurisdictions = response.getUploads.summary.jurisdictions.toSorted((a, b) => a.localeCompare(b));
-    const sortedExpectedJurisdictions = expectedJurisdictions.toSorted((a, b) => a.localeCompare(b));
-    expect(sortedActualJurisdictions).toEqual(sortedExpectedJurisdictions);
+    const actualJurisdictions = response.getUploads.summary.jurisdictions.sort((a, b) => a.localeCompare(b));
+    expect(actualJurisdictions).toEqual(expectedJurisdictions.sort((a, b) => a.localeCompare(b)));
 }
 
 function expectSingleUploadWithFilename(response: GetUploadsQuery, expectedFilename: string) {
@@ -322,12 +292,11 @@ function expectSingleUploadWithFilename(response: GetUploadsQuery, expectedFilen
 }
 
 function expectUploadsByIds(response: GetUploadsQuery, expectedIds: string[]) {
-    const actualIds = response.getUploads.items.map(item => item.uploadId).sort();
     expect(response.getUploads.items.length).toEqual(expectedIds.length);
     expect(response.getUploads.summary.totalItems).toEqual(expectedIds.length);
-    const sortedActualIds = actualIds.toSorted((a, b) => a.localeCompare(b));
-    const sortedExpectedIds = expectedIds.toSorted((a, b) => a.localeCompare(b));
-    expect(sortedActualIds).toEqual(sortedExpectedIds);
+    const actualIds = response.getUploads.items.map(item => item.uploadId ?? '').sort((a, b) => a.localeCompare(b));
+    const sortedExpectedIds = expectedIds.sort((a, b) => a.localeCompare(b));
+    expect(actualIds).toEqual(sortedExpectedIds);
 }
 
 function expectGraphQLErrorResponse(result: GraphQLErrorResponse, snapshotName: string) {
