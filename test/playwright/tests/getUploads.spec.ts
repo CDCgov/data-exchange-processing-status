@@ -53,7 +53,7 @@ test.describe('GraphQL getUploads', () => {
             data_stream_route: baseReport.data_stream_route,
         }, 3)
 
-        const expectedJurisdictions = startedReports.map(report => report.jurisdiction).sort()
+        const expectedJurisdictions = startedReports.map(report => report.jurisdiction).toSorted((a, b) => a.localeCompare(b))
         const getUploadResponse = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
@@ -181,8 +181,7 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         });
 
-        const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort();
-        const actualUploadIds = result.getUploads.items.map(item => item.uploadId).sort();
+        const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort((a, b) => a.localeCompare(b));
 
         expectUploadsByIds(result, expectedUploadIds);
     });
@@ -190,7 +189,6 @@ test.describe('GraphQL getUploads', () => {
     test('items are filtered by end date range', async ({ gql, reportHelper, dataGenerator }) => {
         const baseDate = new Date();
         const numReports = 4;
-        const expectedReports = numReports - 1;
         const expectedPageSize = 5
         const expectedPageNumber = 1
         const baseReport = dataGenerator.createUploadReportStarted()
@@ -215,16 +213,13 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         });
 
-        const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort();
-        const actualUploadIds = result.getUploads.items.map(item => item.uploadId).sort();
-
+        const expectedUploadIds = uploadStartedReports.slice(1).map(report => report.upload_id).sort((a, b) => a.localeCompare(b));
         expectUploadsByIds(result, expectedUploadIds);
     });
 
     test('items are filtered by start and end date range', async ({ gql, reportHelper, dataGenerator }) => {
         const baseDate = new Date();
         const numReports = 4;
-        const expectedReports = numReports - 2;
         const expectedPageSize = 5
         const expectedPageNumber = 1
         const baseReport = dataGenerator.createUploadReportStarted()
@@ -250,9 +245,7 @@ test.describe('GraphQL getUploads', () => {
             pageNumber: expectedPageNumber
         });
 
-        const expectedUploadIds = uploadStartedReports.slice(1, -1).map(report => report.upload_id).sort();
-        const actualUploadIds = result.getUploads.items.map(item => item.uploadId).sort();
-
+        const expectedUploadIds = uploadStartedReports.slice(1, -1).map(report => report.upload_id).sort((a, b) => a.localeCompare(b));
         expectUploadsByIds(result, expectedUploadIds);
     });
 
@@ -318,7 +311,9 @@ function expectUploadsCount(response: GetUploadsQuery, expectedCount: number) {
 }
 
 function expectJurisdictions(response: GetUploadsQuery, expectedJurisdictions: string[]) {
-    expect(response.getUploads.summary.jurisdictions.sort()).toEqual(expectedJurisdictions.sort());
+    const sortedActualJurisdictions = response.getUploads.summary.jurisdictions.toSorted((a, b) => a.localeCompare(b));
+    const sortedExpectedJurisdictions = expectedJurisdictions.toSorted((a, b) => a.localeCompare(b));
+    expect(sortedActualJurisdictions).toEqual(sortedExpectedJurisdictions);
 }
 
 function expectSingleUploadWithFilename(response: GetUploadsQuery, expectedFilename: string) {
@@ -330,7 +325,9 @@ function expectUploadsByIds(response: GetUploadsQuery, expectedIds: string[]) {
     const actualIds = response.getUploads.items.map(item => item.uploadId).sort();
     expect(response.getUploads.items.length).toEqual(expectedIds.length);
     expect(response.getUploads.summary.totalItems).toEqual(expectedIds.length);
-    expect(actualIds).toStrictEqual(expectedIds.sort());
+    const sortedActualIds = actualIds.toSorted((a, b) => a.localeCompare(b));
+    const sortedExpectedIds = expectedIds.toSorted((a, b) => a.localeCompare(b));
+    expect(sortedActualIds).toEqual(sortedExpectedIds);
 }
 
 function expectGraphQLErrorResponse(result: GraphQLErrorResponse, snapshotName: string) {
