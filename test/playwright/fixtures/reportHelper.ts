@@ -34,6 +34,7 @@ export class ReportHelper {
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
         return { startedReport: report, createStartedReportResult: createReportResult }
     }
+    
 
     async createUploadStatusReport(baseReport?: UploadReport) {
         const report = dataGenerator.createUploadReportStatus(baseReport)
@@ -44,6 +45,16 @@ export class ReportHelper {
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
         return { statusReport: report, createStatusReportResult: createReportResult }
     }
+
+    async createUploadStatusReportCompleted(baseReport?: UploadReport) {
+        const report = dataGenerator.createUploadReportStatusCompleted(baseReport)
+        const createReportResult = await this.gql.upsertReport({
+            action: "create",
+            report: report
+        })
+        expect(createReportResult.upsertReport.result).toBe("SUCCESS")
+        return { statusReport: report, createStatusReportResult: createReportResult }
+    }   
 
     async createUploadMetadataVerifyReport(baseReport?: Partial<UploadReport>) {
         const report = dataGenerator.createUploadMetadataVerifyReport(baseReport ? dataGenerator.createUploadMetadataVerifyReport(baseReport) : undefined)
@@ -121,7 +132,16 @@ export class ReportHelper {
         for (let i = 0; i < numReports; i++) {
             const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
             const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
-            const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
+            const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport({
+                ...startedReport,
+                content: {
+                    ...startedReport.content,
+                    metadata: {
+                        ...startedReport.content.metadata,
+                        received_filename: statusReport.content.filename
+                    }
+                }
+            })
             startedReports.push(startedReport)
             statusReports.push(statusReport)
             metadataVerifyReports.push(metadataVerifyReport)
@@ -141,7 +161,7 @@ export class ReportHelper {
 
     async createFullCompleteUpload(baseReport?: Partial<UploadReport>) {
         const { startedReport, createStartedReportResult } = await this.createUploadStartedReport(baseReport)
-        const { statusReport, createStatusReportResult } = await this.createUploadStatusReport(startedReport)
+        const { statusReport, createStatusReportResult } = await this.createUploadStatusReportCompleted(startedReport)
         const { metadataVerifyReport, createMetadataVerifyReportResult } = await this.createUploadMetadataVerifyReport(startedReport)
         const { completeReport, createCompleteReportResult } = await this.createUploadCompleteReport(startedReport)
         const { blobFileCopyReport, createBlobFileCopyReportResult } = await this.createBlobFileCopyReport(startedReport)
