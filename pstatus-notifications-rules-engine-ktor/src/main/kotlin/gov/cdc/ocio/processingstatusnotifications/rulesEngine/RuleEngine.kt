@@ -53,7 +53,7 @@ object RuleEngine: KoinComponent {
             runCatching {
                 evaluateSubscription(report, subscription)
             }.onFailure { ex ->
-                logger.error("Failed to evaluate subscription: ${subscription.key} with exception: ${ex.message}", subscription)
+                logger.error("Failed to evaluate subscription: ${subscription.key}", ex)
             }
         }
     }
