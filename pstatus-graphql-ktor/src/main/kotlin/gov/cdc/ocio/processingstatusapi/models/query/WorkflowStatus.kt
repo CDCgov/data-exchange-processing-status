@@ -10,6 +10,7 @@ import java.time.OffsetDateTime
  * Model for the workflow status.
  *
  * @property workflowId String
+ * @property runId String
  * @property taskName String
  * @property description String
  * @property status String
@@ -21,6 +22,9 @@ import java.time.OffsetDateTime
 data class WorkflowStatus(
     @GraphQLDescription("Workflow ID of the scheduled evaluation workflow")
     val workflowId: String,
+
+    @GraphQLDescription("Run ID of the scheduled evaluation workflow")
+    val runId: String,
 
     @GraphQLDescription("Name of the task to run in the workflow")
     val taskName: String,

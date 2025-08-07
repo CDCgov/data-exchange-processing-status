@@ -314,6 +314,7 @@ class WorkflowEngine(
             )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
+                executionInfo.execution.runId,
                 taskName,
                 taskQueue,
                 description,

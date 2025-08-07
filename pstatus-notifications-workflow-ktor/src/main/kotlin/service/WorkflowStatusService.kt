@@ -18,6 +18,7 @@ class WorkflowStatusService : KoinComponent {
                 // Only provide a subset of the workflow status to callers as the other data is superfluous.
                 mapOf(
                     "workflowId" to it.workflowId,
+                    "runId" to it.runId,
                     "taskName" to it.taskName,
                     "description" to it.description,
                     "status" to it.status,

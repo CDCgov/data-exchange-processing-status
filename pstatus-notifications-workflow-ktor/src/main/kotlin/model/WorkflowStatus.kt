@@ -7,6 +7,7 @@ import gov.cdc.ocio.processingnotifications.temporal.WorkflowFailureInfo
  * Represents the status of a workflow, providing details about its context, execution, and potential errors.
  *
  * @property workflowId String
+ * @property runId String
  * @property taskName String
  * @property taskQueue String
  * @property description String
@@ -19,6 +20,7 @@ import gov.cdc.ocio.processingnotifications.temporal.WorkflowFailureInfo
  */
 data class WorkflowStatus(
     val workflowId: String,
+    val runId: String,
     val taskName: String,
     val taskQueue: String,
     val description: String,
