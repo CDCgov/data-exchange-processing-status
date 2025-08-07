@@ -6,16 +6,23 @@ import io.temporal.api.failure.v1.Failure
 import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
 import io.temporal.serviceclient.WorkflowServiceStubs
 
-fun getWorkflowFailureInfo(
+/**
+ * Retrieves detailed information about a workflow failure, if any occurred.
+ * This method analyzes the workflow execution history and identifies the source and type of failure.
+ *
+ * @param service The WorkflowServiceStubs instance used to fetch the workflow execution history.
+ * @param namespace The namespace of the workflow execution.
+ * @return A WorkflowFailureInfo object containing details about the failure, or null if no failure is found.
+ */
+fun WorkflowExecution.getWorkflowFailureInfo(
     service: WorkflowServiceStubs,
-    namespace: String,
-    execution: WorkflowExecution
+    namespace: String
 ): WorkflowFailureInfo? {
 
     val history = service.blockingStub().getWorkflowExecutionHistory(
         GetWorkflowExecutionHistoryRequest.newBuilder()
             .setNamespace(namespace)
-            .setExecution(execution)
+            .setExecution(this)
             .build()
     )
 

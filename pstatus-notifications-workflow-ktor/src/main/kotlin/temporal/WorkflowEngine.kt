@@ -293,7 +293,7 @@ class WorkflowEngine(
             val workflowImplClassNamePayload = runCatching { executionInfo.memo.getFieldsOrThrow("workflowImplClassName") }
             val workflowImplClassName = workflowImplClassNamePayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "")
             val workerAttached = if (includeWorkerCheck) workerHasPoller(executionInfo.taskQueue) else null
-            val failureInfo = getWorkflowFailureInfo(service, temporalConfig.namespace, executionInfo.execution)
+            val failureInfo = executionInfo.execution.getWorkflowFailureInfo(service, temporalConfig.namespace)
 
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,
