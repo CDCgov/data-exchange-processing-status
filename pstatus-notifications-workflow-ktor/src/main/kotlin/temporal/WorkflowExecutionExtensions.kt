@@ -77,7 +77,7 @@ fun WorkflowExecution.getWorkflowFailureInfo(
     val canceledAttrs = canceledEvent?.workflowExecutionCanceledEventAttributes
     if (canceledAttrs != null) {
         val detailsString = canceledAttrs.details?.payloadsList
-            ?.joinToString("; ") { it.data.toStringUtf8() } // decode payloads safely
+            ?.joinToString("; ") { safeToStringUtf8(it.data) } // decode payloads safely
 
         return WorkflowFailureInfo(
             source = "canceled",
