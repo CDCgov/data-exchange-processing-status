@@ -39,11 +39,10 @@ fun Application.graphQLModule() {
         schema {
             packages = listOf(
                 "gov.cdc.ocio.processingstatusapi",
-                "gov.cdc.ocio.types" // for the types defined in the "commons-types" library
+                "gov.cdc.ocio.types", // for the types defined in the "commons-types" library
             )
-            packages = listOf("gov.cdc.ocio.processingstatusapi","gov.cdc.ocio.types.health")
             queries = listOf(
-                HealthQueryService(), // ✅ Manually passing dependencies
+                HealthQueryService(),
                 ReportQueryService(),
                 ReportSchemaQueryService(),
                 ReportCountsQueryService(),
