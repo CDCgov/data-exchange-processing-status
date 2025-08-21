@@ -49,6 +49,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val schemaSecurityConfig = SchemaSecurityConfigKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
     val messageProcessorConfigModule = MessageProcessorConfigKoinCreator.moduleFromAppEnv(environment)
+    val healthModule = module {
+        single { HealthConfigLoader(environment.config) }
+        single { GraphQLHealth() }
+        single { HealthCheckService() } // Register HealthCheckService
+        single { HealthQueryService() } // Register HealthQueryService
+    }
 
     return modules(
         listOf(
@@ -56,16 +62,10 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             schemaLoaderModule,
             schemaSecurityConfig,
             messageSystemModule,
-            messageProcessorConfigModule
+            messageProcessorConfigModule,
+            healthModule
         )
     )
-    val healthModule = module {
-        single { HealthConfigLoader(environment.config) }
-        single { GraphQLHealth() }
-        single { HealthCheckService() } // Register HealthCheckService
-        single { HealthQueryService() } // Register HealthQueryService
-    }
-    return modules(listOf(databaseModule, schemaLoaderModule, schemaSecurityConfig,healthModule))
 }
 
 fun main(args: Array<String>) {
