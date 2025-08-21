@@ -14,4 +14,6 @@ interface MessageSystem {
         get() = "Message System"
 
     var healthCheckSystem: HealthCheckSystem
+
+    fun send(message: String)
 }

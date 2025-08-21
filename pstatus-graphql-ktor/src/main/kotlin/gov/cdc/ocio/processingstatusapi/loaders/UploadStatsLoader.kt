@@ -1,10 +1,13 @@
 package gov.cdc.ocio.processingstatusapi.loaders
 
+import gov.cdc.ocio.database.models.StageAction
+import gov.cdc.ocio.database.models.StageService
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.database.utils.SqlClauseBuilder
 import gov.cdc.ocio.processingstatusapi.exceptions.BadRequestException
 import gov.cdc.ocio.processingstatusapi.exceptions.ContentException
 import gov.cdc.ocio.processingstatusapi.models.query.*
-import gov.cdc.ocio.processingstatusapi.utils.SqlClauseBuilder
+import gov.cdc.ocio.types.model.Status
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -24,6 +27,7 @@ class UploadStatsLoader: KoinComponent {
     private val openBkt = reportsCollection.openBracketChar
     private val closeBkt = reportsCollection.closeBracketChar
     private val cElFunc = repository.reportsCollection.collectionElementForQuery
+    private val timeFunc = repository.reportsCollection.timeConversionForQuery
 
     @Throws(BadRequestException::class, ContentException::class)
     fun getUploadStats(
@@ -34,11 +38,12 @@ class UploadStatsLoader: KoinComponent {
         daysInterval: Int?
     ): UploadStats {
 
-        val timeRangeWhereClause = SqlClauseBuilder().buildSqlClauseForDateRange(
+        val timeRangeWhereClause = SqlClauseBuilder.buildSqlClauseForDateRange(
             daysInterval,
             dateStart,
             dateEnd,
-            cPrefix
+            cPrefix,
+            timeFunc
         )
 
         val numUniqueUploadsQuery = (
@@ -51,7 +56,7 @@ class UploadStatsLoader: KoinComponent {
                 "select value count(1) "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-status' and "
+                        + "${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_STATUS}' and "
                         + timeRangeWhereClause
                 )
 
@@ -59,7 +64,7 @@ class UploadStatsLoader: KoinComponent {
                 "select value count(1) "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
+                        + "${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}' and "
                         + "ARRAY_LENGTH(${cPrefix}stageInfo.issues) > 0 and $timeRangeWhereClause"
                 )
 
@@ -67,17 +72,17 @@ class UploadStatsLoader: KoinComponent {
                 "select value count(1) "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'upload-completed' and "
-                        + "${cPrefix}stageInfo.status = 'SUCCESS' and "
+                        + "${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.UPLOAD_COMPLETED}' and "
+                        + "${cPrefix}stageInfo.status = '${Status.SUCCESS}' and "
                         + "$timeRangeWhereClause "
                 )
 
         val duplicateFilenameCountQuery = (
                 "select * from "
-                        + "(select ${cPrefix}content.metadata.received_filename, count(1) as totalCount "
+                        + "(select ${cPrefix}content.metadata.received_filename as filename, count(1) as totalCount "
                         + "from $cName $cVar "
                         + "where ${cPrefix}dataStreamId = '$dataStreamId' and ${cPrefix}dataStreamRoute = '$dataStreamRoute' and "
-                        + "${cPrefix}stageInfo.service = 'UPLOAD API' and ${cPrefix}stageInfo.${cElFunc("action")} = 'metadata-verify' and "
+                        + "${cPrefix}stageInfo.service = '${StageService.UPLOAD_API}' and ${cPrefix}stageInfo.${cElFunc("action")} = '${StageAction.METADATA_VERIFY}' and "
                         + "$timeRangeWhereClause "
                         + "group by ${cPrefix}content.metadata.received_filename"
                         + ") $cVar where ${cPrefix}totalCount > 1"

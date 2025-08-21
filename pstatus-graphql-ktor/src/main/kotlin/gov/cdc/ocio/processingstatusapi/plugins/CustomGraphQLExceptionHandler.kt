@@ -1,16 +1,12 @@
 package gov.cdc.ocio.processingstatusapi.plugins
 
-import gov.cdc.ocio.processingstatusapi.exceptions.ForbiddenException
-import gov.cdc.ocio.processingstatusapi.exceptions.InsufficientScopesException
-import gov.cdc.ocio.processingstatusapi.exceptions.InvalidTokenException
-import gov.cdc.ocio.processingstatusapi.exceptions.PublicKeyNotFoundException
+import gov.cdc.ocio.types.extensions.getRootCause
 import graphql.GraphqlErrorBuilder
 import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.DataFetcherExceptionHandlerParameters
 import graphql.execution.DataFetcherExceptionHandlerResult
 import mu.KotlinLogging
 import java.util.concurrent.CompletableFuture
-
 
 /**
  * Custom GraphQL exception handler.  Note that install(StatusPages) pattern normally used for this in ktor does not
@@ -26,24 +22,15 @@ class CustomGraphQLExceptionHandler : DataFetcherExceptionHandler {
         params: DataFetcherExceptionHandlerParameters
     ): CompletableFuture<DataFetcherExceptionHandlerResult> {
 
-        val exception = params.exception
+        val exception = params.exception.getRootCause()
         logger.error("GraphQL Error: ${exception.message}", exception)
-
-        val classification = when (exception) {
-            is UnsupportedOperationException -> "UnsupportedOperationException"
-            is ForbiddenException -> "ForbiddenException"
-            is InvalidTokenException -> "InvalidTokenException"
-            is InsufficientScopesException -> "InsufficientScopesException"
-            is PublicKeyNotFoundException -> "PublicKeyNotFoundException"
-            else -> "InternalServerError"
-        }
 
         return CompletableFuture.supplyAsync {
             DataFetcherExceptionHandlerResult.newResult()
                 .error(
                     GraphqlErrorBuilder.newError()
                         .message(exception.message ?: "An error occurred")
-                        .extensions(mapOf("classification" to classification))
+                        .extensions(mapOf("classification" to exception::class.simpleName))
                         .path(params.path)
                         .build()
                 )

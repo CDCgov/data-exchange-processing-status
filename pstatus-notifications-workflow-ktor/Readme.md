@@ -1,5 +1,5 @@
 # notifications-workflow-ktor
-The `notifications-workflow-kotr`microservice is a workflow orchestration service for processing and evaluating the active notification rules.  The service uses temporal as its workflow engine for scheduling , orchestrating and then executing the activity stub related to the notification rules
+The `notifications-workflow-ktor`microservice is a workflow orchestration service for processing and evaluating the active notification rules.  The service uses temporal as its workflow engine for scheduling , orchestrating and then executing the activity stub related to the notification rules
 
 # Structure Overview
 

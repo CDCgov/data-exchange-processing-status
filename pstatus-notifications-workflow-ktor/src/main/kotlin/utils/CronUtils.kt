@@ -12,7 +12,6 @@ import kotlin.jvm.optionals.getOrNull
 
 
 object CronUtils {
-
     /**
      * Returns a human-readable version of the provided cron schedule (UNIX format).
      *
@@ -25,7 +24,11 @@ object CronUtils {
         // Parse cronExpression expression and get description
         val parser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX))
         val descriptor = CronDescriptor.instance(Locale.US)
-        return descriptor.describe(parser.parse(cronExpression))
+        return try {
+            descriptor.describe(parser.parse(cronExpression))
+        } catch (e: IllegalArgumentException) {
+            cronExpression
+        }
     }
 
     /**

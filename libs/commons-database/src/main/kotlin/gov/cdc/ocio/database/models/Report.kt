@@ -1,6 +1,8 @@
 package gov.cdc.ocio.database.models
 
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
+import gov.cdc.ocio.types.model.MessageMetadata
+import gov.cdc.ocio.types.model.StageInfo
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 import java.time.Instant

@@ -1,0 +1,1 @@
+[{"service":"Couchbase DB","status":"UP","healthIssues":null},{"service":"AWS SQS","status":"UP","healthIssues":null},{"service":"s3","status":"UP","healthIssues":null}]

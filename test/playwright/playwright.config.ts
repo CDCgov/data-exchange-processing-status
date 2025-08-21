@@ -1,4 +1,7 @@
 import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
   // Look for test files in the "tests" directory, relative to this configuration file.
@@ -17,8 +20,21 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: [['list', { printSteps: true }],['html']],
+  reporter: [
+    ['list', { printSteps: true }],
+    ['html', { open: 'never' }],
+    ['playwright-graphql/coverage-reporter', {
+      graphqlFilePath: path.resolve(__dirname, 'gql/graphql.ts'), 
+      coverageFilePath: path.resolve(__dirname, 'coverage/gql-coverage.log'),
+      htmlFilePath: path.resolve(__dirname, 'coverage/gql-coverage.html'),
+      logUncoveredOperations: false,
+      saveGqlCoverageLog: true,
+      saveHtmlSummary: true
+  }]
+  ],
 
+  snapshotPathTemplate: `{testDir}/__snapshot__/{testFileName}/{testName}-{arg}{ext}`,
+  
   use: {
     // Collect trace when retrying the failed test.
     trace: 'on-first-retry',
@@ -27,29 +43,19 @@ export default defineConfig({
   // Configure projects for major browsers.
   projects: [
     {
-      name: 'GQL-Local',
-          use: { 
-          baseURL: 'http://127.0.0.1:8090/graphql'
+      name: 'Global Setup',
+      testMatch: /global\.setup\.ts/,
+      use: { 
+        baseURL: process.env.BASEURL
       },
     },
     {
-      name: 'GQL-Dev',
-      use: {
-            baseURL: 'https://pstatusgraphql.ocio-eks-dev-ede.cdc.gov/graphql'
-          }
+      name: 'GQL',
+      use: { 
+        baseURL: process.env.BASEURL
+      },
+      dependencies: ['Global Setup'],
     },
-    {
-      name: 'GQL-Test',
-      use: {
-            baseURL: 'https://pstatusgraphql.phdo-eks-test.cdc.gov/graphql'
-          }
-    },
-    {
-      name: 'GQL-Stage',
-      use: {
-            baseURL: 'https://pstatusgraphql.phdo-eks-test.cdc.gov/graphql'
-          }
-    }
   ],
 
 });

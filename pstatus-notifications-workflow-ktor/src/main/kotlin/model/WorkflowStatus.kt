@@ -1,38 +1,32 @@
 package gov.cdc.ocio.processingnotifications.model
 
-import java.time.OffsetDateTime
+import gov.cdc.ocio.processingnotifications.temporal.WorkflowFailureInfo
 
 
 /**
- * Model for the workflow status.
+ * Represents the status of a workflow, providing details about its context, execution, and potential errors.
  *
  * @property workflowId String
+ * @property runId String
  * @property taskName String
+ * @property taskQueue String
  * @property description String
+ * @property workerAttached Boolean?
  * @property status String
  * @property schedule CronSchedule
+ * @property workflowImplClassName String?
+ * @property workflowFailureInfo WorkflowFailureInfo
  * @constructor
  */
 data class WorkflowStatus(
     val workflowId: String,
+    val runId: String,
     val taskName: String,
+    val taskQueue: String,
     val description: String,
+    val workerAttached: Boolean?,
     val status: String,
-    val schedule: CronSchedule
-)
-
-/**
- * Raw cron schedule and its human-readable form.
- *
- * @property cron String?
- * @property description String?
- * @property lastRun OffsetDateTime?
- * @property nextExecution String?
- * @constructor
- */
-data class CronSchedule(
-    val cron: String?,
-    val description: String?,
-    val lastRun: OffsetDateTime?,
-    val nextExecution: String?
+    val schedule: CronSchedule,
+    val workflowImplClassName: String?,
+    val workflowFailureInfo: WorkflowFailureInfo?
 )

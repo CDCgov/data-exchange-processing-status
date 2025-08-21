@@ -1,4 +1,4 @@
-# Public Health Data Observability (PHDO) Processing Status (PS) API
+# Public Health Data Operations (PHDO) Processing Status (PS) API
 
 **General disclaimer** This repository was created for use by CDC programs to collaborate on public health related
 projects in support of the [CDC mission](https://www.cdc.gov/about/organization/mission.htm).  GitHub is not hosted by the CDC, but is a third party website used by
@@ -19,7 +19,7 @@ of any one particular service, product, or enterprise.
 * [Code of Conduct](code-of-conduct.md)
 
 ## Overview
-The Public Health Data Observability (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
+The Public Health Data Operations (PHDO) Processing Status (PS) API is one tool in the broader PHDO service offering.
 It was developed to support public health Data Senders in their effort to share critical public health data with
 internal CDC Programs. Data Senders are CDC partners across the country, including:
 
@@ -40,8 +40,7 @@ The following Quick Start will help you get up and running quickly to explore ba
 - **Docker**: See [instructions](https://docs.docker.com/desktop/) for downloading Docker Desktop for Windows, MacOS, and Linux.
 
 ### Docker Compose
-The PS API can be deployed locally using docker compose, which will create the PS API services and all its
-dependencies.  It will also set everything up for you so you can get started quickly.
+The PS API services can be run using docker compose, which will create the core services and all its dependencies.  It will also set everything up for you so you can get started quickly. The docker compose files are configured to pull the PS API images Quay. In order to run the services from locally built images reference the [Running from Local Builds](#running-from-local-builds) section.
 
 - Step 1: Clone the repo:
   ```shell
@@ -190,9 +189,124 @@ query GetReports {
 Run this query and you should see an output that looks like this:
 ![PS API GraphiQL Get Reports](./resources/ps-api-graphiql-get-reports.png)
 
+
+### Notifications
+The PS API Notifications services can be deployed along with the core services using docker compose as well. In order to accomplish this you must have PS API already running which can be done by following the steps outlined in the [Docker Compose](#docker-compose) section. Once the core services are up and running successfully you can run the following to deploy the Notifications services:
+
+#### Setup
+- Step 1: Configure Email (if needed)  
+    By default, the notifications will dispatch emails to the log only.  If you want to send emails via an SMTP, set the following environment variables in a `.env` file.  
+  - `EMAIL_PROTOCOL`: SMTP
+  - `SMTP_HOST`: Hostname of the SMTP server
+  - `SMTP_PORT`: Port number to use, typically 25
+  - `SMTP_AUTH`: If true, then the `username` and `password` is used to authenticate with the SMTP server
+  - `SMTP_USERNAME`: Username used for SMTP server auth
+  - `SMTP_PASSWORD`: Password used for SMTP server auth
+
+- Step 2: Run docker compose with the notifications file specified to launch
+  ```shell
+  docker compose -f docker-compose.notifications.yml up -d
+  ```
+    You should see the following:
+    ```
+    [+] Running 6/6
+    ✔ Container temporal-postgresql                                     Started                                                                                                                0.8s 
+    ✔ Container temporal                                                Started                                                                                                                1.0s 
+    ✔ Container temporal-admin-tools                                    Started                                                                                                                1.5s 
+    ✔ Container temporal-ui                                             Started                                                                                                                1.7s 
+    ✔ Container pstatus-api-notifications-notifications-rules-engine-1  Started                                                                                                                2.2s 
+    ✔ Container notifications-workflow                                  Started
+  ```
+- Step 3: Verify that all services are running in Docker Desktop or by running `docker ps`.
+
+#### Setup (Local Mail & Webhook Mocking)
+For local development and testing, you can use a mock email server setup. This allows you to test the notifications functionality without needing to configure a real SMTP server.  A default mock-email.env file has been provided to feed in some default environment variables to be used for local tests.
+
+1. Start the notifications services with the mock email configuration:
+   ```shell
+   docker compose -f docker-compose.notifications.yml --env-file mock-email.env up -d
+   ```
+
+2. Start the test mocks service which provides mock services for email and webhooks:
+   ```shell
+   docker compose -f docker-compose.test-mocks.yml up -d
+   ```
+   This will start additional containers that provide mock implementations for services like smtp email (Mailhog) and webhook listeners (webhook.site) making it easier to test the system in isolation.
+
+##### Email Settings
+When using the mock email setup with Mailhog, the following settings are available:
+
+- Web UI: http://localhost:8025 - View sent emails through the Mailhog web interface
+- SMTP Port: `1025` - The port Mailhog listens on for SMTP connections
+- API Port: `8025` - The port for Mailhog's HTTP API
+
+These settings are configured in `mock-email.env`.
+
+
+##### Webhook Settings
+When using the mock webhook setup with webhook.site, the following settings are available:
+
+- Web UI: http://localhost:8000 - View received webhook calls through the webhook.site interface
+- API Port: `8000` - The port webhook.site listens on for incoming webhook requests
+
+Additional details for automated testing can be found in the [playwright tests folder](./test/playwright/README.md).
+
+### Observability
+The following microservices within the PS API system are capable of emitting metrics and traces in OpenTelemetry format
+(OTLP):
+- report-sink
+- graphql
+- notifications-rules-engine
+- notifications-workflow
+
+This telemetry can be enabled and emitted by setting the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable for each microservice.
+This endpoint should be something that is capable of accepting data in OTLP format over HTTP and GRPC.  Additionally, you
+can optionally set the `OTEL_SERVICE_NAME` environment variable to set a unique name for the service attribute that gets appended
+to the otel data.
+For local development convenience and to mimic the production environment, the `docker-compose.monitoring.yml` file has been created to orchestrate an
+OpenTelemetry Collector service for ingesting the emitted telemetry, as well as a Tempo service for storing traces and a
+Prometheus service for scraping and storing metrics.
+
+Follow these steps for setting up and running the monitoring stack locally:
+1. Run the PS API microservices in a container either using the gradle jib or running
+   `podman compose -f docker-compose.yml -f docker-compose.notifications.yml -f docker-compose.monitoring.yml up -d`
+2. If using the jib, you'll need to start the monitoring containers separately.  This can be done by running
+   `podman compose -f docker-compose.monitoring.yml up -d`.
+3. If using the full compose command and not the jib and making local changes, you need to stop the core services and
+   run them locally with gradle.
+4. If running locally with gradle, specify the following environment variable: `OTEL_EXPORTER_OTLP_ENDPOINT = http://localhost:4317`
+5. Perform some PS API actions such as querying the graphql endpoint for reports, or subscribing to a workflow notification
+6. Open grafana at http://localhost:3000 and login with the default username (admin) and password (grafana). Then, navigate to the explore page
+7. Select prometheus or tempo as data sources and observe traces and metrics flowing through.  Metrics from the 
+microservices should contain the respected service name, such as `pstatus-notifications-workflow`.  You should see traces
+like this:
+![PS API Grafana](./resources/ps-api-grafana.png)
+8. You can also see the raw prometheus metrics that the opentelemetry collector exposes at http://localhost:8889/metrics
+
 ### Next Steps
 Please continue to explore in GraphQL for all the types of queries and mutations that can be done.  GraphQL provides a
 complete list in the documentation that is grabbed via "introspection" from the PS API GraphQL service.
+
+### Running from Local Builds
+The main docker compose file pulls the latest PS API images from Quay. In order to build and run images on your local machine you can run the `local-run.sh` script. This script uses the `./gradlew jibDockerBuild` command to build local images and `docker compose` to start the services. Note that the Dockerfile specified in this script (`docker-compose.ci.yml`) excludes services such as temporal-ui, as it is designed to run only the components required for end-to-end tests.
+
+## Future Enhancements
+### Security
+- Add OAuth 2.0 to all services to secure the API.
+- Add support for fine-grained access control in the GraphQL service. For example, most users can only access a particular data stream ID and route combination. Attempts to access any other data should be denied. Further, within this data stream most users will be restricted to accessing data only in their jurisdiction. This is currently only partially implemented. 
+- Update the schema management GraphQL mutations to require administrative scope to add, remove, or updates report schemas.
+### Tracing
+- Add Open Telemetry tracing to all services.
+- Add Tempo based tracing to the Processing Status Grafana dashboards.
+- Consider using the Upload ID from the Upload API for the trace ID which would allow for end-to-end tracing.
+### Metrics
+- Add metrics to the notifications services, namely the rules engine and workflow service.
+### Performance
+- Use the tracing and metrics telemetry to determine bottlenecks.
+- The Couchbase database writes and queries as well as the report-sink message processing are the most time critical.
+### Notifications
+- Add support for running a script in the rules-engine.
+- Add ability to run a script with business logic in the notification system.
 
 ## Public Domain Standard Notice
 This repository constitutes a work of the United States Government and is not

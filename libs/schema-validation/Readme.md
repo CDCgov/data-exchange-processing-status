@@ -50,7 +50,7 @@ fun validateJsonSchema(message: String, source: Source) {
     val schemaValidator: SchemaValidator = JsonSchemaValidator(logger)
     val jsonUtils: JsonUtils = DefaultJsonUtils(objectMapper)
     val schemaLoader: SchemaLoader = FileSchemaLoader()
-    val createReportMessage: CreateReportMessage
+    val reportMessage: ReportMessage
     val schemaValidationService = SchemaValidationService(
         schemaLoader,
         schemaValidator,
@@ -59,8 +59,8 @@ fun validateJsonSchema(message: String, source: Source) {
         logger
     )
     try {
-        createReportMessage = gson.fromJson(message, CreateReportMessage::class.java)
-        //createReportMessage.source= source
+        reportMessage = gson.fromJson(message, ReportMessage::class.java)
+        //reportMessage.source= source
         val result: ValidationSchemaResult = schemaValidationService.validateJsonSchema(message)
         var isBadRequest = false
         if (!result.status) {
@@ -72,7 +72,7 @@ fun validateJsonSchema(message: String, source: Source) {
                 isBadRequest = true
                 logger.error("The report validation failed ${result.reason}")
             }
-            sendToDeadLetter(invalidData, result.schemaFileNames, createReportMessage)
+            sendToDeadLetter(invalidData, result.schemaFileNames, reportMessage)
             if (isBadRequest) throw BadRequestException(invalidData.joinToString(separator = ","))
 
         }

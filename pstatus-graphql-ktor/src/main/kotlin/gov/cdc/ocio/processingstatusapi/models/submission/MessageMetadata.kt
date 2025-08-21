@@ -46,8 +46,8 @@ data class MessageMetadata(
             this.messageUUID = dao?.messageUUID
             this.messageHash = dao?.messageHash
             this.aggregation = when (dao?.aggregation) {
-                gov.cdc.ocio.database.models.Aggregation.SINGLE -> Aggregation.SINGLE
-                gov.cdc.ocio.database.models.Aggregation.BATCH -> Aggregation.BATCH
+                gov.cdc.ocio.types.model.Aggregation.SINGLE -> Aggregation.SINGLE
+                gov.cdc.ocio.types.model.Aggregation.BATCH -> Aggregation.BATCH
                 else -> null
             }
             this.messageIndex = dao?.messageIndex

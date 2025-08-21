@@ -29,7 +29,11 @@ class BlobStorageSchemaClient(
     override fun getSchemaFile(fileName: String): String {
         val blobClient = buildBlobClient(fileName)
 
-        return blobClient.openInputStream().readAllBytes().decodeToString()
+        val result = runCatching {
+            blobClient.openInputStream().readAllBytes().decodeToString()
+        }
+
+        return result.getOrThrow()
     }
 
     /**

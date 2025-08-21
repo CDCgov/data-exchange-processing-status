@@ -14,4 +14,8 @@ import gov.cdc.ocio.types.health.HealthCheckSystem
 class UnsupportedMessageSystem(messageSystem: String?): MessageSystem {
 
     override var healthCheckSystem = HealthCheckUnsupportedMessageSystem(system, messageSystem) as HealthCheckSystem
+
+    override fun send(message: String) {
+        throw NotImplementedError()
+    }
 }

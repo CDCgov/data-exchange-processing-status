@@ -53,7 +53,7 @@ class JsonSchemaValidator : SchemaValidator {
             status = true
         } else {
             schemaValidationMessages.forEach { invalidData.add(it.message) }
-            //  processError(reason, invalidData,validationSchemaFileNames,createReportMessage)
+            //  processError(reason, invalidData,validationSchemaFileNames,reportMessage)
         }
         return ValidationSchemaResult(reason,status,schemaFileNames,invalidData)
     }

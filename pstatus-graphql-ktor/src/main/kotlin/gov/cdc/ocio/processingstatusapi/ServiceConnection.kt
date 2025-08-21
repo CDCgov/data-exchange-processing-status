@@ -1,10 +1,13 @@
 package gov.cdc.ocio.processingstatusapi
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.serialization.jackson.*
 
 
 /**
@@ -25,11 +28,16 @@ class ServiceConnection(
         "The hostname for the $serviceDescription service has not been provided."
 
     val serviceUnavailable =
-        "$serviceDescription service is unavailable.  Make sure the $serviceDescription service is running."
+        "The $serviceDescription service is unavailable.  Make sure the $serviceDescription service is running."
 
     val client = HttpClient {
         install(ContentNegotiation) {
-            json()
+            jackson {
+                // This is where you customize the ObjectMapper
+                registerModule(JavaTimeModule())   // Java time support
+                disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
         install(Logging) {
             logger = Logger.DEFAULT
@@ -48,7 +56,7 @@ class ServiceConnection(
      * @param path String
      * @return String
      */
-    fun getUrl(path: String): String {
+    fun buildUrl(path: String): String {
         if (serviceUrl.isNullOrBlank())
             throw Exception(unspecifiedUrl)
 

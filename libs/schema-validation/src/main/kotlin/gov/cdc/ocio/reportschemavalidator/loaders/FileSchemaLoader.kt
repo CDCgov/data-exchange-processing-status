@@ -32,10 +32,7 @@ class FileSchemaLoader(
      */
     override fun loadSchemaFile(fileName: String): SchemaFile {
         val file = File("$schemaLocalSystemFilePath/$fileName")
-
-        val content = if (file.exists())
-            file.inputStream().readAllBytes().decodeToString()
-        else null
+        val content = file.inputStream().readAllBytes().decodeToString()
 
         return SchemaFile(
             fileName,
@@ -77,6 +74,7 @@ class FileSchemaLoader(
      */
     override fun getSchemaContent(schemaFilename: String): Map<String, Any> {
         val file = File("$schemaLocalSystemFilePath/$schemaFilename")
+
         file.inputStream().use { inputStream ->
             val jsonContent = inputStream.readAllBytes().decodeToString()
             return DefaultJsonUtils(ObjectMapper()).getJsonMapOfContent(jsonContent)

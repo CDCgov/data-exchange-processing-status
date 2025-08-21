@@ -1,8 +1,10 @@
 @file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package gov.cdc.ocio.processingnotifications
 
-import gov.cdc.ocio.processingnotifications.model.*
 import gov.cdc.ocio.processingnotifications.service.*
+import gov.cdc.ocio.types.model.UnsubscribeRequest
+import gov.cdc.ocio.types.model.WorkflowSubscriptionDeadlineCheck
+import gov.cdc.ocio.types.model.WorkflowSubscriptionForDataStreams
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -16,22 +18,8 @@ import java.util.*
  */
 fun Route.subscribeDeadlineCheckRoute() {
     post("/subscribe/deadlineCheck") {
-        val subscription = call.receive<DeadlineCheckSubscription>()
-        val deadlineCheckSubscription = DeadlineCheckSubscription(subscription.dataStreamId, subscription.dataStreamRoute, subscription.jurisdiction,
-            subscription.daysToRun, subscription.timeToRun, subscription.deliveryReference)
-        val result = DeadLineCheckSubscriptionService().run(deadlineCheckSubscription)
-        call.respond(result)
-
-    }
-}
-
-/**
- * Route to unsubscribe for DeadlineCheck subscription
- */
-fun Route.unsubscribeDeadlineCheck() {
-    post("/unsubscribe/deadlineCheck") {
-        val subscription = call.receive<DeadlineCheckUnSubscription>()
-        val result = DeadLineCheckUnSubscriptionService().run(subscription.subscriptionId)
+        val subscription = call.receive<WorkflowSubscriptionDeadlineCheck>()
+        val result = NotificationSubscriptionService().subscribeDeadlineCheck(subscription)
         call.respond(result)
     }
 }
@@ -41,48 +29,9 @@ fun Route.unsubscribeDeadlineCheck() {
  */
 fun Route.subscribeUploadDigestCountsRoute() {
     post("/subscribe/uploadDigestCounts") {
-        val subscription = call.receive<UploadDigestSubscription>()
-        val uploadDigestCountsSubscription = UploadDigestSubscription(subscription.jurisdictionIds, subscription.dataStreamIds,
-            subscription.daysToRun, subscription.timeToRun, subscription.deliveryReference)
-        val result = UploadDigestCountsNotificationSubscriptionService().run(uploadDigestCountsSubscription)
-        call.respond(result)
-
-    }
-}
-
-/**
- * Route to unsubscribe for upload digest counts
- */
-fun Route.unsubscribeUploadDigestCountsRoute() {
-    post("/unsubscribe/uploadDigestCounts") {
-        val subscription = call.receive<UploadDigestUnSubscription>()
-        val result = UploadDigestCountNotificationUnSubscriptionService().run(subscription.subscriptionId)
-        call.respond(result)
-    }
-}
-
-/**
- * Route to subscribe for upload errors notification subscription
- */
-fun Route.subscribeUploadErrorsNotification() {
-    post("/subscribe/uploadErrorsNotification") {
-        val subscription = call.receive<UploadErrorsNotificationSubscription>()
-        val uploadErrorsNotificationSubscription = UploadErrorsNotificationSubscription(subscription.dataStreamId, subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.daysToRun, subscription.timeToRun,  subscription.deliveryReference)
-        val result = UploadErrorsNotificationSubscriptionService().run(uploadErrorsNotificationSubscription)
-        call.respond(result)
-
-    }
-}
-
-/**
- * Route to unsubscribe for upload errors subscription notification
- */
-fun Route.unsubscribeUploadErrorsNotification() {
-    post("/unsubscribe/uploadErrorsNotification") {
-        val subscription = call.receive<UploadErrorsNotificationUnSubscription>()
-        val result = UploadErrorsNotificationUnSubscriptionService().run(subscription.subscriptionId)
+        val subscription = call.receive<WorkflowSubscriptionForDataStreams>()
+        val result = NotificationSubscriptionService()
+            .subscribeUploadDigest(subscription)
         call.respond(result)
     }
 }
@@ -92,23 +41,20 @@ fun Route.unsubscribeUploadErrorsNotification() {
  */
 fun Route.subscribeDataStreamTopErrorsNotification() {
     post("/subscribe/dataStreamTopErrorsNotification") {
-        val subscription = call.receive<DataStreamTopErrorsNotificationSubscription>()
-        val dataStreamTopErrorsNotificationSubscription = DataStreamTopErrorsNotificationSubscription(subscription.dataStreamId, subscription.dataStreamRoute,
-            subscription.jurisdiction,
-            subscription.daysToRun, subscription.timeToRun,  subscription.deliveryReference)
-        val result = DataStreamTopErrorsNotificationSubscriptionService().run(dataStreamTopErrorsNotificationSubscription)
+        val subscription = call.receive<WorkflowSubscriptionForDataStreams>()
+        val result = NotificationSubscriptionService()
+            .subscribeTopErrors(subscription)
         call.respond(result)
-
     }
 }
 
 /**
- * Route to unsubscribe for top data stream errors notification subscription
+ * Route to unsubscribe from a workflow notification subscription
  */
-fun Route.unsubscribesDataStreamTopErrorsNotification() {
-    post("/unsubscribe/dataStreamTopErrorsNotification") {
-        val subscription = call.receive<DataStreamTopErrorsNotificationUnSubscription>()
-        val result = DataStreamTopErrorsNotificationUnSubscriptionService().run(subscription.subscriptionId)
+fun Route.unsubscribe() {
+    post("/unsubscribe") {
+        val unsubRequest = call.receive<UnsubscribeRequest>()
+        val result = NotificationSubscriptionService().unsubscribe(unsubRequest.subscriptionId)
         call.respond(result)
     }
 }
@@ -120,7 +66,10 @@ fun Route.getWorkflowsRoute() {
             call.respond(result)
         }
         result.onFailure {
-            call.respond(HttpStatusCode.InternalServerError, result.exceptionOrNull()?.localizedMessage ?: "Unknown error")
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                result.exceptionOrNull()?.localizedMessage ?: "Unknown error"
+            )
         }
     }
 }

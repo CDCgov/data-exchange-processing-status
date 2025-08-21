@@ -1,6 +1,7 @@
 package gov.cdc.ocio.processingstatusapi.models.submission
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
+import gov.cdc.ocio.database.models.StageAction
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
@@ -49,7 +50,7 @@ data class StageInfo(
     var service : String? = null,
 
     @GraphQLDescription("Stage name a.k.a action")
-    var action: String? = null,
+    var action: StageAction? = null,
 
     @GraphQLDescription("Version")
     var version: String? = null,
@@ -77,8 +78,8 @@ data class StageInfo(
             this.action = dao?.action
             this.version = dao?.version
             this.status = when (dao?.status) {
-                gov.cdc.ocio.database.models.Status.SUCCESS -> Status.SUCCESS
-                gov.cdc.ocio.database.models.Status.FAILURE -> Status.FAILURE
+                gov.cdc.ocio.types.model.Status.SUCCESS -> Status.SUCCESS
+                gov.cdc.ocio.types.model.Status.FAILURE -> Status.FAILURE
                 else -> null
             }
             this.issues = dao?.issues?.map { Issue.fromIssueDao(it) }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import gov.cdc.ocio.database.dynamo.ReportConverterProvider
-import gov.cdc.ocio.database.utils.EpochToInstantConverter
+import gov.cdc.ocio.types.adapters.EpochToInstantConverter
 import gov.cdc.ocio.database.extensions.convertToNumber
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.protocols.jsoncore.JsonNode

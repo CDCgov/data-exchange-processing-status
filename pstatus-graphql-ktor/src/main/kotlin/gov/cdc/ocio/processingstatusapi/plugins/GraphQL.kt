@@ -10,6 +10,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
@@ -36,6 +37,10 @@ fun Application.graphQLModule() {
 
     install(GraphQL) {
         schema {
+            packages = listOf(
+                "gov.cdc.ocio.processingstatusapi",
+                "gov.cdc.ocio.types" // for the types defined in the "commons-types" library
+            )
             packages = listOf("gov.cdc.ocio.processingstatusapi","gov.cdc.ocio.types.health")
             queries = listOf(
                 HealthQueryService(), // ✅ Manually passing dependencies
@@ -44,14 +49,15 @@ fun Application.graphQLModule() {
                 ReportCountsQueryService(),
                 ReportDeadLetterQueryService(),
                 UploadQueryService(),
+                RulesEngineQueryService(rulesEngineServiceUrl),
                 WorkflowQueryService(workflowServiceUrl)
             )
             mutations = listOf(
-                NotificationsMutationService(workflowServiceUrl),
+                NotificationsRulesEngineMutationService(rulesEngineServiceUrl),
                 DataStreamTopErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
                 DeadlineCheckSubscriptionMutationService(workflowServiceUrl),
-                UploadErrorsNotificationSubscriptionMutationService(workflowServiceUrl),
                 UploadDigestCountsSubscriptionMutationService(workflowServiceUrl),
+                UnsubscribeMutationService(workflowServiceUrl),
                 ReportMutation(),
                 ReportSchemaMutation()
             )
@@ -62,6 +68,15 @@ fun Application.graphQLModule() {
         }
         engine {
             exceptionHandler = CustomGraphQLExceptionHandler()
+
+            val graphqlOperationCounter = GlobalOpenTelemetry.get()
+                .meterBuilder("pstatus-graphql-meter")
+                .build()
+                .counterBuilder("graphql_operation_count")
+                .setDescription("Count of GraphQL queries and mutations")
+                .setUnit("1")
+                .build()
+            instrumentations = listOf(MetricsInstrumentation(graphqlOperationCounter))
         }
     }
 

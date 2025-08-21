@@ -165,8 +165,7 @@ class ReportSchemaValidationTests {
         val testMessage =File("./src/test/kotlin/data/report_schema_contentSchemaVersion_validation.json").readBytes()
         val message = createMessageFromBinary(testMessage)
         val result: ValidationSchemaResult = schemaValidationService.validateJsonSchema(message)
-        val missingContent ="Report rejected: file - hl7v2-debatch.2.0.0.schema.json not found for content schema."
-        //"Report rejected: file: ${file.absolutePath} not found for content schema"
+        val missingContent ="Report rejected: Content schema file not found for content schema name 'hl7v2-debatch' and schema version '2.0.0'."
         Assert.assertTrue(!result.status)
         Assert.assertEquals(result.reason,missingContent)
         Assert.assertNotSame(result.invalidData, mutableListOf<String>())

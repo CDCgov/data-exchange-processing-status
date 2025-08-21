@@ -19,7 +19,7 @@ class CloudSchemaLoaderBlobTest {
         `when`(mockBlobClient.getSchemaFile(fileName)).thenReturn(mockContent)
 
         val config = mapOf(
-            "REPORT_SCHEMA_BLOB_CONNECTION_STR" to "fake-connection-string",
+            "REPORT_SCHEMA_BLOB_CONNECTION_STR" to "DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test",
             "REPORT_SCHEMA_BLOB_CONTAINER" to "test-container"
         )
         val loader = CloudSchemaLoader("blob_storage", config)

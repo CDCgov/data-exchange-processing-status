@@ -3,12 +3,15 @@ package gov.cdc.ocio.database.couchbase
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Scope
 import com.couchbase.client.java.json.JsonObject
+import com.couchbase.client.java.query.QueryOptions
+import com.couchbase.client.java.query.QueryScanConsistency
 import com.google.gson.*
-import gov.cdc.ocio.database.utils.DateLongFormatTypeAdapter
-import gov.cdc.ocio.database.utils.InstantTypeAdapter
-import gov.cdc.ocio.database.utils.OffsetDateTimeTypeAdapter
+import gov.cdc.ocio.types.adapters.DateLongFormatTypeAdapter
+import gov.cdc.ocio.types.adapters.InstantTypeAdapter
+import gov.cdc.ocio.types.adapters.OffsetDateTimeTypeAdapter
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.lang.reflect.Type
 import java.util.*
 
 
@@ -26,15 +29,24 @@ import java.util.*
 class CouchbaseCollection(
     collectionName: String,
     private val couchbaseScope: Scope,
-    private val couchbaseCollection: com.couchbase.client.java.Collection
+    private val couchbaseCollection: com.couchbase.client.java.Collection,
+    private val typeAdapters: Map<Type, Any> = emptyMap()
 ): Collection {
 
-    private val gson = GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
-        .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-        .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
-        .create()
+    private val gson = createGson()
+
+    private fun createGson(): Gson {
+        val builder = GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(Date::class.java, DateLongFormatTypeAdapter())
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeTypeAdapter())
+
+        typeAdapters.forEach { (type, adapter) ->
+            builder.registerTypeAdapter(type, adapter)
+        }
+        return builder.create()
+    }
 
     /**
      * Get a specific item by its ID.
@@ -64,14 +76,14 @@ class CouchbaseCollection(
      * @return List<T>
      */
     override fun <T> queryItems(query: String?, classType: Class<T>?): List<T> {
-        val queryResult = couchbaseScope.query(query)
+        val queryResult = couchbaseScope.query(query, QueryOptions.queryOptions().scanConsistency(QueryScanConsistency.REQUEST_PLUS))
         val results = mutableListOf<T>()
         when (classType) {
             // Handle primitive types
             String::class.java, Boolean::class.java -> {
                 results.addAll(queryResult.rowsAs(classType))
             }
-            Int::class.java, Long::class.java,Float::class.java -> {
+            Int::class.java, Long::class.java, Float::class.java, Array<Int>::class.java, Array<Long>::class.java, Array<Float>::class.java -> {
                 val expectedResult = queryResult.rowsAs(classType)[0]
                 results.add(expectedResult as T)
             }
@@ -128,8 +140,9 @@ class CouchbaseCollection(
      * @return Boolean
      */
     override fun deleteItem(itemId: String?, partitionKey: String?): Boolean {
-        val removeResult = couchbaseCollection.remove(itemId)
-        return removeResult != null
+        return runCatching {
+            couchbaseCollection.remove(itemId)
+        }.isSuccess
     }
 
     override val collectionVariable = "r"
@@ -144,7 +157,7 @@ class CouchbaseCollection(
 
     override val collectionElementForQuery = { name: String -> name }
 
-
-
-
+    // converting seconds to millis as couchbase stores epochs in millis.
+    override val timeConversionForQuery: (Long) -> String
+        get() = { timeEpoch: Long -> (timeEpoch * 1000).toString() }
 }

@@ -1,6 +1,5 @@
 package gov.cdc.ocio.messagesystem.rabbitmq
 
-import com.rabbitmq.client.Connection
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.health.HealthCheckRabbitMQ
 import gov.cdc.ocio.messagesystem.config.RabbitMQServiceConfiguration
@@ -18,7 +17,7 @@ class RabbitMQMessageSystem(
     rabbitMQConfig: RabbitMQServiceConfiguration
 ): MessageSystem {
 
-    val rabbitMQConnection: Connection? by lazy {
+    val rabbitMQConnection by lazy {
         try {
             rabbitMQConfig.getConnectionFactory().newConnection()
         } catch (e: Exception) {
@@ -26,5 +25,34 @@ class RabbitMQMessageSystem(
         }
     }
 
+    // Create send channel
+    private val sendChannel by lazy {
+        rabbitMQConnection?.createChannel()?.apply {
+            queueDeclare(
+                rabbitMQConfig.sendQueueName,
+                true,
+                false,
+                false,
+                null
+            )
+        }
+    }
+
+    private val sendQueueName = rabbitMQConfig.sendQueueName
+
     override var healthCheckSystem = HealthCheckRabbitMQ(system, rabbitMQConfig) as HealthCheckSystem
+
+    /**
+     * Sends a message to a queue.
+     *
+     * @param message String
+     */
+    override fun send(message: String) {
+        sendChannel?.basicPublish(
+            "", // use default exchange
+            sendQueueName, // routing key must equal queue name
+            null,
+            message.toByteArray(Charsets.UTF_8)
+        )
+    }
 }

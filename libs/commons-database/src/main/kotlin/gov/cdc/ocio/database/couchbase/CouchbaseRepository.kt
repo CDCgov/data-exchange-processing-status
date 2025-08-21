@@ -1,11 +1,20 @@
 package gov.cdc.ocio.database.couchbase
 
+import com.couchbase.client.core.error.CollectionExistsException
+import com.couchbase.client.java.Bucket
 import gov.cdc.ocio.database.persistence.Collection
 import com.couchbase.client.java.Cluster
+import com.couchbase.client.java.ClusterOptions
 import com.couchbase.client.java.Scope
+import com.couchbase.client.java.manager.collection.CreateCollectionSettings
+import com.couchbase.client.metrics.opentelemetry.OpenTelemetryMeter
 import gov.cdc.ocio.database.health.HealthCheckCouchbaseDb
+import gov.cdc.ocio.database.persistence.CollectionDataFetcher
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
+import gov.cdc.ocio.types.adapters.NotificationTypeAdapter
 import gov.cdc.ocio.types.health.HealthCheckSystem
+import gov.cdc.ocio.types.model.Notification
+import io.opentelemetry.api.GlobalOpenTelemetry
 import mu.KotlinLogging
 import java.time.Duration
 
@@ -48,9 +57,9 @@ class CouchbaseRepository(
     private val logger = KotlinLogging.logger {}
 
     // Connect without customizing the cluster environment
-    private var cluster = Cluster.connect(connectionString, username, password)
+    private var cluster: Cluster
 
-    private val processingStatusBucket = cluster.bucket(bucketName)
+    private val processingStatusBucket: Bucket
 
     private val scope: Scope
 
@@ -68,6 +77,14 @@ class CouchbaseRepository(
             logger.error("Failed to establish an initial connection to Couchbase!")
         }
 
+        val otel = GlobalOpenTelemetry.get()
+
+        cluster = Cluster.connect(connectionString, ClusterOptions.clusterOptions(username, password).environment { env ->
+            env.meter(OpenTelemetryMeter.wrap(otel.meterProvider))
+        })
+
+        processingStatusBucket = cluster.bucket(bucketName)
+
         scope = processingStatusBucket.scope(scopeName)
 
         reportsCouchbaseCollection = scope.collection(reportsCollectionName)
@@ -77,26 +94,44 @@ class CouchbaseRepository(
         notificationSubscriptionsCouchbaseCollection = scope.collection(notificationSubscriptionsCollectionName)
     }
 
-    override var reportsCollection =
+    override var reportsCollection = CollectionDataFetcher(
         CouchbaseCollection(
             reportsCollectionName,
             scope,
             reportsCouchbaseCollection
         ) as Collection
+    )
 
-    override var reportsDeadLetterCollection =
+    override var reportsDeadLetterCollection = CollectionDataFetcher(
         CouchbaseCollection(
             reportsDeadLetterCollectionName,
             scope,
             reportsDeadLetterCouchbaseCollection
         ) as Collection
+    )
 
-    override var notificationSubscriptionsCollection =
+    override var notificationSubscriptionsCollection = CollectionDataFetcher(
         CouchbaseCollection(
-            reportsDeadLetterCollectionName,
+            notificationSubscriptionsCollectionName,
             scope,
-            notificationSubscriptionsCouchbaseCollection
+            notificationSubscriptionsCouchbaseCollection,
+            typeAdapters = mapOf(Notification::class.java to NotificationTypeAdapter())
         ) as Collection
+    )
 
     override var healthCheckSystem = HealthCheckCouchbaseDb(system) as HealthCheckSystem
+
+    override fun createCollection(name: String) {
+        val cm = processingStatusBucket.collections()
+        try {
+            cm.createCollection("data", name, CreateCollectionSettings.createCollectionSettings())
+        } catch (e: CollectionExistsException) {
+            logger.warn("collection $name already exists")
+        }
+    }
+
+    override fun deleteCollection(name: String) {
+        val cm = processingStatusBucket.collections()
+        cm.dropCollection("data", name)
+    }
 }

@@ -11,7 +11,7 @@
       "allowSyntheticDefaultImports": true,
       "baseUrl": "./",
       "paths": {
-        "@fixtures/*": ["fixtures/gql"],
+        "@fixtures/*": ["fixtures/*"],
         "@gql": ["gql/graphql"]
       }
     }

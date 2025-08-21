@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: PHDO Processing Status API
   description: |
-    Swagger definition of the Public Health Data Observability (PHDO) Processing Status (PS) API.
+    Swagger definition of the Public Health Data Operations (PHDO) Processing Status (PS) API.
     ## Overview
     ### What it does:
     -  Standardized report capture with advanced query options

@@ -1,3 +1,6 @@
+val ktorVersion: String by project
+val kotlinxHtmlVersion: String by project
+
 buildscript {
     repositories {
         mavenCentral()
@@ -5,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.1.10"
     id("com.google.cloud.tools.jib") version "3.3.0"
     id ("io.ktor.plugin") version "2.3.11"
     id ("maven-publish")
@@ -30,44 +33,57 @@ application {
 
 dependencies {
     implementation(project(":libs:commons-database"))
+    implementation(project(":libs:notification-dispatchers"))
     implementation(project(":libs:commons-types"))
     implementation("io.temporal:temporal-sdk:1.15.1")
     implementation("com.sendgrid:sendgrid-java:4.9.2")
-    implementation ("io.ktor:ktor-server-core:2.3.2")
-    implementation ("io.ktor:ktor-server-netty:2.3.2")
-    implementation ("io.ktor:ktor-server-content-negotiation:2.3.2")
-    implementation ("io.ktor:ktor-serialization-kotlinx-json:2.3.2")
-    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0") // Java time module
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.2")
-    implementation ("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation ("com.google.code.gson:gson:2.10.1")
-    implementation ("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation ("org.slf4j:slf4j-api:1.7.36")
-    implementation ("ch.qos.logback:logback-classic:1.4.12")
-    implementation ("io.insert-koin:koin-core:3.5.6")
-    implementation ("io.insert-koin:koin-ktor:3.5.6")
-    implementation ("com.sun.mail:javax.mail:1.6.2")
-    implementation ("com.expediagroup:graphql-kotlin-ktor-server:7.1.1")
-    implementation ("com.graphql-java:graphql-java-extended-scalars:22.0")
-    implementation ("joda-time:joda-time:2.12.7")
-    implementation ("org.apache.commons:commons-lang3:3.3.1")
-    implementation ("com.expediagroup:graphql-kotlin-server:6.0.0")
-    implementation ("com.expediagroup:graphql-kotlin-schema-generator:6.0.0")
-    implementation ("io.ktor:ktor-server-netty:2.1.0")
-    implementation ("io.ktor:ktor-client-content-negotiation:2.1.0")
-    implementation ("io.ktor:ktor-server-netty:2.1.0")
-    implementation ("io.ktor:ktor-client-content-negotiation:2.1.0")
-    implementation ("io.netty:netty-all:4.1.68.Final")
-    implementation ("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
-    implementation ("software.amazon.awssdk:sts:2.29.34")
-    implementation ("com.cronutils:cron-utils:9.2.1")
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0") // Java time module
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.2")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("org.slf4j:slf4j-api:1.7.36")
+    implementation("ch.qos.logback:logback-classic:1.4.12")
+    implementation("io.insert-koin:koin-core:3.5.6")
+    implementation("io.insert-koin:koin-ktor:3.5.6")
+    implementation("joda-time:joda-time:2.12.7")
+    implementation("org.apache.commons:commons-lang3:3.3.1")
+    implementation("com.expediagroup:graphql-kotlin-server:6.0.0")
+    implementation("com.expediagroup:graphql-kotlin-schema-generator:6.0.0")
+    implementation("io.netty:netty-all:4.1.68.Final")
+    implementation("io.netty:netty-tcnative-boringssl-static:2.0.52.Final:windows-x86_64")
+    implementation("software.amazon.awssdk:sts:2.29.34")
+    implementation("com.cronutils:cron-utils:9.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-html:$kotlinxHtmlVersion")
+    implementation("commons-io:commons-io:2.15.1")
+    implementation("org.knowm.xchart:xchart:3.8.8")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-2.0:2.15.0-alpha")
+    implementation("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.49.0")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.49.0")
+    implementation("io.opentelemetry.semconv:opentelemetry-semconv:1.30.1-alpha")
 
-    testImplementation(kotlin("test"))
+    testImplementation("io.insert-koin:koin-test:3.5.6")
+    testImplementation("io.insert-koin:koin-test-junit5:4.0.4")
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags("IntegrationTest")
+    }
+}
+
+tasks.register<Test>("integrationTest") {
+    useJUnitPlatform {
+        includeTags("IntegrationTest")
+    }
 }
 
 kotlin {

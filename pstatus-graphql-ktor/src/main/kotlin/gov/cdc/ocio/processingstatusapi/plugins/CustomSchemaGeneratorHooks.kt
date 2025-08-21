@@ -12,6 +12,7 @@ import graphql.language.*
 import graphql.scalars.ExtendedScalars
 import graphql.scalars.datetime.DateTimeScalar
 import graphql.schema.*
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.reflect.KClass
@@ -193,6 +194,7 @@ class CustomSchemaGeneratorHooks : SchemaGeneratorHooks {
      */
     override fun willGenerateGraphQLType(type: KType): GraphQLType? = when (type.classifier as? KClass<*>) {
         OffsetDateTime::class -> DateTimeScalar.INSTANCE
+        LocalTime::class -> ExtendedScalars.LocalTime
         Long::class -> graphqlLongClassType
         Map::class -> ExtendedScalars.Json
         BasicHashMap::class -> basicHashMapScalar
