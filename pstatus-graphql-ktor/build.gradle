@@ -95,9 +95,6 @@ dependencies {
     implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.49.0")
     implementation("io.opentelemetry.semconv:opentelemetry-semconv:1.30.1-alpha")
 
-    implementation "io.ktor:ktor-client-core:$ktor_version"
-    implementation "io.ktor:ktor-client-cio:$ktor_version"
-
     // Ktor JSON serialization (Kotlinx)
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
