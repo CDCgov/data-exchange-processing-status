@@ -20,7 +20,12 @@ test.describe('GraphQL getHealth', () => {
             
         expect(res.getHealth.status).toEqual('UP')
         expect(res.getHealth.totalChecksDuration).toBeDefined()
-        expect(res.getHealth.dependencyHealthChecks).toStrictEqual(expectedDepenedencyHealthChecks)
+
+        // Find the GraphQL service
+        const graphQLService = res.getHealth.services.find(s => s.name === 'GraphQL');
+
+        // Assert only the dependencyHealthChecks of GraphQL
+        expect(graphQLService?.dependencyHealthChecks).toStrictEqual(expectedDepenedencyHealthChecks);
     })
 
     test('returns healtheck data snapshot check', async ({ gql }) => {
@@ -29,6 +34,10 @@ test.describe('GraphQL getHealth', () => {
             
         expect(res.getHealth.status).toEqual('UP')
         expect(res.getHealth.totalChecksDuration).toBeDefined()
-        expect(JSON.stringify(res.getHealth.dependencyHealthChecks)).toMatchSnapshot("healthcheck.json")
+
+        // Find the GraphQL service
+        const graphQLService = res.getHealth.services.find(s => s.name === 'GraphQL');
+
+        expect(JSON.stringify(graphQLService?.dependencyHealthChecks)).toMatchSnapshot("healthcheck.json")
     })
 } )
