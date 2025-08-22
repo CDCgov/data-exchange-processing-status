@@ -1,6 +1,5 @@
 package gov.cdc.ocio.processingstatusapi.queries
 
-
 import com.expediagroup.graphql.server.operations.Query
 import gov.cdc.ocio.processingstatusapi.models.query.*
 import gov.cdc.ocio.types.health.HealthCheck
@@ -14,12 +13,14 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
+
 
 /**
  * Service for querying the health of the report-sink service and its dependencies.
@@ -57,11 +58,11 @@ class HealthCheckService: KoinComponent {
                     }
                 }
             }
-            serviceResults.addAll(healthChecks.map { it.await() })
+            serviceResults.addAll(healthChecks.awaitAll())
         }
 
-        if (serviceResults.any { it.status.name == "DOWN" }) {
-            overallStatus = HealthStatusType.STATUS_DOWN.toString()
+        if (serviceResults.any { it.status == HealthStatusType.STATUS_DOWN }) {
+            overallStatus = HealthStatusType.STATUS_DOWN.value
         }
 
         return@coroutineScope HealthStatusResult(
