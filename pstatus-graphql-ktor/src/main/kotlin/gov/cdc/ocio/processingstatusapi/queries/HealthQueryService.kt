@@ -123,14 +123,20 @@ class HealthCheckService: KoinComponent {
 }
 
 /**
- * A service responsible for providing health status information.
+ * Service responsible for querying health status information.
  *
- * This class implements a GraphQL query operation and acts as a bridge to retrieve the
- * overall health status of the system and its associated services by delegating to the `HealthCheckService`.
- * It provides a summarized health result across internal and external dependencies.
+ * The `HealthQueryService` acts as a GraphQL query implementation for retrieving
+ * the health status of application services. It leverages `HealthCheckService`
+ * to perform the underlying health check evaluations and provides results in the form of
+ * `HealthStatusResult`. This is intended to expose the overall health status and detailed
+ * health results of the application's components through GraphQL queries.
+ *
+ * @constructor Instantiates the service with a `HealthCheckService` used to perform health checks.
  */
-class HealthQueryService : Query {
+class HealthQueryService(
+    private val healthCheckService: HealthCheckService = HealthCheckService()
+) : Query {
     suspend fun getHealth(): HealthStatusResult {
-        return HealthCheckService().getHealth()
+        return healthCheckService.getHealth()
     }
 }
