@@ -48,27 +48,33 @@ class HealthCheckService: KoinComponent {
      *         and a list of detailed health check results for individual services.
      */
     suspend fun getHealth(): HealthStatusResult = coroutineScope {
-        val serviceResults: MutableList<HealthCheck> = mutableListOf()
-        var overallStatus = "UP"
+        // Filter services: include internal or external with non-null URL
+        val services = configLoader.serviceConfigs.filter {
+            it.type == "internal" || it.url != null
+        }
 
+        val serviceResults: List<HealthCheck>
         val time = measureTimeMillis {
-            val healthChecks = configLoader.serviceConfigs.map { serviceConfig ->
+            val healthChecks = services.map { serviceConfig ->
                 async {
                     if (serviceConfig.type == "internal") {
                         fetchGraphQLHealth(serviceConfig.name)
                     } else {
-                        fetchExternalHealth(serviceConfig.name, serviceConfig.url!!)
+                        // Only append "/health" if URL is defined
+                        fetchExternalHealth(serviceConfig.name, serviceConfig.url + "/health")
                     }
                 }
             }
-            serviceResults.addAll(healthChecks.awaitAll())
+            serviceResults = healthChecks.awaitAll()
         }
 
-        if (serviceResults.any { it.status == HealthStatusType.STATUS_DOWN }) {
-            overallStatus = HealthStatusType.STATUS_DOWN.value
+        val overallStatus = if (serviceResults.any { it.status == HealthStatusType.STATUS_DOWN }) {
+            HealthStatusType.STATUS_DOWN.value
+        } else {
+            "UP"
         }
 
-        return@coroutineScope HealthStatusResult(
+        HealthStatusResult(
             status = overallStatus,
             totalChecksDuration = TimeUtils.formatMillisToHMS(time),
             services = serviceResults
