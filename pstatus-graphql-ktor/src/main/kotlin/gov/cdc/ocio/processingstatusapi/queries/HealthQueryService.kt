@@ -23,10 +23,8 @@ import kotlin.system.measureTimeMillis
 
 
 /**
- * Service for querying the health of the report-sink service and its dependencies.
- *
- * @property logger KLogger
-
+ * Service responsible for performing health checks on the application and its dependencies.
+ * Utilizes both internal and external health checks to determine the overall health status of the system.
  */
 class HealthCheckService: KoinComponent {
 
@@ -40,9 +38,14 @@ class HealthCheckService: KoinComponent {
     }
 
     /**
-     * Returns a HealthCheck object with the overall health of the report-sink service and its dependencies.
+     * Retrieves the overall health status of multiple services along with detailed health information for each service.
      *
-     * @return HealthCheck
+     * Aggregates and evaluates the health status of configured services, differentiating between internal
+     * and external services. Internal services are checked using GraphQL health checks, while external services
+     * are checked via respective URLs. Also calculates the total duration for all health checks.
+     *
+     * @return HealthStatusResult containing the overall health status, total duration of health checks,
+     *         and a list of detailed health check results for individual services.
      */
     suspend fun getHealth(): HealthStatusResult = coroutineScope {
         val serviceResults: MutableList<HealthCheck> = mutableListOf()
@@ -73,9 +76,10 @@ class HealthCheckService: KoinComponent {
     }
 
     /**
-     * The function which fetches the graphql health
-     * this function calls the graphQlHealth.getHealth directly
-     * @param name string
+     * Fetches the GraphQL health status for a service and returns a `HealthCheck` object with its details.
+     *
+     * @param name The name of the service for which the health status is being fetched.
+     * @return A `HealthCheck` object containing the health status, total checks duration, and dependency health check details.
      */
     private fun fetchGraphQLHealth(name: String): HealthCheck {
         val result = graphqlHealthService.getHealth()
@@ -89,15 +93,16 @@ class HealthCheckService: KoinComponent {
                     if (it.status == "UP") HealthStatusType.STATUS_UP else HealthStatusType.STATUS_DOWN, it.healthIssues
                 )
             }.toMutableList()
-
         }
     }
 
     /**
-     * Fetch external health Urls for services defined in the application.conf
-     * @param name string
-     * @param url string
-     * @return ServiceHealth
+     * Fetches external health information from a specified URL and returns a `HealthCheck` object.
+     * If an error occurs during the process, a default `HealthCheck` object with error details is returned.
+     *
+     * @param name The name of the service for which health is being fetched.
+     * @param url The URL to fetch the health information from.
+     * @return A `HealthCheck` object containing the health status and additional details.
      */
     private suspend fun fetchExternalHealth(name: String, url: String): HealthCheck {
         return try {
@@ -113,15 +118,16 @@ class HealthCheckService: KoinComponent {
                     HealthCheckResult("Unknown", name, HealthStatusType.STATUS_DOWN, e.message)
                 ).toMutableList()
             }
-
-
         }
     }
-
 }
 
 /**
- * GraphQL query service for getting health status.
+ * A service responsible for providing health status information.
+ *
+ * This class implements a GraphQL query operation and acts as a bridge to retrieve the
+ * overall health status of the system and its associated services by delegating to the `HealthCheckService`.
+ * It provides a summarized health result across internal and external dependencies.
  */
 class HealthQueryService : Query {
     suspend fun getHealth(): HealthStatusResult {
