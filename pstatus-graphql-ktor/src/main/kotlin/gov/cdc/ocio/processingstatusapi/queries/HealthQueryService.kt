@@ -37,6 +37,8 @@ class HealthCheckService: KoinComponent {
         }
     }
 
+    fun getHealthOfSelf(): HealthCheck = fetchGraphQLHealth("GraphQL")
+
     /**
      * Retrieves the overall health status of multiple services along with detailed health information for each service.
      *
@@ -142,6 +144,10 @@ class HealthCheckService: KoinComponent {
 class HealthQueryService(
     private val healthCheckService: HealthCheckService = HealthCheckService()
 ) : Query {
+    fun getHealthOfSelf(): HealthCheck {
+        return healthCheckService.getHealthOfSelf()
+    }
+
     suspend fun getHealth(): HealthStatusResult {
         return healthCheckService.getHealth()
     }
