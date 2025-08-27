@@ -37,7 +37,7 @@ test.describe('GraphQL subscribeWebhook', () => {
         subscriptions.push(subscriptionId);
     });
 
-    test('data stream subscription with generic rule should trigger a webhook call', async ({ gql, dataGenerator, notificationHelper }) => {   
+    test('data stream subscription with generic rule should trigger a webhook call', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const report = dataGenerator.createUploadReportStarted()
 
         const subscription = dataGenerator.createWebhookSubscriptionInput({
@@ -61,7 +61,7 @@ test.describe('GraphQL subscribeWebhook', () => {
         
     });
 
-    test('data stream subscription with specific rule should trigger a webhook call', async ({ gql, dataGenerator, notificationHelper }) => {   
+    test('data stream subscription with specific rule should trigger a webhook call', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const report = dataGenerator.createUploadReportStarted()
 
         const subscription = dataGenerator.createWebhookSubscriptionInput({
@@ -84,7 +84,7 @@ test.describe('GraphQL subscribeWebhook', () => {
         await notificationHelper.validateWebhookIsCalledForToken(token);
     });
 
-    test('custom schema and data stream subscription should trigger a webhook call', async ({ gql, dataGenerator, notificationHelper }) => {   
+    test('custom schema and data stream subscription should trigger a webhook call', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const schema = dataGenerator.createRandomSchema()
         const schemaRes = await gql.upsertSchema(schema);
         expect(schemaRes.upsertSchema).toBeDefined();

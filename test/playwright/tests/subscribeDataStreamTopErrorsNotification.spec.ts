@@ -66,7 +66,7 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.validateWebhookIsCalledForToken(token, { timeout: 70_000 });
     });
 
-    test('subscribing to a generic data stream via email', async ({ notificationHelper, dataGenerator }) => {
+    test('subscribing to a generic data stream via email', {tag: "@slow"}, async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
         const subscription = dataGenerator.createSubscriptionInput({
             emailAddresses: [subscriptionEmail],
