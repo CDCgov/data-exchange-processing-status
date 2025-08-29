@@ -25,7 +25,7 @@ object DateUtils {
     fun getEpochFromDateString(dateStr: String): Long {
         return try {
             val localDateTime = LocalDateTime.parse(dateStr, dateFormatter)
-            return localDateTime.toEpochSecond(ZoneOffset.UTC) * 1000
+            localDateTime.toEpochSecond(ZoneOffset.UTC) * 1000
         } catch (e: DateTimeParseException) {
             throw IllegalArgumentException("Failed to parse $dateStr as a date. Format should be: ${DATE_FORMAT}.")
         }
