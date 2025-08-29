@@ -1,9 +1,9 @@
 package gov.cdc.ocio.types.utils
 
-import org.apache.commons.lang3.time.FastDateFormat
-import java.text.ParseException
-import java.util.*
-
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 /**
  * A utility class for handling date operations.
@@ -12,7 +12,7 @@ object DateUtils {
 
     private const val DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'"
 
-    private val dateFormat = FastDateFormat.getInstance(DATE_FORMAT)
+    private val dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
 
     /**
      * Get the epoch time from a string provided.
@@ -23,11 +23,10 @@ object DateUtils {
      */
     @Throws(IllegalArgumentException::class)
     fun getEpochFromDateString(dateStr: String): Long {
-        try {
-            // Parse the date string to a Date object
-            val date = dateFormat.parse(dateStr)
-            return date.time
-        } catch (e: ParseException) {
+        return try {
+            val localDateTime = LocalDateTime.parse(dateStr, dateFormatter)
+            localDateTime.toEpochSecond(ZoneOffset.UTC) * 1000
+        } catch (e: DateTimeParseException) {
             throw IllegalArgumentException("Failed to parse $dateStr as a date. Format should be: ${DATE_FORMAT}.")
         }
     }

@@ -157,7 +157,7 @@ test.describe('GraphQL getUploads', () => {
         const result = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
-            dateStart: dataGenerator.formatDateCompactUTC(baseDate),
+            dateStart: dataGenerator.formatDateCompactUTC(new Date(baseDate.getTime() + 1000)),
             pageSize: 5,
             pageNumber: 1
         });
@@ -215,7 +215,7 @@ test.describe('GraphQL getUploads', () => {
         const result = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
-            dateStart: dataGenerator.formatDateCompactUTC(baseDate),
+            dateStart: dataGenerator.formatDateCompactUTC(new Date(baseDate.getTime() + 1000)),
             dateEnd: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, numReports-1)),
             pageSize: 5,
             pageNumber: 1
