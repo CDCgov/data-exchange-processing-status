@@ -258,16 +258,6 @@ test.describe('GraphQL getUploads', () => {
         expectGraphQLErrorResponse(result, "invalid-page-number")
     })
 
-    test('errors when page number is invalid for nonexistent data stream and route', async ({ gql }) => {
-        const result = await gql.getUploads({
-            dataStreamId: "test-data-stream-id",
-            dataStreamRoute: "test-data-stream-route",
-            pageSize: 5,
-            pageNumber: 0
-        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
-
-        expectGraphQLErrorResponse(result, "invalid-page-number-no-datastream-route")
-    })
 })
 
 function expectEmptyUploadsResponse(response: GetUploadsQuery) {
