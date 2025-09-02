@@ -27,7 +27,7 @@ test.describe('GraphQL subscribeEmail', () => {
         subscriptions.push(subscriptionId);
     });
 
-    test('data stream subscription with generic rule should trigger an email', async ({ gql, dataGenerator, notificationHelper }) => {   
+    test('data stream subscription with generic rule should trigger an email', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const subscriptionEmail = "subscribeEmail-generic-rule@test.com"
         const report = dataGenerator.createUploadReportStarted()
 
@@ -52,7 +52,7 @@ test.describe('GraphQL subscribeEmail', () => {
         await notificationHelper.validateEmailIsSent(subscriptionEmail, `Triggered: ${subscription.ruleDescription}`);
     });
 
-    test('data stream subscription with specific rule should trigger an email', async ({ gql, dataGenerator, notificationHelper }) => {   
+    test('data stream subscription with specific rule should trigger an email', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const subscriptionEmail = "subscribeEmail-specific-rule@test.com"
         const report = dataGenerator.createUploadReportStarted()
 
@@ -83,7 +83,7 @@ test.describe('GraphQL subscribeEmail', () => {
 
     });
 
-    test('custom schema and data stream subscription should trigger an email', async ({ gql, dataGenerator, notificationHelper }) => {   
+    test('custom schema and data stream subscription should trigger an email', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const subscriptionEmail = "subscribeEmail-custom-schema@test.com"
         const schema = dataGenerator.createRandomSchema()
 

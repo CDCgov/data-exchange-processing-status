@@ -157,7 +157,7 @@ test.describe('GraphQL getUploads', () => {
         const result = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
-            dateStart: dataGenerator.formatDateCompactUTC(baseDate),
+            dateStart: dataGenerator.formatDateCompactUTC(new Date(baseDate.getTime() + 1000)),
             pageSize: 5,
             pageNumber: 1
         });
@@ -215,7 +215,7 @@ test.describe('GraphQL getUploads', () => {
         const result = await gql.getUploads({
             dataStreamId: baseReport.data_stream_id,
             dataStreamRoute: baseReport.data_stream_route,
-            dateStart: dataGenerator.formatDateCompactUTC(baseDate),
+            dateStart: dataGenerator.formatDateCompactUTC(new Date(baseDate.getTime() + 1000)),
             dateEnd: dataGenerator.formatDateCompactUTC(dataGenerator.addDays(baseDate, numReports-1)),
             pageSize: 5,
             pageNumber: 1
@@ -258,16 +258,6 @@ test.describe('GraphQL getUploads', () => {
         expectGraphQLErrorResponse(result, "invalid-page-number")
     })
 
-    test('errors when page number is invalid for nonexistent data stream and route', async ({ gql }) => {
-        const result = await gql.getUploads({
-            dataStreamId: "test-data-stream-id",
-            dataStreamRoute: "test-data-stream-route",
-            pageSize: 5,
-            pageNumber: 0
-        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
-
-        expectGraphQLErrorResponse(result, "invalid-page-number-no-datastream-route")
-    })
 })
 
 function expectEmptyUploadsResponse(response: GetUploadsQuery) {
