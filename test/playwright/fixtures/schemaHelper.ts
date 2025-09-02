@@ -44,14 +44,21 @@ export class SchemaHelper {
     }
 
     async validateSchemaContentResponse(schema: { schemaName: string; schemaVersion: string; content: any }) {
-        const schemaContentResponse = await this.gql.schemaContent({
-            schemaName: schema.schemaName,
-            schemaVersion: schema.schemaVersion
-        });
-
-        expect(schemaContentResponse.schemaContent).toBeDefined();
-        
-        return schemaContentResponse;
+        let lastResponse;
+        await expect.poll(
+            async () => {
+                lastResponse = await this.gql.schemaContent({
+                    schemaName: schema.schemaName,
+                    schemaVersion: schema.schemaVersion
+                });
+                return lastResponse.schemaContent;
+            },
+            {
+                timeout: 10_000,
+                intervals: [500]
+            }
+        ).toBeDefined();
+        return lastResponse;
     }
 
     async removeSchemaAndMatchSnapshot(schema: { schemaName: string; schemaVersion: string }, snapshotName: string) {

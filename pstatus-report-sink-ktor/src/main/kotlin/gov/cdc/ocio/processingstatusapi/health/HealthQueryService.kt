@@ -7,7 +7,6 @@ import gov.cdc.ocio.types.health.HealthCheck
 import gov.cdc.ocio.types.health.HealthCheckResult
 import gov.cdc.ocio.types.health.HealthStatusType
 import gov.cdc.ocio.types.utils.TimeUtils
-import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.system.measureTimeMillis
@@ -16,14 +15,11 @@ import kotlin.system.measureTimeMillis
 /**
  * Service for querying the health of the report-sink service and its dependencies.
  *
- * @property logger KLogger
  * @property repository ProcessingStatusRepository
  * @property messageSystem MessageSystem
  * @property schemaLoader SchemaLoader
  */
 class HealthQueryService: KoinComponent {
-
-    private val logger = KotlinLogging.logger {}
 
     private val repository by inject<ProcessingStatusRepository>()
 
@@ -66,6 +62,7 @@ class HealthQueryService: KoinComponent {
     ): HealthCheck {
 
         return HealthCheck().apply {
+            name = "Report Sink"
             status = if (databaseHealth.status == HealthStatusType.STATUS_UP
                 && messageSystemHealth.status == HealthStatusType.STATUS_UP
                 && schemaLoaderSystemHealth.status == HealthStatusType.STATUS_UP
