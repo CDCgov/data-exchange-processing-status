@@ -27,6 +27,13 @@ class NotificationSubscriptionService: KoinComponent {
     private val workflowEngine by inject<WorkflowEngine>()
 
     fun subscribeTopErrors(subscription: WorkflowSubscriptionForDataStreams): WorkflowSubscriptionResult {
+        require(subscription.dataStreamIds.size == 1) {
+            "Expected exactly one data stream ID, but found ${subscription.dataStreamIds.size}"
+        }
+        require(subscription.dataStreamRoutes.size == 1) {
+            "Expected exactly one data stream route, but found ${subscription.dataStreamRoutes.size}"
+        }
+
         val workflow = workflowEngine.setupWorkflow(
             "Determines the count of the top 5 errors that have occurred for this data stream in the time range provided.",
             WorkflowTaskQueue.TOP_ERRORS.toString(),

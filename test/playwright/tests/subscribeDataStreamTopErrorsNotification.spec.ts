@@ -66,22 +66,6 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
         await notificationHelper.validateWebhookIsCalledForToken(token, { timeout: 70_000 });
     });
 
-    test('subscribing to a generic data stream via email', {tag: "@slow"}, async ({ notificationHelper, dataGenerator }) => {
-        const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
-        const subscription = dataGenerator.createSubscriptionInput({
-            emailAddresses: [subscriptionEmail],
-            cronSchedule: "@every 10s",
-            dataStreamIds: [],
-            dataStreamRoutes: [],
-            jurisdictions: []
-        });
-
-        const subscriptionResponse = await notificationHelper.subscribeDataStreamTopErrorsNotificationAndValidate(subscription);
-        subscriptions.push(subscriptionResponse.subscriptionId!.toString())
-        
-        await notificationHelper.validateEmailIsSent(subscriptionEmail, "PHDO TOP ERRORS NOTIFICATION");
-    });
-
     test('subscribing with multiple emails', async ({ notificationHelper, dataGenerator }) => {
         const subscriptionEmail1 = `subscribeDataStreamTopErrorsNotification-multiple-emails-1@test.com`;
         const subscriptionEmail2 = `subscribeDataStreamTopErrorsNotification-multiple-emails-2@test.com`;
@@ -137,5 +121,71 @@ test.describe('GraphQL subscribeDataStreamTopErrorsNotification', () => {
             const res = await gql.subscribeDataStreamTopErrorsNotification({ subscription }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
             expect(JSON.stringify(res.errors)).toMatchSnapshot("invalid-email-format");
         });
-    });
+
+        test('no data stream id or data stream route', async ({ gql, dataGenerator}) => {
+            const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
+            const subscription = dataGenerator.createSubscriptionInput({
+                emailAddresses: [subscriptionEmail],
+                cronSchedule: "@every 10s",
+                dataStreamIds: [],
+                dataStreamRoutes: [],
+            });
+
+            const res =  await gql.subscribeDataStreamTopErrorsNotification({ subscription }, {failOnEmptyData: false}) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("no-data-stream-id-or-route");
+        });
+
+        test('no data stream id', async ({ gql, dataGenerator}) => {
+            const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
+            const subscription = dataGenerator.createSubscriptionInput({
+                emailAddresses: [subscriptionEmail],
+                cronSchedule: "@every 10s",
+                dataStreamIds: [],
+                dataStreamRoutes: ["dataStreamRoute"],
+            });
+
+            const res =  await gql.subscribeDataStreamTopErrorsNotification({ subscription }, {failOnEmptyData: false}) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("no-data-stream-id");
+        });
+
+        test('no data stream route', async ({ gql, dataGenerator}) => {
+            const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
+            const subscription = dataGenerator.createSubscriptionInput({
+                emailAddresses: [subscriptionEmail],
+                cronSchedule: "@every 10s",
+                dataStreamIds: ["dataStreamId"],
+                dataStreamRoutes: [],
+            });
+
+            const res =  await gql.subscribeDataStreamTopErrorsNotification({ subscription }, {failOnEmptyData: false}) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("no-data-stream-route");
+        });
+        
+        test('multiple data stream ids', async ({ gql, dataGenerator}) => {
+            const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
+            const subscription = dataGenerator.createSubscriptionInput({
+                emailAddresses: [subscriptionEmail],
+                cronSchedule: "@every 10s",
+                dataStreamIds: ["stream1", "stream2"],
+                dataStreamRoutes: ["dataStreamRoute"],
+            });
+
+            const res =  await gql.subscribeDataStreamTopErrorsNotification({ subscription }, {failOnEmptyData: false}) as unknown as GraphQLErrorResponse;
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("multiple-data-stream-ids");
+        });
+
+        test('multiple data stream routes', async ({ gql, dataGenerator}) => {
+            const subscriptionEmail = `subscribeDataStreamTopErrorsNotification-datastream-generic@test.com`;
+            const subscription = dataGenerator.createSubscriptionInput({
+                emailAddresses: [subscriptionEmail],
+                cronSchedule: "@every 10s",
+                dataStreamIds: ["stream1"],
+                dataStreamRoutes: ["dataStreamRoute1", "dataStreamRoute2"],
+            });
+            
+            const res =  await gql.subscribeDataStreamTopErrorsNotification({ subscription }, {failOnEmptyData: false}) as unknown as GraphQLErrorResponse
+            expect(JSON.stringify(res.errors)).toMatchSnapshot("multiple-data-stream-routes");
+        });
+
+    })
 });

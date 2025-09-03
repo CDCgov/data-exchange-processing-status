@@ -1,0 +1,1 @@
+[{"message":"Expected exactly one data stream route, but found 0","locations":[],"path":["subscribeDataStreamTopErrorsNotification"],"extensions":{"classification":"BadRequestException"}}]
