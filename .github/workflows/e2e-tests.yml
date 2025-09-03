@@ -23,4 +23,4 @@ jobs:
           docker compose -f docker-compose.playwright.yml run --rm --quiet-pull playwright
       - name: Stop Services
         run: |
-          docker compose -f docker-compose.local.yml down
+          docker compose -f docker-compose.ci.yml down
