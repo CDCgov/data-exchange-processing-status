@@ -11,12 +11,8 @@ import io.grpc.StatusRuntimeException
 import io.temporal.api.enums.v1.TaskQueueKind
 import io.temporal.api.enums.v1.WorkflowExecutionStatus
 import io.temporal.api.workflow.v1.WorkflowExecutionInfo
-import io.temporal.api.workflowservice.v1.GetWorkflowExecutionHistoryRequest
-import io.temporal.api.workflowservice.v1.ListWorkflowExecutionsRequest
-import io.temporal.api.workflowservice.v1.DescribeTaskQueueRequest
 import io.temporal.api.taskqueue.v1.TaskQueue
 import io.temporal.api.enums.v1.TaskQueueType
-import io.temporal.api.workflowservice.v1.DescribeTaskQueueResponse
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.client.WorkflowOptions
@@ -40,6 +36,7 @@ import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCo
 import gov.cdc.ocio.processingnotifications.workflow.digestcounts.UploadDigestCountsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationWorkflowImpl
 import gov.cdc.ocio.processingnotifications.workflow.toperrors.TopErrorsNotificationActivitiesImpl
+import io.temporal.api.workflowservice.v1.*
 import io.temporal.client.WorkflowNotFoundException
 import io.temporal.common.converter.DefaultDataConverter
 import io.temporal.common.converter.JacksonJsonPayloadConverter
@@ -294,6 +291,19 @@ class WorkflowEngine(
             val workflowImplClassName = workflowImplClassNamePayload.getOrNull()?.data?.toStringUtf8()?.replace("\"", "")
             val workerAttached = if (includeWorkerCheck) workerHasPoller(executionInfo.taskQueue) else null
 
+            val describe = service.blockingStub().describeWorkflowExecution(
+                DescribeWorkflowExecutionRequest.newBuilder()
+                    .setNamespace(temporalConfig.namespace)
+                    .setExecution(executionInfo.execution)
+                    .build()
+            )
+            val workflowStatus = describe.workflowExecutionInfo.status
+            val failureInfo = if (workflowStatus != WorkflowExecutionStatus.WORKFLOW_EXECUTION_STATUS_COMPLETED
+                && workflowStatus != WorkflowExecutionStatus.WORKFLOW_EXECUTION_STATUS_RUNNING) {
+                executionInfo.execution.getWorkflowFailureInfo(service, temporalConfig.namespace)
+            } else
+                null
+
             val cronSchedule = CronSchedule(
                 cron = cronScheduleRaw,
                 description = cronScheduleDescription.getOrDefault(
@@ -304,13 +314,15 @@ class WorkflowEngine(
             )
             WorkflowStatus(
                 executionInfo.execution.workflowId,
+                executionInfo.execution.runId,
                 taskName,
                 taskQueue,
                 description,
                 workerAttached,
                 executionInfo.status.name,
                 cronSchedule,
-                workflowImplClassName
+                workflowImplClassName,
+                failureInfo
             )
         }
 

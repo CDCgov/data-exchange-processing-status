@@ -24,7 +24,9 @@ import gov.cdc.ocio.reportschemavalidator.utils.DefaultJsonUtils
 import gov.cdc.ocio.reportschemavalidator.validators.JsonSchemaValidator
 import gov.cdc.ocio.messagesystem.MessageSystem
 import gov.cdc.ocio.messagesystem.MessageProcessorConfig
+import gov.cdc.ocio.types.extensions.renameKey
 import io.ktor.server.application.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import mu.KLogger
 import mu.KotlinLogging
 import org.koin.core.component.KoinComponent
@@ -82,6 +84,16 @@ class ReportMutationService: KoinComponent {
 
     private val messageProcessorConfig by inject<MessageProcessorConfig>()
 
+    private val meter = GlobalOpenTelemetry.get().getMeter("graphql")
+
+    private val validReportCount = meter.counterBuilder("valid_report_count")
+        .setDescription("Count of valid reports")
+        .build()
+
+    private val invalidReportCount = meter.counterBuilder("invalid_report_count")
+        .setDescription("Count of invalid reports")
+        .build()
+
     /**
      * Upsert a report based on the provided input and action.
      *
@@ -118,6 +130,9 @@ class ReportMutationService: KoinComponent {
                 Action.REPLACE -> reportManager.replaceReport(validatedReport)
             }
 
+            // Increment the otel valid report count
+            validReportCount.add(1)
+
             // Forward the validated report if enabled
             if (messageProcessorConfig.forwardValidatedReports) {
                 // The forwarded messages need to remain snake case for downstream processing.
@@ -131,6 +146,11 @@ class ReportMutationService: KoinComponent {
                 reportId = validatedReport.reportId ?: "unknown",
                 schemaFileNames = validationResult.validationSchemaResult?.schemaFileNames
             )
+        }
+
+        result.onFailure {
+            // Increment the otel invalid report count
+            invalidReportCount.add(1)
         }
 
         when (val exception = result.exceptionOrNull()) {
@@ -183,7 +203,9 @@ class ReportMutationService: KoinComponent {
             // if status is successful, will persist report to Reports container, otherwise to dlq container
             if (validationResult.status) {
                 // The report input comes in from graphql as snake case, but all the models are set up for camel case.
-                val camelCaseKeyMap = mapKeysToCamelCase(input)
+                val camelCaseKeyMap = mapKeysToCamelCase(input, ignore = listOf("content")).toMutableMap()
+                // Rename known Report keys that don't quite match in case.
+                camelCaseKeyMap.renameKey(oldKey = "dexIngestDatetime", newKey = "dexIngestDateTime")
                 val reportJson = gson.toJson(camelCaseKeyMap)
                 val report = gson.fromJson(reportJson, Report::class.java)
                 return ValidatedReportResult(
@@ -203,28 +225,43 @@ class ReportMutationService: KoinComponent {
     }
 
     /**
-     * Re-map the keys of the provided map from snake case to camel case.
+     * Recursively transforms the keys of a map from snake_case to camelCase.
+     * Keys present in the `ignore` parameter are excluded from the transformation.
      *
-     * @param map Map<String, Any?>?
-     * @return Map<String, Any?>
+     * @param map The input map whose keys are to be converted, or null if no map needs processing.
+     * @param ignore Vararg of keys that should be excluded from the transformation.
+     * @return A new map with keys transformed to camelCase, keeping the original values intact. Nested maps will also
+     * have their keys transformed recursively.
      */
-    private fun mapKeysToCamelCase(map: Map<String, Any?>?): Map<String, Any?> {
-        val newMap = mutableMapOf<String, Any?>()
+    private fun mapKeysToCamelCase(
+        map: Map<String, Any?>?,
+        ignore: List<String>,
+        parentPath: String = ""
+    ): Map<String, Any?> {
+        val sourceMap = map ?: return emptyMap()
+        val ignoredPaths = ignore.toSet()
 
-        if (map != null) {
-            for ((key, value) in map) {
-                val newKey = key.snakeToCamelCase() // Example transformation, adjust as needed
+        val result = mutableMapOf<String, Any?>()
 
-                val newValue = when (value) {
-                    is Map<*, *> -> mapKeysToCamelCase(value as Map<String, Any?>) // Recursively convert nested maps
-                    else -> value
+        for ((key, value) in sourceMap) {
+            val fullPath = if (parentPath.isEmpty()) key else "$parentPath.$key"
+
+            val shouldIgnore = ignoredPaths.any { fullPath == it || fullPath.startsWith("$it.") }
+
+            val newKey = if (shouldIgnore) key else key.snakeToCamelCase()
+
+            val newValue = when (value) {
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    mapKeysToCamelCase(value as Map<String, Any?>, ignore, parentPath = fullPath)
                 }
-
-                newMap[newKey] = newValue
+                else -> value
             }
+
+            result[newKey] = newValue
         }
 
-        return newMap
+        return result
     }
 
     /**

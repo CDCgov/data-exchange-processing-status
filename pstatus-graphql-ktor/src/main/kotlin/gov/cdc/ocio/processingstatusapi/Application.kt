@@ -5,10 +5,14 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import gov.cdc.ocio.database.telemetry.Otel
 import gov.cdc.ocio.database.utils.DatabaseKoinCreator
+import gov.cdc.ocio.processingstatusapi.models.query.GraphQLHealth
+import gov.cdc.ocio.processingstatusapi.models.query.HealthConfigLoader
 import gov.cdc.ocio.messagesystem.utils.MessageProcessorConfigKoinCreator
 import gov.cdc.ocio.messagesystem.utils.MessageSystemKoinCreator
 import gov.cdc.ocio.processingstatusapi.plugins.configureRouting
 import gov.cdc.ocio.processingstatusapi.plugins.graphQLModule
+import gov.cdc.ocio.processingstatusapi.queries.HealthCheckService
+import gov.cdc.ocio.processingstatusapi.queries.HealthQueryService
 import gov.cdc.ocio.reportschemavalidator.utils.SchemaLoaderKoinCreator
 import gov.cdc.ocio.processingstatusapi.utils.SchemaSecurityConfigKoinCreator
 import graphql.scalars.ExtendedScalars
@@ -18,16 +22,14 @@ import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v3_0.KtorServerTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-import io.opentelemetry.sdk.metrics.Aggregation
 import io.opentelemetry.sdk.metrics.InstrumentSelector
 import io.opentelemetry.sdk.metrics.InstrumentType
-import io.opentelemetry.sdk.metrics.View
 import io.opentelemetry.semconv.ServiceAttributes
 import org.koin.core.KoinApplication
+import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 
@@ -44,6 +46,12 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
     val schemaSecurityConfig = SchemaSecurityConfigKoinCreator.moduleFromAppEnv(environment)
     val messageSystemModule = MessageSystemKoinCreator.moduleFromAppEnv(environment)
     val messageProcessorConfigModule = MessageProcessorConfigKoinCreator.moduleFromAppEnv(environment)
+    val healthModule = module {
+        single { HealthConfigLoader(environment.config) }
+        single { GraphQLHealth() }
+        single { HealthCheckService() } // Register HealthCheckService
+        single { HealthQueryService() } // Register HealthQueryService
+    }
 
     return modules(
         listOf(
@@ -51,7 +59,8 @@ fun KoinApplication.loadKoinModules(environment: ApplicationEnvironment): KoinAp
             schemaLoaderModule,
             schemaSecurityConfig,
             messageSystemModule,
-            messageProcessorConfigModule
+            messageProcessorConfigModule,
+            healthModule
         )
     )
 }
@@ -84,6 +93,7 @@ fun Application.module() {
     install(Koin) {
         loadKoinModules(environment)
     }
+
     graphQLModule()
     configureRouting()
 

@@ -10,6 +10,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
@@ -66,6 +67,15 @@ fun Application.graphQLModule() {
         }
         engine {
             exceptionHandler = CustomGraphQLExceptionHandler()
+
+            val graphqlOperationCounter = GlobalOpenTelemetry.get()
+                .meterBuilder("pstatus-graphql-meter")
+                .build()
+                .counterBuilder("graphql_operation_count")
+                .setDescription("Count of GraphQL queries and mutations")
+                .setUnit("1")
+                .build()
+            instrumentations = listOf(MetricsInstrumentation(graphqlOperationCounter))
         }
     }
 

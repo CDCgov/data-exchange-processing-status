@@ -1,0 +1,1 @@
+[{"message":"Expected exactly one data stream ID, but found 2","locations":[],"path":["subscribeDataStreamTopErrorsNotification"],"extensions":{"classification":"BadRequestException"}}]

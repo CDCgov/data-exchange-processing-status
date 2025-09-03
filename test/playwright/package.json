@@ -6,7 +6,8 @@
   "scripts": {
     "generate:schema": "npx playwright-graphql --url $BASEURL --schema schema.gql --coverage",
     "codegen": "npx dotenv -e .env -- npm run generate:schema",
-    "test": "npx playwright test"
+    "test": "npx playwright test",
+    "cleanup": "npx playwright test --project='Global Setup'"
   },
   "keywords": [],
   "author": "",

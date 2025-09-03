@@ -49,8 +49,13 @@ object RuleEngine: KoinComponent {
     fun evaluateAllRules(
         report: ReportMessage
     ) {
-        val subscriptions = getSubscriptions()
-        subscriptions.forEach { evaluateSubscription(report, it) }
+        getSubscriptions().forEach { subscription ->
+            runCatching {
+                evaluateSubscription(report, subscription)
+            }.onFailure { ex ->
+                logger.error("Failed to evaluate subscription: ${subscription.key}", ex)
+            }
+        }
     }
 
     /**

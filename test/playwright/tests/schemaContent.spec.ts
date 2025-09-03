@@ -1,5 +1,7 @@
-import { test, expect } from '@fixtures/gql';
+import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
 import complexSchema from '../fixtures/complex-schema.json';
+
+const environmentName = process.env.ENV ?? 'local';
 
 test.describe("schemaContent query", async () => {
     test.beforeAll(async ({ gql }) => {
@@ -29,7 +31,7 @@ test.describe("schemaContent query", async () => {
     ];
 
     expectedSchemas.forEach(expectedSchema => {
-        test(`matches snapshot for schema content ${expectedSchema.schemaName}/${expectedSchema.version} in ${process.env.ENV}`, async ({ gql }, testInfo) => {
+        test(`matches snapshot for schema content ${expectedSchema.schemaName}/${expectedSchema.version} in ${environmentName}`, async ({ gql }, testInfo) => {
             const response = await gql.schemaContent({
                 schemaName: expectedSchema.schemaName,
                 schemaVersion: expectedSchema.version
@@ -47,7 +49,8 @@ test.describe("schemaContent query", async () => {
         });
     });
 
-    test(`by schema name validates the response structure for environment: ${process.env.ENV}`, async ({ gql }) => {
+
+    test(`by schema name validates the response structure for environment: ${environmentName}`, async ({ gql }) => {
         const response = await gql.schemaContent({
             schemaName: 'base',
             schemaVersion: '1.0.0'
@@ -57,7 +60,7 @@ test.describe("schemaContent query", async () => {
         expect(typeof response.schemaContent).toBe('object');
     });
 
-    test(`by schema file name validates the response structure for environment: ${process.env.ENV}`, async ({ gql }) => {
+    test(`by schema file name validates the response structure for environment: ${environmentName}`, async ({ gql }) => {
         const response = await gql.schemaContentFromFilename({
             schemaFilename: 'base.1.0.0.schema.json'
         });
@@ -70,7 +73,7 @@ test.describe("schemaContent query", async () => {
         const response = await gql.schemaContent({
             schemaName: 'non-existent-schema',
             schemaVersion: '1.0.0'
-        }, { failOnEmptyData: false });
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
         expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-name");
     });
@@ -79,7 +82,7 @@ test.describe("schemaContent query", async () => {
         const response = await gql.schemaContent({
             schemaName: 'base',
             schemaVersion: '999.999.999'
-        }, { failOnEmptyData: false });
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
         expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-version");
     });
@@ -87,7 +90,7 @@ test.describe("schemaContent query", async () => {
     test('handles invalid schema file name gracefully', async ({ gql }) => {
         const response = await gql.schemaContentFromFilename({
             schemaFilename: 'non-existent-schema.1.0.0.schema.json'
-        }, { failOnEmptyData: false });
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
         expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-name-filename");
     });
@@ -95,7 +98,7 @@ test.describe("schemaContent query", async () => {
     test('handles invalid schema file name version gracefully', async ({ gql }) => {
         const response = await gql.schemaContentFromFilename({
             schemaFilename: 'base.999.schema.json'
-        }, { failOnEmptyData: false });
+        }, { failOnEmptyData: false }) as unknown as GraphQLErrorResponse;
 
         expect(JSON.stringify(response.errors)).toMatchSnapshot("schema-not-found-invalid-schema-version-filename");
     });

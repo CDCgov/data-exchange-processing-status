@@ -1,9 +1,9 @@
 package gov.cdc.ocio.processingstatusnotifications.subscription
 
 import gov.cdc.ocio.processingstatusnotifications.exception.*
-import gov.cdc.ocio.types.model.Notification
 import gov.cdc.ocio.processingstatusnotifications.model.Subscription
-import gov.cdc.ocio.types.model.SubscriptionRule
+import gov.cdc.ocio.processingstatusnotifications.rulesEngine.MvelValidator
+import gov.cdc.ocio.types.model.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.*
@@ -41,6 +41,11 @@ class SubscriptionManager : KoinComponent {
             SubscriptionRule(dataStreamId, dataStreamRoute, jurisdiction, ruleDescription, mvelCondition),
             notification
         )
+
+        // Syntax and type checking for the MVEL expression
+        val validator = MvelValidator()
+        val result = validator.validate(mvelCondition)
+        require(result.isValid) { "Invalid MVEL expression: ${result.errorMessage}" }
 
         val existingSubscriptionId = cachedSubscriptionLoader.findSubscriptionId(subscription)
         return if (existingSubscriptionId != null)

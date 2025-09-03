@@ -1,0 +1,1 @@
+[{"message":"Required field webhookUrl can not be blank","locations":[],"path":["subscribeWebhook"],"extensions":{"classification":"BadRequestException"}}]

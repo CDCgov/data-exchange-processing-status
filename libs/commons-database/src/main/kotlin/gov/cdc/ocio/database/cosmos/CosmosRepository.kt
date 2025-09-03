@@ -2,6 +2,7 @@ package gov.cdc.ocio.database.cosmos
 
 import gov.cdc.ocio.database.health.HealthCheckCosmosDb
 import gov.cdc.ocio.database.persistence.Collection
+import gov.cdc.ocio.database.persistence.CollectionDataFetcher
 import gov.cdc.ocio.database.persistence.ProcessingStatusRepository
 import gov.cdc.ocio.types.health.HealthCheckSystem
 
@@ -43,13 +44,13 @@ class CosmosRepository(
     private val notificationSubscriptionsContainer =
         CosmosContainerManager.initDatabaseContainer(uri, authKey, notificationSubscriptionsContainerName, partitionKey)
 
-    override var reportsCollection = CosmosCollection(reportsContainer) as Collection
+    override var reportsCollection = CollectionDataFetcher(CosmosCollection(reportsContainer) as Collection)
 
     override var reportsDeadLetterCollection =
-        CosmosCollection(reportsDeadLetterContainer) as Collection
+        CollectionDataFetcher(CosmosCollection(reportsDeadLetterContainer) as Collection)
 
     override var notificationSubscriptionsCollection =
-        CosmosCollection(notificationSubscriptionsContainer) as Collection
+        CollectionDataFetcher(CosmosCollection(notificationSubscriptionsContainer) as Collection)
 
     override var healthCheckSystem = HealthCheckCosmosDb(
         system,

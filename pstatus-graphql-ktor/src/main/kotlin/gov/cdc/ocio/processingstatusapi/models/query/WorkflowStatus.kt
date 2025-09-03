@@ -10,6 +10,7 @@ import java.time.OffsetDateTime
  * Model for the workflow status.
  *
  * @property workflowId String
+ * @property runId String
  * @property taskName String
  * @property description String
  * @property status String
@@ -22,6 +23,9 @@ data class WorkflowStatus(
     @GraphQLDescription("Workflow ID of the scheduled evaluation workflow")
     val workflowId: String,
 
+    @GraphQLDescription("Run ID of the scheduled evaluation workflow")
+    val runId: String,
+
     @GraphQLDescription("Name of the task to run in the workflow")
     val taskName: String,
 
@@ -32,7 +36,10 @@ data class WorkflowStatus(
     val status: String,
 
     @GraphQLDescription("Schedule for the workflow to run its evaluation")
-    val schedule: CronSchedule
+    val schedule: CronSchedule,
+
+    @GraphQLDescription("Detailed information regarding a workflow failure, if any")
+    val workflowFailureInfo: WorkflowFailureInfo? = null
 )
 
 /**
@@ -58,4 +65,30 @@ data class CronSchedule(
 
     @GraphQLDescription("Next evaluation workflow execution date/time based on the schedule")
     val nextExecution: String?
+)
+
+@Serializable
+@GraphQLDescription("Detailed information regarding a workflow failure, if any")
+data class WorkflowFailureInfo(
+
+    @GraphQLDescription("Source of the failure")
+    val source: String,
+
+    @GraphQLDescription("Failure message")
+    val failureMessage: String?,
+
+    @GraphQLDescription("Cause of the failure")
+    val causeMessage: String?,
+
+    @GraphQLDescription("Stack trace of the failure")
+    val stackTrace: String?,
+
+    @GraphQLDescription("Activity name of the failure")
+    val activityName: String?,
+
+    @GraphQLDescription("Retry state of the failure")
+    val retryState: String?,
+
+    @GraphQLDescription("Timeout type of the failure")
+    val timeoutType: String?
 )

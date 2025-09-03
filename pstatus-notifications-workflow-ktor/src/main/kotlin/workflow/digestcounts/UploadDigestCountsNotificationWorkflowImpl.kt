@@ -64,6 +64,7 @@ class UploadDigestCountsNotificationWorkflowImpl : UploadDigestCountsNotificatio
             )
         } catch (ex: ActivityFailure) {
             logger.error("Error while processing daily upload digest. The workflow may have been canceled. Error: ${ex.localizedMessage}")
+            throw ex
         } catch (ex: Exception) {
             logger.error("Error while processing daily upload digest: ${ex.localizedMessage}")
             throw ex

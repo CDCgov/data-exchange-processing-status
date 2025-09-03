@@ -1,13 +1,23 @@
 [
     {
         "environment": "local",
+        "name": "graphql",
+        "url": "http://localhost:8090"
+    },
+    {
+        "environment": "local",
         "name": "report-sink",
         "url": "http://localhost:8080"
     },
     {
-        "environment": "local",
+        "environment": "CI",
         "name": "graphql",
-        "url": "http://localhost:8090"
+        "url": "http://graphql:8080"
+    },
+    {
+        "environment": "CI",
+        "name": "report-sink",
+        "url": "http://report-sink:8080"
     },
     {
         "environment": "dev",

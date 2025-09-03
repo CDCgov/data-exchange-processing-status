@@ -79,9 +79,10 @@ To setup and run the tests:
 
 ## NPM Scripts
 
-| Script                        | Description                                                         |
-|-------------------------------|---------------------------------------------------------------------|
-| `npm run codegen`             | Run all code generation scripts (schema, operations, and types).    |
-| `npm run test`                | Run all Playwright tests.                                           |
+| Script                        | Description                                                            |
+|-------------------------------|------------------------------------------------------------------------|
+| `npm run codegen`             | Run all code generation scripts (schema, operations, and types).       |
+| `npm run test`                | Run all Playwright tests.                                              |
+| `npm run cleanup`             | Runs the "Global Setup" project to cleanup email, webhooks and schemas | 
 
 

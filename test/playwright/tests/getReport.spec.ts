@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/gql';
-import { SortOrder, Report } from '@gql';
+import { SortOrder, Report, GetReportsQuery } from '@gql';
 import dataGenerator, { createUploadReport, UploadReport } from 'fixtures/dataGenerator';
 
 test.describe('GraphQL getReports', () => {
@@ -13,14 +13,20 @@ test.describe('GraphQL getReports', () => {
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: typicalReport.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
-        })
-        expect(reportResult.getReports.length).toBe(1)
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: typicalReport.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(1)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
+         })
 
-        await reportResult.getReports.forEach(report => {
+         await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, typicalReport)
             validateNonRequiredFields(report, typicalReport)
             validateContentInfo(report, typicalReport)            
@@ -38,14 +44,21 @@ test.describe('GraphQL getReports', () => {
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: minimalReport.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
+
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: minimalReport.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(1)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
         })
-        expect(reportResult.getReports.length).toBe(1)
         
-        await reportResult.getReports.forEach(report => {
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, minimalReport)
             validateContentInfo(report, minimalReport)
             expect(report.stageInfo?.issues).toBeNull()
@@ -66,14 +79,20 @@ test.describe('GraphQL getReports', () => {
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: uploadReportWithError.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: uploadReport.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(1)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
         })
-        expect(reportResult.getReports.length).toBe(1)
 
-        await reportResult.getReports.forEach(report => {
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, uploadReportWithError)
             validateContentInfo(report, uploadReportWithError)
             validateStageInfo(report, uploadReportWithError)
@@ -99,14 +118,20 @@ test.describe('GraphQL getReports', () => {
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: uploadReportWithWarnIssue.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: uploadReportWithWarnIssue.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(1)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
         })
-        expect(reportResult.getReports.length).toBe(1)
 
-        await reportResult.getReports.forEach(report => {
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, uploadReportWithWarnIssue)
             validateContentInfo(report, uploadReportWithWarnIssue)
             validateStageInfo(report, uploadReportWithWarnIssue)
@@ -131,14 +156,20 @@ test.describe('GraphQL getReports', () => {
         })
         expect(createReportResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: uploadWithMessageMetadata.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
-        })
-        expect(reportResult.getReports.length).toBe(1)
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: uploadReport.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(1)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
+         })
 
-        await reportResult.getReports.forEach(report => {
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, uploadWithMessageMetadata)
             validateContentInfo(report, uploadWithMessageMetadata)
             validateStageInfo(report, uploadWithMessageMetadata)
@@ -170,20 +201,26 @@ test.describe('GraphQL getReports', () => {
         })
         expect(upsertReportCompleteResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: uploadReportStart.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
-        })
-        expect(reportResult.getReports.length).toBe(3)
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: uploadReportStart.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(3)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
+         })
 
-        await reportResult.getReports.forEach(report => {
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, uploadReportStart)
         });
 
-        validateContentInfo(reportResult.getReports[0], uploadReportStart)
-        validateContentInfo(reportResult.getReports[1], uploadReportStatus)
-        validateContentInfo(reportResult.getReports[2], uploadReportComplete)
+        validateContentInfo(reportResult!.getReports[0], uploadReportStart)
+        validateContentInfo(reportResult!.getReports[1], uploadReportStatus)
+        validateContentInfo(reportResult!.getReports[2], uploadReportComplete)
     });
 
     test('returns all reports for an upload with multiple reports in descending order', async ({ gql }) => {
@@ -209,19 +246,27 @@ test.describe('GraphQL getReports', () => {
         })
         expect(upsertReportCompleteResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: uploadReportStart.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Descending
-        })
-        expect(reportResult.getReports.length).toBe(3)
-        await reportResult.getReports.forEach(report => {
+
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: uploadReportStart.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Descending
+            })
+            expect(reportResult.getReports.length).toBe(3)
+            
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
+         })
+
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, uploadReportStart)
         });
 
-        validateContentInfo(reportResult.getReports[0], uploadReportComplete)
-        validateContentInfo(reportResult.getReports[2], uploadReportStart)
-        validateContentInfo(reportResult.getReports[1], uploadReportStatus)
+        validateContentInfo(reportResult!.getReports[0], uploadReportComplete)
+        validateContentInfo(reportResult!.getReports[2], uploadReportStart)
+        validateContentInfo(reportResult!.getReports[1], uploadReportStatus)
     });
 
     test('returns a report that has been updated after initial entry', async ({ gql }) => {
@@ -242,14 +287,19 @@ test.describe('GraphQL getReports', () => {
         })
         expect(createNewReportResult.upsertReport.result).toBe("SUCCESS")
 
-        const reportResult = await gql.getReports({
-            uploadId: newReport.upload_id,
-            reportsSortedBy: "timestamp",
-            sortOrder: SortOrder.Ascending
-        })
-        expect(reportResult.getReports.length).toBe(1)
+        let reportResult: GetReportsQuery;
+        await expect(async () => {
+            reportResult = await gql.getReports({
+                uploadId: newReport.upload_id,
+                reportsSortedBy: "timestamp",
+                sortOrder: SortOrder.Ascending
+            })
+            expect(reportResult.getReports.length).toBe(1)
+         }).toPass({
+            intervals: [1_000, 2_000, 5_000],
+         })
 
-        await reportResult.getReports.forEach(report => {
+        await reportResult!.getReports.forEach(report => {
             validateBasicFields(report, newReport)
             validateNonRequiredFields(report, newReport)
             validateContentInfo(report, newReport)            
@@ -289,8 +339,8 @@ function validateStageInfo(report: any, uploadReport: any) {
 }
 
 function validateContentInfo(report: any, uploadReport: any) {
-    expect(report.content.contentSchemaName).toEqual(uploadReport.content.content_schema_name)
-    expect(report.content.contentSchemaVersion).toEqual(uploadReport.content.content_schema_version)
+    expect(report.content.content_schema_name).toEqual(uploadReport.content.content_schema_name)
+    expect(report.content.content_schema_version).toEqual(uploadReport.content.content_schema_version)
     if (uploadReport.content.content_schema_name === "upload-started" || "upload-completed") {
         expect(report.content.status).toEqual(uploadReport.content.status)
     }

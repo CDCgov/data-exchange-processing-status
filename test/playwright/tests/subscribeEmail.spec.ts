@@ -1,25 +1,16 @@
-import { test, expect } from '@fixtures/gql';
-import { GraphQLError } from 'graphql';
-import { createEmailSubscriptionInput, createMinimalReport, createRandomSchema, createUploadReport, createUploadReportStarted } from '../fixtures/dataGenerator';
-
-const EMAIL_SERVICE = process.env.EMAILURL || "http://localhost:8025";
-
-type GraphQLErrorResponse = { errors: GraphQLError[] };
+import { test, expect, GraphQLErrorResponse } from '@fixtures/gql';
 
 let subscriptions:string[] = []
 
 test.describe('GraphQL subscribeEmail', () => {
 
-    test.afterEach(async ({ gql }) => { 
-        subscriptions.forEach(async (subscriptionId) => {
-            const response = await gql.unsubscribe({ subscriptionId: subscriptionId });
-            expect(response.unsubscribe.subscriptionId).toBe(subscriptionId);
-        });
+    test.afterEach(async ({ notificationHelper }) => { 
+        await notificationHelper.subscriptionCleanup(subscriptions);
         subscriptions = [];
     });
 
-    test('create subscription to a generic rule', async ({ gql }) => {
-        const subscription = createEmailSubscriptionInput({
+    test('create subscription to a generic rule', async ({ gql, dataGenerator }) => {
+        const subscription = dataGenerator.createEmailSubscriptionInput({
             emailAddresses: ["subscribeEmail-create@test.com"],
             dataStreamId: "TestDataStream",
             dataStreamRoute: "TestStreamRoute",
@@ -36,11 +27,11 @@ test.describe('GraphQL subscribeEmail', () => {
         subscriptions.push(subscriptionId);
     });
 
-    test('data stream subscription with generic rule should trigger an email', async ({ gql, request }) => {   
+    test('data stream subscription with generic rule should trigger an email', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const subscriptionEmail = "subscribeEmail-generic-rule@test.com"
-        const report = createUploadReportStarted()
+        const report = dataGenerator.createUploadReportStarted()
 
-        const subscription = createEmailSubscriptionInput({
+        const subscription = dataGenerator.createEmailSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
@@ -56,33 +47,16 @@ test.describe('GraphQL subscribeEmail', () => {
         const subscriptionId = res.subscribeEmail.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
         
-        const reportRes = await gql.upsertReport({
-            action: "replace",
-            report: report,
-        });
-        expect(reportRes.upsertReport).toBeDefined();
-        expect(reportRes.upsertReport.reportId).toBeDefined();
+        await notificationHelper.upsertCustomReport(report);
 
-        await expect.poll(async () => {
-            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
-            const emails = await mailhogResponse.json();
-            return emails.total;
-        }, {
-            message: 'Email should be found',
-            timeout: 60000,
-        }).toBeGreaterThan(0);
-
-        const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscription.emailAddresses[0]);
-        const emails = await mailhogResponse.json();
-        expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`Triggered: ${subscription.ruleDescription}`);
+        await notificationHelper.validateEmailIsSent(subscriptionEmail, `Triggered: ${subscription.ruleDescription}`);
     });
 
-    test('data stream subscription with specific rule should trigger an email', async ({ gql, request }) => {   
+    test('data stream subscription with specific rule should trigger an email', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const subscriptionEmail = "subscribeEmail-specific-rule@test.com"
-        const report = createUploadReportStarted()
+        const report = dataGenerator.createUploadReportStarted()
 
-        const subscription = createEmailSubscriptionInput({
+        const subscription = dataGenerator.createEmailSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
@@ -105,30 +79,19 @@ test.describe('GraphQL subscribeEmail', () => {
         expect(reportRes.upsertReport).toBeDefined();
         expect(reportRes.upsertReport.reportId).toBeDefined();
 
-        await expect.poll(async () => {
-            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
-            const emails = await mailhogResponse.json();
-            return emails.total;
-        }, {
-            message: 'Email should be found',
-            timeout: 60000,
-        }).toBeGreaterThan(0);
+        await notificationHelper.validateEmailIsSent(subscriptionEmail, `Triggered: ${subscription.ruleDescription}`);
 
-        const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscription.emailAddresses[0]);
-        const emails = await mailhogResponse.json();
-        expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`Triggered: ${subscription.ruleDescription}`);
     });
 
-    test('custom schema and data stream subscription should trigger an email', async ({ gql, request }) => {   
+    test('custom schema and data stream subscription should trigger an email', {tag: "@slow"}, async ({ gql, dataGenerator, notificationHelper }) => {   
         const subscriptionEmail = "subscribeEmail-custom-schema@test.com"
-        const schema = createRandomSchema()
+        const schema = dataGenerator.createRandomSchema()
 
         const schemaRes = await gql.upsertSchema(schema);
         expect(schemaRes.upsertSchema).toBeDefined();
 
         const report = {
-            ...createMinimalReport(),
+            ...dataGenerator.createMinimalReport(),
             data_stream_id: "customtestingid",
             data_stream_route: "customtestingroute", 
             jurisdiction: "customtestingjurisdiction",
@@ -141,7 +104,7 @@ test.describe('GraphQL subscribeEmail', () => {
             }
         }
 
-        const subscription = createEmailSubscriptionInput({
+        const subscription = dataGenerator.createEmailSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
@@ -156,31 +119,14 @@ test.describe('GraphQL subscribeEmail', () => {
         const subscriptionId = res.subscribeEmail.subscriptionId!.toString();
         subscriptions.push(subscriptionId);
 
-        const reportRes = await gql.upsertReport({
-            action: "replace",
-            report: report,
-        });
-        expect(reportRes.upsertReport).toBeDefined();
+        await notificationHelper.upsertCustomReport(report);
 
-
-        await expect.poll(async () => {
-            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
-            const emails = await mailhogResponse.json();
-            return emails.total;
-        }, {
-            message: 'Email should be found',
-            timeout: 60000,
-        }).toBeGreaterThan(0);
-
-        const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscription.emailAddresses[0]);
-        const emails = await mailhogResponse.json();
-        expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`Triggered: ${subscription.ruleDescription}`);
+        await notificationHelper.validateEmailIsSent(subscriptionEmail, `Triggered: ${subscription.ruleDescription}`);
     });
 
     test.describe('subscribing errors', () => {
-        test('blank mvel condition', async ({ gql }) => {
-            const subscription = createEmailSubscriptionInput({
+        test('blank mvel condition', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createEmailSubscriptionInput({
                 emailAddresses: ["subscribeEmail-invalid-mvel@test.com"],
                 mvelCondition: "",
             });
@@ -189,8 +135,8 @@ test.describe('GraphQL subscribeEmail', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("blank-mvel");
         });
 
-        test('empty data stream id', async ({ gql }) => {
-            const subscription = createEmailSubscriptionInput({
+        test('empty data stream id', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createEmailSubscriptionInput({
                 emailAddresses: ["subscribeEmail-empty-data-stream-id@test.com"],
                 dataStreamId: "",
             });
@@ -199,8 +145,8 @@ test.describe('GraphQL subscribeEmail', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("empty-data-stream-id");
         });
 
-        test('empty data stream route', async ({ gql }) => {    
-            const subscription = createEmailSubscriptionInput({
+        test('empty data stream route', async ({ gql, dataGenerator }) => {    
+            const subscription = dataGenerator.createEmailSubscriptionInput({
                 emailAddresses: ["subscribeEmail-empty-data-stream-route@test.com"],
                 dataStreamRoute: "",
             });
@@ -209,8 +155,8 @@ test.describe('GraphQL subscribeEmail', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("empty-data-stream-route");
         });
 
-        test('empty email addresses', async ({ gql }) => {
-            const subscription = createEmailSubscriptionInput({
+        test('empty email addresses', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createEmailSubscriptionInput({
                 emailAddresses: [],
             });
 
@@ -218,8 +164,8 @@ test.describe('GraphQL subscribeEmail', () => {
             expect(JSON.stringify(res.errors)).toMatchSnapshot("empty-email-addresses");
         });
 
-        test('blank email addresses', async ({ gql }) => {
-            const subscription = createEmailSubscriptionInput({
+        test('blank email addresses', async ({ gql, dataGenerator }) => {
+            const subscription = dataGenerator.createEmailSubscriptionInput({
                 emailAddresses: [""],
             });
 
@@ -237,11 +183,11 @@ test.describe('GraphQL subscribeEmail', () => {
 // There is no good way to guarantee the order of subscriptions in the rules engine.
 // When this test runs it should be run as: test.describe.serial
 test.describe.skip('GraphQL subscribeEmail Catastrophic Failures', () => {
-    test('gets email even with an invalid mvel condition', async ({ gql, request }) => {
+    test('gets email even with an invalid mvel condition', async ({ gql, dataGenerator, notificationHelper }) => {
         const subscriptionEmail = "subscribeEmail-major-mvel-failure@test.com"
-        const report = createUploadReportStarted()
+        const report = dataGenerator.createUploadReportStarted()
 
-        const subscription = createEmailSubscriptionInput({
+        const subscription = dataGenerator.createEmailSubscriptionInput({
             emailAddresses: [subscriptionEmail],
             dataStreamId: report.data_stream_id,
             dataStreamRoute: report.data_stream_route,
@@ -251,7 +197,7 @@ test.describe.skip('GraphQL subscribeEmail Catastrophic Failures', () => {
         });
 
         // This subscription is a bad rule, but the email for valid subscriptions should still be sent
-        const invalidSubscription = createEmailSubscriptionInput({
+        const invalidSubscription = dataGenerator.createEmailSubscriptionInput({
             ...subscription,
             dataStreamId: "a",
             dataStreamRoute: "a",
@@ -282,18 +228,6 @@ test.describe.skip('GraphQL subscribeEmail Catastrophic Failures', () => {
         expect(reportRes.upsertReport).toBeDefined();
         expect(reportRes.upsertReport.reportId).toBeDefined();
 
-        await expect.poll(async () => {
-            const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscriptionEmail);
-            const emails = await mailhogResponse.json();
-            return emails.total;
-        }, {
-            message: 'Email should be found',
-            timeout: 10000,
-        }).toBeGreaterThan(0);
-
-        const mailhogResponse = await request.get(`${EMAIL_SERVICE}/api/v2/search?kind=containing&query=` + subscription.emailAddresses[0]);
-        const emails = await mailhogResponse.json();
-        expect(emails.items[0].Content.Headers.To[0]).toBe(subscriptionEmail);
-        expect(emails.items[0].Content.Headers.Subject[0]).toContain(`Triggered: ${subscription.ruleDescription}`);
+        await notificationHelper.validateEmailIsSent(subscriptionEmail, `Triggered: ${subscription.ruleDescription}`);
     })
 });

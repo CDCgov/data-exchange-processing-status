@@ -45,7 +45,6 @@ class HealthCheckRabbitMQ(
      *
      * @return Result<Boolean>
      */
-    @OptIn(DelicateCoroutinesApi::class)
     private fun isRabbitMQHealthy(): Result<Boolean> {
         var channel: Channel? = null
         var rabbitMQConnection: Connection? = null
@@ -53,16 +52,10 @@ class HealthCheckRabbitMQ(
         try {
             rabbitMQConnection = rabbitMQConfig.getConnectionFactory().newConnection()
 
-            var d: Deferred<Channel?>? = null
-            GlobalScope.launch {
-                d = async {
-                    rabbitMQConnection?.createChannel()
-                }
-            }
             runBlocking {
-                withTimeout(Duration.ofSeconds(5).toMillis()) {
-                    channel = d?.await()
-                } // wait with timeout
+                channel = async {
+                    rabbitMQConnection.createChannel()
+                }.await()
             }
             val isOpen = channel?.isOpen ?: false
             channel?.close()

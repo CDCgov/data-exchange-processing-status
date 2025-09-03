@@ -17,14 +17,10 @@ import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.KtorServerTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-import io.opentelemetry.sdk.metrics.Aggregation
 import io.opentelemetry.sdk.metrics.InstrumentSelector
 import io.opentelemetry.sdk.metrics.InstrumentType
-import io.opentelemetry.sdk.metrics.View
 import io.opentelemetry.semconv.ServiceAttributes
 import org.koin.core.KoinApplication
 import org.koin.ktor.plugin.Koin
@@ -68,6 +64,23 @@ fun Application.module() {
     // Set the environment variable dynamically for Logback
     System.setProperty("ENVIRONMENT", environment.config.property("ktor.logback.environment").getString())
 
+    val builder = AutoConfiguredOpenTelemetrySdk.builder()
+        .setResultAsGlobal()
+        .addResourceCustomizer { old, _ ->
+            old.toBuilder()
+                .putAll(old.attributes)
+                .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-report-sink")
+                .build()
+        }
+        .addMeterProviderCustomizer { old, _ ->
+            old.registerView(
+                InstrumentSelector.builder().setType(InstrumentType.HISTOGRAM).build(), Otel.getDefaultHistogramView())
+        }
+    val otel = builder.build().openTelemetrySdk
+    install(KtorServerTelemetry) {
+        setOpenTelemetry(otel)
+    }
+
     configureRouting()
 
     val messageSystemType = MessageSystemType.getFromAppEnv(environment)
@@ -80,23 +93,6 @@ fun Application.module() {
     }
 
     createMessageSystemPlugin(messageSystemType, messageProcessor)
-
-    val builder = AutoConfiguredOpenTelemetrySdk.builder()
-        .setResultAsGlobal()
-        .addResourceCustomizer { old, _ ->
-        old.toBuilder()
-            .putAll(old.attributes)
-            .put(ServiceAttributes.SERVICE_NAME, environment.config.tryGetString("otel.service_name") ?: "pstatus-report-sink")
-            .build()
-        }
-        .addMeterProviderCustomizer { old, _ ->
-            old.registerView(
-                InstrumentSelector.builder().setType(InstrumentType.HISTOGRAM).build(), Otel.getDefaultHistogramView())
-        }
-    val otel: OpenTelemetry = builder.build().openTelemetrySdk
-    install(KtorServerTelemetry) {
-        setOpenTelemetry(otel)
-    }
 
     install(Koin) {
         loadKoinModules(environment)
